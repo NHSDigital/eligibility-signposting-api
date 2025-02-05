@@ -1,0 +1,8 @@
+variables:
+  - group: status-endpoint
+  - name: service_name
+    value: eligibility-signposting-api
+  - name: short_service_name
+    value: esa
+  - name: service_base_path
+    value: eligibility-signposting-api
