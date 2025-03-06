@@ -17,3 +17,4 @@ regexes = [
 
 [allowlist]
 paths = ['''.terraform.lock.hcl''', '''poetry.lock''', '''yarn.lock''']
+stopwords = ['''dummy_key''', '''dummy_secret''', '''192.0.0.1''']
