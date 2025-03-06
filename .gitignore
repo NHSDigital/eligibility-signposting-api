@@ -38,3 +38,4 @@ test-report.xml
 .coverage
 
 localstack_data/
+/volume/*

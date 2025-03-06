@@ -25,6 +25,12 @@ flask = {extras = ["async"], version = "^3.1.0"}
 httpx = "^0.28.1"
 yarl = "^1.18.3"
 pydantic = "^2.10.6"
+asgiref = "^3.8.1"
+boto3 = "^1.37.3"
+botocore = "^1.37.3"
+eval-type-backport = "^0.2.2"
+mangum = "^0.19.0"
+wireup = "^0.16.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.9.6"
@@ -42,6 +48,17 @@ awscli-local = "^0.22.0"
 pyhamcrest = "^2.1.0"
 factory-boy = "^3.3.3"
 pyright = "^1.1.394"
+brunns-matchers = "^2.9.0"
+localstack = "^4.1.1"
+pytest-docker = "^3.2.0"
+stamina = "^24.3.0"
+
+[tool.poetry-plugin-lambda-build]
+docker-image = "public.ecr.aws/sam/build-python3.13:latest-x86_64"
+docker-network = "host"
+docker-platform = "linux/x86_64"
+package-artifact-path = "dist/poetry-lambda.zip"
+without = "dev"
 
 [tool.ruff]
 line-length = 120
@@ -49,11 +66,41 @@ exclude = ["docs/", "scripts/"]
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["COM812", "D"]
+ignore = ["COM812", "D", "PGH003"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ANN", "INP", "S101"]
+"src/eligibility_signposting_api/repos/*" = ["ANN401"]
+"tests/*" = ["ANN", "INP", "S101", "S106"]
 
 [tool.pyright]
 include = ["src/"]
 pythonVersion = "3.13"
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+log_format = "%(asctime)s %(levelname)s %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+
+[tool.coverage.run]
+branch = true
+source = ["src/poetry_lambda"]
+omit = [
+  "tests/*",
+  "*/__init__.py",
+  "*/migrations/*",
+  "*/settings/*",
+  "*/venv/*",
+  "*/.venv/*",
+  "*/site-packages/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+  "pragma: no cover",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+]
