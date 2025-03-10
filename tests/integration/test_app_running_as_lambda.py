@@ -76,7 +76,7 @@ def test_install_and_call_flask_lambda_with_nickname_over_http(flask_function_ur
     # Given
 
     # When
-    response = httpx.get(str(flask_function_url / "ayesh"))
+    response = httpx.get(str(flask_function_url / "ayesh"), timeout=30)
 
     # Then
     assert_that(
