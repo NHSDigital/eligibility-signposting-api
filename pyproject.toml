@@ -57,7 +57,7 @@ stamina = "^24.3.0"
 docker-image = "public.ecr.aws/sam/build-python3.13:latest-x86_64"
 docker-network = "host"
 docker-platform = "linux/x86_64"
-package-artifact-path = "dist/poetry-lambda.zip"
+package-artifact-path = "dist/lambda.zip"
 without = "dev"
 
 [tool.ruff]

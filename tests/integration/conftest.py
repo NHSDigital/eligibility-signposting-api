@@ -73,7 +73,7 @@ def dynamodb_resource(localstack: URL) -> ServiceResource:
 @pytest.fixture(scope="session")
 def flask_function(lambda_client: BaseClient) -> str:
     function_name = "flask_function"
-    with Path("dist/poetry-lambda.zip").open("rb") as zipfile:
+    with Path("dist/lambda.zip").open("rb") as zipfile:
         lambda_client.create_function(
             FunctionName=function_name,
             Runtime="python3.13",

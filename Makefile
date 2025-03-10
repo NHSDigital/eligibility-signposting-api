@@ -45,11 +45,8 @@ _dist_include="pytest.ini poetry.lock poetry.toml pyproject.toml Makefile build/
 dependencies: # Install dependencies needed to build and test the project @Pipeline
 	scripts/dependencies.sh
 
-build-lambda: # Build lambda in dist
+build: # Build lambda in dist
 	poetry build-lambda -vv
-
-build: # Build the project artefact @Pipeline
-	# TODO: Implement the artefact build step
 
 publish: # Publish the project artefact @Pipeline
 	# TODO: Implement the artefact publishing step

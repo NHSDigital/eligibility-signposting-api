@@ -17,5 +17,5 @@ cd "$(git rev-parse --show-toplevel)"
 # tests from here. If you want to run other test suites, see the predefined
 # tasks in scripts/test.mk.
 
-make dependencies install-python build-lambda
-poetry run pytest tests/integration/ --durations=10 --cov-report term-missing --cov src
+make dependencies install-python
+poetry run pytest tests/integration/ --durations=10 --cov-report= --cov src/
