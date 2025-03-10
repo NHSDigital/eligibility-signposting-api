@@ -117,6 +117,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: "Get lambda artefact"
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda
+          path: dist/
       - name: "Run integration test"
         run: |
           make test-integration
