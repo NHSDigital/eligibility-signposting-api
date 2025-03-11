@@ -22,7 +22,7 @@ def boto3_session_factory(
     )
 
 
-@service
+@service(qualifier="dynamodb")
 def dynamodb_resource_factory(
     session: Session, dynamodb_endpoint: Annotated[URL, Inject(param="dynamodb_endpoint")]
 ) -> ServiceResource:
