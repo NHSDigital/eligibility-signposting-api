@@ -14,7 +14,7 @@ from tests.utils.builders import PersonFactory
 
 @pytest.fixture(autouse=True, scope="module")
 def persisted_person(people_table: Any) -> Generator[Person]:
-    person = PersonFactory()
+    person = PersonFactory(name="simon", nickname="Baldy")
     people_table.put_item(Item=person.model_dump())
     yield person
     people_table.delete_item(Key={"name": person.name})

@@ -7,5 +7,5 @@ class PersonFactory(factory.Factory):
     class Meta:
         model = Person
 
-    name = "simon"
-    nickname = "Baldy"
+    name = factory.Faker("first_name")
+    nickname = factory.Faker("first_name")
