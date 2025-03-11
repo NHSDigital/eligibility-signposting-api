@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated
 
-import boto3
+from boto3 import Session
 from boto3.resources.base import ServiceResource
 from wireup import Inject, service
 from yarl import URL
@@ -12,12 +12,18 @@ logger = logging.getLogger(__name__)
 
 
 @service
-def dynamodb_resource_factory(
-    dynamodb_endpoint: Annotated[URL, Inject(param="dynamodb_endpoint")],
+def boto3_session_factory(
     aws_region: Annotated[AwsRegion, Inject(param="aws_region")],
     aws_access_key_id: Annotated[AwsAccessKey, Inject(param="aws_access_key_id")],
     aws_secret_access_key: Annotated[AwsSecretAccessKey, Inject(param="aws_secret_access_key")],
-) -> ServiceResource:
-    return boto3.Session(
+) -> Session:
+    return Session(
         aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, region_name=aws_region
-    ).resource("dynamodb", endpoint_url=str(dynamodb_endpoint))
+    )
+
+
+@service
+def dynamodb_resource_factory(
+    session: Session, dynamodb_endpoint: Annotated[URL, Inject(param="dynamodb_endpoint")]
+) -> ServiceResource:
+    return session.resource("dynamodb", endpoint_url=str(dynamodb_endpoint))
