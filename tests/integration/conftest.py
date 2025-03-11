@@ -1,4 +1,5 @@
 import logging
+import os
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
@@ -84,7 +85,7 @@ def flask_function(lambda_client: BaseClient) -> str:
             Timeout=180,
             Environment={
                 "Variables": {
-                    "DYNAMODB_ENDPOINT": "http://host.docker.internal:4566",
+                    "DYNAMODB_ENDPOINT": os.getenv("TEST_DYNAMODB_ENDPOINT", "http://host.docker.internal:4566"),
                     "AWS_REGION": AWS_REGION,
                 }
             },
