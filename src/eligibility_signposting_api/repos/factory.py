@@ -18,13 +18,6 @@ def dynamodb_resource_factory(
     aws_access_key_id: Annotated[AwsAccessKey, Inject(param="aws_access_key_id")],
     aws_secret_access_key: Annotated[AwsSecretAccessKey, Inject(param="aws_secret_access_key")],
 ) -> ServiceResource:
-    logger.info("creating dynamodb_resource with endpoint %s, region %s", dynamodb_endpoint, aws_region)
-    resource = boto3.resource(
-        "dynamodb",
-        endpoint_url=str(dynamodb_endpoint),
-        region_name=aws_region,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-    )
-    logger.info("built dynamodb_resource %r", resource)
-    return resource
+    return boto3.Session(
+        aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, region_name=aws_region
+    ).resource("dynamodb", endpoint_url=str(dynamodb_endpoint))
