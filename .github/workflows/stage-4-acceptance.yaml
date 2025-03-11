@@ -111,7 +111,8 @@ jobs:
     needs: environment-set-up
     timeout-minutes: 10
     env:
-      LOCALSTACK_INTERNAL_DYNAMODB_ENDPOINT: http://localstack:4566/
+      LOCALSTACK_INTERNAL_DYNAMODB_ENDPOINT: http://localhost:4566/
+      RUNNING_LOCALSTACK_URL: http://localhost:4566/
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
@@ -124,6 +125,11 @@ jobs:
         with:
           name: lambda
           path: dist/
+      - name: Start LocalStack
+        uses: LocalStack/setup-localstack@v0.2.2
+        with:
+          image-tag: 'latest'
+          install-awslocal: 'true'
       - name: "Run integration test"
         run: |
           make test-integration
