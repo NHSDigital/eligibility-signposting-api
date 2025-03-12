@@ -10,6 +10,8 @@ services:
       - DEBUG=${LOCALSTACK_DEBUG:-0}
       - DEFAULT_REGION=${AWS_DEFAULT_REGION:-eu-west-1}
       - LAMBDA_EXECUTOR=local
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - "${LOCALSTACK_VOLUME_DIR:-../volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
