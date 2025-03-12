@@ -111,7 +111,7 @@ jobs:
     needs: environment-set-up
     timeout-minutes: 10
     env:
-      LOCALSTACK_INTERNAL_DYNAMODB_ENDPOINT: http://host.docker.internal:4566/
+      LOCALSTACK_INTERNAL_DYNAMODB_ENDPOINT: http://localstack:4566/
       RUNNING_LOCALSTACK_URL: http://localhost:4566/
     steps:
       - name: "Checkout code"
@@ -130,6 +130,10 @@ jobs:
         with:
           image-tag: 'latest'
           install-awslocal: 'true'
+      - name: Check Docker networks
+        run: docker network ls
+      - name: Inspect Lambda container
+        run: docker inspect $(docker ps -q --filter "ancestor=localstack/localstack") | grep NetworkMode
       - name: "Run integration test"
         run: |
           make test-integration
