@@ -33,7 +33,7 @@ mangum = "^0.19.0"
 wireup = "^0.16.0"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.9.6"
+ruff = "^0.11.0"
 docopt = "^0.6.2"
 jsonpath-rw = "^1.4.0"
 semver = "^3.0.4"
@@ -51,7 +51,7 @@ pyright = "^1.1.394"
 brunns-matchers = "^2.9.0"
 localstack = "^4.1.1"
 pytest-docker = "^3.2.0"
-stamina = "^24.3.0"
+stamina = "^25.1.0"
 
 [tool.poetry-plugin-lambda-build]
 docker-image = "public.ecr.aws/sam/build-python3.13:latest-x86_64"
@@ -84,7 +84,7 @@ log_date_format = "%Y-%m-%d %H:%M:%S"
 
 [tool.coverage.run]
 branch = true
-source = ["src/poetry_lambda"]
+source = ["src/eligibility_signposting_api"]
 omit = [
   "tests/*",
   "*/__init__.py",
