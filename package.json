@@ -11,7 +11,7 @@
   "license": "MIT",
   "homepage": "https://github.com/NHSDigital/eligibility-signposting-api",
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^2.18.1",
+    "@openapitools/openapi-generator-cli": "^2.18.4",
     "apigeetool": "^0.16.5",
     "license-checker": "^25.0.1",
     "minimist": "^1.2.2"
