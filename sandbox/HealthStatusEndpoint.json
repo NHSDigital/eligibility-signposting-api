@@ -1,0 +1,21 @@
+{
+    "/_status": {
+      "get": {
+        "operationId": "healthcheck",
+        "summary": "healthcheck endpoint",
+        "responses": {
+          "200": {
+            "description": "Successful Operation",
+            "content": {
+              "application/text": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "OK"
+              }
+            }
+          }
+        }
+      }
+  }
+  }

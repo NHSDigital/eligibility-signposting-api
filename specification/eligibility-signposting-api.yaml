@@ -1,46 +1,220 @@
-# This is an OpenAPI Specification (https://swagger.io/specification/)
-# for eligibility-signposting-api owned by NHS Digital (https://digital.nhs.uk/)
-openapi: '3.0.0'
+openapi: 3.0.1
 info:
-  title: 'eligibility-signposting-api'
-  version: 'Computed and injected at build time by `scripts/set_version.py`'
-  description: |
-    ## Overview
-    Add a fully fledged description here with markdown syntax.
-    For help completing the content of your API spec, see [our guidance](https://nhsd-confluence.digital.nhs.uk/display/APM/Documenting+your+API).
-    You should also base your content on our exemplar API - [PDS FHIR](https://digital.nhs.uk/developer/api-catalogue/personal-demographics-service-fhir).
-    ## Who can use this API
-    To be completed.
-    ## Related APIs
-    To be completed.
-    ## API status and roadmap
-    To be completed.
-    ## Service level
-    To be completed.
-    ## Technology
-    To be completed.
-    ## Network access
-    To be completed.
-    ## Security and authorisation
-    To be completed.
-    ## Errors
-    To be completed.
-    ### Open source
-    To be completed.
-    ## Environments and testing
-    To be completed.
-    ## Onboarding
-    To be completed.
-
+  title: Eligibility Signposting API
+  version: 1.0.0-alpha
+  description: API to assess eligibility based on category, condition and NHS number.
   contact:
-    name: 'eligibility-signposting-api API Support'
-    url: 'https://digital.nhs.uk/developer/help-and-support'
-    email: api.management@nhs.net
+    url: https://developer.nhs.uk/apis/eligibility-signposting-api
+  termsOfService: https://developer.nhs.uk/apis/eligibility-signposting-api
+tags:
+  - name: Eligibility
+  - name: Signposting
+  - name: NextActions
 servers:
-  - url: 'https://sandbox.api.service.nhs.uk/eligibility-signposting-api'
-    description: Sandbox environment.
-  - url: 'https://int.api.service.nhs.uk/eligibility-signposting-api'
-    description: Integration test environment.
-  - url: 'https://api.service.nhs.uk/eligibility-signposting-api'
-    description: Production environment.
-paths: {}
+  - url: https://sandbox.api.service.nhs.uk/eligibility-signposting
+    description: Sandbox Server
+  - url: https://int.api.service.nhs.uk/eligibility-signposting
+    description: Integration Server
+  - url: https://api.service.nhs.uk/eligibility-signposting
+    description: Production Server
+security:
+  - OAuth_Token: []
+paths:
+  /eligibility:
+    get:
+      summary: Check Eligibility
+      description: >-
+        Determines which suggestions a person is eligible for and which they are
+        not, including reasons and next steps.
+      operationId: checkEligibility
+      parameters:
+        - name: patient
+          in: query
+          required: true
+          schema:
+            type: string
+            example: '9876543210'
+          description: The NHS number of the person.
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+            example: VACCINATIONS
+            default: ALL
+          description: >-
+            The category for which the caller is checking eligibility
+            suggestions. If not provided, eligibility for all supported
+            categories will be checked.
+        - name: conditions
+          in: query
+          required: false
+          schema:
+            type: string
+            example: FLU,RSV
+            default: ALL
+          description: >-
+            The diseases or conditions for which the caller is checking
+            eligibility suggestions in a comma separated list. If not provided, eligibility for all
+            supported diseases will be checked.
+      responses:
+        '200':
+          description: Eligibility response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseId:
+                    type: guid
+                    description: GUID assigned when the decisioning evaluation is carried out.  This will be useful if you ever need to request support for a particular request.  This will not change if you receive a cached response.
+                    example: 1a233ba5-e1eb-4080-a086-2962f6fc3473
+                  processedDateTime:
+                    type: string
+                    description: Timestamp of when the decisioning evaluation is carried out.  This will not change if you receive a cached response.
+                    example: '2025-02-12T16:11:22Z'
+                  processedSuggestions:
+                    type: array
+                    description: List of suggestions the person is eligible for.
+                    items:
+                      type: object
+                      properties:
+                        condition:
+                          type: string
+                          example: FLU
+                        status:
+                          type: string
+                          example: Bookable
+                        reasons:
+                          type: array
+                          description: Reasons that the status returned was returned.
+                          items:
+                            type: object
+                            properties:
+                              reasonCode:
+                                type: string
+                              reasonText:
+                                type: string
+                          example:
+                            - reasonCode: 'flu_coded_eligibility'
+                              reasonText: Our records indicate that you might be at a higher risk of illness if you were to catch Flu.
+                            - reasonCode: 'flu_65+_autumnwinter2023'
+                              reasonText: Our records indicate you are over 65
+                        nextSteps:
+                          type: array
+                          description: List of next steps for the person.
+                          items:
+                            type: object
+                            properties:
+                              actionType:
+                                type: string
+                                description: >-
+                                  The type of step (e.g., information, link,
+                                  button).
+                              actionCode:
+                                type: string
+                                description: Code representing the action to be taken
+                              description:
+                                type: string
+                                description: A brief description of the step.
+                              markdownText:
+                                type: string
+                                description: Additional information in markdown format.
+                              htmlText:
+                                type: string
+                                description: Additional information in HTML format.
+                              actionDate:
+                                type: string
+                                description: Optional date by which this action should be undertaken
+                            example:
+                              - actionType: "Link"
+                                actionCode: "BOOK"
+                                description: "Book an appointment here"
+                                markdownText: >-
+                                  [Click here](https://www.nhs.uk/nhs-services/pharmacies/book-flu-vaccination/) to book your
+                                  appointment.
+                                actionDate: "2025-03-31"
+                              - actionType: "INFO"
+                                actionCode: "NHS"
+                                description: "Visit the NHS website for more details."
+                                markdownText: "[Click here](https://www.nhs.uk/vaccinations/flu-vaccine/) to get more information"
+                                htmlText: "<a href='https://www.nhs.uk/vaccinations/flu-vaccine/'>Click here</a> to get more information."
+              examples:
+                example1:
+                  summary: Example 1
+                  value:
+                    responseId: 1a233ba5-e1eb-4080-a086-2962f6fc3473
+                    processedDateTime: '2025-02-12T16:11:22Z'
+                    processedSuggestions:
+                      - condition: FLU
+                        status: Bookable
+                        reasons:
+                          - reasonCode: 'flu_coded_eligibility'
+                            reasonText: Our records indicate that you might be at a higher risk of illness if you were to catch Flu.
+                          - reasonCode: 'flu_65+_autumnwinter2023'
+                            reasonText: Our records indicate you are over 65
+                        nextSteps:
+                          - actionType: "Link"
+                            actionCode: "BOOK"
+                            description: "Book an appointment here"
+                            markdownText: >-
+                              [Click here](https://www.nhs.uk/nhs-services/pharmacies/book-flu-vaccination/) to book your
+                              appointment.
+                            actionDate: "2025-03-31"
+                          - actionType: "INFO"
+                            actionCode: "NHS"
+                            description: "Visit the NHS website for more details."
+                            markdownText: "[Click here](https://www.nhs.uk/vaccinations/flu-vaccine/) to get more information"
+                            htmlText: "<a href='https://www.nhs.uk/vaccinations/flu-vaccine/'>Click here</a> to get more information."
+                example2:
+                  summary: Example 2
+                  value:
+                    responseId: 2b344cb6-f2fc-5091-b197-4073f7fd4584
+                    processedDateTime: '2025-03-15T10:22:33Z'
+                    processedSuggestions:
+                      - condition: RSV
+                        status: Not Bookable
+                        reasons:
+                          - reasonCode: 'rsv_coded_eligibility'
+                            reasonText: Our records indicate that you might be at a higher risk of illness if you were to catch RSV.
+                          - reasonCode: 'rsv_65+_autumnwinter2023'
+                            reasonText: Our records indicate you are over 65
+                        nextSteps:
+                          - actionType: "Link"
+                            actionCode: "INFO"
+                            description: "Visit the NHS website for more details."
+                            markdownText: "[Click here](https://www.nhs.uk/vaccinations/rsv-vaccine/) to get more information"
+                            htmlText: "<a href='https://www.nhs.uk/vaccinations/rsv-vaccine/'>Click here</a> to get more information."
+        '400':
+          description: Invalid input data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example:
+                      - The values submitted in your request were not valid.
+                      - The condition list was badly formatted or contained unrecognised conditions.
+                      - The category contained an unrecognised value.
+        '404':
+          description: Person not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: >-
+                      The given NHS number was not found in our datasets.  This
+                      could be because the number is incorrect or some other
+                      reason we cannot process that number.
+        '500':
+          description: Internal server error.
+components:
+  securitySchemes:
+    OAuth_Token:
+      type: http
+      scheme: bearer

@@ -1,11 +1,18 @@
 SHELL := /bin/bash
 dirname := $(notdir $(patsubst %/,%,$(CURDIR)))
+project_name = eligibility-signposting-api
 
 list:
 	@grep '^[^#[:space:]].*:' Makefile
 
 build:
-	docker build .
+	docker-compose -f docker-compose.yaml build
+
+up: build
+	docker-compose -f docker-compose.yaml up -d
+
+down:
+	docker-compose -f docker-compose.yaml down
 
 clean:
 	rm -rf ./node_modules
@@ -16,8 +23,10 @@ install:
 update:
 	npm update
 
-test:
-	NODE_ENV=test npx mocha --reporter spec
+spec:
+	make -C .. publish
 
-test-report:
-	NODE_ENV=test npx mocha --reporter mocha-junit-reporter --reporter-options mochaFile=../../reports/tests/$(dirname).xml || true
+test:
+	UPSTREAM_HOST=test poetry run pytest
+
+.PHONY: build run spec test

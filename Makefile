@@ -35,7 +35,7 @@ format: ## Format and fix code
 publish: clean
 	mkdir -p build
 	npm run publish 2> /dev/null
-
+	cp build/eligibility-signposting-api.json sandbox/specification/eligibility-signposting-api.json
 #Files to loop over in release
 _dist_include="pytest.ini poetry.lock poetry.toml pyproject.toml Makefile build/. tests"
 
@@ -47,9 +47,6 @@ dependencies: # Install dependencies needed to build and test the project @Pipel
 
 build: # Build lambda in dist
 	poetry build-lambda -vv
-
-publish: # Publish the project artefact @Pipeline
-	# TODO: Implement the artefact publishing step
 
 deploy: # Deploy the project artefact to the target environment @Pipeline
 	# TODO: Implement the artefact deployment step
