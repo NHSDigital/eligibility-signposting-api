@@ -111,7 +111,7 @@ jobs:
     needs: environment-set-up
     timeout-minutes: 10
     env:
-      LOCALSTACK_INTERNAL_DYNAMODB_ENDPOINT: http://localstack:4566/
+      LOCALSTACK_INTERNAL_ENDPOINT: http://localstack:4566/
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4

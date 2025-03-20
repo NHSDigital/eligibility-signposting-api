@@ -92,9 +92,7 @@ def flask_function(lambda_client: BaseClient) -> str:
             Timeout=180,
             Environment={
                 "Variables": {
-                    "DYNAMODB_ENDPOINT": os.getenv(
-                        "LOCALSTACK_INTERNAL_DYNAMODB_ENDPOINT", "http://host.docker.internal:4566"
-                    ),
+                    "DYNAMODB_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "AWS_REGION": AWS_REGION,
                 }
             },
