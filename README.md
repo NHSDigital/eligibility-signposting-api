@@ -82,12 +82,11 @@ There are `make` tasks for you to configure to run your tests.  Run `make test` 
 
 ## Conflict with yanai
 
-If you have previously built yanai, which is the platform we use to supply data to this project, that uses an old version of localstack that does not support our Python version. We have pinned the correct version here and yanai have their version pinned as well so it should work fine, but sometimes issues can arise - if so then removing the docker image can solve that, before then rebuilding.
+If you have previously built [yanai](https://nhsd-confluence.digital.nhs.uk/pages/viewpage.action?pageId=48826732), which is the platform we use to supply data to this project, that uses an old version of localstack that does not support our Python version. We have pinned the correct version here and yanai have their version pinned as well so it should work fine, but sometimes issues can arise - if so then removing the docker image can solve that, before then rebuilding.
 
 ```shell
  docker rmi localstack/localstack
 ```
-Link here to get started with yanai https://nhsd-confluence.digital.nhs.uk/pages/viewpage.action?pageId=48826732
 
 ## Design
 
