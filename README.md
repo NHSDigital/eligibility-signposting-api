@@ -80,6 +80,14 @@ make precommit
 
 There are `make` tasks for you to configure to run your tests.  Run `make test` to see how they work.  You should be able to use the same entry points for local development as in your CI pipeline.
 
+## Conflict with yanai
+
+If you have previously built [yanai](https://nhsd-confluence.digital.nhs.uk/pages/viewpage.action?pageId=48826732), which is the platform we use to supply data to this project, that uses an old version of localstack that does not support our Python version. We have pinned the correct version here and yanai have their version pinned as well so it should work fine, but sometimes issues can arise - if so then removing the docker image can solve that, before then rebuilding.
+
+```shell
+ docker rmi localstack/localstack
+```
+
 ## Design
 
 We'll be separating our [presentation](https://martinfowler.com/eaaDev/SeparatedPresentation.html) layer (where API logic lives, in [`views/`](src/eligibility_signposting_api/views)), [business services](https://martinfowler.com/eaaCatalog/serviceLayer.html) layer (where business logic lives, in [`services/`](src/eligibility_signposting_api/services)) and [repository](https://martinfowler.com/eaaCatalog/repository.html) layer (where database logic lives, [`repos/`](src/eligibility_signposting_api/repos)). We will be using [wireup](https://pypi.org/project/wireup/) for [dependency injection](https://pinboard.in/u:brunns/t:dependency-injection), so services get their dependencies given to them ("injection"), and wireup takes care of that. (We'll usually use the [`@service` annotation](https://maldoinc.github.io/wireup/latest/services/), but [factory functions](https://maldoinc.github.io/wireup/latest/factory_functions/) will be used where necessary, typically for creating resources from 3rd party libraries.)  We'll be using [Pydantic](https://pypi.org/project/pydantic/) for both response models and database models.
