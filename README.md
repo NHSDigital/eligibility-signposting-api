@@ -82,7 +82,7 @@ There are `make` tasks for you to configure to run your tests.  Run `make test` 
 
 ## Conflict with YANAI
 
-If you have previously built yanai, that uses an old version of localstack that does not support our python version. We have pinned the correct version here and yanai have their version pinned as well so it should work fine, but sometimes issues can arise - if so then removing the docker image can solve that, before then rebuilding.
+If you have previously built yanai, that uses an old version of localstack that does not support our Python version. We have pinned the correct version here and yanai have their version pinned as well so it should work fine, but sometimes issues can arise - if so then removing the docker image can solve that, before then rebuilding.
 
 ```shell
  docker rmi localstack/localstack
