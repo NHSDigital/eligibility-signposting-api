@@ -21,3 +21,4 @@ pyenv
 colima
 wireup
 Pydantic
+yanai
