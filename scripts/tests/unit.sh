@@ -18,5 +18,4 @@ cd "$(git rev-parse --show-toplevel)"
 # tasks in scripts/test.mk.
 
 make dependencies install-python
-poetry run pytest tests/unit/ --durations=10 --cov-report= --cov src/
-poetry run python -m coverage xml
+poetry run pytest tests/unit/ --durations=10 --cov-report=xml --cov=src/

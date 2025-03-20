@@ -83,17 +83,9 @@ log_format = "%(asctime)s %(levelname)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
 
 [tool.coverage.run]
+relative_files = true
 branch = true
-source = ["src/eligibility_signposting_api"]
-omit = [
-  "tests/*",
-  "*/__init__.py",
-  "*/migrations/*",
-  "*/settings/*",
-  "*/venv/*",
-  "*/.venv/*",
-  "*/site-packages/*",
-]
+source = ["src"]
 
 [tool.coverage.report]
 show_missing = true
