@@ -2,6 +2,7 @@ import logging
 import os
 from typing import Any, NewType
 
+from pythonjsonlogger.json import JsonFormatter
 from yarl import URL
 
 LOG_LEVEL = logging.getLevelNamesMapping().get(os.getenv("LOG_LEVEL", ""), logging.WARNING)
@@ -22,4 +23,7 @@ def config() -> dict[str, Any]:
 
 def init_logging() -> None:
     log_format = "%(asctime)s %(levelname)-8s %(name)s %(module)s.py:%(funcName)s():%(lineno)d %(message)s"
-    logging.basicConfig(level=LOG_LEVEL, format=log_format, handlers=[logging.StreamHandler()])
+    formatter = JsonFormatter(log_format)
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    logging.basicConfig(level=LOG_LEVEL, format=log_format, handlers=[handler])
