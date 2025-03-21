@@ -4,7 +4,7 @@ from typing import Any, NewType
 
 from yarl import URL
 
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL =  logging.getLevelNamesMapping().get(os.getenv("LOG_LEVEL", None), logging.WARNING)
 
 AwsRegion = NewType("AwsRegion", str)
 AwsAccessKey = NewType("AwsAccessKey", str)
@@ -20,11 +20,10 @@ def config() -> dict[str, Any]:
     }
 
 
-def setup_logging():
+def init_logging() -> None:
     log_format = "%(asctime)s %(levelname)-8s %(name)s %(module)s.py:%(funcName)s():%(lineno)d %(message)s"
-    # Define the root logger configuration
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=LOG_LEVEL,
         format=log_format,
         handlers=[
             logging.StreamHandler()

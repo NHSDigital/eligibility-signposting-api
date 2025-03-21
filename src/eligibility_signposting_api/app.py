@@ -8,12 +8,12 @@ from mangum import Mangum
 from mangum.types import LambdaContext, LambdaEvent
 
 from eligibility_signposting_api import repos, services
-from eligibility_signposting_api.config import LOG_LEVEL, config, setup_logging
+from eligibility_signposting_api.config import LOG_LEVEL, config, init_logging
 from eligibility_signposting_api.error_handler import handle_exception
 from eligibility_signposting_api.views.eligibility import eligibility
 from eligibility_signposting_api.views.hello import hello
 
-setup_logging()
+init_logging()
 logger = logging.getLogger(__name__)
 
 def main() -> None:  # pragma: no cover
