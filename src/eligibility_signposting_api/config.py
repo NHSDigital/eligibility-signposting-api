@@ -1,6 +1,5 @@
 import logging
 import os
-from logging.config import dictConfig
 from typing import Any, NewType
 
 from yarl import URL
@@ -21,23 +20,13 @@ def config() -> dict[str, Any]:
     }
 
 
-def init_logging() -> None:
-    level = logging.getLevelName(LOG_LEVEL)
+def setup_logging():
     log_format = "%(asctime)s %(levelname)-8s %(name)s %(module)s.py:%(funcName)s():%(lineno)d %(message)s"
-    dictConfig(
-        {
-            "version": 1,
-            "formatters": {
-                "default": {
-                    "format": log_format,
-                }
-            },
-            "handlers": {
-                "wsgi": {"class": "logging.StreamHandler", "stream": "ext://sys.stdout", "formatter": "default"}
-            },
-            "root": {"level": level, "handlers": ["wsgi"]},
-            "loggers": {
-                "eligibility_signposting_api.app": {"level": level, "handlers": ["wsgi"], "propagate": False},
-            },
-        }
+    # Define the root logger configuration
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format=log_format,
+        handlers=[
+            logging.StreamHandler()
+        ]
     )

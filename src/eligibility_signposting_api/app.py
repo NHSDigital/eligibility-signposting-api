@@ -8,11 +8,13 @@ from mangum import Mangum
 from mangum.types import LambdaContext, LambdaEvent
 
 from eligibility_signposting_api import repos, services
-from eligibility_signposting_api.config import LOG_LEVEL, config, init_logging
+from eligibility_signposting_api.config import LOG_LEVEL, config, setup_logging
 from eligibility_signposting_api.error_handler import handle_exception
 from eligibility_signposting_api.views.eligibility import eligibility
 from eligibility_signposting_api.views.hello import hello
 
+setup_logging()
+logger = logging.getLogger(__name__)
 
 def main() -> None:  # pragma: no cover
     """Run the Flask app as a local process."""
@@ -27,10 +29,9 @@ def lambda_handler(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]
 
 
 def create_app() -> Flask:
-    init_logging()
 
     app = Flask(__name__)
-    app.logger.info("app created")
+    logger.info("app created")
 
     # Register views & error handler
     app.register_blueprint(eligibility, url_prefix="/eligibility")
@@ -41,7 +42,7 @@ def create_app() -> Flask:
     container = wireup.create_container(service_modules=[services, repos], parameters=config())
     wireup.integration.flask.setup(container, app, import_flask_config=True)
 
-    app.logger.info("app ready")
+    logger.info("app ready")
     return app
 
 
