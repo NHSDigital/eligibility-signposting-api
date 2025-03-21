@@ -48,9 +48,6 @@ dependencies: # Install dependencies needed to build and test the project @Pipel
 build: # Build lambda in dist
 	poetry build-lambda -vv
 
-publish: # Publish the project artefact @Pipeline
-	# TODO: Implement the artefact publishing step
-
 deploy: # Deploy the project artefact to the target environment @Pipeline
 	# TODO: Implement the artefact deployment step
 
@@ -61,6 +58,13 @@ config:: # Configure development environment (main) @Configuration
 precommit: test-unit build test-integration lint ## Pre-commit tasks
 	python -m this
 
+SPEC_DIR := $(CURDIR)/specification
+POSTMAN_DIR := $(SPEC_DIR)/postman
+
+convert-postman:
+	docker build -t portman-converter -f $(POSTMAN_DIR)/Dockerfile $(SPEC_DIR)
+	docker run --rm -v $(SPEC_DIR):/app portman-converter \
+		portman -l /app/eligibility-signposting-api.yaml -o /app/postman/collection.json
 # ==============================================================================
 
 ${VERBOSE}.SILENT: \
