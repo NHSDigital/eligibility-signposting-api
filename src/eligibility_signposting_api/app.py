@@ -16,6 +16,7 @@ from eligibility_signposting_api.views.hello import hello
 init_logging()
 logger = logging.getLogger(__name__)
 
+
 def main() -> None:  # pragma: no cover
     """Run the Flask app as a local process."""
     app = create_app()
@@ -29,7 +30,6 @@ def lambda_handler(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]
 
 
 def create_app() -> Flask:
-
     app = Flask(__name__)
     logger.info("app created")
 
