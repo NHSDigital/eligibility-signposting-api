@@ -116,7 +116,7 @@ class FunctionNotActiveError(Exception):
 
 
 def wait_for_function_active(function_name, lambda_client):
-    for attempt in stamina.retry_context(on=FunctionNotActiveError):
+    for attempt in stamina.retry_context(on=FunctionNotActiveError, attempts=20, timeout=120):
         with attempt:
             logger.info("waiting")
             response = lambda_client.get_function(FunctionName=function_name)
