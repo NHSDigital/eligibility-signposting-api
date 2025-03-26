@@ -26,9 +26,9 @@ provider "aws" {
 }
 
 module "s3" {
-  source          = "../../modules/s3"
-  environment     = "local"
-  bucket_name     = "truststore"
+  source            = "../../modules/s3"
+  environment       = "local"
+  bucket_name       = "truststore"
   enable_versioning = false
 }
 
@@ -40,21 +40,21 @@ module "dynamodb" {
 }
 
 module "iam" {
-  source      = "../../modules/iam"
-  environment = "local"
+  source       = "../../modules/iam"
+  environment  = "local"
   dynamodb_arn = module.dynamodb.table_arn
 }
 
 module "lambda" {
-  source          = "../../modules/lambda"
-  role_arn        = module.iam.lambda_role_arn
-  environment     = "local"
-  function_name   = "processor"
-  handler         = "index.handler"
-  runtime         = "python3.9"
-  source_file     = "${abspath(path.root)}/../../../dist/lambda.zip"
-  s3_bucket_arn   = module.s3.bucket_arn
-  dynamodb_arn    = module.dynamodb.table_arn
+  source        = "../../modules/lambda"
+  role_arn      = module.iam.lambda_role_arn
+  environment   = "local"
+  function_name = "processor"
+  handler       = "index.handler"
+  runtime       = "python3.9"
+  source_file   = "${abspath(path.root)}/../../../dist/lambda.zip"
+  s3_bucket_arn = module.s3.bucket_arn
+  dynamodb_arn  = module.dynamodb.table_arn
 }
 
 resource "null_resource" "lambda_zip_check" {

@@ -4,7 +4,7 @@
 # Custom implementation - implementation of a make target should not exceed 5 lines of effective code.
 # In most cases there should be no need to modify the existing make targets.
 
-TF_ENV ?= dev
+TF_ENV ?= local
 STACK ?= ${stack}
 TERRAFORM_STACK ?= $(or ${STACK}, infrastructure/environments/${TF_ENV})
 dir ?= ${TERRAFORM_STACK}
