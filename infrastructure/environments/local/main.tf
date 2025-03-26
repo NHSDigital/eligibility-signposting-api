@@ -51,7 +51,7 @@ module "lambda" {
   environment   = "local"
   function_name = "processor"
   handler       = "index.handler"
-  runtime       = "python3.9"
+  runtime       = "python3.13"
   source_file   = "${abspath(path.root)}/../../../dist/lambda.zip"
   s3_bucket_arn = module.s3.bucket_arn
   dynamodb_arn  = module.dynamodb.table_arn
