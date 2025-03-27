@@ -19,3 +19,9 @@ The initial Terraform:
 1. Creates a dynamoDB table with your choice of name.
 2. Creates an s3 bucket with your choice of name.
 3. Deploys the lambda zip that we build in `/dist/lambda.zip`.
+4. The lambda should be able to read from DynamoDB and write to s3.
+5. You can invoke the lambda locally and get the output with:
+
+```bash
+aws --endpoint-url=http://localhost:4566 --region eu-west-1 lambda invoke --function-name eligibility_signposting_api-local --payload '{"version":"2.0","routeKey":"GET /","rawPath":"/","rawQueryString":"","headers":{"accept":"application/json","content-type":"application/json"},"requestContext":{"http":{"sourceIp":"192.0.0.1","method":"GET","path":"/hello/","protocol":"HTTP/1.1"}},"body":null,"isBase64Encoded":false}' output.txt
+```
