@@ -58,6 +58,16 @@ config:: # Configure development environment (main) @Configuration
 precommit: test-unit build test-integration lint ## Pre-commit tasks
 	python -m this
 
+SPEC_DIR := $(CURDIR)/specification
+POSTMAN_DIR := $(SPEC_DIR)/postman
+
+convert-postman: # Create Postman collection from OAS spec
+	mkdir -p $(POSTMAN_DIR)
+	cp $(SPEC_DIR)/eligibility-signposting-api.yaml $(POSTMAN_DIR)/
+	docker build -t portman-converter -f $(POSTMAN_DIR)/Dockerfile $(SPEC_DIR)
+	docker run --rm -v $(SPEC_DIR):/app portman-converter \
+		portman -l /app/eligibility-signposting-api.yaml -o /app/postman/collection.json
+	rm $(POSTMAN_DIR)/eligibility-signposting-api.yaml
 # ==============================================================================
 
 ${VERBOSE}.SILENT: \

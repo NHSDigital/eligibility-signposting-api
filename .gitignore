@@ -41,4 +41,7 @@ localstack_data/
 sandbox/specification/*
 /volume/*
 /coverage.xml
+/lines-of-code-report*
+/specification/postman
+/sandbox/specification/*
 /specification/tmp/*

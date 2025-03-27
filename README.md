@@ -21,6 +21,7 @@ The software will only be used for signposting an individual to an appropriate s
     - [Testing](#testing)
   - [Sandbox](#sandbox)
   - [Conflict with yanai](#conflict-with-yanai)
+  - [Creating a Postman collection](#creating-a-postman-collection)
   - [Design](#design)
     - [Diagrams](#diagrams)
     - [Modularity](#modularity)
@@ -102,6 +103,17 @@ If you have previously built [yanai](https://nhsd-confluence.digital.nhs.uk/page
 ```shell
  docker rmi localstack/localstack
 ```
+
+## Creating a Postman collection
+
+A Postman collection can be generated from the Open API specification in `specification/` by running the following make command:
+
+```shell
+make convert-postman
+```
+
+The conversion is done using the [Portman CLI](https://github.com/apideck-libraries/portman). The resulting Postman collection
+is saved to `specification/postman/`.
 
 ## Design
 
