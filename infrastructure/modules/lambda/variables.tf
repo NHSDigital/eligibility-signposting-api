@@ -33,14 +33,12 @@ variable "role_arn" {
   description = "Execution role ARN"
 }
 
-variable "s3_bucket_arn" {
-  type        = string
-  description = "S3 bucket ARN for Lambda access"
-  default     = "" # Make optional if not used in all environments
-}
-
 variable "dynamodb_arn" {
   type        = string
-  description = "ARN of DynamoDB table for Lambda permissions"
-  default     = "" # Optional if not used in all environments
+  description = "ARN of DynamoDB table for Lambda access"
+}
+
+variable "s3_bucket_arn" {
+  type        = string
+  description = "ARN of the S3 bucket for Lambda access"
 }

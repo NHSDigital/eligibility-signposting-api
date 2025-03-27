@@ -40,9 +40,10 @@ module "dynamodb" {
 }
 
 module "iam" {
-  source       = "../../modules/iam"
-  environment  = "local"
-  dynamodb_arn = module.dynamodb.table_arn
+  source        = "../../modules/iam"
+  environment   = "local"
+  dynamodb_arn  = module.dynamodb.table_arn
+  s3_bucket_arn = module.s3.bucket_arn
 }
 
 module "lambda" {

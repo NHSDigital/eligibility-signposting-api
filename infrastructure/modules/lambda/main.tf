@@ -10,11 +10,3 @@ resource "aws_lambda_function" "main" {
   publish = true
   timeout = 30
 }
-
-resource "aws_lambda_permission" "dynamodb_access" {
-  statement_id  = "AllowDynamoDBAccess"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.main.function_name
-  principal     = "dynamodb.amazonaws.com"
-  source_arn    = var.dynamodb_arn
-}
