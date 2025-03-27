@@ -10,6 +10,7 @@ services:
       - SERVICES=s3,dynamodb,lambda,apigateway,iam
       - DEBUG=1
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEFAULT_REGION=eu-west-1
     volumes:
       - "./localstack_data:/var/lib/localstack"  # Persist data in a local volume
       - ./dist:/tmp/dist

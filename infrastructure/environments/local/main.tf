@@ -49,8 +49,8 @@ module "lambda" {
   source        = "../../modules/lambda"
   role_arn      = module.iam.lambda_role_arn
   environment   = "local"
-  function_name = "processor"
-  handler       = "index.handler"
+  function_name = "eligibility_signposting_api"
+  handler       = "eligibility_signposting_api.app.lambda_handler"
   runtime       = "python3.13"
   source_file   = "${abspath(path.root)}/../../../dist/lambda.zip"
   s3_bucket_arn = module.s3.bucket_arn
