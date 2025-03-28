@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import subprocess
 from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -131,9 +132,16 @@ def iam_role(iam_client: BaseClient) -> Generator[str]:
 
 
 @pytest.fixture(scope="session")
-def flask_function(lambda_client: BaseClient, iam_role: str) -> Generator[str]:
+def lambda_zip() -> Path:
+    build_result = subprocess.run(["make", "build"], capture_output=True, text=True, check=False)  # Noqa: S603, S607
+    assert build_result.returncode == 0, f"'make build' failed: {build_result.stderr}"
+    return Path("dist/lambda.zip")
+
+
+@pytest.fixture(scope="session")
+def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -> Generator[str]:
     function_name = "eligibility_signposting_api"
-    with Path("dist/lambda.zip").open("rb") as zipfile:
+    with lambda_zip.open("rb") as zipfile:
         lambda_client.create_function(
             FunctionName=function_name,
             Runtime="python3.13",

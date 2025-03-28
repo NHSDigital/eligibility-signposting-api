@@ -3,6 +3,8 @@
 # ==============================================================================
 include scripts/init.mk
 
+MAKE_DIR := $(abspath $(shell pwd))
+
 #Installs dependencies using poetry.
 install-python:
 	poetry install
@@ -39,13 +41,15 @@ publish: clean
 #Files to loop over in release
 _dist_include="pytest.ini poetry.lock poetry.toml pyproject.toml Makefile build/. tests"
 
-
 # Example CI/CD targets are: dependencies, build, publish, deploy, clean, etc.
 
 dependencies: # Install dependencies needed to build and test the project @Pipeline
 	scripts/dependencies.sh
 
-build: # Build lambda in dist
+.PHONY: build
+build: dist/lambda.zip # Build lambda.zip in dist/
+
+dist/lambda.zip: $(MAKE_DIR)/pyproject.toml $(MAKE_DIR)/poetry.lock $(shell find src -type f)
 	poetry build-lambda -vv
 
 deploy: # Deploy the project artefact to the target environment @Pipeline
