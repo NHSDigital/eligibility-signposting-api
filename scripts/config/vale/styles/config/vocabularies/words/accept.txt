@@ -16,6 +16,7 @@ Syft
 Terraform
 toolchain
 Trufflehog
+Uncomment
 Syncytial
 pyenv
 colima

@@ -1,0 +1,4 @@
+bucket         = "eligibility-signposting-api-dev-tfstate"
+key            = "terraform.tfstate"
+region         = "eu-west-2"
+encrypt        = true
