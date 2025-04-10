@@ -1,0 +1,3 @@
+api: eligibility-signposting-api
+endpoint_url: https://proxygen.prod.api.platform.nhs.uk
+spec_output_format: yaml

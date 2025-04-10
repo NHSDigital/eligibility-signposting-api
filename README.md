@@ -20,6 +20,7 @@ The software will only be used for signposting an individual to an appropriate s
   - [Usage](#usage)
     - [Testing](#testing)
   - [Sandbox](#sandbox)
+  - [Specification](#specification)
   - [Conflict with yanai](#conflict-with-yanai)
   - [Creating a Postman collection](#creating-a-postman-collection)
   - [Design](#design)
@@ -95,6 +96,11 @@ There are `make` tasks for you to configure to run your tests.  Run `make test` 
 ## Sandbox
 
 There is a minimalist sandbox environment in `/sandbox` with an accompanying README with instructions on how to run it locally.
+
+## Specification
+
+The OpenAPI specification is stored in `specification`. In that folder, there is an accompanying README with instructions on how to produce an environment-specification specification and publish
+it using Proxygen CLI.
 
 ## Conflict with yanai
 
