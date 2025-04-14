@@ -14,6 +14,8 @@ from eligibility_signposting_api.services import EligibilityService, UnknownPers
 from tests.utils.builders import CampaignConfigFactory, IterationFactory, IterationRuleFactory
 from tests.utils.matchers.eligibility import is_eligibility_status
 
+PASSED = True
+FAILED = False
 
 @pytest.fixture(scope="session")
 def faker() -> Faker:
@@ -160,18 +162,18 @@ def test_simple_rule_ineligible(faker: Faker):
 
 def test_equals_rule():
     rule = IterationRuleFactory.build(operator=RuleOperator.equals, comparator="42")
-    assert EligibilityService.evaluate_rule(rule, "42")
-    assert not EligibilityService.evaluate_rule(rule, "99")
-    assert not EligibilityService.evaluate_rule(rule, "")
-    assert not EligibilityService.evaluate_rule(rule, None)
+    assert EligibilityService.evaluate_rule(rule, "42") is PASSED
+    assert EligibilityService.evaluate_rule(rule, "") is FAILED
+    assert EligibilityService.evaluate_rule(rule, None) is FAILED
+    assert EligibilityService.evaluate_rule(rule, "99") is FAILED
 
 
 def test_not_equals_rule():
-    rule = IterationRuleFactory.build(operator=RuleOperator.ne, comparator="42")
-    assert EligibilityService.evaluate_rule(rule, "99")
-    assert not EligibilityService.evaluate_rule(rule, "42")
-    assert EligibilityService.evaluate_rule(rule, "")
-    assert EligibilityService.evaluate_rule(rule, None)
+    rule = IterationRuleFactory.build(operator=RuleOperator.ne, comparator="27")
+    assert EligibilityService.evaluate_rule(rule, "98") is PASSED
+    assert EligibilityService.evaluate_rule(rule, "") is PASSED
+    assert EligibilityService.evaluate_rule(rule, None) is PASSED
+    assert EligibilityService.evaluate_rule(rule, "27") is FAILED
 
 
 def test_less_than_rule():
@@ -232,8 +234,39 @@ def test_year_gt_rule_past_date():
     assert not EligibilityService.evaluate_rule(rule, "")
     assert not EligibilityService.evaluate_rule(rule, None)
 
+def test_in_rule():
+    rule = IterationRuleFactory.build(operator=RuleOperator.is_in, comparator="QH8,QJG")
+    assert EligibilityService.evaluate_rule(rule, "") is FAILED
+    assert EligibilityService.evaluate_rule(rule, None) is FAILED
+    assert EligibilityService.evaluate_rule(rule, "AZ1") is FAILED
+    assert EligibilityService.evaluate_rule(rule, "QH8") is PASSED
+
+def test_not_in_rule():
+    rule = IterationRuleFactory.build(operator=RuleOperator.not_in, comparator="QH8,QJG")
+    assert EligibilityService.evaluate_rule(rule, "") is PASSED
+    assert EligibilityService.evaluate_rule(rule, None) is PASSED
+    assert EligibilityService.evaluate_rule(rule, "AZ1") is PASSED
+    assert EligibilityService.evaluate_rule(rule, "QH8") is FAILED
+
+
+def test_member_of_rule():
+    rule = IterationRuleFactory.build(operator=RuleOperator.member_of, comparator="cohort1")
+    assert EligibilityService.evaluate_rule(rule, "cohort1,cohort2") is PASSED
+    assert EligibilityService.evaluate_rule(rule, None) is FAILED
+    assert EligibilityService.evaluate_rule(rule, "") is FAILED
+    assert EligibilityService.evaluate_rule(rule, "cohort3") is FAILED
+
+
+def test_not_member_of_rule():
+    rule = IterationRuleFactory.build(operator=RuleOperator.not_member_of, comparator="cohort1")
+    assert EligibilityService.evaluate_rule(rule, "cohort1,cohort2") is FAILED
+    assert EligibilityService.evaluate_rule(rule, None) is PASSED
+    assert EligibilityService.evaluate_rule(rule, "") is PASSED
+    assert EligibilityService.evaluate_rule(rule, "cohort3") is PASSED
+
 
 def test_unimplemented_operator():
     rule = IterationRuleFactory.build(operator=RuleOperator.member_of, comparator="something")
     with pytest.raises(NotImplementedError, match="not implemented"):
         EligibilityService.evaluate_rule(rule, "any_value")
+

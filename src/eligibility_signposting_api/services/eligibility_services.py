@@ -99,6 +99,20 @@ class EligibilityService:
                 today = datetime.today()  # noqa: DTZ002
                 cutoff = today + relativedelta(years=int(iteration_rule.comparator))
                 return (attribute_date > cutoff) if attribute_date else False
+            case RuleOperator.is_in:
+                comparators = str(iteration_rule.comparator).split(",")
+                return str(attribute_value) in comparators
+            case RuleOperator.not_in:
+                comparators = str(iteration_rule.comparator).split(",")
+                return str(attribute_value) not in comparators
+            case RuleOperator.date_gte:
+                return False
+            case RuleOperator.member_of:
+                attribute_values = str(attribute_value).split(",")
+                return iteration_rule.comparator in attribute_values
+            case RuleOperator.not_member_of:
+                attribute_values = str(attribute_value).split(",")
+                return iteration_rule.comparator not in attribute_values
             case _:
                 msg = f"{iteration_rule.operator} not implemented"
                 raise NotImplementedError(msg)

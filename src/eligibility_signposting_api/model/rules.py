@@ -41,9 +41,11 @@ class RuleOperator(str, Enum):
     gt = ">"
     gte = ">="
     year_gt = "Y>"
+    is_in = "in"
     not_in = "not_in"
     date_gte = "D>="
     member_of = "MemberOf"
+    not_member_of = "NotaMemberOf"
 
 
 class RuleAttributeLevel(str, Enum):
