@@ -94,25 +94,30 @@ class EligibilityService:
                 return int(attribute_value or 0) > int(iteration_rule.comparator)
             case RuleOperator.gte:
                 return int(attribute_value or 0) >= int(iteration_rule.comparator)
-            case RuleOperator.year_gt:
-                attribute_date = datetime.strptime(str(attribute_value), "%Y%m%d") if attribute_value else None  # noqa: DTZ007
-                today = datetime.today()  # noqa: DTZ002
-                cutoff = today + relativedelta(years=int(iteration_rule.comparator))
-                return (attribute_date > cutoff) if attribute_date else False
             case RuleOperator.is_in:
                 comparators = str(iteration_rule.comparator).split(",")
                 return str(attribute_value) in comparators
             case RuleOperator.not_in:
                 comparators = str(iteration_rule.comparator).split(",")
                 return str(attribute_value) not in comparators
-            case RuleOperator.date_gte:
-                return False
             case RuleOperator.member_of:
                 attribute_values = str(attribute_value).split(",")
                 return iteration_rule.comparator in attribute_values
             case RuleOperator.not_member_of:
                 attribute_values = str(attribute_value).split(",")
                 return iteration_rule.comparator not in attribute_values
+            case RuleOperator.year_gt:
+                attribute_date = datetime.strptime(str(attribute_value),
+                                                   "%Y%m%d") if attribute_value else None  # noqa: DTZ007
+                today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+                cutoff = today + relativedelta(years=int(iteration_rule.comparator))
+                return (attribute_date > cutoff) if attribute_date else False
+            case RuleOperator.date_gte:
+                attribute_date = datetime.strptime(str(attribute_value),
+                                                   '%Y%m%d') if attribute_value else None  # noqa: DTZ007
+                today_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+                cutoff = today_date + relativedelta(days=int(iteration_rule.comparator))
+                return (attribute_date >= cutoff) if attribute_date else False
             case _:
                 msg = f"{iteration_rule.operator} not implemented"
                 raise NotImplementedError(msg)
