@@ -191,6 +191,7 @@ def test_not_equals_rule():
     assert EligibilityService.evaluate_rule(rule, None)
     assert not EligibilityService.evaluate_rule(rule, "27")
 
+
 def test_greater_than_or_equal_rule():
     rule = IterationRuleFactory.build(operator=RuleOperator.gte, comparator="100")
     assert EligibilityService.evaluate_rule(rule, "100")
@@ -210,22 +211,44 @@ def test_less_than_or_equal_rule():
 
 
 def test_contains_rule():
-    pass
+    # Check if person's postcode is contained in A12 postcode
+    rule = IterationRuleFactory.build(operator=RuleOperator.contains, comparator="A12")
+    assert EligibilityService.evaluate_rule(rule, "A12 3DC")
+    assert EligibilityService.evaluate_rule(rule, "A12")
+    assert not EligibilityService.evaluate_rule(rule, None)
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, "A23")
+    assert not EligibilityService.evaluate_rule(rule, 23)
 
 
 def test_not_contains_rule():
-    pass
+    # Check if person's postcode is not contained in A12,B12 postcode
+    rule = IterationRuleFactory.build(operator=RuleOperator.not_contains, comparator="A12")
+    assert EligibilityService.evaluate_rule(rule, "A22")
+    assert EligibilityService.evaluate_rule(rule, None)
+    assert EligibilityService.evaluate_rule(rule, "")
+    assert EligibilityService.evaluate_rule(rule, 23)
+    assert not EligibilityService.evaluate_rule(rule, "A12")
 
 
 def test_starts_with_rule():
-    pass
+    rule = IterationRuleFactory.build(operator=RuleOperator.starts_with, comparator="YY66")
+    assert EligibilityService.evaluate_rule(rule, "YY66")
+    assert EligibilityService.evaluate_rule(rule, "YY66095")
+
+    assert not EligibilityService.evaluate_rule(rule, "BB11")
+    assert not EligibilityService.evaluate_rule(rule, "BYY66095")
+    assert not EligibilityService.evaluate_rule(rule, "  YY66")
+
+    assert not EligibilityService.evaluate_rule(rule, None)
+    assert not EligibilityService.evaluate_rule(rule, "")
 
 
 def test_ends_with_rule():
     pass
 
 
-def test_is_in_rule():
+def test_in_rule():
     rule = IterationRuleFactory.build(operator=RuleOperator.is_in, comparator="QH8,QJG")
     assert not EligibilityService.evaluate_rule(rule, "")
     assert not EligibilityService.evaluate_rule(rule, None)
