@@ -112,7 +112,7 @@ class EligibilityService:
                 today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
                 cutoff = today + relativedelta(years=int(iteration_rule.comparator))
                 return (attribute_date > cutoff) if attribute_date else False
-            case RuleOperator.date_gte:
+            case RuleOperator.day_gte:
                 attribute_date = datetime.strptime(str(attribute_value),
                                                    '%Y%m%d') if attribute_value else None  # noqa: DTZ007
                 today_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)

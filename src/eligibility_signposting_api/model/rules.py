@@ -35,15 +35,43 @@ class RuleType(str, Enum):
 
 class RuleOperator(str, Enum):
     equals = "="
-    ne = "!="
-    lt = "<"
-    lte = "<="
     gt = ">"
+    lt = "<"
+    ne = "!="
     gte = ">="
-    year_gt = "Y>"
-    date_gte = "D>="
+    lte = "<="
+
+    contains = "contains"
+    not_contains = "not_contains"
+    starts_with = "starts_with"
+    ends_with = "ends_with"
     is_in = "in"
     not_in = "not_in"
+    is_null = "is_null"
+    is_not_null = "is_not_null"
+    between = "between"
+    not_between = "not_between"
+    is_empty = "is_empty"
+    is_not_empty = "is_not_empty"
+    is_true = "is_true"
+    is_false = "is_false"
+
+    day_lte = "D<="
+    week_lte = "W<="
+    year_lte = "Y<="
+
+    day_gte = "D>="
+    week_gte = "W>="
+    year_gte = "Y>="
+
+    day_lt = "D<"
+    week_lt = "W<"
+    year_lt = "Y<"
+
+    day_gt = "D>"
+    week_gt = "W>"
+    year_gt = "Y>"
+
     member_of = "MemberOf"
     not_member_of = "NotaMemberOf"
 
