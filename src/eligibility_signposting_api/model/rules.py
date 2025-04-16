@@ -44,36 +44,41 @@ class RuleOperator(str, Enum):
     contains = "contains"
     not_contains = "not_contains"
     starts_with = "starts_with"
+    not_starts_with = "not_starts_with"
     ends_with = "ends_with"
+
     is_in = "in"
     not_in = "not_in"
+
+    member_of = "MemberOf"
+    not_member_of = "NotaMemberOf"
+
     is_null = "is_null"
     is_not_null = "is_not_null"
+
     between = "between"
     not_between = "not_between"
+
     is_empty = "is_empty"
     is_not_empty = "is_not_empty"
+
     is_true = "is_true"
     is_false = "is_false"
 
     day_lte = "D<="
-    week_lte = "W<="
-    year_lte = "Y<="
-
-    day_gte = "D>="
-    week_gte = "W>="
-    year_gte = "Y>="
-
     day_lt = "D<"
-    week_lt = "W<"
-    year_lt = "Y<"
-
+    day_gte = "D>="
     day_gt = "D>"
-    week_gt = "W>"
-    year_gt = "Y>"
 
-    member_of = "MemberOf"
-    not_member_of = "NotaMemberOf"
+    week_lte = "W<="
+    week_lt = "W<"
+    week_gte = "W>="
+    week_gt = "W>"
+
+    year_lte = "Y<="
+    year_lt = "Y<"
+    year_gte = "Y>="
+    year_gt = "Y>"
 
 
 class RuleAttributeLevel(str, Enum):

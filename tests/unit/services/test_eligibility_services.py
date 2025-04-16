@@ -235,17 +235,31 @@ def test_starts_with_rule():
     rule = IterationRuleFactory.build(operator=RuleOperator.starts_with, comparator="YY66")
     assert EligibilityService.evaluate_rule(rule, "YY66")
     assert EligibilityService.evaluate_rule(rule, "YY66095")
-
     assert not EligibilityService.evaluate_rule(rule, "BB11")
     assert not EligibilityService.evaluate_rule(rule, "BYY66095")
     assert not EligibilityService.evaluate_rule(rule, "  YY66")
-
     assert not EligibilityService.evaluate_rule(rule, None)
     assert not EligibilityService.evaluate_rule(rule, "")
 
 
+def test_not_starts_with_rule():
+    rule = IterationRuleFactory.build(operator=RuleOperator.not_starts_with, comparator="YY66")
+    assert not EligibilityService.evaluate_rule(rule, "YY66")
+    assert not EligibilityService.evaluate_rule(rule, "YY66095")
+    assert EligibilityService.evaluate_rule(rule, "BB11")
+    assert EligibilityService.evaluate_rule(rule, "BYY66095")
+    assert EligibilityService.evaluate_rule(rule, "  YY66")
+    assert EligibilityService.evaluate_rule(rule, None)
+    assert EligibilityService.evaluate_rule(rule, "")
+
+
 def test_ends_with_rule():
-    pass
+    rule = IterationRuleFactory.build(operator=RuleOperator.ends_with, comparator="2BA")
+    assert EligibilityService.evaluate_rule(rule, "2BA")
+    assert EligibilityService.evaluate_rule(rule, "002BA")
+    assert not EligibilityService.evaluate_rule(rule, None)
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, "2BA00")
 
 
 def test_in_rule():
@@ -264,44 +278,139 @@ def test_not_in_rule():
     assert not EligibilityService.evaluate_rule(rule, "QH8")
 
 
+def test_member_of_rule():
+    rule = IterationRuleFactory.build(operator=RuleOperator.member_of, comparator="cohort1")
+    assert EligibilityService.evaluate_rule(rule, "cohort1,cohort2")
+    assert not EligibilityService.evaluate_rule(rule, None)
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, "cohort3")
+
+
+def test_not_member_of_rule():
+    rule = IterationRuleFactory.build(operator=RuleOperator.not_member_of, comparator="cohort1")
+    assert not EligibilityService.evaluate_rule(rule, "cohort1,cohort2")
+    assert EligibilityService.evaluate_rule(rule, None)
+    assert EligibilityService.evaluate_rule(rule, "")
+    assert EligibilityService.evaluate_rule(rule, "cohort3")
+
+
 def test_is_null_rule():
-    pass
-
+    # Check email flag is null
+    rule = IterationRuleFactory.build(operator=RuleOperator.is_null)
+    assert EligibilityService.evaluate_rule(rule, "")
+    assert EligibilityService.evaluate_rule(rule, None)
+    assert not EligibilityService.evaluate_rule(rule, "email_flag")
+    assert not EligibilityService.evaluate_rule(rule, 42)
 
 def test_is_not_null_rule():
-    pass
-
-
-def test_is_not_null_rule():
-    pass
+    # Check email flag is not null
+    rule = IterationRuleFactory.build(operator=RuleOperator.is_not_null)
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, None)
+    assert EligibilityService.evaluate_rule(rule, "email_flag")
+    assert EligibilityService.evaluate_rule(rule, 42)
 
 
 def test_between_rule():
-    pass
+    # check if numerical value is between two give values (inclusive)
+    rule = IterationRuleFactory.build(operator=RuleOperator.between, comparator="1,3")
+    assert not EligibilityService.evaluate_rule(rule, "0")
+    assert EligibilityService.evaluate_rule(rule, "1")
+    assert EligibilityService.evaluate_rule(rule, "2")
+    assert EligibilityService.evaluate_rule(rule, "3")
+    assert not EligibilityService.evaluate_rule(rule, "4")
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, None)
+
+    rule = IterationRuleFactory.build(operator=RuleOperator.between, comparator="3,1")
+    assert not EligibilityService.evaluate_rule(rule, "0")
+    assert EligibilityService.evaluate_rule(rule, "1")
+    assert EligibilityService.evaluate_rule(rule, "2")
+    assert EligibilityService.evaluate_rule(rule, "3")
+    assert not EligibilityService.evaluate_rule(rule, "4")
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, None)
+
+    rule = IterationRuleFactory.build(operator=RuleOperator.between, comparator="3,3")
+    assert not EligibilityService.evaluate_rule(rule, "2")
+    assert EligibilityService.evaluate_rule(rule, "3")
+    assert not EligibilityService.evaluate_rule(rule, "4")
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, None)
+
+    rule = IterationRuleFactory.build(operator=RuleOperator.between, comparator="20100302,20100304")
+    assert not EligibilityService.evaluate_rule(rule, "20100301")
+    assert EligibilityService.evaluate_rule(rule, "20100302")
+    assert EligibilityService.evaluate_rule(rule, "20100303")
+    assert EligibilityService.evaluate_rule(rule, "20100304")
+    assert not EligibilityService.evaluate_rule(rule, "20100305")
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, None)
+
 
 
 def test_not_between_rule():
-    pass
+    # check if numerical value is NOT between two give values (inclusive)
+    rule = IterationRuleFactory.build(operator=RuleOperator.not_between, comparator="1,3")
+    assert EligibilityService.evaluate_rule(rule, "0")
+    assert not EligibilityService.evaluate_rule(rule, "1")
+    assert not EligibilityService.evaluate_rule(rule, "2")
+    assert not EligibilityService.evaluate_rule(rule, "3")
+    assert EligibilityService.evaluate_rule(rule, "4")
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, None)
+
+    rule = IterationRuleFactory.build(operator=RuleOperator.not_between, comparator="3,1")
+    assert EligibilityService.evaluate_rule(rule, "0")
+    assert not EligibilityService.evaluate_rule(rule, "1")
+    assert not EligibilityService.evaluate_rule(rule, "2")
+    assert not EligibilityService.evaluate_rule(rule, "3")
+    assert EligibilityService.evaluate_rule(rule, "4")
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, None)
+
+    rule = IterationRuleFactory.build(operator=RuleOperator.not_between, comparator="3,3")
+    assert EligibilityService.evaluate_rule(rule, "2")
+    assert not EligibilityService.evaluate_rule(rule, "3")
+    assert EligibilityService.evaluate_rule(rule, "4")
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, None)
 
 
 def test_is_empty_rule():
-    pass
-
+    pass # clarify definition
 
 def test_is_not_empty_rule():
-    pass
+    pass # clarify definition
 
 
 def test_is_true_rule():
-    pass
+    rule = IterationRuleFactory.build(operator=RuleOperator.is_true)
+    assert EligibilityService.evaluate_rule(rule, True)
+    assert not EligibilityService.evaluate_rule(rule, False)
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, None)
+    assert not EligibilityService.evaluate_rule(rule, "True")
 
 
 def test_is_false_rule():
-    pass
+    rule = IterationRuleFactory.build(operator=RuleOperator.is_false)
+    assert EligibilityService.evaluate_rule(rule, False)
+    assert not EligibilityService.evaluate_rule(rule, True)
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, None)
+    assert not EligibilityService.evaluate_rule(rule, "False")
 
 
 def test_day_lte_rule():
-    pass
+    today = datetime.today()  # noqa: DTZ002
+    days_offset = 2
+    future_date = today + relativedelta(days=days_offset - 3)
+    attribute_value = future_date.strftime("%Y%m%d")
+    rule = IterationRuleFactory.build(operator=RuleOperator.day_lte, comparator=str(days_offset))
+    assert EligibilityService.evaluate_rule(rule, attribute_value)
+    assert not EligibilityService.evaluate_rule(rule, "")
+    assert not EligibilityService.evaluate_rule(rule, None)
 
 
 def test_week_lte_rule():
@@ -404,22 +513,6 @@ def test_year_gt_rule_same_date():
     assert not EligibilityService.evaluate_rule(rule, attribute_value)
     assert not EligibilityService.evaluate_rule(rule, "")
     assert not EligibilityService.evaluate_rule(rule, None)
-
-
-def test_member_of_rule():
-    rule = IterationRuleFactory.build(operator=RuleOperator.member_of, comparator="cohort1")
-    assert EligibilityService.evaluate_rule(rule, "cohort1,cohort2")
-    assert not EligibilityService.evaluate_rule(rule, None)
-    assert not EligibilityService.evaluate_rule(rule, "")
-    assert not EligibilityService.evaluate_rule(rule, "cohort3")
-
-
-def test_not_member_of_rule():
-    rule = IterationRuleFactory.build(operator=RuleOperator.not_member_of, comparator="cohort1")
-    assert not EligibilityService.evaluate_rule(rule, "cohort1,cohort2")
-    assert EligibilityService.evaluate_rule(rule, None)
-    assert EligibilityService.evaluate_rule(rule, "")
-    assert EligibilityService.evaluate_rule(rule, "cohort3")
 
 
 @pytest.mark.skip(reason="Skipping this test since all the operators are implemented")
