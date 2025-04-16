@@ -28,7 +28,7 @@ This will stop the sandbox environment.
 There are a number of examples of responses which can be returned by passing specific NHS Numbers in the patient query parameter:
 
 ```bash
- curl -X GET "http://0.0.0.0:9000/eligibility?patient=<patient NHS Number>" -H "Authorization: Bearer sdvsd"
+ curl -X GET "http://0.0.0.0:9000/eligibility-check?patient=<patient NHS Number>" -H "Authorization: Bearer sdvsd"
 ```
 
 #### Example scenarios
@@ -47,3 +47,20 @@ There are a number of examples of responses which can be returned by passing spe
 | 90000000500  | Internal server error                            |
 
 See [app.py](app.py) for current examples.
+
+## Deployment of sandbox image to APIM AWS ECR repository
+
+In order for our sandbox to be deployed correctly, both the specification for the sandbox and the accompanying backend
+need to be deployed.
+
+Instructions for creation and deployment of the sandbox specification can be found in the [specification README](/specification/README.md)
+
+To deploy the sandbox Docker image to AWS ECR, we use Proxygen CLI as follows:
+
+1. Follow the instructions in the [specification README](/specification/README.md) to set up Proxygen authentication.
+2. Run `proxygen docker get-login` and copy the command provided in the response.
+3. Run the command to authenticate with our ECR repository.
+4. Build the sandbox container - `make build` in this directory.
+5. Tag the image created using `docker image tag <image id> 958002497996.dkr.ecr.eu-west-2.amazonaws.com/eligibility-signposting-api:latest`. You
+   can see what the image id is by running `docker images` to find what was just built.
+6. Push the docker image to our ECR repository using `docker push 958002497996.dkr.ecr.eu-west-2.amazonaws.com/eligibility-signposting-api:latest`

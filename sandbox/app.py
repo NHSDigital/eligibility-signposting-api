@@ -82,6 +82,15 @@ def parse_prefer_header_value(prefer_header_value: str) -> str:
     return ""
 
 
+@app.route("/_status", methods=["GET"])
+def health_check() -> Response:
+    """
+    Health-check endpoint to verify the application is running.
+    Returns a 200 OK status with a simple JSON response.
+    """
+    return Response('{"status": "ok"}', status=200, mimetype="application/json")
+
+
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def proxy_to_upstream(path: str) -> Response:  # noqa: ARG001

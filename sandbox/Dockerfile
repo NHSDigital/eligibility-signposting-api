@@ -25,6 +25,8 @@ USER appuser
 COPY app.py __init__.py /home/appuser/app/
 # Copy supervisord configuration
 COPY supervisord.conf /etc/supervisord.conf
+
+COPY ./specification /home/appuser/app/specification
 # Install Prism
 USER root
 RUN apk add --no-cache nodejs npm && \

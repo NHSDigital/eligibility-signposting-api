@@ -25,7 +25,7 @@ paths:
         Determines which suggestions a person is eligible for and which they are
         not, including reasons and next steps.
       security:
-        - nhs-login-p9: []
+        - $ref: "../specification/components/security/security.yaml"
       operationId: checkEligibility
       parameters:
         - name: patient
@@ -507,5 +507,12 @@ paths:
 ################################################################################
 components:
     securitySchemes:
-      nhs-login-p9:
-        $ref: https://proxygen.prod.api.platform.nhs.uk/components/securitySchemes/nhs-login-p9
+      app-level0:
+          $ref: https://proxygen.ptl.api.platform.nhs.uk/components/securitySchemes/app-level0
+x-nhsd-apim:
+    access:
+        $ref: "x-nhsd-apim/access.yaml"
+    target:
+        $ref: "x-nhsd-apim/target.yaml"
+    ratelimiting:
+        $ref: "x-nhsd-apim/ratelimit.yaml"
