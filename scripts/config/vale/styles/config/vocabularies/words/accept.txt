@@ -12,6 +12,7 @@ onboarding
 Podman
 Python
 sed
+subnet
 Syft
 Terraform
 toolchain
