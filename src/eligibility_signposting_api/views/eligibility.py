@@ -49,7 +49,7 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> Eligibi
     return EligibilityResponse(  # pyright: ignore[reportCallIssue]
         processed_suggestions=[  # pyright: ignore[reportCallIssue]
             ProcessedSuggestion(  # pyright: ignore[reportCallIssue]
-                condition=condition.condition,
+                condition=condition.condition_name,
                 status=STATUS_MAPPING[condition.status],
                 status_text=f"{condition.status}",  # pyright: ignore[reportCallIssue]
                 eligibility_cohorts=[],  # pyright: ignore[reportCallIssue]

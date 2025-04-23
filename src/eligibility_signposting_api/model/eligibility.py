@@ -6,6 +6,7 @@ from typing import NewType
 NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
 Postcode = NewType("Postcode", str)
+ConditionName = NewType("ConditionName", str)
 
 
 class Status(Enum):
@@ -16,7 +17,7 @@ class Status(Enum):
 
 @dataclass
 class Condition:
-    condition: str
+    condition_name: ConditionName
     status: Status
 
 

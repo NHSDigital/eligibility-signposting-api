@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 from faker import Faker
 from hamcrest import assert_that, empty, has_item
 
-from eligibility_signposting_api.model.eligibility import DateOfBirth, NHSNumber, Postcode, Status
+from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Postcode, Status
 from eligibility_signposting_api.model.rules import RuleAttributeLevel, RuleOperator, RuleType
 from eligibility_signposting_api.repos import EligibilityRepo, NotFoundError, RulesRepo
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
@@ -101,7 +101,7 @@ def test_simple_rule_eligible(faker: Faker):
     assert_that(
         actual,
         is_eligibility_status().with_conditions(
-            has_item(is_condition().with_condition("RSV").and_status(Status.actionable))
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable))
         ),
     )
 
@@ -162,7 +162,7 @@ def test_simple_rule_ineligible(faker: Faker):
     assert_that(
         actual,
         is_eligibility_status().with_conditions(
-            has_item(is_condition().with_condition("RSV").and_status(Status.not_actionable))
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_actionable))
         ),
     )
 

@@ -5,7 +5,7 @@ from typing import Any
 from dateutil.relativedelta import relativedelta
 from wireup import service
 
-from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
+from eligibility_signposting_api.model.eligibility import Condition, ConditionName, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.model.rules import CampaignConfig, IterationRule, RuleAttributeLevel, RuleOperator
 from eligibility_signposting_api.repos import EligibilityRepo, NotFoundError, RulesRepo
 
@@ -49,10 +49,11 @@ class EligibilityService:
     def evaluate_eligibility(
         campaign_configs: list[CampaignConfig], person_data: list[dict[str, Any]]
     ) -> EligibilityStatus:
-        conditions: dict[str, Condition] = {}
+        conditions: dict[ConditionName, Condition] = {}
         for campaign_config in campaign_configs:
+            condition_name = ConditionName(campaign_config.target)
             condition = conditions.setdefault(
-                campaign_config.target, Condition(condition=campaign_config.target, status=Status.actionable)
+                condition_name, Condition(condition_name=condition_name, status=Status.actionable)
             )
             for iteration_rule in [
                 iteration_rule
