@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class Status(str, Enum):
@@ -35,7 +35,7 @@ class Action(BaseModel):
     action_type: str = Field(..., alias="actionType")
     action_code: str = Field(..., alias="actionCode")
     description: str
-    url_link: str = Field(..., alias="urlLink")
+    url_link: HttpUrl = Field(..., alias="urlLink")
 
     model_config = {"populate_by_name": True}
 
