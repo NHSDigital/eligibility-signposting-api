@@ -2,17 +2,16 @@ from datetime import datetime
 from unittest.mock import MagicMock
 
 import pytest
-from brunns.matchers.object import false, true
 from dateutil.relativedelta import relativedelta
 from faker import Faker
-from hamcrest import assert_that
+from hamcrest import assert_that, empty, has_item
 
-from eligibility_signposting_api.model.eligibility import DateOfBirth, NHSNumber, Postcode
+from eligibility_signposting_api.model.eligibility import DateOfBirth, NHSNumber, Postcode, Status
 from eligibility_signposting_api.model.rules import RuleAttributeLevel, RuleOperator, RuleType
 from eligibility_signposting_api.repos import EligibilityRepo, NotFoundError, RulesRepo
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from tests.utils.builders import CampaignConfigFactory, IterationFactory, IterationRuleFactory
-from tests.utils.matchers.eligibility import is_eligibility_status
+from tests.utils.matchers.eligibility import is_condition, is_eligibility_status
 
 
 @pytest.fixture(scope="session")
@@ -31,7 +30,7 @@ def test_eligibility_service_returns_from_repo():
     actual = ps.get_eligibility_status(NHSNumber("1234567890"))
 
     # Then
-    assert_that(actual, is_eligibility_status().with_eligible(true()))
+    assert_that(actual, is_eligibility_status().with_conditions(empty()))
 
 
 def test_eligibility_service_for_nonexistent_nhs_number():
@@ -99,7 +98,12 @@ def test_simple_rule_eligible(faker: Faker):
     actual = ps.get_eligibility_status(NHSNumber(nhs_number))
 
     # Then
-    assert_that(actual, is_eligibility_status().with_eligible(true()))
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition("RSV").and_status(Status.actionable))
+        ),
+    )
 
 
 def test_simple_rule_ineligible(faker: Faker):
@@ -155,7 +159,12 @@ def test_simple_rule_ineligible(faker: Faker):
     actual = ps.get_eligibility_status(NHSNumber(nhs_number))
 
     # Then
-    assert_that(actual, is_eligibility_status().with_eligible(false()))
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition("RSV").and_status(Status.not_actionable))
+        ),
+    )
 
 
 def test_equals_rule():

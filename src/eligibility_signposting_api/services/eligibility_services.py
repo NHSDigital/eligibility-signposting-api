@@ -5,7 +5,7 @@ from typing import Any
 from dateutil.relativedelta import relativedelta
 from wireup import service
 
-from eligibility_signposting_api.model.eligibility import EligibilityStatus, NHSNumber
+from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.model.rules import CampaignConfig, IterationRule, RuleAttributeLevel, RuleOperator
 from eligibility_signposting_api.repos import EligibilityRepo, NotFoundError, RulesRepo
 
@@ -49,17 +49,20 @@ class EligibilityService:
     def evaluate_eligibility(
         campaign_configs: list[CampaignConfig], person_data: list[dict[str, Any]]
     ) -> EligibilityStatus:
-        eligible, reasons, actions = True, [], []
-        for iteration_rule in [
-            iteration_rule
-            for campaign_config in campaign_configs
-            for iteration in campaign_config.iterations
-            for iteration_rule in iteration.iteration_rules
-        ]:
-            if EligibilityService.evaluate_exclusion(iteration_rule, person_data):
-                eligible = False
+        conditions: dict[str, Condition] = {}
+        for campaign_config in campaign_configs:
+            for iteration_rule in [
+                iteration_rule
+                for iteration in campaign_config.iterations
+                for iteration_rule in iteration.iteration_rules
+            ]:
+                condition = conditions.setdefault(
+                    campaign_config.target, Condition(condition=campaign_config.target, status=Status.actionable)
+                )
+                if EligibilityService.evaluate_exclusion(iteration_rule, person_data):
+                    condition.status = Status.not_actionable
 
-        return EligibilityStatus(eligible=eligible, reasons=reasons, actions=actions)
+        return EligibilityStatus(conditions=list(conditions.values()))
 
     @staticmethod
     def evaluate_exclusion(iteration_rule: IterationRule, person_data: list[dict[str, Any]]) -> bool:

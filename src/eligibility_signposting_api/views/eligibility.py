@@ -1,18 +1,21 @@
 import logging
 from http import HTTPStatus
 
-from fhir.resources.R4B.bundle import Bundle, BundleEntry
-from fhir.resources.R4B.guidanceresponse import GuidanceResponse
-from fhir.resources.R4B.location import Location
 from fhir.resources.R4B.operationoutcome import OperationOutcome, OperationOutcomeIssue
-from fhir.resources.R4B.requestgroup import RequestGroup
-from fhir.resources.R4B.task import Task
 from flask import Blueprint, make_response
 from flask.typing import ResponseReturnValue
 from wireup import Injected
 
-from eligibility_signposting_api.model.eligibility import EligibilityStatus, NHSNumber
+from eligibility_signposting_api.model.eligibility import EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
+from eligibility_signposting_api.views.response_models import EligibilityResponse, ProcessedSuggestion
+from eligibility_signposting_api.views.response_models import Status as ResponseStatus
+
+STATUS_MAPPING = {
+    Status.actionable: ResponseStatus.actionable,
+    Status.not_actionable: ResponseStatus.not_actionable,
+    Status.not_eligible: ResponseStatus.not_eligible,
+}
 
 logger = logging.getLogger(__name__)
 
@@ -38,20 +41,21 @@ def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[Eligi
         )
         return make_response(problem.model_dump(by_alias=True), HTTPStatus.NOT_FOUND)
     else:
-        bundle = build_bundle(eligibility_status)
-        return make_response(bundle.model_dump(by_alias=True), HTTPStatus.OK)
+        eligibility_response = build_eligibility_response(eligibility_status)
+        return make_response(eligibility_response.model_dump(by_alias=True), HTTPStatus.OK)
 
 
-def build_bundle(_eligibility_status: EligibilityStatus) -> Bundle:
-    return Bundle(  # pyright: ignore[reportCallIssue]
-        id="dummy-bundle",
-        type="collection",
-        entry=[
-            BundleEntry(  # pyright: ignore[reportCallIssue]
-                resource=GuidanceResponse(id="dummy-guidance-response", status="requested", moduleCodeableConcept={})  # pyright: ignore[reportCallIssue]
-            ),
-            BundleEntry(resource=RequestGroup(id="dummy-request-group", intent="proposal", status="requested")),  # pyright: ignore[reportCallIssue]
-            BundleEntry(resource=Task(id="dummy-task", intent="proposal", status="requested")),  # pyright: ignore[reportCallIssue]
-            BundleEntry(resource=Location(id="dummy-location")),  # pyright: ignore[reportCallIssue]
-        ],
+def build_eligibility_response(eligibility_status: EligibilityStatus) -> EligibilityResponse:
+    return EligibilityResponse(  # pyright: ignore[reportCallIssue]
+        processed_suggestions=[  # pyright: ignore[reportCallIssue]
+            ProcessedSuggestion(  # pyright: ignore[reportCallIssue]
+                condition=condition.condition,
+                status=STATUS_MAPPING[condition.status],
+                status_text=f"{condition.status}",  # pyright: ignore[reportCallIssue]
+                eligibility_cohorts=[],  # pyright: ignore[reportCallIssue]
+                suitability_rules=[],  # pyright: ignore[reportCallIssue]
+                actions=[],
+            )
+            for condition in eligibility_status.conditions
+        ]
     )
