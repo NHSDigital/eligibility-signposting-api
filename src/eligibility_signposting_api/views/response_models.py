@@ -1,8 +1,10 @@
+from datetime import datetime
 from enum import Enum
 from typing import NewType
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import UUID4, BaseModel, Field, HttpUrl, SerializationInfo, field_serializer
 
+LastUpdated = NewType("LastUpdated", datetime)
 ConditionName = NewType("ConditionName", str)
 StatusText = NewType("StatusText", str)
 ActionType = NewType("ActionType", str)
@@ -62,7 +64,19 @@ class ProcessedSuggestion(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class Meta(BaseModel):
+    last_updated: LastUpdated = Field(..., alias="lastUpdated")
+
+    model_config = {"populate_by_name": True}
+
+    @field_serializer("last_updated")
+    def serialize_last_updated(self, last_updated: LastUpdated, _info: SerializationInfo) -> str:
+        return last_updated.isoformat()
+
+
 class EligibilityResponse(BaseModel):
+    response_id: UUID4 = Field(..., alias="responseId")
+    meta: Meta
     processed_suggestions: list[ProcessedSuggestion] = Field(..., alias="processedSuggestions")
 
     model_config = {"populate_by_name": True}

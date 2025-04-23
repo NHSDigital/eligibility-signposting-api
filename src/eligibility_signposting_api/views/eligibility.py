@@ -1,4 +1,6 @@
 import logging
+import uuid
+from datetime import UTC, datetime
 from http import HTTPStatus
 
 from fhir.resources.R4B.operationoutcome import OperationOutcome, OperationOutcomeIssue
@@ -11,6 +13,8 @@ from eligibility_signposting_api.services import EligibilityService, UnknownPers
 from eligibility_signposting_api.views.response_models import (
     ConditionName,
     EligibilityResponse,
+    LastUpdated,
+    Meta,
     ProcessedSuggestion,
     StatusText,
 )
@@ -52,6 +56,8 @@ def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[Eligi
 
 def build_eligibility_response(eligibility_status: EligibilityStatus) -> EligibilityResponse:
     return EligibilityResponse(  # pyright: ignore[reportCallIssue]
+        response_id=uuid.uuid4(),  # pyright: ignore[reportCallIssue]
+        meta=Meta(last_updated=LastUpdated(datetime.now(tz=UTC))),  # pyright: ignore[reportCallIssue]
         processed_suggestions=[  # pyright: ignore[reportCallIssue]
             ProcessedSuggestion(  # pyright: ignore[reportCallIssue]
                 condition_name=ConditionName(condition.condition_name),  # pyright: ignore[reportCallIssue]
@@ -62,5 +68,5 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> Eligibi
                 actions=[],
             )
             for condition in eligibility_status.conditions
-        ]
+        ],
     )
