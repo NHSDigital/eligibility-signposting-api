@@ -51,14 +51,14 @@ class EligibilityService:
     ) -> EligibilityStatus:
         conditions: dict[str, Condition] = {}
         for campaign_config in campaign_configs:
+            condition = conditions.setdefault(
+                campaign_config.target, Condition(condition=campaign_config.target, status=Status.actionable)
+            )
             for iteration_rule in [
                 iteration_rule
                 for iteration in campaign_config.iterations
                 for iteration_rule in iteration.iteration_rules
             ]:
-                condition = conditions.setdefault(
-                    campaign_config.target, Condition(condition=campaign_config.target, status=Status.actionable)
-                )
                 if EligibilityService.evaluate_exclusion(iteration_rule, person_data):
                     condition.status = Status.not_actionable
 
