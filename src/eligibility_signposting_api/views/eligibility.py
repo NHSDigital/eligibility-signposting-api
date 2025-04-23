@@ -8,7 +8,12 @@ from wireup import Injected
 
 from eligibility_signposting_api.model.eligibility import EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
-from eligibility_signposting_api.views.response_models import EligibilityResponse, ProcessedSuggestion
+from eligibility_signposting_api.views.response_models import (
+    ConditionName,
+    EligibilityResponse,
+    ProcessedSuggestion,
+    StatusText,
+)
 from eligibility_signposting_api.views.response_models import Status as ResponseStatus
 
 STATUS_MAPPING = {
@@ -49,9 +54,9 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> Eligibi
     return EligibilityResponse(  # pyright: ignore[reportCallIssue]
         processed_suggestions=[  # pyright: ignore[reportCallIssue]
             ProcessedSuggestion(  # pyright: ignore[reportCallIssue]
-                condition=condition.condition_name,
+                condition_name=ConditionName(condition.condition_name),  # pyright: ignore[reportCallIssue]
                 status=STATUS_MAPPING[condition.status],
-                status_text=f"{condition.status}",  # pyright: ignore[reportCallIssue]
+                status_text=StatusText(f"{condition.status}"),  # pyright: ignore[reportCallIssue]
                 eligibility_cohorts=[],  # pyright: ignore[reportCallIssue]
                 suitability_rules=[],  # pyright: ignore[reportCallIssue]
                 actions=[],
