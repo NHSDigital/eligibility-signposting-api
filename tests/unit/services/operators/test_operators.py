@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import pytest
 from freezegun import freeze_time
 
@@ -165,9 +163,58 @@ cases: list[tuple[RuleOperator, AttributeData, AttributeData, bool]] = [
     (RuleOperator.is_false, None, "", False),
     (RuleOperator.is_false, None, None, False),
     (RuleOperator.is_false, None, "False", False),
+    # Day lesser than or equal to
+    (RuleOperator.day_lte, "2", "20250426", True),  # Past date
+    (RuleOperator.day_lte, "2", "20250427", True),  # Present date
+    (RuleOperator.day_lte, "2", "20250428", False),  # Future date
+    # Day less than
+    (RuleOperator.day_lt, "2", "20250426", True),  # Past date
+    (RuleOperator.day_lt, "2", "20250427", False),  # Present date
+    (RuleOperator.day_lt, "2", "20250428", False),  # Future date
+    # Day greater than or equal to
+    (RuleOperator.day_gte, "2", "20250426", False),  # Past date
+    (RuleOperator.day_gte, "2", "20250427", True),  # Present date
+    (RuleOperator.day_gte, "2", "20250428", True),  # Future date
+    # Day greater than
+    (RuleOperator.day_gt, "2", "20250426", False),  # Past date
+    (RuleOperator.day_gt, "2", "20250427", False),  # Present date
+    (RuleOperator.day_gt, "2", "20250428", True),  # Future date
+    # Week lesser than or equal to
+    (RuleOperator.week_lte, 2, "20250502", True),  # Past week
+    (RuleOperator.week_lte, 2, "20250509", True),  # Present week
+    (RuleOperator.week_lte, 2, "20250516", False),  # Future week
+    # Week less than
+    (RuleOperator.week_lt, 2, "20250502", True),  # Past week
+    (RuleOperator.week_lt, 2, "20250509", False),  # Present week
+    (RuleOperator.week_lt, 2, "20250516", False),  # Future week
+    # week greater than or equal to
+    (RuleOperator.week_gte, 2, "20250502", False),  # Past week
+    (RuleOperator.week_gte, 2, "20250509", True),  # Present week
+    (RuleOperator.week_gte, 2, "20250516", True),  # Future week
+    # Week greater than
+    (RuleOperator.week_gt, 2, "20250502", False),  # Past week
+    (RuleOperator.week_gt, 2, "20250509", False),  # Present week
+    (RuleOperator.week_gt, 2, "20250516", True),  # Future week
+    # Year lesser than or equal to
+    (RuleOperator.year_lte, 2, "20260425", True),  # Past year
+    (RuleOperator.year_lte, 2, "20270425", True),  # Present year
+    (RuleOperator.year_lte, 2, "20280425", False),  # Future year
+    # Year lesser than
+    (RuleOperator.year_lt, 2, "20260425", True),  # Past year
+    (RuleOperator.year_lt, 2, "20270425", False),  # Present year
+    (RuleOperator.year_lt, 2, "20280425", False),  # Future year
+    # Year greater than or equal to
+    (RuleOperator.year_gte, 2, "20260425", False),  # Past year
+    (RuleOperator.year_gte, 2, "20270425", True),  # Present year
+    (RuleOperator.year_gte, 2, "20280425", True),  # Future year
+    # Year greater than
+    (RuleOperator.year_gt, 2, "20260425", False),  # Past year
+    (RuleOperator.year_gt, 2, "20270425", False),  # Present year
+    (RuleOperator.year_gt, 2, "20280425", True),  # Future year
 ]
 
 
+@freeze_time("2025-04-25")
 @pytest.mark.parametrize(("rule_operator", "comparator", "attribute", "expected"), cases)
 def test_operator(rule_operator: RuleOperator, comparator: AttributeData, attribute: AttributeData, expected: bool):  # noqa: FBT001
     # Given
@@ -176,73 +223,6 @@ def test_operator(rule_operator: RuleOperator, comparator: AttributeData, attrib
 
     # When
     actual = operator.matches(attribute)
-
-    # Then
-    assert actual is expected
-
-
-date_operator_test_cases: list[tuple[RuleOperator, AttributeData, AttributeData, bool]] = [
-    # Day lesser than or equal to
-    (RuleOperator.day_lte, "2", "2025-04-26", True),  # Past date
-    (RuleOperator.day_lte, "2", "2025-04-27", True),  # Present date
-    (RuleOperator.day_lte, "2", "2025-04-28", False),  # Future date
-    # Day less than
-    (RuleOperator.day_lt, "2", "2025-04-26", True),  # Past date
-    (RuleOperator.day_lt, "2", "2025-04-27", False),  # Present date
-    (RuleOperator.day_lt, "2", "2025-04-28", False),  # Future date
-    # Day greater than or equal to
-    (RuleOperator.day_gte, "2", "2025-04-26", False),  # Past date
-    (RuleOperator.day_gte, "2", "2025-04-27", True),  # Present date
-    (RuleOperator.day_gte, "2", "2025-04-28", True),  # Future date
-    # Day greater than
-    (RuleOperator.day_gt, "2", "2025-04-26", False),  # Past date
-    (RuleOperator.day_gt, "2", "2025-04-27", False),  # Present date
-    (RuleOperator.day_gt, "2", "2025-04-28", True),  # Future date
-    # Week lesser than or equal to
-    (RuleOperator.week_lte, 2, "2025-05-02", True),  # Past date
-    (RuleOperator.week_lte, 2, "2025-05-09", True),  # Present date
-    (RuleOperator.week_lte, 2, "2025-05-16", False),  # Future date
-    # Week less than
-    (RuleOperator.week_lt, 2, "2025-05-02", True),  # Past date
-    (RuleOperator.week_lt, 2, "2025-05-09", False),  # Present date
-    (RuleOperator.week_lt, 2, "2025-05-16", False),  # Future date
-    # week greater than or equal to
-    (RuleOperator.week_gte, 2, "2025-05-02", False),  # Past date
-    (RuleOperator.week_gte, 2, "2025-05-09", True),  # Present date
-    (RuleOperator.week_gte, 2, "2025-05-16", True),  # Future date
-    # Week greater than
-    (RuleOperator.week_gt, 2, "2025-05-02", False),  # Past date
-    (RuleOperator.week_gt, 2, "2025-05-09", False),  # Present date
-    (RuleOperator.week_gt, 2, "2025-05-16", True),  # Future date
-    # Year lesser than or equal to
-    (RuleOperator.year_lte, 2, "2026-04-25", True),  # Past year
-    (RuleOperator.year_lte, 2, "2027-04-25", True),  # Present year
-    (RuleOperator.year_lte, 2, "2028-04-25", False),  # Future year
-    # Year lesser than
-    (RuleOperator.year_lt, 2, "2026-04-25", True),  # Past year
-    (RuleOperator.year_lt, 2, "2027-04-25", False),  # Present year
-    (RuleOperator.year_lt, 2, "2028-04-25", False),  # Future year
-    # Year greater than or equal to
-    (RuleOperator.year_gte, 2, "2026-04-25", False),  # Past year
-    (RuleOperator.year_gte, 2, "2027-04-25", True),  # Present year
-    (RuleOperator.year_gte, 2, "2028-04-25", True),  # Future year
-    # Year greater than
-    (RuleOperator.year_gt, 2, "2026-04-25", False),  # Past year
-    (RuleOperator.year_gt, 2, "2027-04-25", False),  # Present year
-    (RuleOperator.year_gt, 2, "2028-04-25", True),  # Future year
-]
-
-
-@freeze_time("2025-04-25")
-@pytest.mark.parametrize(("rule_operator", "comparator", "attribute", "expected"), date_operator_test_cases)
-def test_day_rule(rule_operator: RuleOperator, comparator: AttributeData, attribute: AttributeData, expected: bool):  # noqa: FBT001
-    # Given
-    attribute = datetime.strptime(attribute, "%Y-%m-%d").strftime("%Y%m%d")  # noqa: DTZ007
-    operator_class: type[Operator] = OperatorRegistry.get(rule_operator)
-    operator_instance: Operator = operator_class(rule_comparator=comparator)
-
-    # When
-    actual = operator_instance.matches(attribute)
 
     # Then
     assert actual is expected
