@@ -55,6 +55,7 @@ brunns-matchers = "^2.9.0"
 localstack = "^4.1.1"
 pytest-docker = "^3.2.0"
 stamina = "^25.1.0"
+pytest-freezer = "^0.4.9"
 
 [tool.poetry-plugin-lambda-build]
 docker-image = "public.ecr.aws/sam/build-python3.13:1.137.1-x86_64"

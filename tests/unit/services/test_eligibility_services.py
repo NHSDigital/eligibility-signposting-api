@@ -856,6 +856,7 @@ def test_year_gt_rule_past_date():
 def test_year_gt_rule_present_date():
     today = datetime.today()  # noqa: DTZ002
     years_offset = 2
+
     past_date = today + relativedelta(years=years_offset)
     attribute_value = past_date.strftime("%Y%m%d")
     rule = IterationRuleFactory.build(operator=RuleOperator.year_gt, comparator=str(years_offset))
