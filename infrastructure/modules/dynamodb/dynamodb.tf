@@ -20,6 +20,6 @@ resource "aws_dynamodb_table" "dynamodb_table" {
 
   tags = {
     "Name" = "${var.workspace}-${var.table_name}"
-    Stack  = var.stack_name
+    # Stack  = var.stack_name
   }
 }
