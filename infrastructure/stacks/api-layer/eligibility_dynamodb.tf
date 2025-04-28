@@ -6,4 +6,5 @@ module "eligibility_status_table" {
   partition_key_type = "S"
   sort_key           = "ATTRIBUTE_TYPE"
   sort_key_type      = "S"
+  tags               = local.tags
 }

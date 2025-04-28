@@ -29,3 +29,9 @@ variable "sort_key_type" {
   type        = string
   default     = null
 }
+
+variable "tags" {
+  description = "A map of tags for the DynamoDB table"
+  type        = map(string)
+  default     = {}
+}
