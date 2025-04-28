@@ -4,281 +4,281 @@ from freezegun import freeze_time
 from eligibility_signposting_api.model.rules import RuleOperator
 from eligibility_signposting_api.services.rules.operators import AttributeData, Operator, OperatorRegistry
 
-cases: list[tuple[RuleOperator, AttributeData, AttributeData, bool]] = [
+cases: list[tuple[AttributeData, RuleOperator, AttributeData, bool]] = [
     # Equals
-    (RuleOperator.equals, "42", "42", True),
-    (RuleOperator.equals, "42", "", False),
-    (RuleOperator.equals, "42", None, False),
-    (RuleOperator.equals, "42", "99", False),
-    (RuleOperator.equals, "-1", "-1", True),
-    (RuleOperator.equals, "-1", "0", False),
-    (RuleOperator.equals, "-1", "", False),
-    (RuleOperator.equals, "-1", None, False),
-    (RuleOperator.equals, "", "", False),
-    (RuleOperator.equals, "", None, False),
-    (RuleOperator.equals, None, "", False),
-    (RuleOperator.equals, None, None, False),
-    (RuleOperator.equals, "42", "Fourtytwo", False),
+    ("42", RuleOperator.equals, "42", True),
+    ("", RuleOperator.equals, "42", False),
+    (None, RuleOperator.equals, "42", False),
+    ("99", RuleOperator.equals, "42", False),
+    ("-1", RuleOperator.equals, "-1", True),
+    ("0", RuleOperator.equals, "-1", False),
+    ("", RuleOperator.equals, "-1", False),
+    (None, RuleOperator.equals, "-1", False),
+    ("", RuleOperator.equals, "", False),
+    (None, RuleOperator.equals, "", False),
+    ("", RuleOperator.equals, None, False),
+    (None, RuleOperator.equals, None, False),
+    ("Fourtytwo", RuleOperator.equals, "42", False),
     # Greater Than
-    (RuleOperator.gt, "100", "101", True),
-    (RuleOperator.gt, "100", "100", False),
-    (RuleOperator.gt, "100", "99", False),
-    (RuleOperator.gt, "100", "", False),
-    (RuleOperator.gt, "100", None, False),
-    (RuleOperator.gt, "-1", "0", True),
-    (RuleOperator.gt, "-1", "-1", False),
-    (RuleOperator.gt, "-1", "-2", False),
-    (RuleOperator.gt, "-1", "", False),
-    (RuleOperator.gt, "-1", None, False),
+    ("101", RuleOperator.gt, "100", True),
+    ("100", RuleOperator.gt, "100", False),
+    ("99", RuleOperator.gt, "100", False),
+    ("", RuleOperator.gt, "100", False),
+    (None, RuleOperator.gt, "100", False),
+    ("0", RuleOperator.gt, "-1", True),
+    ("-1", RuleOperator.gt, "-1", False),
+    ("-2", RuleOperator.gt, "-1", False),
+    ("", RuleOperator.gt, "-1", False),
+    (None, RuleOperator.gt, "-1", False),
     # Less Than
-    (RuleOperator.lt, "100", "42", True),
-    (RuleOperator.lt, "100", "99", True),
-    (RuleOperator.lt, "100", "100", False),
-    (RuleOperator.lt, "100", "101", False),
-    (RuleOperator.lt, "100", "", False),
-    (RuleOperator.lt, "100", None, False),
-    (RuleOperator.lt, "-1", "-2", True),
-    (RuleOperator.lt, "-1", "-1", False),
-    (RuleOperator.lt, "-1", "0", False),
-    (RuleOperator.lt, "-1", "", False),
-    (RuleOperator.lt, "-1", None, False),
+    ("42", RuleOperator.lt, "100", True),
+    ("99", RuleOperator.lt, "100", True),
+    ("100", RuleOperator.lt, "100", False),
+    ("101", RuleOperator.lt, "100", False),
+    ("", RuleOperator.lt, "100", False),
+    (None, RuleOperator.lt, "100", False),
+    ("-2", RuleOperator.lt, "-1", True),
+    ("-1", RuleOperator.lt, "-1", False),
+    ("0", RuleOperator.lt, "-1", False),
+    ("", RuleOperator.lt, "-1", False),
+    (None, RuleOperator.lt, "-1", False),
     # Not Equals
-    (RuleOperator.ne, "27", "98", True),
-    (RuleOperator.ne, "27", "", False),
-    (RuleOperator.ne, "27", None, False),
-    (RuleOperator.ne, "27", "27", False),
-    (RuleOperator.ne, "-1", "-1", False),
-    (RuleOperator.ne, "-1", "0", True),
-    (RuleOperator.ne, "-1", "", False),
-    (RuleOperator.ne, "-1", None, False),
+    ("98", RuleOperator.ne, "27", True),
+    ("", RuleOperator.ne, "27", False),
+    (None, RuleOperator.ne, "27", False),
+    ("27", RuleOperator.ne, "27", False),
+    ("-1", RuleOperator.ne, "-1", False),
+    ("0", RuleOperator.ne, "-1", True),
+    ("", RuleOperator.ne, "-1", False),
+    (None, RuleOperator.ne, "-1", False),
     # Greater Than or Equal
-    (RuleOperator.gte, "100", "100", True),
-    (RuleOperator.gte, "100", "101", True),
-    (RuleOperator.gte, "100", "99", False),
-    (RuleOperator.gte, "100", "", False),
-    (RuleOperator.gte, "100", None, False),
-    (RuleOperator.gte, "-1", "0", True),
-    (RuleOperator.gte, "-1", "-1", True),
-    (RuleOperator.gte, "-1", "-2", False),
-    (RuleOperator.gte, "-1", "", False),
-    (RuleOperator.gte, "-1", None, False),
+    ("100", RuleOperator.gte, "100", True),
+    ("101", RuleOperator.gte, "100", True),
+    ("99", RuleOperator.gte, "100", False),
+    ("", RuleOperator.gte, "100", False),
+    (None, RuleOperator.gte, "100", False),
+    ("0", RuleOperator.gte, "-1", True),
+    ("-1", RuleOperator.gte, "-1", True),
+    ("-2", RuleOperator.gte, "-1", False),
+    ("", RuleOperator.gte, "-1", False),
+    (None, RuleOperator.gte, "-1", False),
     # Less Than or Equal
-    (RuleOperator.lte, "100", "99", True),
-    (RuleOperator.lte, "100", "100", True),
-    (RuleOperator.lte, "100", "101", False),
-    (RuleOperator.lte, "100", "", False),
-    (RuleOperator.lte, "100", None, False),
-    (RuleOperator.lte, "-1", "-2", True),
-    (RuleOperator.lte, "-1", "-1", True),
-    (RuleOperator.lte, "-1", "0", False),
-    (RuleOperator.lte, "-1", "", False),
-    (RuleOperator.lte, "-1", None, False),
+    ("99", RuleOperator.lte, "100", True),
+    ("100", RuleOperator.lte, "100", True),
+    ("101", RuleOperator.lte, "100", False),
+    ("", RuleOperator.lte, "100", False),
+    (None, RuleOperator.lte, "100", False),
+    ("-2", RuleOperator.lte, "-1", True),
+    ("-1", RuleOperator.lte, "-1", True),
+    ("0", RuleOperator.lte, "-1", False),
+    ("", RuleOperator.lte, "-1", False),
+    (None, RuleOperator.lte, "-1", False),
     # Is Null
-    (RuleOperator.is_null, None, "", True),
-    (RuleOperator.is_null, None, None, True),
-    (RuleOperator.is_null, None, "email_flag", False),
-    (RuleOperator.is_null, None, 42, False),
+    ("", RuleOperator.is_null, None, True),
+    (None, RuleOperator.is_null, None, True),
+    ("email_flag", RuleOperator.is_null, None, False),
+    (42, RuleOperator.is_null, None, False),
     # Is Not Null
-    (RuleOperator.is_not_null, None, "", False),
-    (RuleOperator.is_not_null, None, None, False),
-    (RuleOperator.is_not_null, None, "email_flag", True),
-    (RuleOperator.is_not_null, None, 42, True),
+    ("", RuleOperator.is_not_null, None, False),
+    (None, RuleOperator.is_not_null, None, False),
+    ("email_flag", RuleOperator.is_not_null, None, True),
+    (42, RuleOperator.is_not_null, None, True),
     # Between - inclusive
-    (RuleOperator.between, "1,3", "0", False),
-    (RuleOperator.between, "1,3", "1", True),
-    (RuleOperator.between, "1,3", "2", True),
-    (RuleOperator.between, "1,3", "3", True),
-    (RuleOperator.between, "1,3", "4", False),
-    (RuleOperator.between, "1,3", "", False),
-    (RuleOperator.between, "1,3", None, False),
-    (RuleOperator.between, "3,1", "0", False),
-    (RuleOperator.between, "3,1", "1", True),
-    (RuleOperator.between, "3,1", "2", True),
-    (RuleOperator.between, "3,1", "3", True),
-    (RuleOperator.between, "3,1", "4", False),
-    (RuleOperator.between, "3,1", "", False),
-    (RuleOperator.between, "3,1", None, False),
-    (RuleOperator.between, "3,3", "2", False),
-    (RuleOperator.between, "3,3", "3", True),
-    (RuleOperator.between, "3,3", "4", False),
-    (RuleOperator.between, "3,3", "", False),
-    (RuleOperator.between, "3,3", None, False),
-    (RuleOperator.between, "20100302,20100304", "20100301", False),
-    (RuleOperator.between, "20100302,20100304", "20100302", True),
-    (RuleOperator.between, "20100302,20100304", "20100303", True),
-    (RuleOperator.between, "20100302,20100304", "20100304", True),
-    (RuleOperator.between, "20100302,20100304", "20100305", False),
-    (RuleOperator.between, "20100302,20100304", "", False),
-    (RuleOperator.between, "20100302,20100304", None, False),
+    ("0", RuleOperator.is_between, "1,3", False),
+    ("1", RuleOperator.is_between, "1,3", True),
+    ("2", RuleOperator.is_between, "1,3", True),
+    ("3", RuleOperator.is_between, "1,3", True),
+    ("4", RuleOperator.is_between, "1,3", False),
+    ("", RuleOperator.is_between, "1,3", False),
+    (None, RuleOperator.is_between, "1,3", False),
+    ("0", RuleOperator.is_between, "3,1", False),
+    ("1", RuleOperator.is_between, "3,1", True),
+    ("2", RuleOperator.is_between, "3,1", True),
+    ("3", RuleOperator.is_between, "3,1", True),
+    ("4", RuleOperator.is_between, "3,1", False),
+    ("", RuleOperator.is_between, "3,1", False),
+    (None, RuleOperator.is_between, "3,1", False),
+    ("2", RuleOperator.is_between, "3,3", False),
+    ("3", RuleOperator.is_between, "3,3", True),
+    ("4", RuleOperator.is_between, "3,3", False),
+    ("", RuleOperator.is_between, "3,3", False),
+    (None, RuleOperator.is_between, "3,3", False),
+    ("20100301", RuleOperator.is_between, "20100302,20100304", False),
+    ("20100302", RuleOperator.is_between, "20100302,20100304", True),
+    ("20100303", RuleOperator.is_between, "20100302,20100304", True),
+    ("20100304", RuleOperator.is_between, "20100302,20100304", True),
+    ("20100305", RuleOperator.is_between, "20100302,20100304", False),
+    ("", RuleOperator.is_between, "20100302,20100304", False),
+    (None, RuleOperator.is_between, "20100302,20100304", False),
     # Not Between
-    (RuleOperator.not_between, "1,3", "0", True),
-    (RuleOperator.not_between, "1,3", "1", False),
-    (RuleOperator.not_between, "1,3", "2", False),
-    (RuleOperator.not_between, "1,3", "3", False),
-    (RuleOperator.not_between, "1,3", "4", True),
-    (RuleOperator.not_between, "1,3", "", False),
-    (RuleOperator.not_between, "1,3", None, False),
-    (RuleOperator.not_between, "3,1", "0", True),
-    (RuleOperator.not_between, "3,1", "1", False),
-    (RuleOperator.not_between, "3,1", "2", False),
-    (RuleOperator.not_between, "3,1", "3", False),
-    (RuleOperator.not_between, "3,1", "4", True),
-    (RuleOperator.not_between, "3,1", "", False),
-    (RuleOperator.not_between, "3,1", None, False),
-    (RuleOperator.not_between, "3,3", "2", True),
-    (RuleOperator.not_between, "3,3", "3", False),
-    (RuleOperator.not_between, "3,3", "4", True),
-    (RuleOperator.not_between, "3,3", "", False),
-    (RuleOperator.not_between, "3,3", None, False),
+    ("0", RuleOperator.is_not_between, "1,3", True),
+    ("1", RuleOperator.is_not_between, "1,3", False),
+    ("2", RuleOperator.is_not_between, "1,3", False),
+    ("3", RuleOperator.is_not_between, "1,3", False),
+    ("4", RuleOperator.is_not_between, "1,3", True),
+    ("", RuleOperator.is_not_between, "1,3", False),
+    (None, RuleOperator.is_not_between, "1,3", False),
+    ("0", RuleOperator.is_not_between, "3,1", True),
+    ("1", RuleOperator.is_not_between, "3,1", False),
+    ("2", RuleOperator.is_not_between, "3,1", False),
+    ("3", RuleOperator.is_not_between, "3,1", False),
+    ("4", RuleOperator.is_not_between, "3,1", True),
+    ("", RuleOperator.is_not_between, "3,1", False),
+    (None, RuleOperator.is_not_between, "3,1", False),
+    ("2", RuleOperator.is_not_between, "3,3", True),
+    ("3", RuleOperator.is_not_between, "3,3", False),
+    ("4", RuleOperator.is_not_between, "3,3", True),
+    ("", RuleOperator.is_not_between, "3,3", False),
+    (None, RuleOperator.is_not_between, "3,3", False),
     # Is Empty
-    (RuleOperator.is_empty, None, "", True),
-    (RuleOperator.is_empty, None, ",", True),
-    (RuleOperator.is_empty, None, ",,,,", True),
-    (RuleOperator.is_empty, None, ", , , ,", True),
-    (RuleOperator.is_empty, None, "  ,  ,  ,  ,  ", True),
-    (RuleOperator.is_empty, None, None, True),
-    (RuleOperator.is_empty, None, "              ", True),
-    (RuleOperator.is_empty, None, "a", False),
-    (RuleOperator.is_empty, None, "this is not empty", False),
-    (RuleOperator.is_empty, None, "a,", False),
-    (RuleOperator.is_empty, None, ",a", False),
-    (RuleOperator.is_empty, None, "a,b,c", False),
+    ("", RuleOperator.is_empty, None, True),
+    (",", RuleOperator.is_empty, None, True),
+    (",,,,", RuleOperator.is_empty, None, True),
+    (", , , ,", RuleOperator.is_empty, None, True),
+    ("  ,  ,  ,  ,  ", RuleOperator.is_empty, None, True),
+    (None, RuleOperator.is_empty, None, True),
+    ("              ", RuleOperator.is_empty, None, True),
+    ("a", RuleOperator.is_empty, None, False),
+    ("this is not empty", RuleOperator.is_empty, None, False),
+    ("a,", RuleOperator.is_empty, None, False),
+    (",a", RuleOperator.is_empty, None, False),
+    ("a,b,c", RuleOperator.is_empty, None, False),
     # Is Not Empty
-    (RuleOperator.is_not_empty, None, "a", True),
-    (RuleOperator.is_not_empty, None, "this is not empty", True),
-    (RuleOperator.is_not_empty, None, "a,", True),
-    (RuleOperator.is_not_empty, None, ",a", True),
-    (RuleOperator.is_not_empty, None, "a,b,c", True),
-    (RuleOperator.is_not_empty, None, "", False),
-    (RuleOperator.is_not_empty, None, ",", False),
-    (RuleOperator.is_not_empty, None, ",,,,", False),
-    (RuleOperator.is_not_empty, None, ", , , ,", False),
-    (RuleOperator.is_not_empty, None, "  ,  ,  ,  ,  ", False),
-    (RuleOperator.is_not_empty, None, None, False),
-    (RuleOperator.is_not_empty, None, "              ", False),
+    ("a", RuleOperator.is_not_empty, None, True),
+    ("this is not empty", RuleOperator.is_not_empty, None, True),
+    ("a,", RuleOperator.is_not_empty, None, True),
+    (",a", RuleOperator.is_not_empty, None, True),
+    ("a,b,c", RuleOperator.is_not_empty, None, True),
+    ("", RuleOperator.is_not_empty, None, False),
+    (",", RuleOperator.is_not_empty, None, False),
+    (",,,,", RuleOperator.is_not_empty, None, False),
+    (", , , ,", RuleOperator.is_not_empty, None, False),
+    ("  ,  ,  ,  ,  ", RuleOperator.is_not_empty, None, False),
+    (None, RuleOperator.is_not_empty, None, False),
+    ("              ", RuleOperator.is_not_empty, None, False),
     # Is True
-    (RuleOperator.is_true, None, True, True),
-    (RuleOperator.is_true, None, False, False),
-    (RuleOperator.is_true, None, "", False),
-    (RuleOperator.is_true, None, None, False),
-    (RuleOperator.is_true, None, "True", False),
+    (True, RuleOperator.is_true, None, True),
+    (False, RuleOperator.is_true, None, False),
+    ("", RuleOperator.is_true, None, False),
+    (None, RuleOperator.is_true, None, False),
+    ("True", RuleOperator.is_true, None, False),
     # Is False
-    (RuleOperator.is_false, None, False, True),
-    (RuleOperator.is_false, None, True, False),
-    (RuleOperator.is_false, None, "", False),
-    (RuleOperator.is_false, None, None, False),
-    (RuleOperator.is_false, None, "False", False),
-    # Has it contains
-    (RuleOperator.contains, "A12", "A12 3DC", True),
-    (RuleOperator.contains, "A12", "A12", True),
-    (RuleOperator.contains, "A12", None, False),
-    (RuleOperator.contains, "A12", "", False),
-    (RuleOperator.contains, "A12", "A23", False),
-    (RuleOperator.contains, "A12", 23, False),
-    # Has it not_contains
-    (RuleOperator.not_contains, "A12", "A22", True),
-    (RuleOperator.not_contains, "A12", None, True),
-    (RuleOperator.not_contains, "A12", "", True),
-    (RuleOperator.not_contains, "A12", 23, True),
-    (RuleOperator.not_contains, "A12", "A12", False),
-    # Does it starts_with
-    (RuleOperator.starts_with, "YY66", "YY66", True),
-    (RuleOperator.starts_with, "YY66", "YY66095", True),
-    (RuleOperator.starts_with, "YY66", "BB11", False),
-    (RuleOperator.starts_with, "YY66", "BYY66095", False),
-    (RuleOperator.starts_with, "YY66", "  YY66", False),
-    (RuleOperator.starts_with, "YY66", None, False),
-    (RuleOperator.starts_with, "YY66", "", False),
-    # Does it not_starts_with
-    (RuleOperator.not_starts_with, "YY66", "YY66", False),
-    (RuleOperator.not_starts_with, "YY66", "YY66095", False),
-    (RuleOperator.not_starts_with, "YY66", "BB11", True),
-    (RuleOperator.not_starts_with, "YY66", "BYY66095", True),
-    (RuleOperator.not_starts_with, "YY66", "  YY66", True),
-    (RuleOperator.not_starts_with, "YY66", None, True),
-    (RuleOperator.not_starts_with, "YY66", "", True),
-    # Does it ends_with
-    (RuleOperator.ends_with, "2BA", "2BA", True),
-    (RuleOperator.ends_with, "2BA", "002BA", True),
-    (RuleOperator.ends_with, "2BA", None, False),
-    (RuleOperator.ends_with, "2BA", "", False),
-    (RuleOperator.ends_with, "2BA", "2BA00", False),
+    (False, RuleOperator.is_false, None, True),
+    (True, RuleOperator.is_false, None, False),
+    ("", RuleOperator.is_false, None, False),
+    (None, RuleOperator.is_false, None, False),
+    ("False", RuleOperator.is_false, None, False),
+    # Contains
+    ("A12 3DC", RuleOperator.contains, "A12", True),
+    ("A12", RuleOperator.contains, "A12", True),
+    (None, RuleOperator.contains, "A12", False),
+    ("", RuleOperator.contains, "A12", False),
+    ("A23", RuleOperator.contains, "A12", False),
+    (23, RuleOperator.contains, "A12", False),
+    # Not Contains
+    ("A22", RuleOperator.not_contains, "A12", True),
+    (None, RuleOperator.not_contains, "A12", True),
+    ("", RuleOperator.not_contains, "A12", True),
+    (23, RuleOperator.not_contains, "A12", True),
+    ("A12", RuleOperator.not_contains, "A12", False),
+    # Starts With
+    ("YY66", RuleOperator.starts_with, "YY66", True),
+    ("YY66095", RuleOperator.starts_with, "YY66", True),
+    ("BB11", RuleOperator.starts_with, "YY66", False),
+    ("BYY66095", RuleOperator.starts_with, "YY66", False),
+    ("  YY66", RuleOperator.starts_with, "YY66", False),
+    (None, RuleOperator.starts_with, "YY66", False),
+    ("", RuleOperator.starts_with, "YY66", False),
+    # Not Starts With
+    ("YY66", RuleOperator.not_starts_with, "YY66", False),
+    ("YY66095", RuleOperator.not_starts_with, "YY66", False),
+    ("BB11", RuleOperator.not_starts_with, "YY66", True),
+    ("BYY66095", RuleOperator.not_starts_with, "YY66", True),
+    ("  YY66", RuleOperator.not_starts_with, "YY66", True),
+    (None, RuleOperator.not_starts_with, "YY66", True),
+    ("", RuleOperator.not_starts_with, "YY66", True),
+    # Ends With
+    ("2BA", RuleOperator.ends_with, "2BA", True),
+    ("002BA", RuleOperator.ends_with, "2BA", True),
+    (None, RuleOperator.ends_with, "2BA", False),
+    ("", RuleOperator.ends_with, "2BA", False),
+    ("2BA00", RuleOperator.ends_with, "2BA", False),
     # is_in
-    (RuleOperator.is_in, "QH8,QJG", "", False),
-    (RuleOperator.is_in, "QH8,QJG", None, False),
-    (RuleOperator.is_in, "QH8,QJG", "AZ1", False),
-    (RuleOperator.is_in, "QH8,QJG", "QH8", True),
+    ("", RuleOperator.is_in, "QH8,QJG", False),
+    (None, RuleOperator.is_in, "QH8,QJG", False),
+    ("AZ1", RuleOperator.is_in, "QH8,QJG", False),
+    ("QH8", RuleOperator.is_in, "QH8,QJG", True),
     # is not_in
-    (RuleOperator.not_in, "QH8,QJG", "", True),
-    (RuleOperator.not_in, "QH8,QJG", None, True),
-    (RuleOperator.not_in, "QH8,QJG", "AZ1", True),
-    (RuleOperator.not_in, "QH8,QJG", "QH8", False),
+    ("", RuleOperator.not_in, "QH8,QJG", True),
+    (None, RuleOperator.not_in, "QH8,QJG", True),
+    ("AZ1", RuleOperator.not_in, "QH8,QJG", True),
+    ("QH8", RuleOperator.not_in, "QH8,QJG", False),
     # is member_of
-    (RuleOperator.member_of, "cohort1", "cohort1,cohort2", True),
-    (RuleOperator.member_of, "cohort1", None, False),
-    (RuleOperator.member_of, "cohort1", "", False),
-    (RuleOperator.member_of, "cohort1", "cohort3", False),
+    ("cohort1,cohort2", RuleOperator.member_of, "cohort1", True),
+    (None, RuleOperator.member_of, "cohort1", False),
+    ("", RuleOperator.member_of, "cohort1", False),
+    ("cohort3", RuleOperator.member_of, "cohort1", False),
     # is not_member_of
-    (RuleOperator.not_member_of, "cohort1", "cohort1,cohort2", False),
-    (RuleOperator.not_member_of, "cohort1", None, True),
-    (RuleOperator.not_member_of, "cohort1", "", True),
-    (RuleOperator.not_member_of, "cohort1", "cohort3", True),
+    ("cohort1,cohort2", RuleOperator.not_member_of, "cohort1", False),
+    (None, RuleOperator.not_member_of, "cohort1", True),
+    ("", RuleOperator.not_member_of, "cohort1", True),
+    ("cohort3", RuleOperator.not_member_of, "cohort1", True),
     # Day lesser than or equal to
-    (RuleOperator.day_lte, "2", "20250426", True),  # Past date
-    (RuleOperator.day_lte, "2", "20250427", True),  # Present date
-    (RuleOperator.day_lte, "2", "20250428", False),  # Future date
-    (RuleOperator.day_lte, "2", "", False),  # Case empty string: behaves the same for all the date operators
-    (RuleOperator.day_lte, "2", None, False),  # Case None: behaves the same for all the date operators
+    ("20250426", RuleOperator.day_lte, "2", True),  # Past date
+    ("20250427", RuleOperator.day_lte, "2", True),  # Present date
+    ("20250428", RuleOperator.day_lte, "2", False),  # Future date
+    ("", RuleOperator.day_lte, "2", False),  # Case empty string
+    (None, RuleOperator.day_lte, "2", False),  # Case None
     # Day less than
-    (RuleOperator.day_lt, "2", "20250426", True),  # Past date
-    (RuleOperator.day_lt, "2", "20250427", False),  # Present date
-    (RuleOperator.day_lt, "2", "20250428", False),  # Future date
+    ("20250426", RuleOperator.day_lt, "2", True),  # Past date
+    ("20250427", RuleOperator.day_lt, "2", False),  # Present date
+    ("20250428", RuleOperator.day_lt, "2", False),  # Future date
     # Day greater than or equal to
-    (RuleOperator.day_gte, "2", "20250426", False),  # Past date
-    (RuleOperator.day_gte, "2", "20250427", True),  # Present date
-    (RuleOperator.day_gte, "2", "20250428", True),  # Future date
+    ("20250426", RuleOperator.day_gte, "2", False),  # Past date
+    ("20250427", RuleOperator.day_gte, "2", True),  # Present date
+    ("20250428", RuleOperator.day_gte, "2", True),  # Future date
     # Day greater than
-    (RuleOperator.day_gt, "2", "20250426", False),  # Past date
-    (RuleOperator.day_gt, "2", "20250427", False),  # Present date
-    (RuleOperator.day_gt, "2", "20250428", True),  # Future date
+    ("20250426", RuleOperator.day_gt, "2", False),  # Past date
+    ("20250427", RuleOperator.day_gt, "2", False),  # Present date
+    ("20250428", RuleOperator.day_gt, "2", True),  # Future date
     # Week lesser than or equal to
-    (RuleOperator.week_lte, 2, "20250502", True),  # Past week
-    (RuleOperator.week_lte, 2, "20250509", True),  # Present week
-    (RuleOperator.week_lte, 2, "20250516", False),  # Future week
+    ("20250502", RuleOperator.week_lte, 2, True),  # Past week
+    ("20250509", RuleOperator.week_lte, 2, True),  # Present week
+    ("20250516", RuleOperator.week_lte, 2, False),  # Future week
     # Week less than
-    (RuleOperator.week_lt, 2, "20250502", True),  # Past week
-    (RuleOperator.week_lt, 2, "20250509", False),  # Present week
-    (RuleOperator.week_lt, 2, "20250516", False),  # Future week
+    ("20250502", RuleOperator.week_lt, 2, True),  # Past week
+    ("20250509", RuleOperator.week_lt, 2, False),  # Present week
+    ("20250516", RuleOperator.week_lt, 2, False),  # Future week
     # Week greater than or equal to
-    (RuleOperator.week_gte, 2, "20250502", False),  # Past week
-    (RuleOperator.week_gte, 2, "20250509", True),  # Present week
-    (RuleOperator.week_gte, 2, "20250516", True),  # Future week
+    ("20250502", RuleOperator.week_gte, 2, False),  # Past week
+    ("20250509", RuleOperator.week_gte, 2, True),  # Present week
+    ("20250516", RuleOperator.week_gte, 2, True),  # Future week
     # Week greater than
-    (RuleOperator.week_gt, 2, "20250502", False),  # Past week
-    (RuleOperator.week_gt, 2, "20250509", False),  # Present week
-    (RuleOperator.week_gt, 2, "20250516", True),  # Future week
+    ("20250502", RuleOperator.week_gt, 2, False),  # Past week
+    ("20250509", RuleOperator.week_gt, 2, False),  # Present week
+    ("20250516", RuleOperator.week_gt, 2, True),  # Future week
     # Year lesser than or equal to
-    (RuleOperator.year_lte, 2, "20260425", True),  # Past year
-    (RuleOperator.year_lte, 2, "20270425", True),  # Present year
-    (RuleOperator.year_lte, 2, "20280425", False),  # Future year
+    ("20260425", RuleOperator.year_lte, 2, True),  # Past year
+    ("20270425", RuleOperator.year_lte, 2, True),  # Present year
+    ("20280425", RuleOperator.year_lte, 2, False),  # Future year
     # Year lesser than
-    (RuleOperator.year_lt, 2, "20260425", True),  # Past year
-    (RuleOperator.year_lt, 2, "20270425", False),  # Present year
-    (RuleOperator.year_lt, 2, "20280425", False),  # Future year
+    ("20260425", RuleOperator.year_lt, 2, True),  # Past year
+    ("20270425", RuleOperator.year_lt, 2, False),  # Present year
+    ("20280425", RuleOperator.year_lt, 2, False),  # Future year
     # Year greater than or equal to
-    (RuleOperator.year_gte, 2, "20260425", False),  # Past year
-    (RuleOperator.year_gte, 2, "20270425", True),  # Present year
-    (RuleOperator.year_gte, 2, "20280425", True),  # Future year
+    ("20260425", RuleOperator.year_gte, 2, False),  # Past year
+    ("20270425", RuleOperator.year_gte, 2, True),  # Present year
+    ("20280425", RuleOperator.year_gte, 2, True),  # Future year
     # Year greater than
-    (RuleOperator.year_gt, 2, "20260425", False),  # Past year
-    (RuleOperator.year_gt, 2, "20270425", False),  # Present year
-    (RuleOperator.year_gt, 2, "20280425", True),  # Future year
+    ("20260425", RuleOperator.year_gt, 2, False),  # Past year
+    ("20270425", RuleOperator.year_gt, 2, False),  # Present year
+    ("20280425", RuleOperator.year_gt, 2, True),  # Future year
 ]
 
 
 @freeze_time("2025-04-25")
-@pytest.mark.parametrize(("rule_operator", "rule_value", "person_data", "expected"), cases)
-def test_operator(rule_operator: RuleOperator, rule_value: AttributeData, person_data: AttributeData, expected: bool):  # noqa: FBT001
+@pytest.mark.parametrize(("person_data", "rule_operator", "rule_value", "expected"), cases)
+def test_operator(person_data: AttributeData, rule_operator: RuleOperator, rule_value: AttributeData, expected: bool):  # noqa: FBT001
     # Given
     operator_class: type[Operator] = OperatorRegistry.get(rule_operator)
     operator: Operator = operator_class(rule_value=rule_value)

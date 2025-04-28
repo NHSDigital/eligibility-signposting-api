@@ -163,7 +163,7 @@ class RangeOperator(Operator, ABC):
         self.high_comparator = max(int(low_comparator_str), int(high_comparator_str))
 
 
-@OperatorRegistry.register(RuleOperator.between)
+@OperatorRegistry.register(RuleOperator.is_between)
 class Between(RangeOperator):
     def _matches(self, item: AttributeData) -> bool:
         if item in (None, ""):
@@ -171,7 +171,7 @@ class Between(RangeOperator):
         return self.low_comparator <= int(item) <= self.high_comparator
 
 
-@OperatorRegistry.register(RuleOperator.not_between)
+@OperatorRegistry.register(RuleOperator.is_not_between)
 class NotBetween(RangeOperator):
     def _matches(self, item: AttributeData) -> bool:
         if item in (None, ""):
