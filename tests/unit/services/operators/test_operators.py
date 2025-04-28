@@ -281,6 +281,7 @@ cases: list[tuple[AttributeData, RuleOperator, AttributeData, bool, str]] = [
 @freeze_time("2025-04-25")
 @pytest.mark.parametrize(("person_data", "rule_operator", "rule_value", "expected", "test_comment"), cases)
 def test_operator(
+    *,
     person_data: AttributeData,
     rule_operator: RuleOperator,
     rule_value: AttributeData,
