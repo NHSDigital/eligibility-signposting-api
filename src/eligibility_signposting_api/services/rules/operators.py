@@ -1,5 +1,6 @@
 import logging
 import operator
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -12,19 +13,19 @@ from hamcrest.core.description import Description
 
 from eligibility_signposting_api.model.rules import RuleOperator
 
-AttributeData = str | int | bool | None
+AttributeData = str | None
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class Operator(BaseMatcher[AttributeData], ABC):
-    rule_comparator: str
+    rule_value: str
 
     @abstractmethod
     def _matches(self, item: AttributeData) -> bool: ...
 
     def describe_to(self, description: Description) -> None:
-        description.append_text(f"need {self.rule_comparator} matching: {self.__class__.__name__}")
+        description.append_text(f"need {self.rule_value} matching: {self.__class__.__name__}")
 
 
 class OperatorRegistry:
@@ -50,11 +51,19 @@ class ComparisonOperator(Operator, ABC):
     comparator: ClassVar[Callable[[AttributeData, AttributeData], bool]]
 
     def _matches(self, item: AttributeData) -> bool:
-        data_comparator = cast("Callable[[AttributeData, AttributeData], bool]", self.comparator)
-        return bool(item) and data_comparator(int(item), int(self.rule_comparator))
+        data_comparator = cast("Callable[[str|int, str|int], bool]", self.comparator)
+        person_data: str | int
+        rule_value: str | int
+        if not item or not self.rule_value:
+            return False
+        if re.match(r"-?\d+$", item) and re.match(r"-?\d+$", self.rule_value):
+            person_data, rule_value = int(item), int(self.rule_value)
+        else:
+            person_data, rule_value = str(item), str(self.rule_value)
+        return data_comparator(person_data, rule_value)
 
     def describe_to(self, description: Description) -> None:
-        description.append_text(f"{self.__class__.__name__} (item {self.comparator.__name__} {self.rule_comparator})")
+        description.append_text(f"{self.__class__.__name__} (item {self.comparator.__name__} {self.rule_value})")
 
 
 COMPARISON_OPERATORS = [
@@ -79,44 +88,44 @@ for rule_operator, comparator in COMPARISON_OPERATORS:
 @OperatorRegistry.register(RuleOperator.contains)
 class Contains(Operator):
     def _matches(self, item: AttributeData) -> bool:
-        return bool(item) and self.rule_comparator in str(item)
+        return bool(item) and self.rule_value in str(item)
 
 
 @OperatorRegistry.register(RuleOperator.not_contains)
 class NotContains(Operator):
     def _matches(self, item: AttributeData) -> bool:
-        return self.rule_comparator not in str(item)
+        return self.rule_value not in str(item)
 
 
 @OperatorRegistry.register(RuleOperator.starts_with)
 class StartsWith(Operator):
     def _matches(self, item: AttributeData) -> bool:
-        return str(item).startswith(self.rule_comparator)
+        return str(item).startswith(self.rule_value)
 
 
 @OperatorRegistry.register(RuleOperator.not_starts_with)
 class NotStartsWith(Operator):
     def _matches(self, item: AttributeData) -> bool:
-        return not str(item).startswith(self.rule_comparator)
+        return not str(item).startswith(self.rule_value)
 
 
 @OperatorRegistry.register(RuleOperator.ends_with)
 class EndsWith(Operator):
     def _matches(self, item: AttributeData) -> bool:
-        return str(item).endswith(self.rule_comparator)
+        return str(item).endswith(self.rule_value)
 
 
 @OperatorRegistry.register(RuleOperator.is_in)
 class IsIn(Operator):
     def _matches(self, item: AttributeData) -> bool:
-        comparators = str(self.rule_comparator).split(",")
+        comparators = str(self.rule_value).split(",")
         return str(item) in comparators
 
 
 @OperatorRegistry.register(RuleOperator.not_in)
 class NotIn(Operator):
     def _matches(self, item: AttributeData) -> bool:
-        comparators = str(self.rule_comparator).split(",")
+        comparators = str(self.rule_value).split(",")
         return str(item) not in comparators
 
 
@@ -124,14 +133,14 @@ class NotIn(Operator):
 class MemberOf(Operator):
     def _matches(self, item: AttributeData) -> bool:
         attribute_values = str(item).split(",")
-        return self.rule_comparator in attribute_values
+        return self.rule_value in attribute_values
 
 
 @OperatorRegistry.register(RuleOperator.not_member_of)
 class NotMemberOf(Operator):
     def _matches(self, item: AttributeData) -> bool:
         attribute_values = str(item).split(",")
-        return self.rule_comparator not in attribute_values
+        return self.rule_value not in attribute_values
 
 
 @OperatorRegistry.register(RuleOperator.is_null)
@@ -147,9 +156,9 @@ class IsNotNull(Operator):
 
 
 class RangeOperator(Operator, ABC):
-    def __init__(self, rule_comparator: str) -> None:
-        super().__init__(rule_comparator=rule_comparator)
-        low_comparator_str, high_comparator_str = str(self.rule_comparator).split(",")
+    def __init__(self, rule_value: str) -> None:
+        super().__init__(rule_value=rule_value)
+        low_comparator_str, high_comparator_str = str(self.rule_value).split(",")
         self.low_comparator = min(int(low_comparator_str), int(high_comparator_str))
         self.high_comparator = max(int(low_comparator_str), int(high_comparator_str))
 
@@ -209,7 +218,7 @@ class DateOperator(Operator, ABC):
     @property
     def cutoff(self) -> date:
         delta = relativedelta()
-        setattr(delta, self.delta_type, int(self.rule_comparator))
+        setattr(delta, self.delta_type, int(self.rule_value))
         return self.today + delta
 
     def _matches(self, item: AttributeData) -> bool:
@@ -221,7 +230,7 @@ class DateOperator(Operator, ABC):
     def describe_to(self, description: Description) -> None:
         description.append_text(
             f"{self.__class__.__name__} "
-            f"(attribute_date {self.comparator.__name__} today + {self.rule_comparator} {self.delta_type})"
+            f"(attribute_date {self.comparator.__name__} today + {self.rule_value} {self.delta_type})"
         )
 
 
@@ -242,9 +251,12 @@ DATE_OPERATORS = [
 
 for rule_operator, delta_type, comparator in DATE_OPERATORS:
     OperatorRegistry.register(rule_operator)(
-        type(
-            f"_{rule_operator.name}",
-            (DateOperator,),
-            {"delta_type": delta_type, "comparator": comparator, "__module__": __name__},
+        cast(
+            "type[Operator]",
+            type(
+                f"_{rule_operator.name}",
+                (DateOperator,),
+                {"delta_type": delta_type, "comparator": comparator, "__module__": __name__},
+            ),
         )
     )

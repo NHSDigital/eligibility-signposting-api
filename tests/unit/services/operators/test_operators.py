@@ -14,6 +14,10 @@ cases: list[tuple[RuleOperator, AttributeData, AttributeData, bool]] = [
     (RuleOperator.equals, "-1", "0", False),
     (RuleOperator.equals, "-1", "", False),
     (RuleOperator.equals, "-1", None, False),
+    (RuleOperator.equals, "", "", False),
+    (RuleOperator.equals, "", None, False),
+    (RuleOperator.equals, None, "", False),
+    (RuleOperator.equals, None, None, False),
     # Greater Than
     (RuleOperator.gt, "100", "101", True),
     (RuleOperator.gt, "100", "100", False),
@@ -215,14 +219,14 @@ cases: list[tuple[RuleOperator, AttributeData, AttributeData, bool]] = [
 
 
 @freeze_time("2025-04-25")
-@pytest.mark.parametrize(("rule_operator", "comparator", "attribute", "expected"), cases)
-def test_operator(rule_operator: RuleOperator, comparator: AttributeData, attribute: AttributeData, expected: bool):  # noqa: FBT001
+@pytest.mark.parametrize(("rule_operator", "rule_value", "person_data", "expected"), cases)
+def test_operator(rule_operator: RuleOperator, rule_value: AttributeData, person_data: AttributeData, expected: bool):  # noqa: FBT001
     # Given
     operator_class: type[Operator] = OperatorRegistry.get(rule_operator)
-    operator: Operator = operator_class(rule_comparator=comparator)
+    operator: Operator = operator_class(rule_value=rule_value)
 
     # When
-    actual = operator.matches(attribute)
+    actual = operator.matches(person_data)
 
     # Then
     assert actual is expected

@@ -7,7 +7,7 @@ from eligibility_signposting_api.model.rules import CampaignConfig, IterationRul
 from eligibility_signposting_api.repos import EligibilityRepo, NotFoundError, RulesRepo
 from eligibility_signposting_api.services.rules.operators import OperatorRegistry
 
-PersonData = str | int | bool | None
+PersonData = str | None
 logger = logging.getLogger(__name__)
 
 
