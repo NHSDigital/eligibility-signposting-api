@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "dynamodb_table" {
-  name         = "${var.workspace}-${var.table_name}"
+  name         = "${var.workspace}-${var.table_name_suffix}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = var.partition_key
 

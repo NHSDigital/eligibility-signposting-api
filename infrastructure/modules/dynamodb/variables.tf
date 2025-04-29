@@ -3,7 +3,7 @@ variable "workspace" {
   type        = string
 }
 
-variable "table_name" {
+variable "table_name_suffix" {
   description = "Name of the DynamoDB table"
   type        = string
 }

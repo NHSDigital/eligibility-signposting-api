@@ -22,12 +22,12 @@ data "aws_iam_policy_document" "write_assume_role" {
 
 # Lambda read role
 resource "aws_iam_role" "lambda_read_role" {
-  name               = "LambdaReadRole"
+  name               = "dynamodb-lambda-read-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
 
 # External write role
 resource "aws_iam_role" "write_access_role" {
-  name               = "ExternalWriteRole"
+  name               = "dynamodb-external-write-role"
   assume_role_policy = data.aws_iam_policy_document.write_assume_role.json
 }
