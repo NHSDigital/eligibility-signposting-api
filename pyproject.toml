@@ -34,6 +34,7 @@ wireup = "^1.0.1"
 python-json-logger = "^3.3.0"
 fhir-resources = "^8.0.0"
 python-dateutil = "^2.9.0"
+pyhamcrest = "^2.1.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.11.0"
@@ -48,13 +49,13 @@ pytest-nhsd-apim = "^5.0.0"
 aiohttp = "^3.11.12"
 awscli = "^1.37.24"
 awscli-local = "^0.22.0"
-pyhamcrest = "^2.1.0"
 polyfactory = "^2.20.0"
 pyright = "^1.1.394"
 brunns-matchers = "^2.9.0"
 localstack = "^4.1.1"
 pytest-docker = "^3.2.0"
 stamina = "^25.1.0"
+pytest-freezer = "^0.4.9"
 
 [tool.poetry-plugin-lambda-build]
 docker-image = "public.ecr.aws/sam/build-python3.13:1.137.1-x86_64"

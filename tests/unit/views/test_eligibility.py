@@ -5,11 +5,12 @@ from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask import Flask
 from flask.testing import FlaskClient
-from hamcrest import assert_that, contains_exactly, has_entries
+from hamcrest import assert_that, contains_exactly, has_entries, has_key
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.model.eligibility import EligibilityStatus, NHSNumber
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
+from tests.utils.builders import EligibilityStatusFactory
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class FakeEligibilityService(EligibilityService):
         pass
 
     def get_eligibility_status(self, _: NHSNumber | None = None) -> EligibilityStatus:
-        return EligibilityStatus(eligible=True, reasons=[], actions=[])
+        return EligibilityStatusFactory.build()
 
 
 class FakeUnknownPersonEligibilityService(EligibilityService):
@@ -47,7 +48,7 @@ def test_nhs_number_given(app: Flask, client: FlaskClient):
         # Then
     assert_that(
         response,
-        is_response().with_status_code(HTTPStatus.OK).and_text(is_json_that(has_entries(resourceType="Bundle"))),
+        is_response().with_status_code(HTTPStatus.OK).and_text(is_json_that(has_key("processedSuggestions"))),
     )
 
 

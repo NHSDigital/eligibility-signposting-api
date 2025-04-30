@@ -7,10 +7,9 @@ from typing import Literal, NewType
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from pydantic import SerializationInfo
 
-BucketName = NewType("BucketName", str)
 CampaignName = NewType("CampaignName", str)
 CampaignVersion = NewType("CampaignVersion", str)
 CampaignID = NewType("CampaignID", str)
@@ -51,8 +50,8 @@ class RuleOperator(str, Enum):
     not_member_of = "NotaMemberOf"
     is_null = "is_null"
     is_not_null = "is_not_null"
-    between = "between"
-    not_between = "not_between"
+    is_between = "between"
+    is_not_between = "not_between"
     is_empty = "is_empty"
     is_not_empty = "is_not_empty"
     is_true = "is_true"

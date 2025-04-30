@@ -19,8 +19,7 @@ The software will only be used for signposting an individual to an appropriate s
       - [Environment variables](#environment-variables)
   - [Usage](#usage)
     - [Testing](#testing)
-  - [Sandbox](#sandbox)
-  - [Specification](#specification)
+  - [Sandbox and Specification](#sandbox-and-specification)
   - [Conflict with yanai](#conflict-with-yanai)
   - [Creating a Postman collection](#creating-a-postman-collection)
   - [Design](#design)
@@ -71,13 +70,15 @@ The following software packages, or their equivalents, are expected to be instal
 
 #### Environment variables
 
-| Variable                | Default                 | Description                                                                                                                                                            |
-|-------------------------|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AWS_ACCESS_KEY_ID`     | `dummy_key`             | AWS Access Key                                                                                                                                                         |
-| `AWS_DEFAULT_REGION`    | `eu-west-1`             | AWS Region                                                                                                                                                             |
-| `AWS_SECRET_ACCESS_KEY` | `dummy_secret`          | AWS Secret Access Key                                                                                                                                                  |
-| `DYNAMODB_ENDPOINT`     | `http://localhost:4566` | Endpoint for the app to access DynamoDB                                                                                                                                |
-| `LOG_LEVEL`             | `WARNING`               | Logging level. Must be one of `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL` as per [Logging Levels](https://docs.python.org/3/library/logging.html#logging-levels) |
+| Variable                 | Default                      | Description                                                                                                                                                            |
+|--------------------------|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AWS_ACCESS_KEY_ID`      | `dummy_key`                  | AWS Access Key                                                                                                                                                         |
+| `AWS_DEFAULT_REGION`     | `eu-west-1`                  | AWS Region                                                                                                                                                             |
+| `AWS_SECRET_ACCESS_KEY`  | `dummy_secret`               | AWS Secret Access Key                                                                                                                                                  |
+| `DYNAMODB_ENDPOINT`      | `http://localhost:4566`      | Endpoint for the app to access DynamoDB                                                                                                                                |
+| `ELIGIBILITY_TABLE_NAME` | `test_eligibility_datastore` | AWS DynamoDB table for person data.                                                                                                                                    |
+| `LOG_LEVEL`              | `WARNING`                    | Logging level. Must be one of `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL` as per [Logging Levels](https://docs.python.org/3/library/logging.html#logging-levels) |
+| `RULES_BUCKET_NAME`      | `test-rules-bucket`          | AWS S3 bucket from which to read rules.                                                                                                                                |
 
 ## Usage
 
@@ -93,14 +94,10 @@ make precommit
 
 There are `make` tasks for you to configure to run your tests.  Run `make test` to see how they work.  You should be able to use the same entry points for local development as in your CI pipeline.
 
-## Sandbox
+## Sandbox and Specification
 
-There is a minimalist sandbox environment in `/sandbox` with an accompanying README with instructions on how to run it locally.
-
-## Specification
-
-The OpenAPI specification is stored in `specification`. In that folder, there is an accompanying README with instructions on how to produce an environment-specification specification and publish
-it using Proxygen CLI.
+See the [specification repository](https://github.com/NHSDigital/eligibility-signposting-api-specification) for details on how to publish both the specification and
+sandbox.
 
 ## Conflict with yanai
 
