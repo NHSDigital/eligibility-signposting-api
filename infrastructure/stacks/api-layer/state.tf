@@ -7,10 +7,4 @@ terraform {
       version = "~> 5.6, != 5.71.0"
     }
   }
-  backend "s3" {
-    bucket = "eligibility-signposting-api-dev-tfstate"
-    key    = "tfstate/api-layer.tfstate"
-    region = "eu-west-2"
-    use_lockfile = true
-  }
 }
