@@ -19,7 +19,7 @@ data "aws_iam_policy_document" "dps_assume_role" {
     actions = ["sts:AssumeRole"]
     principals {
       type        = "AWS"
-      identifiers = [local.selected_arn_role]
+      identifiers = [local.selected_role_arn]
     }
   }
 }
