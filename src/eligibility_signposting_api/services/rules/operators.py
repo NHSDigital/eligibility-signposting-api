@@ -46,18 +46,28 @@ class OperatorRegistry:
         raise NotImplementedError(msg)
 
 
-class ComparisonOperator(Operator, ABC):
+class ScalarOperator(Operator, ABC):
     comparator: ClassVar[Callable[[str | None, str | None], bool]]
 
     def _matches(self, item: str | None) -> bool:
         data_comparator = cast("Callable[[str|int, str|int], bool]", self.comparator)
         person_data: str | int
         rule_value: str | int
-        if not item or not self.rule_value:
-            return False
-        if re.match(r"-?\d+$", item) and re.match(r"-?\d+$", self.rule_value):
-            person_data, rule_value = int(item), int(self.rule_value)
+        if item is None or self.rule_value is None:
+            # For anything other than an NE comparison, a None on either side won't match.
+            # For an NE comparison, match if one is truthy and the other falsy.
+            return data_comparator == operator.ne and bool(item) != bool(self.rule_value)
+        if (
+            isinstance(item, str)
+            and re.match(r"-?\d*$", item)
+            and isinstance(self.rule_value, str)
+            and re.match(r"-?\d*$", self.rule_value)
+        ):
+            # If both sides can be treated as numeric, do so.
+            # This includes treating a zero length string as zero.
+            person_data, rule_value = int(item or 0), int(self.rule_value or 0)
         else:
+            # Treat both sides as strings.
             person_data, rule_value = str(item), str(self.rule_value)
         return data_comparator(person_data, rule_value)
 
@@ -65,7 +75,7 @@ class ComparisonOperator(Operator, ABC):
         description.append_text(f"{self.__class__.__name__} (item {self.comparator.__name__} {self.rule_value})")
 
 
-COMPARISON_OPERATORS = [
+SCALAR_OPERATORS = [
     (RuleOperator.equals, operator.eq),
     (RuleOperator.ne, operator.ne),
     (RuleOperator.gt, operator.gt),
@@ -74,12 +84,15 @@ COMPARISON_OPERATORS = [
     (RuleOperator.lte, operator.le),
 ]
 
-for rule_operator, comparator in COMPARISON_OPERATORS:
+for rule_operator, comparator in SCALAR_OPERATORS:
     OperatorRegistry.register(rule_operator)(
-        type(
-            f"_{rule_operator.name}",
-            (ComparisonOperator,),
-            {"comparator": staticmethod(comparator), "__module__": __name__},
+        cast(
+            "type[Operator]",
+            type(
+                f"_{rule_operator.name}",
+                (ScalarOperator,),
+                {"comparator": staticmethod(comparator), "__module__": __name__},
+            ),
         )
     )
 
@@ -115,6 +128,7 @@ class EndsWith(Operator):
 
 
 @OperatorRegistry.register(RuleOperator.is_in)
+@OperatorRegistry.register(RuleOperator.member_of)
 class IsIn(Operator):
     def _matches(self, item: str | None) -> bool:
         comparators = str(self.rule_value).split(",")
@@ -122,24 +136,11 @@ class IsIn(Operator):
 
 
 @OperatorRegistry.register(RuleOperator.not_in)
+@OperatorRegistry.register(RuleOperator.not_member_of)
 class NotIn(Operator):
     def _matches(self, item: str | None) -> bool:
         comparators = str(self.rule_value).split(",")
         return str(item) not in comparators
-
-
-@OperatorRegistry.register(RuleOperator.member_of)
-class MemberOf(Operator):
-    def _matches(self, item: str | None) -> bool:
-        attribute_values = str(item).split(",")
-        return self.rule_value in attribute_values
-
-
-@OperatorRegistry.register(RuleOperator.not_member_of)
-class NotMemberOf(Operator):
-    def _matches(self, item: str | None) -> bool:
-        attribute_values = str(item).split(",")
-        return self.rule_value not in attribute_values
 
 
 @OperatorRegistry.register(RuleOperator.is_null)
@@ -181,13 +182,13 @@ class NotBetween(RangeOperator):
 @OperatorRegistry.register(RuleOperator.is_empty)
 class IsEmpty(Operator):
     def _matches(self, item: str | None) -> bool:
-        return item is None or all(item.strip() == "" for item in str(item).split(","))
+        return item is None or not item
 
 
 @OperatorRegistry.register(RuleOperator.is_not_empty)
 class IsNotEmpty(Operator):
     def _matches(self, item: str | None) -> bool:
-        return item is not None and any(item.strip() != "" for item in str(item).split(","))
+        return item is not None and bool(item)
 
 
 @OperatorRegistry.register(RuleOperator.is_true)

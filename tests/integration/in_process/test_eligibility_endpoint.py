@@ -54,8 +54,6 @@ def test_actionable_by_rule(
     response = client.get(f"/eligibility/{nhs_number}")
 
     # Then
-
-    # Then
     assert_that(
         response,
         is_response()
@@ -76,8 +74,6 @@ def test_not_actionable_by_rule(
 
     # When
     response = client.get(f"/eligibility/{nhs_number}")
-
-    # Then
 
     # Then
     assert_that(
