@@ -47,7 +47,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "storage_bucket" {
     }
 
     expiration {
-      days = "${var.bucket_expiration_days}"
+      days = var.bucket_expiration_days
     }
 
     noncurrent_version_transition {
