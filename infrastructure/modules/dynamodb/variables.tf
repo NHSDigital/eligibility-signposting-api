@@ -3,6 +3,11 @@ variable "workspace" {
   type        = string
 }
 
+variable "project_name" {
+  default = "eligibility-signposting-api"
+  type    = string
+}
+
 variable "table_name_suffix" {
   description = "Name of the DynamoDB table"
   type        = string
@@ -31,7 +36,7 @@ variable "sort_key_type" {
 }
 
 variable "tags" {
-  description = "A map of tags for the DynamoDB table"
+  description = "A map of tags to assign to resources."
   type        = map(string)
   default     = {}
 }
