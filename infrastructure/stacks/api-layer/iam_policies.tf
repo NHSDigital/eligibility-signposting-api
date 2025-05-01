@@ -14,14 +14,20 @@ data "aws_iam_policy_document" "dynamodb_write_policy" {
   }
 }
 
+# Attach read policy to Lambda role (only in IAM default workspace)
 resource "aws_iam_role_policy" "lambda_read_policy" {
+  count  = local.is_iam_owner ? 1 : 0
   name   = "DynamoDBReadAccess"
-  role   = aws_iam_role.lambda_read_role.id
+  role   = local.lambda_read_role
   policy = data.aws_iam_policy_document.dynamodb_read_policy.json
 }
 
+# Attach write policy to external write role (only in IAM default workspace)
 resource "aws_iam_role_policy" "external_write_policy" {
+  count  = local.is_iam_owner ? 1 : 0
   name   = "DynamoDBWriteAccess"
-  role   = aws_iam_role.write_access_role.id
+  role   = local.write_access_role
   policy = data.aws_iam_policy_document.dynamodb_write_policy.json
 }
+
+
