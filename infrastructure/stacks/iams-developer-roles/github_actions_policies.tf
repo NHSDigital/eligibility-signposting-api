@@ -1,3 +1,4 @@
+# Terraform State Management Policy
 # Create policies only in the IAM default workspace
 resource "aws_iam_policy" "terraform_state" {
   count       = local.is_iam_owner ? 1 : 0
@@ -32,6 +33,7 @@ resource "aws_iam_policy" "terraform_state" {
   )
 }
 
+# API Infrastructure Management Policy
 resource "aws_iam_policy" "api_infrastructure" {
   count       = local.is_iam_owner ? 1 : 0
   name        = "api-infrastructure-management"
@@ -44,15 +46,24 @@ resource "aws_iam_policy" "api_infrastructure" {
       {
         Effect = "Allow",
         Action = [
+          # Lambda permissions
           "lambda:*",
+
+          # DynamoDB permissions
           "dynamodb:*",
+
+          # API Gateway permissions
           "apigateway:*",
+
+          # S3 permissions
           "s3:*",
+
+          # IAM permissions (scoped to resources with specific path prefix)
           "iam:Get*",
           "iam:List*",
           "iam:Create*",
           "iam:Update*",
-          "iam:Delete*"
+          "iam:Delete*",
         ],
         Resource = "*"
       }
