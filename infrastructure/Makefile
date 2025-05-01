@@ -14,7 +14,7 @@ guard-%:
 # Initializes the Terraform configuration for the specified stack and environment.
 terraform-init: guard-env guard-stack
 	rm -rf ./stacks/$(stack)/.terraform
-	terraform -chdir=./stacks/$(stack) init -var-file=stacks/_shared/tfvars/$(env).tfvars -backend-config=backends/$(env).$(stack).tfbackend -upgrade
+	terraform -chdir=./stacks/$(stack) init -backend-config=backends/$(env).$(stack).tfbackend -upgrade -reconfigure
 	terraform -chdir=./stacks/$(stack) get -update
 
 # Selects or creates a Terraform workspace for the specified stack and environment.
@@ -35,7 +35,7 @@ terraform-workspace-delete: guard-env guard-stack
 
 # Runs a specified Terraform command (e.g., plan, apply) for the stack and environment.
 terraform: guard-env guard-stack guard-tf-command terraform-init terraform-workspace
-	terraform -chdir=./stacks/$(stack) $(tf-command) -var-file=../_shared/tfvars/$(env).tfvars $(args) $(if $(filter $(tf-command),init),,--parallelism=30)
+	terraform -chdir=./stacks/$(stack) $(tf-command) $(args) $(if $(filter $(tf-command),init),,--parallelism=30)
 	rm -f ./terraform_outputs_$(stack).json || true
 	terraform -chdir=./stacks/$(stack) output -json > ./build/terraform_outputs_$(stack).json
 
@@ -45,9 +45,9 @@ terraform: guard-env guard-stack guard-tf-command terraform-init terraform-works
 
 # Initializes the Terraform configuration for the bootstrap stack.
 bootstrap-terraform-init: guard-env
-	terraform -chdir=./stacks/bootstrap init -var-file=stacks/_shared/tfvars/$(env).tfvars -upgrade
+	terraform -chdir=./stacks/bootstrap init -upgrade
 	terraform -chdir=./stacks/bootstrap get -update
 
 # Runs a specified Terraform command (e.g., plan, apply) for the bootstrap stack.
 bootstrap-terraform: guard-env guard-tf-command bootstrap-terraform-init
-	terraform -chdir=./stacks/bootstrap $(tf-command) -var-file=../_shared/tfvars/$(env).tfvars $(args)
+	terraform -chdir=./stacks/bootstrap $(tf-command) $(args)
