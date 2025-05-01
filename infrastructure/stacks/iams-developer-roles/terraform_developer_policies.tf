@@ -1,18 +1,18 @@
 # Trust policy document
 data "aws_iam_policy_document" "terraform_developer_assume_role" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = ["sts:AssumeRole"]
 
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
 
     condition {
       test     = "StringLike"
       variable = "aws:PrincipalArn"
-      values   = [
+      values = [
         "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-reserved/sso.amazonaws.com/*/AWSReservedSSO_vdselid_${var.environment}_*"
       ]
     }
@@ -180,6 +180,7 @@ data "aws_iam_policy_document" "terraform_developer_policy" {
 
 # Create policy from document
 resource "aws_iam_policy" "terraform_developer_policy" {
+  count       = local.is_iam_owner ? 1 : 0
   name        = "terraform-developer-policy"
   description = "Policy for terraform developers to manage resources"
   policy      = data.aws_iam_policy_document.terraform_developer_policy.json
@@ -187,6 +188,24 @@ resource "aws_iam_policy" "terraform_developer_policy" {
 
 # Attach policy to role
 resource "aws_iam_role_policy_attachment" "terraform_developer_attachment" {
-  role       = aws_iam_role.terraform_developer.name
-  policy_arn = aws_iam_policy.terraform_developer_policy.arn
+  count      = local.is_iam_owner ? 1 : 0
+  role       = local.terraform_developer_role_name
+  policy_arn = local.terraform_developer_policy_arn
+}
+
+data "aws_iam_role" "terraform_developer" {
+  count = local.is_iam_owner ? 0 : 1
+  name  = "terraform-developer-role"
+}
+
+
+data "aws_iam_policy" "terraform_developer_policy" {
+  count = local.is_iam_owner ? 0 : 1
+  arn   = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/terraform-developer-policy"
+}
+
+locals {
+  terraform_developer_policy_arn = local.is_iam_owner ? aws_iam_policy.terraform_developer_policy[0].arn : data.aws_iam_policy.terraform_developer_policy[0].arn
+
+  terraform_developer_role_arn = local.is_iam_owner ? aws_iam_role.terraform_developer[0].arn : data.aws_iam_role.terraform_developer[0].arn
 }
