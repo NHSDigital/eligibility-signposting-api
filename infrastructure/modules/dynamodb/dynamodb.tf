@@ -18,5 +18,10 @@ resource "aws_dynamodb_table" "dynamodb_table" {
 
   range_key = var.sort_key != null ? var.sort_key : null
 
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = aws_kms_key.dynamodb_cmk.arn
+  }
+
   tags = var.tags
 }
