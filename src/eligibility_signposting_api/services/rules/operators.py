@@ -177,8 +177,12 @@ class IsNotNull(Operator):
 
 
 class RangeOperator(Operator, ABC):
-    def __init__(self, rule_value: str) -> None:
-        super().__init__(rule_value=rule_value)
+    low_comparator: int
+    high_comparator: int
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
         low_comparator_str, high_comparator_str = str(self.rule_value).split(",")
         self.low_comparator = min(int(low_comparator_str), int(high_comparator_str))
         self.high_comparator = max(int(low_comparator_str), int(high_comparator_str))
@@ -227,8 +231,17 @@ class IsFalse(Operator):
 
 
 class DateOperator(Operator, ABC):
+    OFFSET_PATTERN: ClassVar[str] = r"(?P<rule_value>[^\[]+)\[\[OFFSET:(?P<offset>\d{8})\]\]"
     delta_type: ClassVar[str]
     comparator: ClassVar[Callable[[date, date], bool]]
+    offset: date | None = None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        if self.rule_value and (match := re.match(self.OFFSET_PATTERN, self.rule_value)):
+            self.rule_value = match.group("rule_value")
+            self.offset = datetime.strptime(match.group("offset"), "%Y%m%d").replace(tzinfo=UTC).date()
 
     @property
     def today(self) -> date:
@@ -242,7 +255,7 @@ class DateOperator(Operator, ABC):
     def cutoff(self) -> date:
         delta = relativedelta()
         setattr(delta, self.delta_type, int(self.rule_value))
-        return self.today + delta
+        return (self.offset if self.offset else self.today) + delta
 
     def _matches(self, item: str | None) -> bool:
         item = item if item is not None else self.item_default

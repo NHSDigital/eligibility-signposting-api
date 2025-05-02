@@ -519,6 +519,9 @@ cases += [
     ("20260425", RuleOperator.year_gte, "2", False, "Past year"),
     ("20270425", RuleOperator.year_gte, "2", True, "Present year"),
     ("20280425", RuleOperator.year_gte, "2", True, "Future year"),
+    ("19680720", RuleOperator.year_gte, "-57[[OFFSET:20250721]]", False, "Include anyone older than Simon"),
+    ("19680721", RuleOperator.year_gte, "-57[[OFFSET:20250721]]", True, "Exclude anyone the same age as Simon"),
+    ("19680722", RuleOperator.year_gte, "-57[[OFFSET:20250721]]", True, "Exclude anyone younger than Simon"),
 ]
 
 # Year greater than
@@ -529,6 +532,9 @@ cases += [
     ("20200424", RuleOperator.year_gt, "-5", False, "Exclude anyone under 5 on the day - 5 yesterday"),
     ("20200425", RuleOperator.year_gt, "-5", False, "Exclude anyone under 5 on the day-  5 today"),
     ("20200426", RuleOperator.year_gt, "-5", True, "Exclude anyone under 5 on the day - 5 tomorrow"),
+    ("19680720", RuleOperator.year_gt, "-57[[OFFSET:20250721]]", False, "Include anyone older than Simon"),
+    ("19680721", RuleOperator.year_gt, "-57[[OFFSET:20250721]]", False, "Include anyone the same age as Simon"),
+    ("19680722", RuleOperator.year_gt, "-57[[OFFSET:20250721]]", True, "Exclude anyone younger than Simon"),
 ]
 
 
