@@ -110,34 +110,4 @@ resource "aws_s3_bucket_public_access_block" "storage_bucket_access_logs_public_
   restrict_public_buckets = true
 }
 
-resource "aws_s3_bucket_policy" "storage_bucket_access_logs_policy" {
-  bucket = aws_s3_bucket.storage_bucket_access_logs.id
-  policy = data.aws_iam_policy_document.storage_bucket_access_logs_policy.json
-}
-
-data "aws_iam_policy_document" "storage_bucket_access_logs_policy" {
-  statement {
-    sid = "AllowSSLRequestsOnly"
-    actions = [
-      "s3:*",
-    ]
-    effect = "Deny"
-    resources = [
-      aws_s3_bucket.storage_bucket_access_logs.arn,
-      "${aws_s3_bucket.storage_bucket_access_logs.arn}/*",
-    ]
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-    condition {
-      test = "Bool"
-      values = [
-        "false",
-      ]
-
-      variable = "aws:SecureTransport"
-    }
-  }
-}
 

@@ -31,3 +31,36 @@ resource "aws_iam_role_policy" "external_write_policy" {
 }
 
 
+# Deny all S3 actions on the access logs bucket unless requests use secure (SSL) transport.
+data "aws_iam_policy_document" "storage_bucket_access_logs_policy" {
+  statement {
+    sid = "AllowSSLRequestsOnly"
+    actions = [
+      "s3:*",
+    ]
+    effect = "Deny"
+    resources = [
+      module.s3_rules_bucket.storage_bucket_access_logs_arn,
+      "${module.s3_rules_bucket.storage_bucket_access_logs_arn}/*",
+    ]
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    condition {
+      test = "Bool"
+      values = [
+        "false",
+      ]
+
+      variable = "aws:SecureTransport"
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "storage_bucket_access_logs_policy" {
+  bucket = module.s3_rules_bucket.storage_bucket_access_logs_id
+  policy = data.aws_iam_policy_document.storage_bucket_access_logs_policy.json
+}
+
+
