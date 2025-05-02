@@ -14,6 +14,7 @@ locals {
     Environment     = var.environment
     ServiceCategory = var.environment == "prod" ? "Bronze" : "N/A"
     Tool            = "Terraform"
+    workspace       = lower(terraform.workspace)
   }
 
   sso_role_patterns = {

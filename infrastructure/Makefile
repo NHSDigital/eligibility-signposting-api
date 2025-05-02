@@ -14,7 +14,7 @@ guard-%:
 # Initializes the Terraform configuration for the specified stack and environment.
 terraform-init: guard-env guard-stack
 	rm -rf ./stacks/$(stack)/.terraform
-	terraform -chdir=./stacks/$(stack) init -backend-config=backends/$(env).$(stack).tfbackend -upgrade -reconfigure
+	terraform -chdir=./stacks/$(stack) init -backend-config=backends/$(env).$(stack).tfbackend -upgrade
 	terraform -chdir=./stacks/$(stack) get -update
 
 # Selects or creates a Terraform workspace for the specified stack and environment.
