@@ -1,7 +1,7 @@
 # s3
 # Define bucket
 resource "aws_s3_bucket" "storage_bucket" {
-  bucket = "${var.project_name}-${var.environment}-${var.bucket_name}"
+  bucket = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.project_name}-${var.environment}-${var.bucket_name}"
 }
 
 # Enable versioning for disaster recovery
@@ -63,7 +63,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "storage_bucket" {
 
 #same again for logging buckets
 resource "aws_s3_bucket" "storage_bucket_access_logs" {
-  bucket = "${var.project_name}-${var.environment}-${var.bucket_name}-access-logs"
+  bucket = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.project_name}-${var.environment}-${var.bucket_name}-access-logs"
 }
 
 resource "aws_s3_bucket_logging" "storage_bucket_logging_config" {
@@ -112,7 +112,7 @@ resource "aws_s3_bucket_public_access_block" "storage_bucket_access_logs_public_
 
 resource "aws_s3_bucket_policy" "storage_bucket_access_logs_policy" {
   bucket = aws_s3_bucket.storage_bucket_access_logs.id
-  policy = data.aws_iam_policy_document.storage_bucket_access_logs_bucket_policy.json
+  policy = data.aws_iam_policy_document.storage_bucket_access_logs_policy.json
 }
 
 data "aws_iam_policy_document" "storage_bucket_access_logs_policy" {
