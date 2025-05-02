@@ -25,6 +25,12 @@ def eligibility_table_factory(
 
 @service
 class EligibilityRepo:
+    """Repository class for the data held about a person which may be relevant to calculating their eligibility for
+    vaccination.
+
+    This data is held in a handful of records in a single Dynamodb table.
+    """
+
     def __init__(self, table: Annotated[Any, Inject(qualifier="eligibility_table")]) -> None:
         super().__init__()
         self.table = table

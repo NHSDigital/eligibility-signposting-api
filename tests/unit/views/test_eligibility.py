@@ -10,7 +10,7 @@ from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.model.eligibility import EligibilityStatus, NHSNumber
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
-from tests.utils.builders import EligibilityStatusFactory
+from tests.fixtures.builders.model.eligibility import EligibilityStatusFactory
 
 logger = logging.getLogger(__name__)
 

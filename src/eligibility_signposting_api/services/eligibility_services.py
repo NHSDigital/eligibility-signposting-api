@@ -23,6 +23,7 @@ class EligibilityService:
         self.rules_repo = rules_repo
 
     def get_eligibility_status(self, nhs_number: eligibility.NHSNumber | None = None) -> eligibility.EligibilityStatus:
+        """Calculate a person's eligibility for vaccination given an NHS number."""
         if nhs_number:
             try:
                 person_data = self.eligibility_repo.get_eligibility_data(nhs_number)

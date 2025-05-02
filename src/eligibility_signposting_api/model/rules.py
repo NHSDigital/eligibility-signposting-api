@@ -165,6 +165,10 @@ class CampaignConfig(BaseModel):
 
 
 class Rules(BaseModel):
+    """Eligibility rules.
+
+    This is a Pydantic model, into which we can de-serialise rules stored in DPS's format."""
+
     campaign_config: CampaignConfig = Field(..., alias="CampaignConfig")
 
     model_config = {"populate_by_name": True}

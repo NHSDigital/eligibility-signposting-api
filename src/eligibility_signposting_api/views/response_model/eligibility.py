@@ -2,7 +2,8 @@ from datetime import datetime
 from enum import Enum
 from typing import NewType
 
-from pydantic import UUID4, BaseModel, Field, HttpUrl, SerializationInfo, field_serializer
+from pydantic import UUID4, BaseModel, Field, HttpUrl, field_serializer
+from pydantic_core.core_schema import SerializationInfo
 
 LastUpdated = NewType("LastUpdated", datetime)
 ConditionName = NewType("ConditionName", str)

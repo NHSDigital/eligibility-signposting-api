@@ -1,7 +1,7 @@
 import logging
 import os
 from collections.abc import Sequence
-from functools import lru_cache
+from functools import cache
 from typing import Any, NewType
 
 from pythonjsonlogger.json import JsonFormatter
@@ -17,7 +17,7 @@ AwsAccessKey = NewType("AwsAccessKey", str)
 AwsSecretAccessKey = NewType("AwsSecretAccessKey", str)
 
 
-@lru_cache
+@cache
 def config() -> dict[str, Any]:
     return {
         "aws_access_key_id": AwsAccessKey(os.getenv("AWS_ACCESS_KEY_ID", "dummy_key")),

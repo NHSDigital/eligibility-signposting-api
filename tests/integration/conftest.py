@@ -19,7 +19,7 @@ from yarl import URL
 from eligibility_signposting_api.model import eligibility, rules
 from eligibility_signposting_api.repos.eligibility_repo import TableName
 from eligibility_signposting_api.repos.rules_repo import BucketName
-from tests.utils.builders import CampaignConfigFactory, IterationFactory, IterationRuleFactory
+from tests.fixtures.builders.model.rule import CampaignConfigFactory, IterationFactory, IterationRuleFactory
 
 if TYPE_CHECKING:
     from pytest_docker.plugin import Services

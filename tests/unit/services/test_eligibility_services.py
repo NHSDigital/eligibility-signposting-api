@@ -8,8 +8,8 @@ from eligibility_signposting_api.model.eligibility import ConditionName, DateOfB
 from eligibility_signposting_api.model.rules import RuleAttributeLevel, RuleOperator, RuleType
 from eligibility_signposting_api.repos import EligibilityRepo, NotFoundError, RulesRepo
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
-from tests.utils.builders import CampaignConfigFactory, IterationFactory, IterationRuleFactory
-from tests.utils.matchers.eligibility import is_condition, is_eligibility_status
+from tests.fixtures.builders.model.rule import CampaignConfigFactory, IterationFactory, IterationRuleFactory
+from tests.fixtures.matchers.eligibility import is_condition, is_eligibility_status
 
 
 @pytest.fixture(scope="session")

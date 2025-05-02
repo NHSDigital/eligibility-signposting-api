@@ -7,8 +7,8 @@ from hamcrest import assert_that, has_item
 
 from eligibility_signposting_api.model.rules import CampaignConfig
 from eligibility_signposting_api.repos.rules_repo import BucketName, RulesRepo
-from tests.utils.builders import CampaignConfigFactory
-from tests.utils.matchers.rules import is_campaign_config, is_iteration, is_iteration_rule
+from tests.fixtures.builders.model.rule import CampaignConfigFactory
+from tests.fixtures.matchers.rules import is_campaign_config, is_iteration, is_iteration_rule
 
 
 @pytest.fixture(scope="module")

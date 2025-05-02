@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Operator(BaseMatcher[str | None], ABC):
+    """An operator compares some person's data attribute - date of birth, postcode, flags or so on - against a value
+    specified in a rule."""
+
     rule_value: str
 
     @abstractmethod
@@ -28,6 +31,8 @@ class Operator(BaseMatcher[str | None], ABC):
 
 
 class OperatorRegistry:
+    """Operators are registered and made available for retrieval here for each RuleOperator."""
+
     registry: ClassVar[dict[RuleOperator, type[Operator]]] = {}
 
     @staticmethod
