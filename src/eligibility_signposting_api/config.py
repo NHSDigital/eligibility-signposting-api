@@ -7,6 +7,9 @@ from typing import Any, NewType
 from pythonjsonlogger.json import JsonFormatter
 from yarl import URL
 
+from eligibility_signposting_api.repos.eligibility_repo import TableName
+from eligibility_signposting_api.repos.rules_repo import BucketName
+
 LOG_LEVEL = logging.getLevelNamesMapping().get(os.getenv("LOG_LEVEL", ""), logging.WARNING)
 
 AwsRegion = NewType("AwsRegion", str)
@@ -19,10 +22,11 @@ def config() -> dict[str, Any]:
     return {
         "aws_access_key_id": AwsAccessKey(os.getenv("AWS_ACCESS_KEY_ID", "dummy_key")),
         "aws_default_region": AwsRegion(os.getenv("AWS_DEFAULT_REGION", "eu-west-1")),
-        "dynamodb_endpoint": URL(os.getenv("DYNAMODB_ENDPOINT", "http://localhost:4566")),
         "aws_secret_access_key": AwsSecretAccessKey(os.getenv("AWS_SECRET_ACCESS_KEY", "dummy_secret")),
+        "dynamodb_endpoint": URL(os.getenv("DYNAMODB_ENDPOINT", "http://localhost:4566")),
+        "eligibility_table_name": TableName(os.getenv("ELIGIBILITY_TABLE_NAME", "test_eligibility_datastore")),
         "log_level": LOG_LEVEL,
-        "rules_bucket_name": AwsAccessKey(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket")),
+        "rules_bucket_name": BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket")),
     }
 
 

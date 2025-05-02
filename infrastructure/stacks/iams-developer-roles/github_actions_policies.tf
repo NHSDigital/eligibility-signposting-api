@@ -1,5 +1,7 @@
 # Terraform State Management Policy
+# Create policies only in the IAM default workspace
 resource "aws_iam_policy" "terraform_state" {
+  count       = local.is_iam_owner ? 1 : 0
   name        = "terraform-state-management"
   description = "Policy granting access to S3 bucket for Terraform state"
   path        = "/service-policies/"
@@ -33,6 +35,7 @@ resource "aws_iam_policy" "terraform_state" {
 
 # API Infrastructure Management Policy
 resource "aws_iam_policy" "api_infrastructure" {
+  count       = local.is_iam_owner ? 1 : 0
   name        = "api-infrastructure-management"
   description = "Policy granting permissions to manage API infrastructure"
   path        = "/service-policies/"
@@ -75,6 +78,17 @@ resource "aws_iam_policy" "api_infrastructure" {
   )
 }
 
+# Data sources for policies in non-default workspaces
+data "aws_iam_policy" "terraform_state" {
+  count = local.is_iam_owner ? 0 : 1
+  arn   = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/service-policies/terraform-state-management"
+}
+
+data "aws_iam_policy" "api_infrastructure" {
+  count = local.is_iam_owner ? 0 : 1
+  arn   = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/service-policies/api-infrastructure-management"
+}
+
 # Assume role policy document for GitHub Actions
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
@@ -83,31 +97,40 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     actions = ["sts:AssumeRoleWithWebIdentity"]
 
     principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github.arn]
+      type = "Federated"
+      identifiers = [
+        local.aws_iam_openid_connect_provider_arn
+      ]
     }
 
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
+      values = ["repo:${var.github_org}/${var.github_repo}:*"]
     }
 
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
+      values = ["sts.amazonaws.com"]
     }
   }
 }
 
-# Attach the policies to the role
+# Attach the policies to the role (only in default workspace)
 resource "aws_iam_role_policy_attachment" "terraform_state" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.terraform_state.arn
+  count      = local.is_iam_owner ? 1 : 0
+  role       = local.github_actions_iam_role_name
+  policy_arn = local.terraform_state_iam_policy_arn
 }
 
 resource "aws_iam_role_policy_attachment" "api_infrastructure" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.api_infrastructure.arn
+  count      = local.is_iam_owner ? 1 : 0
+  role       = local.github_actions_iam_role_name
+  policy_arn = local.api_infrastructure_iam_policy_arn
+}
+
+locals {
+  terraform_state_iam_policy_arn = local.is_iam_owner ? aws_iam_policy.terraform_state[0].arn : data.aws_iam_policy.terraform_state[0].arn
+  api_infrastructure_iam_policy_arn = local.is_iam_owner ? aws_iam_policy.api_infrastructure[0].arn : data.aws_iam_policy.api_infrastructure[0].arn
 }

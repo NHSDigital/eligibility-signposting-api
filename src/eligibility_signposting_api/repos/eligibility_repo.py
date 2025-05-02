@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, Any
+from typing import Annotated, Any, NewType
 
 from boto3.dynamodb.conditions import Key
 from boto3.resources.base import ServiceResource
@@ -10,10 +10,15 @@ from eligibility_signposting_api.repos.exceptions import NotFoundError
 
 logger = logging.getLogger(__name__)
 
+TableName = NewType("TableName", str)
+
 
 @service(qualifier="eligibility_table")
-def eligibility_table_factory(dynamodb_resource: Annotated[ServiceResource, Inject(qualifier="dynamodb")]) -> Any:
-    table = dynamodb_resource.Table("eligibility_data_store")  # type: ignore[reportAttributeAccessIssue]
+def eligibility_table_factory(
+    dynamodb_resource: Annotated[ServiceResource, Inject(qualifier="dynamodb")],
+    eligibility_table_name: Annotated[TableName, Inject(param="eligibility_table_name")],
+) -> Any:
+    table = dynamodb_resource.Table(eligibility_table_name)  # type: ignore[reportAttributeAccessIssue]
     logger.info("eligibility_table %r", table, extra={"table": table})
     return table
 

@@ -1,0 +1,4 @@
+bucket         = "eligibility-signposting-api-dev-tfstate"
+key            = "tfstate/api-layer.tfstate"
+region         = "eu-west-2"
+encrypt        = true

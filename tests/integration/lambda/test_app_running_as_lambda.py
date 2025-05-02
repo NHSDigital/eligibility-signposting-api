@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.response import is_response
 from faker import Faker
-from hamcrest import assert_that, contains_exactly, contains_string, has_entries, has_item
+from hamcrest import assert_that, contains_exactly, contains_string, has_entries, has_item, has_key
 from yarl import URL
 
 from eligibility_signposting_api.model.eligibility import DateOfBirth, NHSNumber, Postcode
@@ -62,7 +62,7 @@ def test_install_and_call_lambda_flask(
     logger.info(response_payload)
     assert_that(
         response_payload,
-        has_entries(statusCode=HTTPStatus.OK, body=is_json_that(has_entries(resourceType="Bundle"))),
+        has_entries(statusCode=HTTPStatus.OK, body=is_json_that(has_key("processedSuggestions"))),
     )
 
     assert_that(log_output, contains_string("person_data"))
@@ -83,7 +83,7 @@ def test_install_and_call_flask_lambda_over_http(
     # Then
     assert_that(
         response,
-        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_entries(resourceType="Bundle"))),
+        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
     )
 
 

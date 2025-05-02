@@ -16,14 +16,9 @@ from faker import Faker
 from httpx import RequestError
 from yarl import URL
 
-from eligibility_signposting_api.model.eligibility import DateOfBirth, NHSNumber, Postcode
-from eligibility_signposting_api.model.rules import (
-    BucketName,
-    CampaignConfig,
-    RuleAttributeLevel,
-    RuleOperator,
-    RuleType,
-)
+from eligibility_signposting_api.model import eligibility, rules
+from eligibility_signposting_api.repos.eligibility_repo import TableName
+from eligibility_signposting_api.repos.rules_repo import BucketName
 from tests.utils.builders import CampaignConfigFactory, IterationFactory, IterationRuleFactory
 
 if TYPE_CHECKING:
@@ -205,7 +200,7 @@ def wait_for_function_active(function_name, lambda_client):
 @pytest.fixture(scope="session")
 def eligibility_table(dynamodb_resource: ServiceResource) -> Generator[Any]:
     table = dynamodb_resource.create_table(
-        TableName="eligibility_data_store",
+        TableName=TableName(os.getenv("ELIGIBILITY_TABLE_NAME", "test_eligibility_datastore")),
         KeySchema=[
             {"AttributeName": "NHS_NUMBER", "KeyType": "HASH"},
             {"AttributeName": "ATTRIBUTE_TYPE", "KeyType": "RANGE"},
@@ -222,10 +217,35 @@ def eligibility_table(dynamodb_resource: ServiceResource) -> Generator[Any]:
 
 
 @pytest.fixture
-def persisted_person(eligibility_table: Any, faker: Faker) -> Generator[tuple[NHSNumber, DateOfBirth, Postcode]]:
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
-    date_of_birth = DateOfBirth(faker.date_of_birth())
-    postcode = Postcode(faker.postcode())
+def persisted_person(
+    eligibility_table: Any, faker: Faker
+) -> Generator[tuple[eligibility.NHSNumber, eligibility.DateOfBirth, eligibility.Postcode]]:
+    nhs_number = eligibility.NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    date_of_birth = eligibility.DateOfBirth(faker.date_of_birth(maximum_age=65))
+    postcode = eligibility.Postcode(faker.postcode())
+    eligibility_table.put_item(
+        Item={
+            "NHS_NUMBER": f"PERSON#{nhs_number}",
+            "ATTRIBUTE_TYPE": "PERSON",
+            "DATE_OF_BIRTH": date_of_birth.strftime("%Y%m%d"),
+            "POSTCODE": postcode,
+        }
+    )
+    eligibility_table.put_item(
+        Item={"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "COHORTS", "COHORT_MAP": {}}
+    )
+    yield nhs_number, date_of_birth, postcode
+    eligibility_table.delete_item(Key={"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "PERSON"})
+    eligibility_table.delete_item(Key={"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "COHORTS"})
+
+
+@pytest.fixture
+def persisted_77yo_person(
+    eligibility_table: Any, faker: Faker
+) -> Generator[tuple[eligibility.NHSNumber, eligibility.DateOfBirth, eligibility.Postcode]]:
+    nhs_number = eligibility.NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    date_of_birth = eligibility.DateOfBirth(faker.date_of_birth(minimum_age=77, maximum_age=77))
+    postcode = eligibility.Postcode(faker.postcode())
     eligibility_table.put_item(
         Item={
             "NHS_NUMBER": f"PERSON#{nhs_number}",
@@ -244,28 +264,31 @@ def persisted_person(eligibility_table: Any, faker: Faker) -> Generator[tuple[NH
 
 @pytest.fixture(scope="session")
 def bucket(s3_client: BaseClient) -> Generator[BucketName]:
-    bucket_name = BucketName("test-rules-bucket")
+    bucket_name = BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket"))
     s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": AWS_REGION})
     yield bucket_name
     s3_client.delete_bucket(Bucket=bucket_name)
 
 
 @pytest.fixture(scope="session")
-def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[CampaignConfig]:
-    campaign: CampaignConfig = CampaignConfigFactory.build(
+def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[rules.CampaignConfig]:
+    campaign: rules.CampaignConfig = CampaignConfigFactory.build(
+        target="RSV",
         iterations=[
             IterationFactory.build(
                 iteration_rules=[
                     IterationRuleFactory.build(
-                        type=RuleType.filter,
-                        operator=RuleOperator.lt,
-                        attribute_level=RuleAttributeLevel.PERSON,
+                        type=rules.RuleType.filter,
+                        name="Exclude too young",
+                        description="Exclude too young less than 75",
+                        operator=rules.RuleOperator.year_gt,
+                        attribute_level=rules.RuleAttributeLevel.PERSON,
                         attribute_name="DATE_OF_BIRTH",
                         comparator="-75",
                     )
                 ]
             )
-        ]
+        ],
     )
     campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
     s3_client.put_object(
