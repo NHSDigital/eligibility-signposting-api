@@ -21,7 +21,15 @@ class Operator(BaseMatcher[str | None], ABC):
     """An operator compares some person's data attribute - date of birth, postcode, flags or so on - against a value
     specified in a rule."""
 
+    ITEM_DEFAULT_PATTERN: ClassVar[str] = r"(?P<rule_value>[^\[]+)\[\[NVL:(?P<item_default>[^\]]+)\]\]"
+
     rule_value: str
+    item_default: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.rule_value and (match := re.match(self.ITEM_DEFAULT_PATTERN, self.rule_value)):
+            self.rule_value = match.group("rule_value")
+            self.item_default = match.group("item_default")
 
     @abstractmethod
     def _matches(self, item: str | None) -> bool: ...
@@ -55,6 +63,7 @@ class ScalarOperator(Operator, ABC):
     comparator: ClassVar[Callable[[str | None, str | None], bool]]
 
     def _matches(self, item: str | None) -> bool:
+        item = item if item is not None else self.item_default
         data_comparator = cast("Callable[[str|int, str|int], bool]", self.comparator)
         person_data: str | int
         rule_value: str | int
@@ -105,30 +114,35 @@ for rule_operator, comparator in SCALAR_OPERATORS:
 @OperatorRegistry.register(RuleOperator.contains)
 class Contains(Operator):
     def _matches(self, item: str | None) -> bool:
+        item = item if item is not None else self.item_default
         return bool(item) and self.rule_value in str(item)
 
 
 @OperatorRegistry.register(RuleOperator.not_contains)
 class NotContains(Operator):
     def _matches(self, item: str | None) -> bool:
+        item = item if item is not None else self.item_default
         return self.rule_value not in str(item)
 
 
 @OperatorRegistry.register(RuleOperator.starts_with)
 class StartsWith(Operator):
     def _matches(self, item: str | None) -> bool:
+        item = item if item is not None else self.item_default
         return str(item).startswith(self.rule_value)
 
 
 @OperatorRegistry.register(RuleOperator.not_starts_with)
 class NotStartsWith(Operator):
     def _matches(self, item: str | None) -> bool:
+        item = item if item is not None else self.item_default
         return not str(item).startswith(self.rule_value)
 
 
 @OperatorRegistry.register(RuleOperator.ends_with)
 class EndsWith(Operator):
     def _matches(self, item: str | None) -> bool:
+        item = item if item is not None else self.item_default
         return str(item).endswith(self.rule_value)
 
 
@@ -136,6 +150,7 @@ class EndsWith(Operator):
 @OperatorRegistry.register(RuleOperator.member_of)
 class IsIn(Operator):
     def _matches(self, item: str | None) -> bool:
+        item = item if item is not None else self.item_default
         comparators = str(self.rule_value).split(",")
         return str(item) in comparators
 
@@ -144,6 +159,7 @@ class IsIn(Operator):
 @OperatorRegistry.register(RuleOperator.not_member_of)
 class NotIn(Operator):
     def _matches(self, item: str | None) -> bool:
+        item = item if item is not None else self.item_default
         comparators = str(self.rule_value).split(",")
         return str(item) not in comparators
 
@@ -171,6 +187,7 @@ class RangeOperator(Operator, ABC):
 @OperatorRegistry.register(RuleOperator.is_between)
 class Between(RangeOperator):
     def _matches(self, item: str | None) -> bool:
+        item = item if item is not None else self.item_default
         if item in (None, ""):
             return False
         return self.low_comparator <= int(item) <= self.high_comparator
@@ -179,6 +196,7 @@ class Between(RangeOperator):
 @OperatorRegistry.register(RuleOperator.is_not_between)
 class NotBetween(RangeOperator):
     def _matches(self, item: str | None) -> bool:
+        item = item if item is not None else self.item_default
         if item in (None, ""):
             return False
         return not self.low_comparator <= int(item) <= self.high_comparator
@@ -227,6 +245,7 @@ class DateOperator(Operator, ABC):
         return self.today + delta
 
     def _matches(self, item: str | None) -> bool:
+        item = item if item is not None else self.item_default
         if attribute_date := self.get_attribute_date(item):
             date_comparator = cast("Callable[[date, date], bool]", self.comparator)
             return date_comparator(attribute_date, self.cutoff)

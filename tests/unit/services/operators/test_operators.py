@@ -23,6 +23,10 @@ cases += [
     (None, RuleOperator.equals, "None", False, ""),
     ("Fourtytwo", RuleOperator.equals, "42", False, ""),
     ("Y", RuleOperator.equals, "Y", True, "Suppress where individual is identified as being a Care Home Resident"),
+    ("Y", RuleOperator.equals, "Y[[NVL:Y]]", True, "Default value specified, but unused"),
+    ("N", RuleOperator.equals, "Y[[NVL:Y]]", False, "Default value specified, but unused"),
+    (None, RuleOperator.equals, "Y[[NVL:Y]]", True, "Default value used"),
+    (None, RuleOperator.equals, "N[[NVL:Y]]", False, "Default value used"),
 ]
 
 # Greater Than
@@ -185,6 +189,10 @@ cases += [
     ("20100305", RuleOperator.is_between, "20100302,20100304", False, ""),
     ("", RuleOperator.is_between, "20100302,20100304", False, ""),
     (None, RuleOperator.is_between, "20100302,20100304", False, ""),
+    ("2", RuleOperator.is_between, "1,3[[NVL:2]]", True, "Default value specified, but unused"),
+    ("0", RuleOperator.is_between, "1,3[[NVL:2]]", False, "Default value specified, but unused"),
+    (None, RuleOperator.is_between, "1,3[[NVL:2]]", True, "Default value used"),
+    (None, RuleOperator.is_between, "1,3[[NVL:0]]", False, "Default value used"),
 ]
 
 # Not Between
@@ -215,6 +223,10 @@ cases += [
     ("20100305", RuleOperator.is_not_between, "20100302,20100304", True, ""),
     ("", RuleOperator.is_not_between, "20100302,20100304", False, ""),
     (None, RuleOperator.is_not_between, "20100302,20100304", False, ""),
+    ("2", RuleOperator.is_not_between, "1,3[[NVL:2]]", False, "Default value specified, but unused"),
+    ("0", RuleOperator.is_not_between, "1,3[[NVL:2]]", True, "Default value specified, but unused"),
+    (None, RuleOperator.is_not_between, "1,3[[NVL:2]]", False, "Default value used"),
+    (None, RuleOperator.is_not_between, "1,3[[NVL:0]]", True, "Default value used"),
 ]
 
 # Is Empty
@@ -267,6 +279,10 @@ cases += [
     ("", RuleOperator.contains, "A12", False, ""),
     ("A23", RuleOperator.contains, "A12", False, ""),
     (23, RuleOperator.contains, "A12", False, ""),
+    ("A12", RuleOperator.contains, "A12[[NVL:A12]]", True, "Default value specified, but unused"),
+    ("3DC", RuleOperator.contains, "A12[[NVL:A12]]", False, "Default value specified, but unused"),
+    (None, RuleOperator.contains, "A12[[NVL:A12]]", True, "Default value used"),
+    (None, RuleOperator.contains, "A12[[NVL:3DC]]", False, "Default value used"),
 ]
 
 # Not Contains
@@ -276,6 +292,10 @@ cases += [
     ("", RuleOperator.not_contains, "A12", True, ""),
     (23, RuleOperator.not_contains, "A12", True, ""),
     ("A12", RuleOperator.not_contains, "A12", False, ""),
+    ("A12", RuleOperator.not_contains, "A12[[NVL:A12]]", False, "Default value specified, but unused"),
+    ("3DC", RuleOperator.not_contains, "A12[[NVL:A12]]", True, "Default value specified, but unused"),
+    (None, RuleOperator.not_contains, "A12[[NVL:A12]]", False, "Default value used"),
+    (None, RuleOperator.not_contains, "A12[[NVL:3DC]]", True, "Default value used"),
 ]
 
 # Starts With
@@ -287,6 +307,10 @@ cases += [
     ("  YY66", RuleOperator.starts_with, "YY66", False, ""),
     (None, RuleOperator.starts_with, "YY66", False, ""),
     ("", RuleOperator.starts_with, "YY66", False, ""),
+    ("YY66", RuleOperator.starts_with, "YY[[NVL:YY77]]", True, "Default value specified, but unused"),
+    ("PP77", RuleOperator.starts_with, "YY[[NVL:YY77]]", False, "Default value specified, but unused"),
+    (None, RuleOperator.starts_with, "YY[[NVL:YY77]]", True, "Default value used"),
+    (None, RuleOperator.starts_with, "YY[[NVL:PP77]]", False, "Default value used"),
 ]
 
 # Not Starts With
@@ -298,6 +322,10 @@ cases += [
     ("  YY66", RuleOperator.not_starts_with, "YY66", True, ""),
     (None, RuleOperator.not_starts_with, "YY66", True, ""),
     ("", RuleOperator.not_starts_with, "YY66", True, ""),
+    ("YY66", RuleOperator.not_starts_with, "YY[[NVL:YY77]]", False, "Default value specified, but unused"),
+    ("PP77", RuleOperator.not_starts_with, "YY[[NVL:YY77]]", True, "Default value specified, but unused"),
+    (None, RuleOperator.not_starts_with, "YY[[NVL:YY77]]", False, "Default value used"),
+    (None, RuleOperator.not_starts_with, "YY[[NVL:PP77]]", True, "Default value used"),
 ]
 
 # Ends With
@@ -307,6 +335,10 @@ cases += [
     (None, RuleOperator.ends_with, "2BA", False, ""),
     ("", RuleOperator.ends_with, "2BA", False, ""),
     ("2BA00", RuleOperator.ends_with, "2BA", False, ""),
+    ("YY66", RuleOperator.ends_with, "66[[NVL:YY77]]", True, "Default value specified, but unused"),
+    ("PP77", RuleOperator.ends_with, "66[[NVL:YY77]]", False, "Default value specified, but unused"),
+    (None, RuleOperator.ends_with, "77[[NVL:YY77]]", True, "Default value used"),
+    (None, RuleOperator.ends_with, "66[[NVL:PP77]]", False, "Default value used"),
 ]
 
 # is_in
@@ -316,6 +348,10 @@ cases += [
     ("AZ1", RuleOperator.is_in, "QH8,QJG", False, ""),
     ("QH8", RuleOperator.is_in, "QH8,QJG", True, ""),
     ("QH8", RuleOperator.is_in, "QJG,QH8", True, ""),
+    ("QH8", RuleOperator.is_in, "QH8,QJG[[NVL:QH8]]", True, "Default value specified, but unused"),
+    ("PP77", RuleOperator.is_in, "QH8,QJG[[NVL:QH8]]", False, "Default value specified, but unused"),
+    (None, RuleOperator.is_in, "QH8,QJG[[NVL:QH8]]", True, "Default value used"),
+    (None, RuleOperator.is_in, "QH8,QJG[[NVL:PP77]]", False, "Default value used"),
 ]
 
 # is not_in
@@ -324,6 +360,10 @@ cases += [
     (None, RuleOperator.not_in, "QH8,QJG", True, ""),
     ("AZ1", RuleOperator.not_in, "QH8,QJG", True, ""),
     ("QH8", RuleOperator.not_in, "QH8,QJG", False, ""),
+    ("QH8", RuleOperator.not_in, "QH8,QJG[[NVL:QH8]]", False, "Default value specified, but unused"),
+    ("PP77", RuleOperator.not_in, "QH8,QJG[[NVL:QH8]]", True, "Default value specified, but unused"),
+    (None, RuleOperator.not_in, "QH8,QJG[[NVL:QH8]]", False, "Default value used"),
+    (None, RuleOperator.not_in, "QH8,QJG[[NVL:PP77]]", True, "Default value used"),
 ]
 
 # is member_of
@@ -332,6 +372,10 @@ cases += [
     (None, RuleOperator.member_of, "cohort1,cohort2", False, ""),
     ("", RuleOperator.member_of, "cohort1,cohort2", False, ""),
     ("cohort3", RuleOperator.member_of, "cohort1,cohort2", False, ""),
+    ("cohort1", RuleOperator.member_of, "cohort1,cohort2[[NVL:cohort1]]", True, "Default value specified, but unused"),
+    ("cohort3", RuleOperator.member_of, "cohort1,cohort2[[NVL:cohort1]]", False, "Default value specified, but unused"),
+    (None, RuleOperator.member_of, "cohort1,cohort2[[NVL:cohort1]]", True, "Default value used"),
+    (None, RuleOperator.member_of, "cohort1,cohort2[[NVL:cohort3]]", False, "Default value used"),
 ]
 
 # is not_member_of
@@ -340,6 +384,22 @@ cases += [
     (None, RuleOperator.not_member_of, "cohort1,cohort2", True, ""),
     ("", RuleOperator.not_member_of, "cohort1,cohort2", True, ""),
     ("cohort3", RuleOperator.not_member_of, "cohort1,cohort2", True, ""),
+    (
+        "cohort1",
+        RuleOperator.not_member_of,
+        "cohort1,cohort2[[NVL:cohort1]]",
+        False,
+        "Default value specified, but unused",
+    ),
+    (
+        "cohort3",
+        RuleOperator.not_member_of,
+        "cohort1,cohort2[[NVL:cohort1]]",
+        True,
+        "Default value specified, but unused",
+    ),
+    (None, RuleOperator.not_member_of, "cohort1,cohort2[[NVL:cohort1]]", False, "Default value used"),
+    (None, RuleOperator.not_member_of, "cohort1,cohort2[[NVL:cohort3]]", True, "Default value used"),
 ]
 
 # Day lesser than or equal to
@@ -349,6 +409,10 @@ cases += [
     ("20250428", RuleOperator.day_lte, "2", False, "Future date"),
     ("", RuleOperator.day_lte, "2", False, "Case empty string"),
     (None, RuleOperator.day_lte, "2", False, "Case None"),
+    ("20250427", RuleOperator.day_lte, "2[[NVL:20991231]]", True, "Default value specified, but unused"),
+    ("20250428", RuleOperator.day_lte, "2[[NVL:20991231]]", False, "Default value specified, but unused"),
+    (None, RuleOperator.day_lte, "2[[NVL:20250427]]", True, "Default value used"),
+    (None, RuleOperator.day_lte, "2[[NVL:20250428]]", False, "Default value used"),
 ]
 
 # Day less than
