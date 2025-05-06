@@ -18,7 +18,7 @@ data "aws_iam_policy_document" "dynamodb_write_policy" {
 resource "aws_iam_role_policy" "lambda_read_policy" {
   count  = local.is_iam_owner ? 1 : 0
   name   = "DynamoDBReadAccess"
-  role   = local.lambda_read_role
+  role   = local.lambda_read_role_id
   policy = data.aws_iam_policy_document.dynamodb_read_policy.json
 }
 
@@ -26,7 +26,7 @@ resource "aws_iam_role_policy" "lambda_read_policy" {
 resource "aws_iam_role_policy" "external_write_policy" {
   count  = local.is_iam_owner ? 1 : 0
   name   = "DynamoDBWriteAccess"
-  role   = local.write_access_role
+  role   = local.write_access_role_id
   policy = data.aws_iam_policy_document.dynamodb_write_policy.json
 }
 

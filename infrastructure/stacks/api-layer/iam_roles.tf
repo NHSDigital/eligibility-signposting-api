@@ -52,6 +52,7 @@ data "aws_iam_role" "write_access_role" {
 }
 
 locals {
-  lambda_read_role = local.is_iam_owner ? aws_iam_role.lambda_read_role[0].id : data.aws_iam_role.lambda_read_role[0].id
-  write_access_role = local.is_iam_owner ? aws_iam_role.write_access_role[0].id : data.aws_iam_role.write_access_role[0].id
+  lambda_read_role_id = local.is_iam_owner ? aws_iam_role.lambda_read_role[0].id : data.aws_iam_role.lambda_read_role[0].id
+  lambda_read_role_arn = local.is_iam_owner ? aws_iam_role.lambda_read_role[0].arn : data.aws_iam_role.lambda_read_role[0].arn
+  write_access_role_id = local.is_iam_owner ? aws_iam_role.write_access_role[0].id : data.aws_iam_role.write_access_role[0].id
 }
