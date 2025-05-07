@@ -1,7 +1,3 @@
-module "iam_permissions_boundary" {
-  source = "../iams-developer-roles"
-}
-
 # Lambda trust policy
 data "aws_iam_policy_document" "lambda_assume_role" {
   statement {
@@ -29,7 +25,7 @@ resource "aws_iam_role" "lambda_read_role" {
   count                = local.is_iam_owner ? 1 : 0
   name                 = "lambda-read-role"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role.json
-  permissions_boundary = module.iam_permissions_boundary.permissions_boundary_arn
+  permissions_boundary = local.permissions_boundary_arn
 }
 
 # External write role: only created in default workspace
@@ -37,7 +33,7 @@ resource "aws_iam_role" "write_access_role" {
   count                = local.is_iam_owner ? 1 : 0
   name                 = "external-write-role"
   assume_role_policy   = data.aws_iam_policy_document.dps_assume_role.json
-  permissions_boundary = module.iam_permissions_boundary.permissions_boundary_arn
+  permissions_boundary = local.permissions_boundary_arn
 }
 
 # Data sources for referencing existing roles in non-default workspaces
