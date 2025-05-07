@@ -1,5 +1,5 @@
 # Read-only policy for DynamoDB
-data "aws_iam_policy_document" "dynamodb_read_policy" {
+data "aws_iam_policy_document" "dynamodb_read_policy_doc" {
   statement {
     actions   = ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"]
     resources = [module.eligibility_status_table.arn]
@@ -7,25 +7,25 @@ data "aws_iam_policy_document" "dynamodb_read_policy" {
 }
 
 # Write-only policy for DynamoDB
-data "aws_iam_policy_document" "dynamodb_write_policy" {
+data "aws_iam_policy_document" "dynamodb_write_policy_doc" {
   statement {
     actions   = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem"]
     resources = [module.eligibility_status_table.arn]
   }
 }
 
-# Attach read policy to Lambda role (only in IAM default workspace)
-resource "aws_iam_role_policy" "lambda_read_policy" {
+# Attach read policy to Lambda role
+resource "aws_iam_role_policy" "lambda_dynamodb_read_policy" {
   name   = "DynamoDBReadAccess"
-  role   = aws_iam_role.lambda_read_role.id
-  policy = data.aws_iam_policy_document.dynamodb_read_policy.json
+  role   = aws_iam_role.eligibility_lambda_role.id
+  policy = data.aws_iam_policy_document.dynamodb_read_policy_doc.json
 }
 
-# Attach write policy to external write role (only in IAM default workspace)
-resource "aws_iam_role_policy" "external_write_policy" {
+# Attach write policy to external write role
+resource "aws_iam_role_policy" "external_dynamodb_write_policy" {
   name   = "DynamoDBWriteAccess"
   role   = aws_iam_role.write_access_role.id
-  policy = data.aws_iam_policy_document.dynamodb_write_policy.json
+  policy = data.aws_iam_policy_document.dynamodb_write_policy_doc.json
 }
 
 

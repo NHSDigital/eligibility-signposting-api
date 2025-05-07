@@ -7,7 +7,7 @@ data "aws_iam_policy_document" "lambda_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
     principals {
-      type        = "Service"
+      type = "Service"
       identifiers = ["lambda.amazonaws.com"]
     }
   }
@@ -18,20 +18,20 @@ data "aws_iam_policy_document" "dps_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [local.selected_role_arn]
     }
   }
 }
 
-# Lambda read role: only created in default workspace
-resource "aws_iam_role" "lambda_read_role" {
-  name                 = "lambda-read-role"
+
+resource "aws_iam_role" "eligibility_lambda_role" {
+  name                 = "eligibility_lambda-role"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role.json
   permissions_boundary = module.iam_permissions_boundary.permissions_boundary_arn
 }
 
-# External write role: only created in default workspace
+
 resource "aws_iam_role" "write_access_role" {
   name                 = "external-write-role"
   assume_role_policy   = data.aws_iam_policy_document.dps_assume_role.json
