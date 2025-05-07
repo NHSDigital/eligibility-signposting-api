@@ -8,7 +8,9 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
 
   source_code_hash = data.archive_file.lambda.output_base64sha256
 
-  runtime = "python3.13"
+  runtime     = "python3.13"
+  timeout     = 3   # Default
+  memory_size = 128 # Default
 
   environment {
     variables = {

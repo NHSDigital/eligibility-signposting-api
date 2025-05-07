@@ -5,11 +5,11 @@ variable "workspace" {
 
 variable "lambda_read_role_arn" {
   description = "lambda read role arn for dynamodb"
-  type    = string
+  type        = string
 }
 
 variable "lambda_func_name" {
   description = "Name of the Lambda function"
-  type    = string
+  type        = string
 }
 
