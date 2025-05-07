@@ -5,20 +5,15 @@ from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask.testing import FlaskClient
 from hamcrest import assert_that, has_entries, has_entry, has_item, has_key
 
-from eligibility_signposting_api.model.eligibility import DateOfBirth, NHSNumber, Postcode
+from eligibility_signposting_api.model.eligibility import NHSNumber
 from eligibility_signposting_api.model.rules import CampaignConfig
 
 
-def test_nhs_number_given(
-    client: FlaskClient,
-    persisted_person: tuple[NHSNumber, DateOfBirth, Postcode],
-    campaign_config: CampaignConfig,  # noqa: ARG001
-):
+def test_nhs_number_given(client: FlaskClient, persisted_person: NHSNumber, campaign_config: CampaignConfig):  # noqa: ARG001
     # Given
-    nhs_number, date_of_birth, postcode = persisted_person
 
     # When
-    response = client.get(f"/eligibility/{nhs_number}")
+    response = client.get(f"/eligibility/{persisted_person}")
 
     # Then
     assert_that(
@@ -42,16 +37,11 @@ def test_no_nhs_number_given(client: FlaskClient):
     )
 
 
-def test_actionable_by_rule(
-    client: FlaskClient,
-    persisted_77yo_person: tuple[NHSNumber, DateOfBirth, Postcode],
-    campaign_config: CampaignConfig,  # noqa: ARG001
-):
+def test_actionable_by_rule(client: FlaskClient, persisted_77yo_person: NHSNumber, campaign_config: CampaignConfig):  # noqa: ARG001
     # Given
-    nhs_number, date_of_birth, postcode = persisted_77yo_person
 
     # When
-    response = client.get(f"/eligibility/{nhs_number}")
+    response = client.get(f"/eligibility/{persisted_77yo_person}")
 
     # Then
     assert_that(
@@ -64,16 +54,11 @@ def test_actionable_by_rule(
     )
 
 
-def test_not_actionable_by_rule(
-    client: FlaskClient,
-    persisted_person: tuple[NHSNumber, DateOfBirth, Postcode],
-    campaign_config: CampaignConfig,  # noqa: ARG001
-):
+def test_not_actionable_by_rule(client: FlaskClient, persisted_person: NHSNumber, campaign_config: CampaignConfig):  # noqa: ARG001
     # Given
-    nhs_number, date_of_birth, postcode = persisted_person
 
     # When
-    response = client.get(f"/eligibility/{nhs_number}")
+    response = client.get(f"/eligibility/{persisted_person}")
 
     # Then
     assert_that(
