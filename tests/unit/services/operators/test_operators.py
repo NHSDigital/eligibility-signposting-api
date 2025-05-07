@@ -31,6 +31,9 @@ cases += [
 ]
 
 # Greater Than
+# test comment for signed commit
+# another test comment
+# another test comment
 cases += [
     ("101", RuleOperator.gt, "100", True, ""),
     ("100", RuleOperator.gt, "100", False, ""),
@@ -586,3 +589,5 @@ def test_operator(
         equal_to(expected),
         f"{person_data!r} {rule_operator.name} {rule_value!r}{' - ' if test_comment else ''}{test_comment}",
     )
+
+    # throw in another comment after realising this is all a waste of time
