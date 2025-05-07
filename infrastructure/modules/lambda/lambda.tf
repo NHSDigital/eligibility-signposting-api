@@ -4,7 +4,7 @@ resource "aws_lambda_function" "test_lambda" {
   filename      = "lambda_function_payload.zip"
   function_name = "lambda_function_name"
   role          = var.lambda_read_role_arn
-  handler       = "lambda-function1.py"
+  handler       = "lambda-function1.lambda_handler"
 
   source_code_hash = data.archive_file.lambda.output_base64sha256
 
