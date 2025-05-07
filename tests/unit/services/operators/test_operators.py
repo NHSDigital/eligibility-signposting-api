@@ -31,6 +31,7 @@ cases += [
 ]
 
 # Greater Than
+# test comment for signed commit
 cases += [
     ("101", RuleOperator.gt, "100", True, ""),
     ("100", RuleOperator.gt, "100", False, ""),
