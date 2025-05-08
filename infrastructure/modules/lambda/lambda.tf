@@ -26,5 +26,5 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
 data "archive_file" "lambda" {
   type        = "zip"
   source_file = "src/lambda_function1.py"
-  output_path = "lambda_function_payload.zip"
+  output_path = "src/lambda_function_payload.zip"
 }
