@@ -7,7 +7,7 @@ data "aws_iam_policy_document" "lambda_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
     principals {
-      type = "Service"
+      type        = "Service"
       identifiers = ["lambda.amazonaws.com"]
     }
   }
@@ -18,7 +18,7 @@ data "aws_iam_policy_document" "dps_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
     principals {
-      type = "AWS"
+      type        = "AWS"
       identifiers = [local.selected_role_arn]
     }
   }
