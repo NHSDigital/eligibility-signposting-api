@@ -25,6 +25,7 @@ RuleAttributeName = NewType("RuleAttributeName", str)
 RuleComparator = NewType("RuleComparator", str)
 StartDate = NewType("StartDate", date)
 EndDate = NewType("EndDate", date)
+CohortLabel = NewType("CohortLabel", str)
 
 
 class RuleType(str, Enum):
@@ -78,7 +79,7 @@ class RuleAttributeLevel(str, Enum):
 
 
 class IterationCohort(BaseModel):
-    cohort_label: str | None = Field(None, alias="CohortLabel")
+    cohort_label: CohortLabel | None = Field(None, alias="CohortLabel")
     priority: int | None = Field(None, alias="Priority")
 
     model_config = {"populate_by_name": True}
@@ -91,6 +92,7 @@ class IterationRule(BaseModel):
     priority: RulePriority = Field(..., alias="Priority")
     attribute_level: RuleAttributeLevel = Field(..., alias="AttributeLevel")
     attribute_name: RuleAttributeName = Field(..., alias="AttributeName")
+    cohort_label: CohortLabel | None = Field(None, alias="CohortLabel")
     operator: RuleOperator = Field(..., alias="Operator")
     comparator: RuleComparator = Field(..., alias="Comparator")
     attribute_target: str | None = Field(None, alias="AttributeTarget")
