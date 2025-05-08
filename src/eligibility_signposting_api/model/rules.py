@@ -82,7 +82,7 @@ class IterationCohort(BaseModel):
     cohort_label: CohortLabel | None = Field(None, alias="CohortLabel")
     priority: int | None = Field(None, alias="Priority")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "ignore"}
 
 
 class IterationRule(BaseModel):
@@ -97,7 +97,7 @@ class IterationRule(BaseModel):
     comparator: RuleComparator = Field(..., alias="Comparator")
     attribute_target: str | None = Field(None, alias="AttributeTarget")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "ignore"}
 
 
 class Iteration(BaseModel):
@@ -112,10 +112,7 @@ class Iteration(BaseModel):
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
 
-    model_config = {
-        "populate_by_name": True,
-        "arbitrary_types_allowed": True,
-    }
+    model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
     @field_validator("iteration_date", mode="before")
     @classmethod
@@ -149,10 +146,7 @@ class CampaignConfig(BaseModel):
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
     iterations: list[Iteration] = Field(..., alias="Iterations")
 
-    model_config = {
-        "populate_by_name": True,
-        "arbitrary_types_allowed": True,
-    }
+    model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
     @field_validator("start_date", "end_date", mode="before")
     @classmethod
@@ -185,4 +179,4 @@ class Rules(BaseModel):
 
     campaign_config: CampaignConfig = Field(..., alias="CampaignConfig")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "ignore"}
