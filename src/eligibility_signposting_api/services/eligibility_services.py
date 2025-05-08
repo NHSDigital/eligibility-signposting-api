@@ -1,10 +1,11 @@
 import logging
+from typing import Any
 
 from hamcrest.core.string_description import StringDescription
 from wireup import service
 
 from eligibility_signposting_api.model import eligibility
-from eligibility_signposting_api.model.rules import CampaignConfig, IterationRule, RuleAttributeLevel
+from eligibility_signposting_api.model.rules import CampaignConfig, Iteration, IterationRule, RuleAttributeLevel
 from eligibility_signposting_api.repos import EligibilityRepo, NotFoundError, RulesRepo
 from eligibility_signposting_api.services.rules.operators import OperatorRegistry
 
@@ -47,33 +48,62 @@ class EligibilityService:
 
     @staticmethod
     def evaluate_eligibility(
-        campaign_configs: list[CampaignConfig], person_data: list[dict[str, str | None]]
+        campaign_configs: list[CampaignConfig], person_data: list[dict[str, Any]]
     ) -> eligibility.EligibilityStatus:
         """Calculate a person's eligibility for vaccination."""
         conditions: dict[eligibility.ConditionName, eligibility.Condition] = {}
         for campaign_config in campaign_configs:
             condition_name = eligibility.ConditionName(campaign_config.target)
-            condition = conditions.setdefault(
-                condition_name,
-                eligibility.Condition(condition_name=condition_name, status=eligibility.Status.actionable, reasons=[]),
-            )
-            for iteration_rule in [
-                iteration_rule
-                for iteration in campaign_config.iterations
-                for iteration_rule in iteration.iteration_rules
-            ]:
-                exclusion, reason = EligibilityService.evaluate_exclusion(iteration_rule, person_data)
-                condition.reasons.append(
-                    eligibility.Reason(
-                        rule_type=eligibility.RuleType(iteration_rule.type),
-                        rule_name=eligibility.RuleName(iteration_rule.name),
-                        rule_result=eligibility.RuleResult(reason),
+
+            for iteration in campaign_config.iterations:
+                base_eligible = EligibilityService.evaluate_base_eligibility(iteration, person_data)
+                if base_eligible:
+                    condition = conditions.setdefault(
+                        condition_name,
+                        eligibility.Condition(
+                            condition_name=condition_name, status=eligibility.Status.actionable, reasons=[]
+                        ),
                     )
-                )
-                if exclusion:
-                    condition.status = eligibility.Status.not_actionable
+                    for iteration_rule in iteration.iteration_rules:
+                        EligibilityService.evaluate_iteration_rule(condition, iteration_rule, person_data)
+                else:
+                    logger.debug("person not in cohorts")
+                    conditions.setdefault(
+                        condition_name,
+                        eligibility.Condition(
+                            condition_name=condition_name, status=eligibility.Status.not_eligible, reasons=[]
+                        ),
+                    )
 
         return eligibility.EligibilityStatus(conditions=list(conditions.values()))
+
+    @staticmethod
+    def evaluate_base_eligibility(iteration: Iteration, person_data: list[dict[str, Any]]) -> set[str]:
+        iteration_cohorts: set[str] = {
+            cohort.cohort_label for cohort in iteration.iteration_cohorts if cohort.cohort_label
+        }
+
+        cohorts_row: dict[str, dict[str, dict[str, dict[str, Any]]]] = next(
+            (r for r in person_data if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"), {}
+        )
+        person_cohorts = set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
+
+        return iteration_cohorts.intersection(person_cohorts)
+
+    @staticmethod
+    def evaluate_iteration_rule(
+        condition: eligibility.Condition, iteration_rule: IterationRule, person_data: list[dict[str, Any]]
+    ) -> None:
+        exclusion, reason = EligibilityService.evaluate_exclusion(iteration_rule, person_data)
+        condition.reasons.append(
+            eligibility.Reason(
+                rule_type=eligibility.RuleType(iteration_rule.type),
+                rule_name=eligibility.RuleName(iteration_rule.name),
+                rule_result=eligibility.RuleResult(reason),
+            )
+        )
+        if exclusion:
+            condition.status = eligibility.Status.not_actionable
 
     @staticmethod
     def evaluate_exclusion(iteration_rule: IterationRule, person_data: list[dict[str, str | None]]) -> tuple[bool, str]:
