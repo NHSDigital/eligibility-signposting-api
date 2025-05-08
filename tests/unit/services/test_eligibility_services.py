@@ -65,7 +65,7 @@ def test_not_base_eligible(faker: Faker):
             {
                 "NHS_NUMBER": f"PERSON#{nhs_number}",
                 "ATTRIBUTE_TYPE": "COHORTS",
-                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.date()}}}}},
+                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.past_date()}}}}},
             },
         ]
     )
@@ -112,7 +112,7 @@ def test_only_live_campaigns_considered(faker: Faker):
             {
                 "NHS_NUMBER": f"PERSON#{nhs_number}",
                 "ATTRIBUTE_TYPE": "COHORTS",
-                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.date()}}}}},
+                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.past_date()}}}}},
             },
         ]
     )
@@ -177,7 +177,7 @@ def test_base_eligible_and_simple_rule_includes(faker: Faker):
             {
                 "NHS_NUMBER": f"PERSON#{nhs_number}",
                 "ATTRIBUTE_TYPE": "COHORTS",
-                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.date()}}}}},
+                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.past_date()}}}}},
             },
         ]
     )
@@ -241,7 +241,7 @@ def test_base_eligible_but_simple_rule_excludes(faker: Faker):
             {
                 "NHS_NUMBER": f"PERSON#{nhs_number}",
                 "ATTRIBUTE_TYPE": "COHORTS",
-                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.date()}}}}},
+                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.past_date()}}}}},
             },
         ]
     )
@@ -306,7 +306,7 @@ def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
             {
                 "NHS_NUMBER": f"PERSON#{nhs_number}",
                 "ATTRIBUTE_TYPE": "COHORTS",
-                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.date()}}}}},
+                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.past_date()}}}}},
             },
         ]
     )
