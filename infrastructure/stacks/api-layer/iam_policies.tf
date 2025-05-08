@@ -1,7 +1,7 @@
 # Read-only policy for DynamoDB
 data "aws_iam_policy_document" "dynamodb_read_policy_doc" {
   statement {
-    actions   = ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"]
+    actions = ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"]
     resources = [module.eligibility_status_table.arn]
   }
 }
@@ -16,7 +16,7 @@ resource "aws_iam_role_policy" "lambda_dynamodb_read_policy" {
 # Write-only policy for DynamoDB
 data "aws_iam_policy_document" "dynamodb_write_policy_doc" {
   statement {
-    actions   = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem"]
+    actions = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem"]
     resources = [module.eligibility_status_table.arn]
   }
 }
@@ -42,7 +42,7 @@ data "aws_iam_policy_document" "storage_bucket_access_logs_policy" {
       "${module.s3_rules_bucket.storage_bucket_access_logs_arn}/*",
     ]
     principals {
-      type        = "*"
+      type = "*"
       identifiers = ["*"]
     }
     condition {
@@ -74,7 +74,7 @@ data "aws_iam_policy_document" "s3_rules_bucket_policy" {
       "${module.s3_rules_bucket.storage_bucket_arn}/*",
     ]
     condition {
-      test = "Bool"
+      test     = "Bool"
       values = ["true"]
       variable = "aws:SecureTransport"
     }
@@ -89,9 +89,15 @@ resource "aws_iam_role_policy" "lambda_s3_read_policy" {
   policy = data.aws_iam_policy_document.s3_rules_bucket_policy.json
 }
 
+# Attach AWSLambdaVPCAccessExecutionRole policy to Lambda role
+resource "aws_iam_role_policy_attachment" "AWSLambdaVPCAccessExecutionRole" {
+  role       = aws_iam_role.eligibility_lambda_role.id
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+
 # Policy doc for S3 Audit bucket
 data "aws_iam_policy_document" "s3_audit_bucket_policy" {
-    statement {
+  statement {
     sid = "AllowSSLRequestsOnly"
     actions = ["s3:*"]
     resources = [
@@ -99,7 +105,7 @@ data "aws_iam_policy_document" "s3_audit_bucket_policy" {
       "${module.s3_audit_bucket.storage_bucket_arn}/*",
     ]
     condition {
-      test = "Bool"
+      test     = "Bool"
       values = ["true"]
       variable = "aws:SecureTransport"
     }

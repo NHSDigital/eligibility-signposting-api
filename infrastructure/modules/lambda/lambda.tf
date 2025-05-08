@@ -3,7 +3,7 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   # path.module in the filename.
   filename      = "lambda_function_payload.zip"
   function_name = var.lambda_func_name
-  role          = var.lambda_read_role_arn
+  role          = var.eligibility_lambda_role_arn
   handler       = "lambda_function1.lambda_handler"
 
   source_code_hash = data.archive_file.lambda.output_base64sha256
@@ -16,6 +16,10 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
     variables = {
       foo = "bar"
     }
+  }
+  vpc_config {
+    subnet_ids         = var.vpc_intra_subnets
+    security_group_ids = var.security_group_ids
   }
 }
 
