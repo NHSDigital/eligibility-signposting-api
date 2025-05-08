@@ -84,10 +84,9 @@ class EligibilityService:
         for campaign_config in (cc for cc in campaign_configs if cc.campaign_live):
             condition_name = eligibility.ConditionName(campaign_config.target)
             condition_names.add(condition_name)
-            for iteration in campaign_config.iterations:
-                base_eligible = EligibilityService.evaluate_base_eligibility(iteration, person_data)
-                if base_eligible:
-                    base_eligible_iterations[condition_name] = iteration
+            base_eligible = EligibilityService.evaluate_base_eligibility(campaign_config.current_iteration, person_data)
+            if base_eligible:
+                base_eligible_iterations[condition_name] = campaign_config.current_iteration
         return base_eligible_iterations, condition_names
 
     @staticmethod

@@ -286,3 +286,91 @@ def test_base_eligible_but_simple_rule_excludes(faker: Faker):
             has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_actionable))
         ),
     )
+
+
+@freeze_time("2025-04-25")
+def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=66, maximum_age=74))
+
+    eligibility_repo = MagicMock(spec=EligibilityRepo)
+    rules_repo = MagicMock(spec=RulesRepo)
+    eligibility_repo.get_eligibility_data = MagicMock(
+        return_value=[
+            {
+                "NHS_NUMBER": f"PERSON#{nhs_number}",
+                "ATTRIBUTE_TYPE": "PERSON",
+                "DATE_OF_BIRTH": date_of_birth.strftime("%Y%m%d"),
+            },
+            {
+                "NHS_NUMBER": f"PERSON#{nhs_number}",
+                "ATTRIBUTE_TYPE": "COHORTS",
+                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.date()}}}}},
+            },
+        ]
+    )
+    rules_repo.get_campaign_configs = MagicMock(
+        return_value=[
+            CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    IterationFactory.build(
+                        name="old iteration - would not exclude 74 year old",
+                        iteration_rules=[
+                            IterationRuleFactory.build(
+                                type=RuleType.filter,
+                                attribute_level=RuleAttributeLevel.PERSON,
+                                attribute_name="DATE_OF_BIRTH",
+                                operator=RuleOperator.year_gt,
+                                comparator="-65",
+                            ),
+                        ],
+                        iteration_cohorts=[IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_date=datetime.date(2025, 4, 10),
+                    ),
+                    IterationFactory.build(
+                        name="current - would exclude 74 year old",
+                        iteration_rules=[
+                            IterationRuleFactory.build(
+                                type=RuleType.filter,
+                                attribute_level=RuleAttributeLevel.PERSON,
+                                attribute_name="DATE_OF_BIRTH",
+                                operator=RuleOperator.year_gt,
+                                comparator="-75",
+                            ),
+                        ],
+                        iteration_cohorts=[IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_date=datetime.date(2025, 4, 20),
+                    ),
+                    IterationFactory.build(
+                        name="next iteration - would not exclude 74 year old",
+                        iteration_rules=[
+                            IterationRuleFactory.build(
+                                type=RuleType.filter,
+                                attribute_level=RuleAttributeLevel.PERSON,
+                                attribute_name="DATE_OF_BIRTH",
+                                operator=RuleOperator.year_gt,
+                                comparator="-65",
+                            ),
+                        ],
+                        iteration_cohorts=[IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_date=datetime.date(2025, 4, 30),
+                    ),
+                ],
+            )
+        ]
+    )
+
+    ps = EligibilityService(eligibility_repo, rules_repo)
+
+    # When
+    actual = ps.get_eligibility_status(NHSNumber(nhs_number))
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_actionable))
+        ),
+    )
