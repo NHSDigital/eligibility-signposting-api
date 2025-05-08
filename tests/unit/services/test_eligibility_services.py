@@ -1,7 +1,9 @@
+import datetime
 from unittest.mock import MagicMock
 
 import pytest
 from faker import Faker
+from freezegun import freeze_time
 from hamcrest import assert_that, empty, has_item
 
 from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Status
@@ -77,6 +79,70 @@ def test_not_base_eligible(faker: Faker):
                     )
                 ],
             )
+        ]
+    )
+
+    ps = EligibilityService(eligibility_repo, rules_repo)
+
+    # When
+    actual = ps.get_eligibility_status(NHSNumber(nhs_number))
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_eligible))
+        ),
+    )
+
+
+@freeze_time("2025-04-25")
+def test_only_live_campaigns_considered(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+
+    eligibility_repo = MagicMock(spec=EligibilityRepo)
+    rules_repo = MagicMock(spec=RulesRepo)
+    eligibility_repo.get_eligibility_data = MagicMock(
+        return_value=[
+            {
+                "NHS_NUMBER": f"PERSON#{nhs_number}",
+                "ATTRIBUTE_TYPE": "PERSON",
+            },
+            {
+                "NHS_NUMBER": f"PERSON#{nhs_number}",
+                "ATTRIBUTE_TYPE": "COHORTS",
+                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.date()}}}}},
+            },
+        ]
+    )
+    rules_repo.get_campaign_configs = MagicMock(
+        return_value=[
+            CampaignConfigFactory.build(
+                name="Live",
+                target="RSV",
+                iterations=[
+                    IterationFactory.build(
+                        iteration_cohorts=[IterationCohortFactory.build(cohort_label="cohort2")],
+                    )
+                ],
+                start_date=datetime.date(2025, 4, 20),
+                end_date=datetime.date(2025, 4, 30),
+            ),
+            CampaignConfigFactory.build(
+                name="No longer live",
+                target="RSV",
+                iterations=[
+                    IterationFactory.build(
+                        iteration_cohorts=[
+                            IterationCohortFactory.build(cohort_label="cohort1"),
+                            IterationCohortFactory.build(cohort_label="cohort2"),
+                        ],
+                    )
+                ],
+                start_date=datetime.date(2025, 4, 1),
+                end_date=datetime.date(2025, 4, 24),
+            ),
         ]
     )
 

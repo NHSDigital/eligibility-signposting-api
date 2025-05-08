@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import typing
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import Enum
+from operator import attrgetter
 from typing import Literal, NewType
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
@@ -162,6 +163,17 @@ class CampaignConfig(BaseModel):
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
+
+    @property
+    def campaign_live(self) -> bool:
+        today = datetime.now(tz=UTC).date()
+        return self.start_date <= today <= self.end_date
+
+    @property
+    def current_iteration(self) -> Iteration:
+        today = datetime.now(tz=UTC).date()
+        iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_date"), reverse=True)
+        return next(i for i in iterations_by_date_descending if i.iteration_date <= today)
 
 
 class Rules(BaseModel):

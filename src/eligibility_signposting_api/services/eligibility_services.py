@@ -81,7 +81,7 @@ class EligibilityService:
         """
         condition_names: set[eligibility.ConditionName] = set()
         base_eligible_iterations: OrderedDict[eligibility.ConditionName, Iteration] = OrderedDict()
-        for campaign_config in campaign_configs:
+        for campaign_config in (cc for cc in campaign_configs if cc.campaign_live):
             condition_name = eligibility.ConditionName(campaign_config.target)
             condition_names.add(condition_name)
             for iteration in campaign_config.iterations:
