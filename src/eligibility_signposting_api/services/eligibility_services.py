@@ -1,5 +1,5 @@
 import logging
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from collections.abc import Collection, Mapping
 from typing import Any
 
@@ -54,40 +54,40 @@ class EligibilityService:
         """Calculate a person's eligibility for vaccination."""
 
         # Get all iterations for which the person is base eligible, i.e. those which *might* provide eligibility.
-        base_eligible_iterations, condition_names = EligibilityService.get_base_eligibility_iterations(
+        base_eligible_campaigns, condition_names = EligibilityService.get_base_eligible_campaigns(
             campaign_configs, person_data
         )
         # Evaluate iteration rules to see if the person is actionable
-        base_eligible_evaluations = EligibilityService.evaluate_for_base_eligible_iterations(
-            base_eligible_iterations, person_data
-        )
+        evaluations = EligibilityService.evaluate_for_base_eligible_campaigns(base_eligible_campaigns, person_data)
 
         conditions: dict[eligibility.ConditionName, eligibility.Condition] = {}
         # Add all not eligible conditions to result set.
-        conditions |= EligibilityService.get_not_eligible_conditions(base_eligible_iterations, condition_names)
+        conditions |= EligibilityService.get_not_eligible_conditions(base_eligible_campaigns, condition_names)
         # Add all actionable and not actionable conditions to result set.
-        conditions |= EligibilityService.get_eligible_conditions(base_eligible_evaluations)
+        conditions |= EligibilityService.get_eligible_conditions(evaluations)
 
         return eligibility.EligibilityStatus(conditions=list(conditions.values()))
 
     @staticmethod
-    def get_base_eligibility_iterations(
+    def get_base_eligible_campaigns(
         campaign_configs: Collection[CampaignConfig], person_data: Collection[Mapping[str, Any]]
-    ) -> tuple[OrderedDict[eligibility.ConditionName, Iteration], set[eligibility.ConditionName]]:
-        """Get all iterations for which the person is base eligible, i.e. those which *might* provide eligibility.
+    ) -> tuple[list[CampaignConfig], set[eligibility.ConditionName]]:
+        """Get all campaigns for which the person is base eligible, i.e. those which *might* provide eligibility.
 
-        Build and return a collection of campaign iterations for which the person is base eligible (using cohorts).
+        Build and return a collection of campaigns for which the person is base eligible (using cohorts).
         Also build and return a set of conditions in the campaigns while we are here.
         """
         condition_names: set[eligibility.ConditionName] = set()
-        base_eligible_iterations: OrderedDict[eligibility.ConditionName, Iteration] = OrderedDict()
+        base_eligible_campaigns: list[CampaignConfig] = []
+
         for campaign_config in (cc for cc in campaign_configs if cc.campaign_live):
             condition_name = eligibility.ConditionName(campaign_config.target)
             condition_names.add(condition_name)
             base_eligible = EligibilityService.evaluate_base_eligibility(campaign_config.current_iteration, person_data)
             if base_eligible:
-                base_eligible_iterations[condition_name] = campaign_config.current_iteration
-        return base_eligible_iterations, condition_names
+                base_eligible_campaigns.append(campaign_config)
+
+        return base_eligible_campaigns, condition_names
 
     @staticmethod
     def evaluate_base_eligibility(iteration: Iteration, person_data: Collection[Mapping[str, Any]]) -> set[str]:
@@ -105,7 +105,7 @@ class EligibilityService:
 
     @staticmethod
     def get_not_eligible_conditions(
-        base_eligible_iterations: Mapping[eligibility.ConditionName, Iteration],
+        base_eligible_campaigns: Collection[CampaignConfig],
         condition_names: Collection[eligibility.ConditionName],
     ) -> dict[eligibility.ConditionName, eligibility.Condition]:
         """Get conditions where the person is not base eligible,
@@ -116,15 +116,15 @@ class EligibilityService:
         #         the person is not (base) eligible for the condition
         not_eligible_conditions: dict[eligibility.ConditionName, eligibility.Condition] = {}
         for condition_name in condition_names:
-            if condition_name not in base_eligible_iterations:
+            if condition_name not in {eligibility.ConditionName(cc.target) for cc in base_eligible_campaigns}:
                 not_eligible_conditions[condition_name] = eligibility.Condition(
                     condition_name=condition_name, status=eligibility.Status.not_eligible, reasons=[]
                 )
         return not_eligible_conditions
 
     @staticmethod
-    def evaluate_for_base_eligible_iterations(
-        base_eligible_iterations: Mapping[eligibility.ConditionName, Iteration],
+    def evaluate_for_base_eligible_campaigns(
+        base_eligible_campaigns: Collection[CampaignConfig],
         person_data: Collection[Mapping[str, Any]],
     ) -> dict[eligibility.ConditionName, dict[eligibility.Status, list[eligibility.Reason]]]:
         """Evaluate iteration rules to see if the person is actionable.
@@ -139,7 +139,9 @@ class EligibilityService:
         base_eligible_evaluations: dict[
             eligibility.ConditionName, dict[eligibility.Status, list[eligibility.Reason]]
         ] = defaultdict(dict)
-        for condition_name, iteration in base_eligible_iterations.items():
+        for condition_name, iteration in [
+            (eligibility.ConditionName(cc.target), cc.current_iteration) for cc in base_eligible_campaigns
+        ]:
             status = eligibility.Status.actionable
             exclusion_reasons, actionable_reasons = [], []
             for iteration_rule in iteration.iteration_rules:
