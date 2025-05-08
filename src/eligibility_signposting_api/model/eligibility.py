@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import date
 from enum import Enum, auto
-from typing import NewType
+from typing import NewType, Self
 
 NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
@@ -22,6 +22,11 @@ class Status(Enum):
     not_eligible = auto()
     not_actionable = auto()
     actionable = auto()
+
+    def __lt__(self, other: Self) -> bool:
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
 
 
 @dataclass

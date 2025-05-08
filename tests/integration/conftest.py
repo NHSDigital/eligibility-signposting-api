@@ -299,7 +299,7 @@ def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[rule
             rule.IterationFactory.build(
                 iteration_rules=[
                     rule.IterationRuleFactory.build(
-                        type=rules.RuleType.filter,
+                        type=rules.RuleType.suppression,
                         name="Exclude too young",
                         description="Exclude too young less than 75",
                         operator=rules.RuleOperator.year_gt,

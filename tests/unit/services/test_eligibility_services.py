@@ -253,14 +253,14 @@ def test_base_eligible_but_simple_rule_excludes(faker: Faker):
                     IterationFactory.build(
                         iteration_rules=[
                             IterationRuleFactory.build(
-                                type=RuleType.filter,
+                                type=RuleType.suppression,
                                 attribute_level=RuleAttributeLevel.PERSON,
                                 attribute_name="DATE_OF_BIRTH",
                                 operator=RuleOperator.year_gt,
                                 comparator="-75",
                             ),
                             IterationRuleFactory.build(
-                                type=RuleType.filter,
+                                type=RuleType.suppression,
                                 attribute_level=RuleAttributeLevel.PERSON,
                                 attribute_name="DATE_OF_BIRTH",
                                 operator=RuleOperator.lt,
@@ -319,7 +319,7 @@ def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
                         name="old iteration - would not exclude 74 year old",
                         iteration_rules=[
                             IterationRuleFactory.build(
-                                type=RuleType.filter,
+                                type=RuleType.suppression,
                                 attribute_level=RuleAttributeLevel.PERSON,
                                 attribute_name="DATE_OF_BIRTH",
                                 operator=RuleOperator.year_gt,
@@ -333,7 +333,7 @@ def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
                         name="current - would exclude 74 year old",
                         iteration_rules=[
                             IterationRuleFactory.build(
-                                type=RuleType.filter,
+                                type=RuleType.suppression,
                                 attribute_level=RuleAttributeLevel.PERSON,
                                 attribute_name="DATE_OF_BIRTH",
                                 operator=RuleOperator.year_gt,
