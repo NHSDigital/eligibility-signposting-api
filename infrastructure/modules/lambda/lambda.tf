@@ -6,10 +6,10 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   role          = var.eligibility_lambda_role_arn
   handler       = var.handler
 
-  source_code_hash = data.archive_file.lambda.output_base64sha256
+  source_code_hash = filebase64sha256(var.file_name)
 
   runtime     = "python3.13"
-  timeout     = 3   # Default
+  timeout     = 30   # Default
   memory_size = 128 # Default
 
   environment {
@@ -21,10 +21,4 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
     subnet_ids         = var.vpc_intra_subnets
     security_group_ids = var.security_group_ids
   }
-}
-
-data "archive_file" "lambda" {
-  type        = "zip"
-  source_file = var.lambda_app_source_file
-  output_path = var.lambda_app_zip_output_path
 }

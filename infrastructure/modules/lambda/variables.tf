@@ -32,13 +32,3 @@ variable "handler" {
   description = "lambda handler name"
   type        = string
 }
-
-variable "lambda_app_source_file" {
-  description = "location of the lambda app in source code"
-  type        = string
-}
-
-variable "lambda_app_zip_output_path" {
-  description = "output location to put the zipped lambda app"
-  type        = string
-}
