@@ -16,6 +16,7 @@ from tests.fixtures.builders.model.rule import (
     IterationFactory,
     IterationRuleFactory,
 )
+from tests.fixtures.builders.repos.eligibility import eligibility_rows
 from tests.fixtures.matchers.eligibility import is_condition, is_eligibility_status
 
 
@@ -56,18 +57,9 @@ def test_not_base_eligible(faker: Faker):
 
     eligibility_repo = MagicMock(spec=EligibilityRepo)
     rules_repo = MagicMock(spec=RulesRepo)
+
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=[
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "PERSON",
-            },
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "COHORTS",
-                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.past_date()}}}}},
-            },
-        ]
+        return_value=eligibility_rows(faker, nhs_number, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
@@ -104,17 +96,7 @@ def test_only_live_campaigns_considered(faker: Faker):
     eligibility_repo = MagicMock(spec=EligibilityRepo)
     rules_repo = MagicMock(spec=RulesRepo)
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=[
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "PERSON",
-            },
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "COHORTS",
-                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.past_date()}}}}},
-            },
-        ]
+        return_value=eligibility_rows(faker, nhs_number, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
@@ -168,18 +150,7 @@ def test_base_eligible_and_simple_rule_includes(faker: Faker):
     eligibility_repo = MagicMock(spec=EligibilityRepo)
     rules_repo = MagicMock(spec=RulesRepo)
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=[
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "PERSON",
-                "DATE_OF_BIRTH": date_of_birth.strftime("%Y%m%d"),
-            },
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "COHORTS",
-                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.past_date()}}}}},
-            },
-        ]
+        return_value=eligibility_rows(faker, nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
@@ -232,18 +203,7 @@ def test_base_eligible_but_simple_rule_excludes(faker: Faker):
     eligibility_repo = MagicMock(spec=EligibilityRepo)
     rules_repo = MagicMock(spec=RulesRepo)
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=[
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "PERSON",
-                "DATE_OF_BIRTH": date_of_birth.strftime("%Y%m%d"),
-            },
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "COHORTS",
-                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.past_date()}}}}},
-            },
-        ]
+        return_value=eligibility_rows(faker, nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
@@ -297,18 +257,7 @@ def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
     eligibility_repo = MagicMock(spec=EligibilityRepo)
     rules_repo = MagicMock(spec=RulesRepo)
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=[
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "PERSON",
-                "DATE_OF_BIRTH": date_of_birth.strftime("%Y%m%d"),
-            },
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "COHORTS",
-                "COHORT_MAP": {"cohorts": {"M": {"cohort1": {"dateJoined": {"S": faker.past_date()}}}}},
-            },
-        ]
+        return_value=eligibility_rows(faker, nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
