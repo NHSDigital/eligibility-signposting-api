@@ -125,4 +125,40 @@ resource "aws_iam_role_policy" "external_s3_write_policy" {
   policy = data.aws_iam_policy_document.s3_audit_bucket_policy.json
 }
 
+## KMS
+data "aws_iam_policy_document" "kms_key_policy" {
+  statement {
+    sid    = "EnableIamUserPermissions"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+  statement {
+    sid    = "Allow lambda role"
+    effect = "Allow"
+    principals {
+      type = "AWS"
+      identifiers = [
+        aws_iam_role.eligibility_lambda_role.arn
+      ]
+    }
+    actions = [
+      "kms:Decrypt"
+    ]
+    resources = [
+      module.eligibility_status_table.dynamodb_kms_key_arn
+    ]
+  }
+}
+
+# attach kms decrypt policy kms key
+resource "aws_kms_key_policy" "kms_key" {
+  key_id = module.eligibility_status_table.dynamodb_kms_key_id
+  policy = data.aws_iam_policy_document.kms_key_policy.json
+}
+
 
