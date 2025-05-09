@@ -10,8 +10,9 @@ resource "aws_network_acl" "private" {
   # Allow all outbound traffic from private subnets
   egress {
     rule_no    = 100
-    action     = "allow"
-    cidr_block = local.vpc_cidr_block
+    action = "allow"
+    # cidr_block = local.vpc_cidr_block
+    cidr_block = "0.0.0.0/0" #TODO
     protocol   = -1
     from_port  = 0
     to_port    = 0
