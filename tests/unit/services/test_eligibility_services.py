@@ -1,14 +1,16 @@
+import datetime
 from unittest.mock import MagicMock
 
 import pytest
 from faker import Faker
+from freezegun import freeze_time
 from hamcrest import assert_that, empty, has_item
 
-from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Postcode, Status
-from eligibility_signposting_api.model.rules import RuleAttributeLevel, RuleOperator, RuleType
+from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Status
 from eligibility_signposting_api.repos import EligibilityRepo, NotFoundError, RulesRepo
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
-from tests.fixtures.builders.model.rule import CampaignConfigFactory, IterationFactory, IterationRuleFactory
+from tests.fixtures.builders.model import rule as rule_builder
+from tests.fixtures.builders.repos.eligibility import eligibility_rows_builder
 from tests.fixtures.matchers.eligibility import is_condition, is_eligibility_status
 
 
@@ -43,47 +45,115 @@ def test_eligibility_service_for_nonexistent_nhs_number():
         ps.get_eligibility_status(NHSNumber("1234567890"))
 
 
-def test_simple_rule_eligible(faker: Faker):
+def test_not_base_eligible(faker: Faker):
     # Given
     nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
-    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=79))
-    postcode = Postcode(faker.postcode())
+
+    eligibility_repo = MagicMock(spec=EligibilityRepo)
+    rules_repo = MagicMock(spec=RulesRepo)
+
+    eligibility_repo.get_eligibility_data = MagicMock(
+        return_value=eligibility_rows_builder(nhs_number, cohorts=["cohort1"])
+    )
+    rules_repo.get_campaign_configs = MagicMock(
+        return_value=[
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort2")]
+                    )
+                ],
+            )
+        ]
+    )
+
+    ps = EligibilityService(eligibility_repo, rules_repo)
+
+    # When
+    actual = ps.get_eligibility_status(NHSNumber(nhs_number))
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_eligible))
+        ),
+    )
+
+
+@freeze_time("2025-04-25")
+def test_only_live_campaigns_considered(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
 
     eligibility_repo = MagicMock(spec=EligibilityRepo)
     rules_repo = MagicMock(spec=RulesRepo)
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=[
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "PERSON",
-                "DATE_OF_BIRTH": date_of_birth.strftime("%Y%m%d"),
-                "POSTCODE": postcode,
-            },
-            {"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "COHORT", "COHORT_MAP": {}},
-        ]
+        return_value=eligibility_rows_builder(nhs_number, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
-            CampaignConfigFactory.build(
+            rule_builder.CampaignConfigFactory.build(
+                name="Live",
                 target="RSV",
                 iterations=[
-                    IterationFactory.build(
-                        iteration_rules=[
-                            IterationRuleFactory.build(
-                                type=RuleType.filter,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name="DATE_OF_BIRTH",
-                                operator=RuleOperator.year_gt,
-                                comparator="-75",
-                            ),
-                            IterationRuleFactory.build(
-                                type=RuleType.filter,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name="DATE_OF_BIRTH",
-                                operator=RuleOperator.lt,
-                                comparator="19440902",
-                            ),
-                        ]
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort2")],
+                    )
+                ],
+                start_date=datetime.date(2025, 4, 20),
+                end_date=datetime.date(2025, 4, 30),
+            ),
+            rule_builder.CampaignConfigFactory.build(
+                name="No longer live",
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[
+                            rule_builder.IterationCohortFactory.build(cohort_label="cohort1"),
+                            rule_builder.IterationCohortFactory.build(cohort_label="cohort2"),
+                        ],
+                    )
+                ],
+                start_date=datetime.date(2025, 4, 1),
+                end_date=datetime.date(2025, 4, 24),
+            ),
+        ]
+    )
+
+    ps = EligibilityService(eligibility_repo, rules_repo)
+
+    # When
+    actual = ps.get_eligibility_status(NHSNumber(nhs_number))
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_eligible))
+        ),
+    )
+
+
+def test_base_eligible_and_simple_rule_includes(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=79))
+
+    eligibility_repo = MagicMock(spec=EligibilityRepo)
+    rules_repo = MagicMock(spec=RulesRepo)
+    eligibility_repo.get_eligibility_data = MagicMock(
+        return_value=eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
+    )
+    rules_repo.get_campaign_configs = MagicMock(
+        return_value=[
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                     )
                 ],
             )
@@ -104,48 +174,78 @@ def test_simple_rule_eligible(faker: Faker):
     )
 
 
-def test_simple_rule_ineligible(faker: Faker):
+def test_base_eligible_but_simple_rule_excludes(faker: Faker):
     # Given
     nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
     date_of_birth = DateOfBirth(faker.date_of_birth(maximum_age=74))
-    postcode = Postcode(faker.postcode())
 
     eligibility_repo = MagicMock(spec=EligibilityRepo)
     rules_repo = MagicMock(spec=RulesRepo)
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=[
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "PERSON",
-                "DATE_OF_BIRTH": date_of_birth.strftime("%Y%m%d"),
-                "POSTCODE": postcode,
-            },
-            {"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "COHORT", "COHORT_MAP": {}},
-        ]
+        return_value=eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
-            CampaignConfigFactory.build(
+            rule_builder.CampaignConfigFactory.build(
                 target="RSV",
                 iterations=[
-                    IterationFactory.build(
-                        iteration_rules=[
-                            IterationRuleFactory.build(
-                                type=RuleType.filter,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name="DATE_OF_BIRTH",
-                                operator=RuleOperator.year_gt,
-                                comparator="-75",
-                            ),
-                            IterationRuleFactory.build(
-                                type=RuleType.filter,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name="DATE_OF_BIRTH",
-                                operator=RuleOperator.lt,
-                                comparator="19440902",
-                            ),
-                        ]
+                    rule_builder.IterationFactory.build(
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                     )
+                ],
+            )
+        ]
+    )
+
+    ps = EligibilityService(eligibility_repo, rules_repo)
+
+    # When
+    actual = ps.get_eligibility_status(NHSNumber(nhs_number))
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_actionable))
+        ),
+    )
+
+
+@freeze_time("2025-04-25")
+def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=66, maximum_age=74))
+
+    eligibility_repo = MagicMock(spec=EligibilityRepo)
+    rules_repo = MagicMock(spec=RulesRepo)
+    eligibility_repo.get_eligibility_data = MagicMock(
+        return_value=eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
+    )
+    rules_repo.get_campaign_configs = MagicMock(
+        return_value=[
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        name="old iteration - would not exclude 74 year old",
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-65")],
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_date=datetime.date(2025, 4, 10),
+                    ),
+                    rule_builder.IterationFactory.build(
+                        name="current - would exclude 74 year old",
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_date=datetime.date(2025, 4, 20),
+                    ),
+                    rule_builder.IterationFactory.build(
+                        name="next iteration - would not exclude 74 year old",
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-65")],
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_date=datetime.date(2025, 4, 30),
+                    ),
                 ],
             )
         ]

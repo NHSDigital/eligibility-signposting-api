@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import typing
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import Enum
+from functools import cached_property
+from operator import attrgetter
 from typing import Literal, NewType
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
@@ -24,6 +26,7 @@ RuleAttributeName = NewType("RuleAttributeName", str)
 RuleComparator = NewType("RuleComparator", str)
 StartDate = NewType("StartDate", date)
 EndDate = NewType("EndDate", date)
+CohortLabel = NewType("CohortLabel", str)
 
 
 class RuleType(str, Enum):
@@ -77,10 +80,10 @@ class RuleAttributeLevel(str, Enum):
 
 
 class IterationCohort(BaseModel):
-    cohort_label: str | None = Field(None, alias="CohortLabel")
+    cohort_label: CohortLabel | None = Field(None, alias="CohortLabel")
     priority: int | None = Field(None, alias="Priority")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "ignore"}
 
 
 class IterationRule(BaseModel):
@@ -90,11 +93,12 @@ class IterationRule(BaseModel):
     priority: RulePriority = Field(..., alias="Priority")
     attribute_level: RuleAttributeLevel = Field(..., alias="AttributeLevel")
     attribute_name: RuleAttributeName = Field(..., alias="AttributeName")
+    cohort_label: CohortLabel | None = Field(None, alias="CohortLabel")
     operator: RuleOperator = Field(..., alias="Operator")
     comparator: RuleComparator = Field(..., alias="Comparator")
     attribute_target: str | None = Field(None, alias="AttributeTarget")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "ignore"}
 
 
 class Iteration(BaseModel):
@@ -109,10 +113,7 @@ class Iteration(BaseModel):
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
 
-    model_config = {
-        "populate_by_name": True,
-        "arbitrary_types_allowed": True,
-    }
+    model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
     @field_validator("iteration_date", mode="before")
     @classmethod
@@ -146,10 +147,7 @@ class CampaignConfig(BaseModel):
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
     iterations: list[Iteration] = Field(..., alias="Iterations")
 
-    model_config = {
-        "populate_by_name": True,
-        "arbitrary_types_allowed": True,
-    }
+    model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
     @field_validator("start_date", "end_date", mode="before")
     @classmethod
@@ -163,6 +161,17 @@ class CampaignConfig(BaseModel):
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
 
+    @cached_property
+    def campaign_live(self) -> bool:
+        today = datetime.now(tz=UTC).date()
+        return self.start_date <= today <= self.end_date
+
+    @cached_property
+    def current_iteration(self) -> Iteration | None:
+        today = datetime.now(tz=UTC).date()
+        iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_date"), reverse=True)
+        return next((i for i in iterations_by_date_descending if i.iteration_date <= today), None)
+
 
 class Rules(BaseModel):
     """Eligibility rules.
@@ -171,4 +180,4 @@ class Rules(BaseModel):
 
     campaign_config: CampaignConfig = Field(..., alias="CampaignConfig")
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "extra": "ignore"}
