@@ -10,7 +10,7 @@ from eligibility_signposting_api.model.eligibility import ConditionName, DateOfB
 from eligibility_signposting_api.repos import EligibilityRepo, NotFoundError, RulesRepo
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from tests.fixtures.builders.model import rule as rule_builder
-from tests.fixtures.builders.repos.eligibility import eligibility_rows
+from tests.fixtures.builders.repos.eligibility import eligibility_rows_builder
 from tests.fixtures.matchers.eligibility import is_condition, is_eligibility_status
 
 
@@ -53,7 +53,7 @@ def test_not_base_eligible(faker: Faker):
     rules_repo = MagicMock(spec=RulesRepo)
 
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=eligibility_rows(faker, nhs_number, cohorts=["cohort1"])
+        return_value=eligibility_rows_builder(nhs_number, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
@@ -90,7 +90,7 @@ def test_only_live_campaigns_considered(faker: Faker):
     eligibility_repo = MagicMock(spec=EligibilityRepo)
     rules_repo = MagicMock(spec=RulesRepo)
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=eligibility_rows(faker, nhs_number, cohorts=["cohort1"])
+        return_value=eligibility_rows_builder(nhs_number, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
@@ -144,7 +144,7 @@ def test_base_eligible_and_simple_rule_includes(faker: Faker):
     eligibility_repo = MagicMock(spec=EligibilityRepo)
     rules_repo = MagicMock(spec=RulesRepo)
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=eligibility_rows(faker, nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
+        return_value=eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
@@ -182,7 +182,7 @@ def test_base_eligible_but_simple_rule_excludes(faker: Faker):
     eligibility_repo = MagicMock(spec=EligibilityRepo)
     rules_repo = MagicMock(spec=RulesRepo)
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=eligibility_rows(faker, nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
+        return_value=eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
@@ -221,7 +221,7 @@ def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
     eligibility_repo = MagicMock(spec=EligibilityRepo)
     rules_repo = MagicMock(spec=RulesRepo)
     eligibility_repo.get_eligibility_data = MagicMock(
-        return_value=eligibility_rows(faker, nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
+        return_value=eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[

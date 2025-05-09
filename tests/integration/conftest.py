@@ -20,7 +20,7 @@ from eligibility_signposting_api.model import eligibility, rules
 from eligibility_signposting_api.repos.eligibility_repo import TableName
 from eligibility_signposting_api.repos.rules_repo import BucketName
 from tests.fixtures.builders.model import rule
-from tests.fixtures.builders.repos.eligibility import eligibility_rows
+from tests.fixtures.builders.repos.eligibility import eligibility_rows_builder
 
 if TYPE_CHECKING:
     from pytest_docker.plugin import Services
@@ -222,7 +222,7 @@ def persisted_person(eligibility_table: Any, faker: Faker) -> Generator[eligibil
     nhs_number = eligibility.NHSNumber(f"5{faker.random_int(max=999999999):09d}")
     date_of_birth = eligibility.DateOfBirth(faker.date_of_birth(maximum_age=65))
 
-    for row in (rows := eligibility_rows(faker, nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])):
+    for row in (rows := eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])):
         eligibility_table.put_item(Item=row)
 
     yield nhs_number
@@ -237,7 +237,7 @@ def persisted_77yo_person(eligibility_table: Any, faker: Faker) -> Generator[eli
     date_of_birth = eligibility.DateOfBirth(faker.date_of_birth(minimum_age=77, maximum_age=77))
 
     for row in (
-        rows := eligibility_rows(faker, nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1", "cohort2"])
+        rows := eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1", "cohort2"])
     ):
         eligibility_table.put_item(Item=row)
 
