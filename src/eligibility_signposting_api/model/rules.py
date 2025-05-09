@@ -3,6 +3,7 @@ from __future__ import annotations
 import typing
 from datetime import UTC, date, datetime
 from enum import Enum
+from functools import cached_property
 from operator import attrgetter
 from typing import Literal, NewType
 
@@ -160,16 +161,16 @@ class CampaignConfig(BaseModel):
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
 
-    @property
+    @cached_property
     def campaign_live(self) -> bool:
         today = datetime.now(tz=UTC).date()
         return self.start_date <= today <= self.end_date
 
-    @property
-    def current_iteration(self) -> Iteration:
+    @cached_property
+    def current_iteration(self) -> Iteration | None:
         today = datetime.now(tz=UTC).date()
         iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_date"), reverse=True)
-        return next(i for i in iterations_by_date_descending if i.iteration_date <= today)
+        return next((i for i in iterations_by_date_descending if i.iteration_date <= today), None)
 
 
 class Rules(BaseModel):

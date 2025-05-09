@@ -52,18 +52,20 @@ class EligibilityService:
     ) -> eligibility.EligibilityStatus:
         """Calculate a person's eligibility for vaccination."""
 
-        # Get all iterations for which the person is base eligible, i.e. those which *might* provide eligibility.
+        # Get all iterations for which the person is base eligible, i.e. those which *might* provide eligibility
+        # due to cohort membership.
         base_eligible_campaigns, condition_names = EligibilityService.get_base_eligible_campaigns(
             campaign_configs, person_data
         )
-        # Evaluate iteration rules to see if the person is actionable
+        # Evaluate iteration rules to see if the person is actionable, not actionable (due to "F" rules),
+        # or not eligible (due to "S" rules")
         evaluations = EligibilityService.evaluate_for_base_eligible_campaigns(base_eligible_campaigns, person_data)
 
         conditions: dict[eligibility.ConditionName, eligibility.Condition] = {}
-        # Add all not eligible conditions to result set.
-        conditions |= EligibilityService.get_not_eligible_conditions(base_eligible_campaigns, condition_names)
-        # Add all actionable and not actionable conditions to result set.
-        conditions |= EligibilityService.get_eligible_conditions(evaluations)
+        # Add all not base eligible conditions to result set.
+        conditions |= EligibilityService.get_not_base_eligible_conditions(base_eligible_campaigns, condition_names)
+        # Add all base eligible conditions to result set.
+        conditions |= EligibilityService.get_base_eligible_conditions(evaluations)
 
         return eligibility.EligibilityStatus(conditions=list(conditions.values()))
 
@@ -79,7 +81,7 @@ class EligibilityService:
         condition_names: set[eligibility.ConditionName] = set()
         base_eligible_campaigns: list[rules.CampaignConfig] = []
 
-        for campaign_config in (cc for cc in campaign_configs if cc.campaign_live):
+        for campaign_config in (cc for cc in campaign_configs if cc.campaign_live and cc.current_iteration):
             condition_name = eligibility.ConditionName(campaign_config.target)
             condition_names.add(condition_name)
             base_eligible = EligibilityService.evaluate_base_eligibility(campaign_config.current_iteration, person_data)
@@ -89,8 +91,12 @@ class EligibilityService:
         return base_eligible_campaigns, condition_names
 
     @staticmethod
-    def evaluate_base_eligibility(iteration: rules.Iteration, person_data: Collection[Mapping[str, Any]]) -> set[str]:
+    def evaluate_base_eligibility(
+        iteration: rules.Iteration | None, person_data: Collection[Mapping[str, Any]]
+    ) -> set[str]:
         """Return cohorts for which person is base eligible."""
+        if not iteration:
+            return set()
         iteration_cohorts: set[str] = {
             cohort.cohort_label for cohort in iteration.iteration_cohorts if cohort.cohort_label
         }
@@ -103,7 +109,7 @@ class EligibilityService:
         return iteration_cohorts.intersection(person_cohorts)
 
     @staticmethod
-    def get_not_eligible_conditions(
+    def get_not_base_eligible_conditions(
         base_eligible_campaigns: Collection[rules.CampaignConfig],
         condition_names: Collection[eligibility.ConditionName],
     ) -> dict[eligibility.ConditionName, eligibility.Condition]:
@@ -126,24 +132,23 @@ class EligibilityService:
         base_eligible_campaigns: Collection[rules.CampaignConfig],
         person_data: Collection[Mapping[str, Any]],
     ) -> dict[eligibility.ConditionName, dict[eligibility.Status, list[eligibility.Reason]]]:
-        """Evaluate iteration rules to see if the person is actionable.
+        """Evaluate iteration rules to see if the person is actionable, not actionable (due to "F" rules),
+        or not eligible (due to "S" rules").
 
         For each condition, evaluate all iterations for inclusion or exclusion."""
-
-        # for each iteration for which the person is base eligible:
-        #   if the person is excluded by any rules
-        #     the person is not actionable for that iteration
-        #   else
-        #     the person is actionable for that iteration
         base_eligible_evaluations: dict[
             eligibility.ConditionName, dict[eligibility.Status, list[eligibility.Reason]]
         ] = defaultdict(dict)
         for condition_name, iteration in [
-            (eligibility.ConditionName(cc.target), cc.current_iteration) for cc in base_eligible_campaigns
+            (eligibility.ConditionName(cc.target), cc.current_iteration)
+            for cc in base_eligible_campaigns
+            if cc.current_iteration
         ]:
             status = eligibility.Status.actionable
             exclusion_reasons, actionable_reasons = [], []
             for iteration_rule in iteration.iteration_rules:
+                if iteration_rule.type not in (rules.RuleType.filter, rules.RuleType.suppression):
+                    continue
                 exclusion, reason = EligibilityService.evaluate_exclusion(iteration_rule, person_data)
                 if exclusion:
                     status = min(
@@ -163,18 +168,16 @@ class EligibilityService:
         return base_eligible_evaluations
 
     @staticmethod
-    def get_eligible_conditions(
+    def get_base_eligible_conditions(
         base_eligible_evaluations: Mapping[
             eligibility.ConditionName, Mapping[eligibility.Status, list[eligibility.Reason]]
         ],
     ) -> dict[eligibility.ConditionName, eligibility.Condition]:
-        """Get conditions where the person is either actionable or not actionable."""
+        """Get conditions where the person is base eligible, but may be either actionable, not actionable,
+        or not eligible."""
 
         # for each condition for which the person is base eligible:
-        #   if the person is actionable for *any* iteration?
-        #     the person is actionable for the condition
-        #   else
-        #     the person is not actionable for the condition
+        #   what is the "best" status, i.e. closest to actionable? Add the condition to the result with that status.
         eligible_conditions: dict[eligibility.ConditionName, eligibility.Condition] = {}
         for condition_name, reasons_by_status in base_eligible_evaluations.items():
             best_status = max(reasons_by_status.keys())

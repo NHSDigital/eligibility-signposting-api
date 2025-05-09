@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import date
 from enum import Enum, auto
+from functools import total_ordering
 from typing import NewType, Self
 
 NHSNumber = NewType("NHSNumber", str)
@@ -18,6 +19,7 @@ class RuleType(str, Enum):
     redirect = "R"
 
 
+@total_ordering
 class Status(Enum):
     not_eligible = auto()
     not_actionable = auto()
