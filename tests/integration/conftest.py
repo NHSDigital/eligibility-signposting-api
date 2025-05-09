@@ -261,17 +261,7 @@ def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[rule
         target="RSV",
         iterations=[
             rule.IterationFactory.build(
-                iteration_rules=[
-                    rule.IterationRuleFactory.build(
-                        type=rules.RuleType.suppression,
-                        name="Exclude too young",
-                        description="Exclude too young less than 75",
-                        operator=rules.RuleOperator.year_gt,
-                        attribute_level=rules.RuleAttributeLevel.PERSON,
-                        attribute_name="DATE_OF_BIRTH",
-                        comparator="-75",
-                    )
-                ],
+                iteration_rules=[rule.PersonAgeSuppressionRuleFactory.build()],
                 iteration_cohorts=[rule.IterationCohortFactory.build(cohort_label="cohort1")],
             )
         ],

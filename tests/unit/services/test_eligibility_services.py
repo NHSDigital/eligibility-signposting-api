@@ -7,15 +7,9 @@ from freezegun import freeze_time
 from hamcrest import assert_that, empty, has_item
 
 from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Status
-from eligibility_signposting_api.model.rules import RuleAttributeLevel, RuleOperator, RuleType
 from eligibility_signposting_api.repos import EligibilityRepo, NotFoundError, RulesRepo
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
-from tests.fixtures.builders.model.rule import (
-    CampaignConfigFactory,
-    IterationCohortFactory,
-    IterationFactory,
-    IterationRuleFactory,
-)
+from tests.fixtures.builders.model import rule as rule_builder
 from tests.fixtures.builders.repos.eligibility import eligibility_rows
 from tests.fixtures.matchers.eligibility import is_condition, is_eligibility_status
 
@@ -63,11 +57,11 @@ def test_not_base_eligible(faker: Faker):
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
-            CampaignConfigFactory.build(
+            rule_builder.CampaignConfigFactory.build(
                 target="RSV",
                 iterations=[
-                    IterationFactory.build(
-                        iteration_cohorts=[IterationCohortFactory.build(cohort_label="cohort2")],
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort2")]
                     )
                 ],
             )
@@ -100,25 +94,25 @@ def test_only_live_campaigns_considered(faker: Faker):
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
-            CampaignConfigFactory.build(
+            rule_builder.CampaignConfigFactory.build(
                 name="Live",
                 target="RSV",
                 iterations=[
-                    IterationFactory.build(
-                        iteration_cohorts=[IterationCohortFactory.build(cohort_label="cohort2")],
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort2")],
                     )
                 ],
                 start_date=datetime.date(2025, 4, 20),
                 end_date=datetime.date(2025, 4, 30),
             ),
-            CampaignConfigFactory.build(
+            rule_builder.CampaignConfigFactory.build(
                 name="No longer live",
                 target="RSV",
                 iterations=[
-                    IterationFactory.build(
+                    rule_builder.IterationFactory.build(
                         iteration_cohorts=[
-                            IterationCohortFactory.build(cohort_label="cohort1"),
-                            IterationCohortFactory.build(cohort_label="cohort2"),
+                            rule_builder.IterationCohortFactory.build(cohort_label="cohort1"),
+                            rule_builder.IterationCohortFactory.build(cohort_label="cohort2"),
                         ],
                     )
                 ],
@@ -154,27 +148,12 @@ def test_base_eligible_and_simple_rule_includes(faker: Faker):
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
-            CampaignConfigFactory.build(
+            rule_builder.CampaignConfigFactory.build(
                 target="RSV",
                 iterations=[
-                    IterationFactory.build(
-                        iteration_rules=[
-                            IterationRuleFactory.build(
-                                type=RuleType.filter,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name="DATE_OF_BIRTH",
-                                operator=RuleOperator.year_gt,
-                                comparator="-75",
-                            ),
-                            IterationRuleFactory.build(
-                                type=RuleType.filter,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name="DATE_OF_BIRTH",
-                                operator=RuleOperator.lt,
-                                comparator="19440902",
-                            ),
-                        ],
-                        iteration_cohorts=[IterationCohortFactory.build(cohort_label="cohort1")],
+                    rule_builder.IterationFactory.build(
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                     )
                 ],
             )
@@ -207,27 +186,12 @@ def test_base_eligible_but_simple_rule_excludes(faker: Faker):
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
-            CampaignConfigFactory.build(
+            rule_builder.CampaignConfigFactory.build(
                 target="RSV",
                 iterations=[
-                    IterationFactory.build(
-                        iteration_rules=[
-                            IterationRuleFactory.build(
-                                type=RuleType.suppression,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name="DATE_OF_BIRTH",
-                                operator=RuleOperator.year_gt,
-                                comparator="-75",
-                            ),
-                            IterationRuleFactory.build(
-                                type=RuleType.suppression,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name="DATE_OF_BIRTH",
-                                operator=RuleOperator.lt,
-                                comparator="19440902",
-                            ),
-                        ],
-                        iteration_cohorts=[IterationCohortFactory.build(cohort_label="cohort1")],
+                    rule_builder.IterationFactory.build(
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                     )
                 ],
             )
@@ -261,49 +225,25 @@ def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
     )
     rules_repo.get_campaign_configs = MagicMock(
         return_value=[
-            CampaignConfigFactory.build(
+            rule_builder.CampaignConfigFactory.build(
                 target="RSV",
                 iterations=[
-                    IterationFactory.build(
+                    rule_builder.IterationFactory.build(
                         name="old iteration - would not exclude 74 year old",
-                        iteration_rules=[
-                            IterationRuleFactory.build(
-                                type=RuleType.suppression,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name="DATE_OF_BIRTH",
-                                operator=RuleOperator.year_gt,
-                                comparator="-65",
-                            ),
-                        ],
-                        iteration_cohorts=[IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-65")],
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                         iteration_date=datetime.date(2025, 4, 10),
                     ),
-                    IterationFactory.build(
+                    rule_builder.IterationFactory.build(
                         name="current - would exclude 74 year old",
-                        iteration_rules=[
-                            IterationRuleFactory.build(
-                                type=RuleType.suppression,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name="DATE_OF_BIRTH",
-                                operator=RuleOperator.year_gt,
-                                comparator="-75",
-                            ),
-                        ],
-                        iteration_cohorts=[IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                         iteration_date=datetime.date(2025, 4, 20),
                     ),
-                    IterationFactory.build(
+                    rule_builder.IterationFactory.build(
                         name="next iteration - would not exclude 74 year old",
-                        iteration_rules=[
-                            IterationRuleFactory.build(
-                                type=RuleType.filter,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name="DATE_OF_BIRTH",
-                                operator=RuleOperator.year_gt,
-                                comparator="-65",
-                            ),
-                        ],
-                        iteration_cohorts=[IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-65")],
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                         iteration_date=datetime.date(2025, 4, 30),
                     ),
                 ],
