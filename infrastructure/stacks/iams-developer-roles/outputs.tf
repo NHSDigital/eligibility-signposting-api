@@ -1,4 +1,4 @@
-## TODO: Below values is not used anywhere
+## TODO: Below values are not used anywhere
 # output "terraform_developer_role_arn" {
 #   description = "ARN of the Terraform developer role"
 #   value       = local.terraform_developer_role_arn

@@ -5,6 +5,6 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
 
   tags = {
     Name  = "lambda-execution-logs"
-    Stack = "api-layer" #TODO
+    Stack = local.stack_name
   }
 }
