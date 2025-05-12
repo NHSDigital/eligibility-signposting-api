@@ -65,9 +65,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
   }
 }
 
-# Permissions Boundary policy created only in owner workspace
+# Permissions Boundary policy
 resource "aws_iam_policy" "permissions_boundary" {
-  count       = local.is_iam_owner ? 1 : 0
   name        = "${upper(var.project_name)}-PermissionsBoundary"
   description = "Allows access to AWS services in the regions the client uses only"
   policy      = data.aws_iam_policy_document.permissions_boundary.json
@@ -78,15 +77,4 @@ resource "aws_iam_policy" "permissions_boundary" {
       Stack = "iams-developer-roles"
     }
   )
-}
-
-# Data source for non-owner workspaces (using ARN)
-data "aws_iam_policy" "permissions_boundary" {
-  count = local.is_iam_owner ? 0 : 1
-  arn   = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${upper(var.project_name)}-PermissionsBoundary"
-}
-
-# Local to always reference the correct policy ARN
-locals {
-  permissions_boundary_arn = local.is_iam_owner ? aws_iam_policy.permissions_boundary[0].arn : data.aws_iam_policy.permissions_boundary[0].arn
 }
