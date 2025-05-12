@@ -27,11 +27,11 @@ def boto3_session_factory(
 def dynamodb_resource_factory(
     session: Session, dynamodb_endpoint: Annotated[URL, Inject(param="dynamodb_endpoint")]
 ) -> ServiceResource:
-    return session.resource("dynamodb", endpoint_url=str(dynamodb_endpoint))
+    endpoint_url = str(dynamodb_endpoint) if dynamodb_endpoint is not None else None
+    return session.resource("dynamodb", endpoint_url=endpoint_url)
 
 
 @service(qualifier="s3")
-def s3_service_factory(
-    session: Session, dynamodb_endpoint: Annotated[URL, Inject(param="dynamodb_endpoint")]
-) -> BaseClient:
-    return session.client("s3", endpoint_url=str(dynamodb_endpoint))
+def s3_service_factory(session: Session, s3_endpoint: Annotated[URL, Inject(param="s3_endpoint")]) -> BaseClient:
+    endpoint_url = str(s3_endpoint) if s3_endpoint is not None else None
+    return session.client("s3", endpoint_url=endpoint_url)

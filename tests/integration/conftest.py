@@ -164,6 +164,7 @@ def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -
             Environment={
                 "Variables": {
                     "DYNAMODB_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
+                    "S3_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "AWS_REGION": AWS_REGION,
                     "LOG_LEVEL": "DEBUG",
                 }
