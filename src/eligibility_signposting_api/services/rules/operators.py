@@ -27,7 +27,7 @@ class Operator(BaseMatcher[str | None], ABC):
     item_default: str | None = None
 
     def __post_init__(self) -> None:
-        if self.rule_value and (match := re.match(self.ITEM_DEFAULT_PATTERN, self.rule_value)):
+        if self.rule_value and (match := re.fullmatch(self.ITEM_DEFAULT_PATTERN, self.rule_value)):
             self.rule_value = match.group("rule_value")
             self.item_default = match.group("item_default")
 
@@ -65,28 +65,42 @@ class ScalarOperator(Operator, ABC):
     def _matches(self, item: str | None) -> bool:
         item = item if item is not None else self.item_default
         data_comparator = cast("Callable[[str|int, str|int], bool]", self.comparator)
-        person_data: str | int
-        rule_value: str | int
-        if item is None or self.rule_value is None:
-            # For anything other than an NE comparison, a None on either side won't match.
-            # For an NE comparison, match if one is truthy and the other falsy.
-            return data_comparator == operator.ne and bool(item) != bool(self.rule_value)
-        if (
-            isinstance(item, str)
-            and re.match(r"-?\d*$", item)
-            and isinstance(self.rule_value, str)
-            and re.match(r"-?\d*$", self.rule_value)
-        ):
-            # If both sides can be treated as numeric, do so.
-            # This includes treating a zero length string as zero.
-            person_data, rule_value = int(item or 0), int(self.rule_value or 0)
-        else:
-            # Treat both sides as strings.
-            person_data, rule_value = str(item), str(self.rule_value)
+
+        if item is None:
+            return self.matches_none()
+
+        if item == "":
+            # If item is an empty string, only EQ and NE can match
+            return self.comparator in (operator.eq, operator.ne) and data_comparator(item, self.rule_value)
+
+        person_data, rule_value = self.coerce_types(item, self.rule_value)
         return data_comparator(person_data, rule_value)
 
+    def coerce_types(self, left: str, right: str) -> tuple[str | int, str | int]:
+        if all(self.int_like(i) for i in (left, right)):
+            # If both sides can be treated as numeric, do so.
+            return int(left), int(right)
+        # Treat both sides as strings.
+        return left, right
+
+    def matches_none(self) -> bool:
+        match self.comparator:
+            case operator.eq:
+                # For an EQ comparison, match falsy things except the empty string.
+                return not bool(self.rule_value) and self.rule_value != ""
+            case operator.ne:
+                # For an NE comparison, match truthy things and the empty string.
+                return bool(self.rule_value) or self.rule_value == ""
+            case _:
+                # For anything other than EQ or NE comparisons, a None won't match.
+                return False
+
+    @staticmethod
+    def int_like(val: str) -> bool:
+        return isinstance(val, str) and bool(re.fullmatch(r"-?\d+$", val))
+
     def describe_to(self, description: Description) -> None:
-        description.append_text(f"{self.__class__.__name__} (item {self.comparator.__name__} {self.rule_value})")
+        description.append_text(f"need {self.__class__.__name__} (item {self.comparator.__name__} {self.rule_value})")
 
 
 SCALAR_OPERATORS = [
@@ -239,7 +253,7 @@ class DateOperator(Operator, ABC):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-        if self.rule_value and (match := re.match(self.OFFSET_PATTERN, self.rule_value)):
+        if self.rule_value and (match := re.fullmatch(self.OFFSET_PATTERN, self.rule_value)):
             self.rule_value = match.group("rule_value")
             self.offset = datetime.strptime(match.group("offset"), "%Y%m%d").replace(tzinfo=UTC).date()
 

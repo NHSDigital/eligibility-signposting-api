@@ -58,7 +58,7 @@ stamina = "^25.1.0"
 pytest-freezer = "^0.4.9"
 
 [tool.poetry-plugin-lambda-build]
-docker-image = "public.ecr.aws/sam/build-python3.13:1.137.1-x86_64"
+docker-image = "public.ecr.aws/sam/build-python3.13:1.138-x86_64"
 docker-network = "host"
 docker-platform = "linux/x86_64"
 package-artifact-path = "dist/lambda.zip"

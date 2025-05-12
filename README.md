@@ -24,14 +24,13 @@ The software will only be used for signposting an individual to an appropriate s
   - [Creating a Postman collection](#creating-a-postman-collection)
   - [Design](#design)
     - [Diagrams](#diagrams)
-    - [Modularity](#modularity)
   - [Contributing](#contributing)
   - [Contacts](#contacts)
   - [Licence](#licence)
 
 ## Setup
 
-First, ensure [Pprerequisites](#prerequisites) are met. Then clone the repository, and install dependencies.
+First, ensure [Prerequisites](#prerequisites) are met. Then clone the repository, and install dependencies.
 
 ```shell
 git clone https://github.com/NHSDigital/eligibility-signposting-api.git
@@ -128,25 +127,91 @@ Local tests will use [localstack](https://www.localstack.cloud/), started & stop
 
 ### Diagrams
 
-The [C4 model](https://c4model.com/) is a simple and intuitive way to create software architecture diagrams that are clear, consistent, scalable and most importantly collaborative. This should result in documenting all the system interfaces, external dependencies and integration points.
-
-![Repository Template](./docs/diagrams/Repository_Template_GitHub_Generic.png)
-
-The source for diagrams should be in Git for change control and review purposes. Recommendations are [draw.io](https://app.diagrams.net/) (example above in [docs](.docs/diagrams/) folder) and [Mermaids](https://github.com/mermaid-js/mermaid). Here is an example Mermaids sequence diagram:
-
 ```mermaid
-sequenceDiagram
-    User->>+Service: GET /users?params=...
-    Service->>Service: auth request
-    Service->>Database: get all users
-    Database-->>Service: list of users
-    Service->>Service: filter users
-    Service-->>-User: list[User]
+graph TB
+    subgraph "System Context"
+        direction TB
+        Client["NHS App / Client"]
+        Consumer["Postman / Consumer"]
+        API["Eligibility Signposting API"]
+        AWS["AWS"]
+    end
+
+    Client -->|"HTTP Request"| API
+    Consumer -->|"HTTP Request"| API
+    API -->|"Deployed on"| AWS
+
+    subgraph "Container Diagram"
+        direction TB
+        subgraph "AWS Infrastructure"
+            direction TB
+            APIGW["API Gateway"]
+            Lambda["Python Lambda (app.py)"]
+            DynamoDB["DynamoDB Table"]
+            S3Bucket["S3 Bucket (rules)"]
+            IAM["IAM Roles & Policies"]
+        end
+        subgraph "CI/CD Pipeline"
+            direction TB
+            GH["GitHub Actions"]
+            TF["Terraform"]
+        end
+    end
+
+    Client -->|"HTTPS POST /eligibility"| APIGW
+    APIGW -->|"Invoke"| Lambda
+    Lambda -->|"GetItem/PutItem"| DynamoDB
+    Lambda -->|"GetObject"| S3Bucket
+    Lambda -->|"Uses"| IAM
+
+    GH -->|"runs pipelines"| TF
+    TF -->|"provisions"| APIGW
+    TF -->|"provisions"| DynamoDB
+    TF -->|"provisions"| S3Bucket
+    TF -->|"provisions"| IAM
+
+    subgraph "Eligibility Lambda Function - Components"
+        direction TB
+        App["app.py (WireUp DI)"]
+        Config["config.py, error_handler.py"]
+        subgraph "Presentation Layer"
+            direction TB
+            View["views/eligibility.py"]
+            ResponseModel["views/response_model/eligibility.py"]
+        end
+        subgraph "Business Logic Layer"
+            direction TB
+            Service["services/eligibility_services.py"]
+            Operators["services/rules/operators.py"]
+        end
+        subgraph "Data Access Layer"
+            direction TB
+            RepoElig["repos/eligibility_repo.py"]
+            RepoRules["repos/rules_repo.py"]
+            Factory["repos/factory.py, exceptions.py"]
+        end
+        subgraph "Models"
+            direction TB
+            ModelElig["model/eligibility.py"]
+            ModelRules["model/rules.py"]
+        end
+    end
+
+    Lambda -->|"loads"| App
+    App -->|injects| View
+    View -->|calls| Service
+    Service -->|calls| Operators
+    Service -->|calls| RepoElig
+    Service -->|calls| RepoRules
+    RepoElig -->|uses| DynamoDB
+    RepoRules -->|uses| S3Bucket
+    View -->|uses| ResponseModel
+    App -->|reads| Config
+    Service -->|uses| ModelElig
+    Operators -->|uses| ModelRules
+    App -->|wires| Factory
+
 ```
-
-### Modularity
-
-Most of the projects are built with customisability and extendability in mind. At a minimum, this can be achieved by implementing service level configuration options and settings. The intention of this section is to show how this can be used. If the system processes data, you could mention here for example how the input is prepared for testing - anonymised, synthetic or live data.
 
 ## Contributing
 
