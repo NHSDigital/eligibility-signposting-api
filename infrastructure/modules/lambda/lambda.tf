@@ -9,12 +9,14 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   source_code_hash = filebase64sha256(var.file_name)
 
   runtime     = "python3.13"
-  timeout     = 30   # Default
+  timeout     = 30
   memory_size = 128 # Default
 
   environment {
     variables = {
-      foo = "bar"
+      ELIGIBILITY_TABLE_NAME = var.eligibility_status_table_name,
+      RULES_BUCKET_NAME      = var.eligibility_rules_bucket_name,
+      ENV                    = var.environment
     }
   }
   vpc_config {

@@ -32,3 +32,14 @@ variable "handler" {
   description = "lambda handler name"
   type        = string
 }
+
+variable "eligibility_rules_bucket_name" {
+  description = "campaign config rules bucket name"
+  type        = string
+}
+
+variable "eligibility_status_table_name" {
+  description = "eligibility datastore table name"
+  type        = string
+}
+
