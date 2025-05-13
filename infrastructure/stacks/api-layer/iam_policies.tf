@@ -16,7 +16,7 @@ resource "aws_iam_role_policy" "lambda_dynamodb_read_policy" {
 # Write-only policy for DynamoDB
 data "aws_iam_policy_document" "dynamodb_write_policy_doc" {
   statement {
-    actions   = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem"]
+    actions   = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:BatchWriteItem"]
     resources = [module.eligibility_status_table.arn]
   }
 }
