@@ -11,7 +11,7 @@ def mock_session():
     return MagicMock(spec=Session)
 
 
-def test_dynamodb_resource_factory_with_endpoint(mock_session):
+def test_dynamodb_resource_factory_with_endpoint(mock_session: Session):
     mock_resource = Mock()
     mock_session.resource.return_value = mock_resource
     endpoint = URL("http://localhost:4566")
