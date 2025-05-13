@@ -26,7 +26,7 @@ def config() -> dict[str, Any]:
     aws_default_region = AwsRegion(os.getenv("AWS_DEFAULT_REGION", "eu-west-1"))
     log_level = LOG_LEVEL
 
-    if env:
+    if env := os.getenv("ENV"):
         return {
             "aws_access_key_id": None,
             "aws_default_region": aws_default_region,
