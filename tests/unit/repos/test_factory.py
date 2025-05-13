@@ -8,7 +8,7 @@ from eligibility_signposting_api.repos.factory import dynamodb_resource_factory,
 
 @pytest.fixture
 def mock_session():
-    return Mock()
+    return MagicMock(spec=Session)
 
 
 def test_dynamodb_resource_factory_with_endpoint(mock_session):
