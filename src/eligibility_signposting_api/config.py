@@ -19,14 +19,12 @@ AwsSecretAccessKey = NewType("AwsSecretAccessKey", str)
 
 @cache
 def config() -> dict[str, Any]:
-    env = os.getenv("ENV")
-
     eligibility_table_name = TableName(os.getenv("ELIGIBILITY_TABLE_NAME", "test_eligibility_datastore"))
     rules_bucket_name = BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket"))
     aws_default_region = AwsRegion(os.getenv("AWS_DEFAULT_REGION", "eu-west-1"))
     log_level = LOG_LEVEL
 
-    if env := os.getenv("ENV"):
+    if os.getenv("ENV"):
         return {
             "aws_access_key_id": None,
             "aws_default_region": aws_default_region,
