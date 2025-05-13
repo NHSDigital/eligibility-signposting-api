@@ -94,7 +94,6 @@ The following software packages, or their equivalents, are expected to be instal
 | `LOG_LEVEL`              | `WARNING`                    | Logging level. Must be one of `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL` as per [Logging Levels](https://docs.python.org/3/library/logging.html#logging-levels) |                                                                                                                                |
 | `RULES_BUCKET_NAME`      | `test-rules-bucket`          | AWS S3 bucket from which to read rules.                                                                                                                                |                                                                                                                                |
 
-
 ## Usage
 
 After a successful installation, provide an informative example of how this project can be used. Additional code snippets, screenshots and demos work well in this space. You may also link to the other documentation resources, e.g. the [User Guide](./docs/user-guide.md) to demonstrate more use cases and to show more features.
