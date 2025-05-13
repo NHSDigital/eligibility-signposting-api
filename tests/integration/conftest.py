@@ -19,7 +19,8 @@ from yarl import URL
 from eligibility_signposting_api.model import eligibility, rules
 from eligibility_signposting_api.repos.eligibility_repo import TableName
 from eligibility_signposting_api.repos.rules_repo import BucketName
-from tests.fixtures.builders.model.rule import CampaignConfigFactory, IterationFactory, IterationRuleFactory
+from tests.fixtures.builders.model import rule
+from tests.fixtures.builders.repos.eligibility import eligibility_rows_builder
 
 if TYPE_CHECKING:
     from pytest_docker.plugin import Services
@@ -218,49 +219,33 @@ def eligibility_table(dynamodb_resource: ServiceResource) -> Generator[Any]:
 
 
 @pytest.fixture
-def persisted_person(
-    eligibility_table: Any, faker: Faker
-) -> Generator[tuple[eligibility.NHSNumber, eligibility.DateOfBirth, eligibility.Postcode]]:
+def persisted_person(eligibility_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
     nhs_number = eligibility.NHSNumber(f"5{faker.random_int(max=999999999):09d}")
-    date_of_birth = eligibility.DateOfBirth(faker.date_of_birth(maximum_age=65))
-    postcode = eligibility.Postcode(faker.postcode())
-    eligibility_table.put_item(
-        Item={
-            "NHS_NUMBER": f"PERSON#{nhs_number}",
-            "ATTRIBUTE_TYPE": "PERSON",
-            "DATE_OF_BIRTH": date_of_birth.strftime("%Y%m%d"),
-            "POSTCODE": postcode,
-        }
-    )
-    eligibility_table.put_item(
-        Item={"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "COHORTS", "COHORT_MAP": {}}
-    )
-    yield nhs_number, date_of_birth, postcode
-    eligibility_table.delete_item(Key={"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "PERSON"})
-    eligibility_table.delete_item(Key={"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "COHORTS"})
+    date_of_birth = eligibility.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
+
+    for row in (rows := eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])):
+        eligibility_table.put_item(Item=row)
+
+    yield nhs_number
+
+    for row in rows:
+        eligibility_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
 
 
 @pytest.fixture
-def persisted_77yo_person(
-    eligibility_table: Any, faker: Faker
-) -> Generator[tuple[eligibility.NHSNumber, eligibility.DateOfBirth, eligibility.Postcode]]:
+def persisted_77yo_person(eligibility_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
     nhs_number = eligibility.NHSNumber(f"5{faker.random_int(max=999999999):09d}")
     date_of_birth = eligibility.DateOfBirth(faker.date_of_birth(minimum_age=77, maximum_age=77))
-    postcode = eligibility.Postcode(faker.postcode())
-    eligibility_table.put_item(
-        Item={
-            "NHS_NUMBER": f"PERSON#{nhs_number}",
-            "ATTRIBUTE_TYPE": "PERSON",
-            "DATE_OF_BIRTH": date_of_birth.strftime("%Y%m%d"),
-            "POSTCODE": postcode,
-        }
-    )
-    eligibility_table.put_item(
-        Item={"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "COHORTS", "COHORT_MAP": {}}
-    )
-    yield nhs_number, date_of_birth, postcode
-    eligibility_table.delete_item(Key={"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "PERSON"})
-    eligibility_table.delete_item(Key={"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "COHORTS"})
+
+    for row in (
+        rows := eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1", "cohort2"])
+    ):
+        eligibility_table.put_item(Item=row)
+
+    yield nhs_number
+
+    for row in rows:
+        eligibility_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
 
 
 @pytest.fixture(scope="session")
@@ -273,21 +258,12 @@ def bucket(s3_client: BaseClient) -> Generator[BucketName]:
 
 @pytest.fixture(scope="session")
 def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[rules.CampaignConfig]:
-    campaign: rules.CampaignConfig = CampaignConfigFactory.build(
+    campaign: rules.CampaignConfig = rule.CampaignConfigFactory.build(
         target="RSV",
         iterations=[
-            IterationFactory.build(
-                iteration_rules=[
-                    IterationRuleFactory.build(
-                        type=rules.RuleType.filter,
-                        name="Exclude too young",
-                        description="Exclude too young less than 75",
-                        operator=rules.RuleOperator.year_gt,
-                        attribute_level=rules.RuleAttributeLevel.PERSON,
-                        attribute_name="DATE_OF_BIRTH",
-                        comparator="-75",
-                    )
-                ]
+            rule.IterationFactory.build(
+                iteration_rules=[rule.PersonAgeSuppressionRuleFactory.build()],
+                iteration_cohorts=[rule.IterationCohortFactory.build(cohort_label="cohort1")],
             )
         ],
     )

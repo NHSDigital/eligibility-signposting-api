@@ -15,4 +15,4 @@ class EligibilityStatusFactory(DataclassFactory[EligibilityStatus]):
 
 
 def random_str(length: int) -> str:
-    return "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(length))  # noqa: S311
+    return "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(length))

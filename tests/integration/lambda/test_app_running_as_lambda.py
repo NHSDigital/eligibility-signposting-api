@@ -13,7 +13,7 @@ from faker import Faker
 from hamcrest import assert_that, contains_exactly, contains_string, has_entries, has_item, has_key
 from yarl import URL
 
-from eligibility_signposting_api.model.eligibility import DateOfBirth, NHSNumber, Postcode
+from eligibility_signposting_api.model.eligibility import NHSNumber
 from eligibility_signposting_api.model.rules import CampaignConfig
 
 logger = logging.getLogger(__name__)
@@ -22,12 +22,11 @@ logger = logging.getLogger(__name__)
 def test_install_and_call_lambda_flask(
     lambda_client: BaseClient,
     flask_function: str,
-    persisted_person: tuple[NHSNumber, DateOfBirth, Postcode],
+    persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa: ARG001
 ):
     """Given lambda installed into localstack, run it via boto3 lambda client"""
     # Given
-    nhs_number, date_of_birth, postcode = persisted_person
 
     # When
     request_payload = {
@@ -40,7 +39,7 @@ def test_install_and_call_lambda_flask(
             "http": {
                 "sourceIp": "192.0.0.1",
                 "method": "GET",
-                "path": f"/eligibility/{nhs_number}",
+                "path": f"/eligibility/{persisted_person}",
                 "protocol": "HTTP/1.1",
             }
         },
@@ -70,15 +69,14 @@ def test_install_and_call_lambda_flask(
 
 def test_install_and_call_flask_lambda_over_http(
     flask_function_url: URL,
-    persisted_person: tuple[NHSNumber, DateOfBirth, Postcode],
+    persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa: ARG001
 ):
     """Given lambda installed into localstack, run it via http"""
     # Given
-    nhs_number, date_of_birth, postcode = persisted_person
 
     # When
-    response = httpx.get(str(flask_function_url / "eligibility" / nhs_number))
+    response = httpx.get(str(flask_function_url / "eligibility" / persisted_person))
 
     # Then
     assert_that(

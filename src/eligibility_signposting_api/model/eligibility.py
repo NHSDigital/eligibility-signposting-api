@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from datetime import date
-from enum import Enum, auto
-from typing import NewType
+from enum import Enum, StrEnum, auto
+from functools import total_ordering
+from typing import NewType, Self
 
 NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
@@ -12,16 +13,22 @@ RuleName = NewType("RuleName", str)
 RuleResult = NewType("RuleResult", str)
 
 
-class RuleType(str, Enum):
+class RuleType(StrEnum):
     filter = "F"
     suppression = "S"
     redirect = "R"
 
 
+@total_ordering
 class Status(Enum):
     not_eligible = auto()
     not_actionable = auto()
     actionable = auto()
+
+    def __lt__(self, other: Self) -> bool:
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
 
 
 @dataclass

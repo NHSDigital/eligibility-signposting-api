@@ -74,7 +74,7 @@ ignore = ["COM812", "D"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/eligibility_signposting_api/repos/*" = ["ANN401"]
-"tests/*" = ["ANN", "INP", "S101", "S106"]
+"tests/*" = ["ANN", "INP", "S101", "S106", "S311"]
 
 [tool.pyright]
 include = ["src/"]

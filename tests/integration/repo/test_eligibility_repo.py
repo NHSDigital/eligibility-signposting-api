@@ -2,32 +2,28 @@ from typing import Any
 
 import pytest
 from faker import Faker
-from hamcrest import assert_that, contains_inanyorder
+from hamcrest import assert_that, contains_inanyorder, has_entries
 
-from eligibility_signposting_api.model.eligibility import DateOfBirth, NHSNumber, Postcode
+from eligibility_signposting_api.model.eligibility import NHSNumber
 from eligibility_signposting_api.repos import NotFoundError
 from eligibility_signposting_api.repos.eligibility_repo import EligibilityRepo
 
 
-def test_person_found(eligibility_table: Any, persisted_person: tuple[NHSNumber, DateOfBirth, Postcode]):
+def test_person_found(eligibility_table: Any, persisted_person: NHSNumber):
     # Given
-    nhs_number, date_of_birth, postcode = persisted_person
     repo = EligibilityRepo(eligibility_table)
 
     # When
-    actual = repo.get_eligibility_data(nhs_number)
+    actual = repo.get_eligibility_data(persisted_person)
 
     # Then
     assert_that(
         actual,
         contains_inanyorder(
-            {
-                "NHS_NUMBER": f"PERSON#{nhs_number}",
-                "ATTRIBUTE_TYPE": "PERSON",
-                "DATE_OF_BIRTH": date_of_birth.strftime("%Y%m%d"),
-                "POSTCODE": postcode,
-            },
-            {"NHS_NUMBER": f"PERSON#{nhs_number}", "ATTRIBUTE_TYPE": "COHORTS", "COHORT_MAP": {}},
+            has_entries({"NHS_NUMBER": f"PERSON#{persisted_person}", "ATTRIBUTE_TYPE": "PERSON"}),
+            has_entries({"NHS_NUMBER": f"PERSON#{persisted_person}", "ATTRIBUTE_TYPE": "COHORTS"}),
+            has_entries({"NHS_NUMBER": f"PERSON#{persisted_person}", "ATTRIBUTE_TYPE": "COVID"}),
+            has_entries({"NHS_NUMBER": f"PERSON#{persisted_person}", "ATTRIBUTE_TYPE": "RSV"}),
         ),
     )
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import NewType
 
 from pydantic import UUID4, BaseModel, Field, HttpUrl, field_serializer
@@ -17,13 +17,13 @@ CohortCode = NewType("CohortCode", str)
 CohortText = NewType("CohortText", str)
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     not_eligible = "NotEligible"
     not_actionable = "NotActionable"
     actionable = "Actionable"
 
 
-class RuleType(str, Enum):
+class RuleType(StrEnum):
     filter = "F"
     suppression = "S"
     redirect = "R"
