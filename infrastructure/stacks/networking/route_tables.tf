@@ -2,7 +2,7 @@
 resource "aws_route_table" "public_1" {
   vpc_id = aws_vpc.main.id
   tags = {
-    Name = "public-route-1",
+    Name  = "public-route-1",
     Stack = local.stack_name
   }
 }
@@ -10,7 +10,7 @@ resource "aws_route_table" "public_1" {
 resource "aws_route_table" "public_2" {
   vpc_id = aws_vpc.main.id
   tags = {
-    Name = "public-route-2",
+    Name  = "public-route-2",
     Stack = local.stack_name
   }
 }
@@ -18,7 +18,7 @@ resource "aws_route_table" "public_2" {
 resource "aws_route_table" "public_3" {
   vpc_id = aws_vpc.main.id
   tags = {
-    Name = "public-route-3",
+    Name  = "public-route-3",
     Stack = local.stack_name
   }
 }
@@ -43,7 +43,7 @@ resource "aws_route_table_association" "public_3" {
 resource "aws_route_table" "private_1" {
   vpc_id = aws_vpc.main.id
   tags = {
-    Name = "private-route-1",
+    Name  = "private-route-1",
     Stack = local.stack_name
   }
 }
@@ -51,7 +51,7 @@ resource "aws_route_table" "private_1" {
 resource "aws_route_table" "private_2" {
   vpc_id = aws_vpc.main.id
   tags = {
-    Name = "private-route-2",
+    Name  = "private-route-2",
     Stack = local.stack_name
   }
 }
@@ -59,7 +59,7 @@ resource "aws_route_table" "private_2" {
 resource "aws_route_table" "private_3" {
   vpc_id = aws_vpc.main.id
   tags = {
-    Name = "private-route-3",
+    Name  = "private-route-3",
     Stack = local.stack_name
   }
 }
