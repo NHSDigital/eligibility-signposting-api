@@ -4,10 +4,17 @@ from unittest.mock import MagicMock
 import pytest
 from faker import Faker
 from freezegun import freeze_time
-from hamcrest import assert_that, empty, has_item, has_items
+from hamcrest import assert_that, contains_exactly, empty, has_item, has_items
 
 from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Postcode, Status
-from eligibility_signposting_api.model.rules import IterationDate, IterationRule, RuleComparator, RulePriority, RuleType
+from eligibility_signposting_api.model.rules import (
+    CampaignConfig,
+    IterationDate,
+    IterationRule,
+    RuleComparator,
+    RulePriority,
+    RuleType,
+)
 from eligibility_signposting_api.repos import EligibilityRepo, NotFoundError, RulesRepo
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from tests.fixtures.builders.model import rule as rule_builder
@@ -530,4 +537,81 @@ def test_multiple_conditions(faker: Faker):
                 is_condition().with_condition_name(ConditionName("COVID")).and_status(Status.actionable),
             )
         ),
+    )
+
+
+@pytest.mark.parametrize(
+    ("test_comment", "campaign1", "campaign2"),
+    [
+        (
+            "1st campaign allows, 2nd excludes",
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                    )
+                ],
+            ),
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-85")],
+                    )
+                ],
+            ),
+        ),
+        (
+            "1st campaign excludes, 2nd allows",
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-85")],
+                    )
+                ],
+            ),
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                    )
+                ],
+            ),
+        ),
+    ],
+)
+def test_multiple_campaigns_for_single_condition(
+    test_comment: str, campaign1: CampaignConfig, campaign2: CampaignConfig, faker: Faker
+):
+    # Given
+    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=78))
+
+    eligibility_repo = MagicMock(spec=EligibilityRepo)
+    rules_repo = MagicMock(spec=RulesRepo)
+
+    eligibility_repo.get_eligibility_data = MagicMock(
+        return_value=eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
+    )
+    rules_repo.get_campaign_configs = MagicMock(return_value=[campaign1, campaign2])
+
+    service = EligibilityService(eligibility_repo, rules_repo)
+
+    # When
+    actual = service.get_eligibility_status(NHSNumber(nhs_number))
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            contains_exactly(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable))
+        ),
+        test_comment,
     )
