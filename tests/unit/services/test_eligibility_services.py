@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 from faker import Faker
 from freezegun import freeze_time
-from hamcrest import assert_that, empty, has_item
+from hamcrest import assert_that, empty, has_item, has_items
 
 from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Postcode, Status
 from eligibility_signposting_api.model.rules import IterationDate, IterationRule, RuleComparator, RulePriority, RuleType
@@ -479,4 +479,55 @@ def test_rules_with_same_priority_must_all_match_to_exclude(
             has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status))
         ),
         test_comment,
+    )
+
+
+def test_multiple_conditions(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=78))
+
+    eligibility_repo = MagicMock(spec=EligibilityRepo)
+    rules_repo = MagicMock(spec=RulesRepo)
+
+    eligibility_repo.get_eligibility_data = MagicMock(
+        return_value=eligibility_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
+    )
+    rules_repo.get_campaign_configs = MagicMock(
+        return_value=[
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                    )
+                ],
+            ),
+            rule_builder.CampaignConfigFactory.build(
+                target="COVID",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                    )
+                ],
+            ),
+        ]
+    )
+
+    service = EligibilityService(eligibility_repo, rules_repo)
+
+    # When
+    actual = service.get_eligibility_status(NHSNumber(nhs_number))
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable),
+                is_condition().with_condition_name(ConditionName("COVID")).and_status(Status.actionable),
+            )
+        ),
     )
