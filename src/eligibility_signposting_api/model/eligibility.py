@@ -23,7 +23,6 @@ class RuleType(StrEnum):
 
 @total_ordering
 class Status(Enum):
-    nothing = auto()
     not_eligible = auto()
     not_actionable = auto()
     actionable = auto()
