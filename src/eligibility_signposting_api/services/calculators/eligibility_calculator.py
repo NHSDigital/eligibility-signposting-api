@@ -32,11 +32,7 @@ class EligibilityCalculator:
 
     @cached_property
     def active_campaigns(self) -> list[rules.CampaignConfig]:
-        return [
-            cc
-            for cc in self.campaign_configs
-            if cc.campaign_live and cc.current_iteration
-        ]
+        return [cc for cc in self.campaign_configs if cc.campaign_live and cc.current_iteration]
 
     def evaluate_eligibility(self) -> eligibility.EligibilityStatus:
         # Group campaign configs by their 'target' attribute and sort each group by 'target'
@@ -63,18 +59,15 @@ class EligibilityCalculator:
         return eligibility.EligibilityStatus(conditions=list(self.results))
 
     def get_the_base_eligible_campaigns(self, campaign_group: list[rules.CampaignConfig]) -> list[rules.CampaignConfig]:
-        """Get all campaigns in the group for which the person is base eligible,
-                                                                        i.e. those which *might* provide eligibility.
+        """Return campaigns for which the person is base eligible via cohorts."""
 
-        Build and return a collection of campaigns for which the person is base eligible (using cohorts),
-        Otherwise, build and return the in-eligibility status and reasons
-        """
-        base_eligible_campaigns: list[rules.CampaignConfig] = []
-
-        for campaign_config in (cc for cc in campaign_group if cc.campaign_live and cc.current_iteration):
-            base_eligible = self.check_base_eligibility(campaign_config.current_iteration)
-            if base_eligible:
-                base_eligible_campaigns.append(campaign_config)
+        base_eligible_campaigns: list[rules.CampaignConfig] = [
+            campaign
+            for campaign in campaign_group
+            if campaign.campaign_live
+            and campaign.current_iteration
+            and self.check_base_eligibility(campaign.current_iteration)
+        ]
 
         if base_eligible_campaigns:
             return base_eligible_campaigns
@@ -82,18 +75,15 @@ class EligibilityCalculator:
 
     def check_base_eligibility(self, iteration: rules.Iteration | None) -> set[str]:
         """Return cohorts for which person is base eligible."""
-        if not iteration or not iteration.iteration_cohorts:
+        if not iteration:
             return set()
-        # Extract iteration cohorts efficiently
         iteration_cohorts: set[str] = {
             cohort.cohort_label for cohort in iteration.iteration_cohorts if cohort.cohort_label
         }
-        # Locate person's cohorts safely
         cohorts_row: Mapping[str, dict[str, dict[str, dict[str, Any]]]] = next(
-            (r for r in self.person_data if r.get("ATTRIBUTE_TYPE") == "COHORTS"), {}
+            (row for row in self.person_data if row.get("ATTRIBUTE_TYPE") == "COHORTS"), {}
         )
-        person_cohorts = set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
-
+        person_cohorts: set[str] = set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
         return iteration_cohorts & person_cohorts
 
     def evaluate_eligibility_by_iteration_rules(
@@ -110,23 +100,18 @@ class EligibilityCalculator:
 
         for iteration in [cc.current_iteration for cc in campaign_group if cc.current_iteration]:
             # Until we see a worse status, we assume someone is actionable for this iteration.
-            worst_status_so_far_for_condition = eligibility.Status.actionable
+            worst_status = eligibility.Status.actionable
             exclusion_reasons, actionable_reasons = [], []
-            for _priority, iteration_rule_group in groupby(
-                sorted(iteration.iteration_rules, key=priority_getter), key=priority_getter
-            ):
-                (
-                    worst_status_so_far_for_condition,
-                    campaign_group_actionable_reasons,
-                    campaign_group_exclusion_reasons,
-                ) = self.evaluate_priority_group(iteration_rule_group, worst_status_so_far_for_condition)
-                actionable_reasons.extend(campaign_group_actionable_reasons)
-                exclusion_reasons.extend(campaign_group_exclusion_reasons)
-            condition_status_entry = status_with_reasons.setdefault(worst_status_so_far_for_condition, [])
+            by_priority = sorted(iteration.iteration_rules, key=priority_getter)
+            for _, rule_group in groupby(by_priority, key=priority_getter):
+                status, group_actionable, group_exclusions = self.evaluate_priority_group(rule_group, worst_status)
+                # Merge results
+                worst_status = status
+                actionable_reasons.extend(group_actionable)
+                exclusion_reasons.extend(group_exclusions)
+            condition_status_entry = status_with_reasons.setdefault(worst_status, [])
             condition_status_entry.extend(
-                actionable_reasons
-                if worst_status_so_far_for_condition is eligibility.Status.actionable
-                else exclusion_reasons
+                actionable_reasons if worst_status is eligibility.Status.actionable else exclusion_reasons
             )
 
         best_status = eligibility.Status.best(*list(status_with_reasons.keys()))
@@ -138,26 +123,22 @@ class EligibilityCalculator:
         iteration_rule_group: Iterator[rules.IterationRule],
         worst_status_so_far_for_condition: eligibility.Status,
     ) -> tuple[eligibility.Status, list[eligibility.Reason], list[eligibility.Reason]]:
-        actionable_reasons, exclusion_reasons = [], []
+        exclusion_reasons, actionable_reasons = [], []
         exclude_capable_rules = [
             ir for ir in iteration_rule_group if ir.type in (rules.RuleType.filter, rules.RuleType.suppression)
         ]
-        best_status_so_far_for_priority_group = (
-            eligibility.Status.not_eligible if exclude_capable_rules else eligibility.Status.actionable
-        )
-        for iteration_rule in exclude_capable_rules:
-            rule_calculator = RuleCalculator(person_data=self.person_data, rule=iteration_rule)
+
+        best_status = eligibility.Status.not_eligible if exclude_capable_rules else eligibility.Status.actionable
+
+        for rule in exclude_capable_rules:
+            rule_calculator = RuleCalculator(person_data=self.person_data, rule=rule)
             status, reason = rule_calculator.evaluate_exclusion()
             if status.is_exclusion:
-                best_status_so_far_for_priority_group = eligibility.Status.best(
-                    status, best_status_so_far_for_priority_group
-                )
+                best_status = eligibility.Status.best(status, best_status)
                 exclusion_reasons.append(reason)
             else:
-                best_status_so_far_for_priority_group = eligibility.Status.actionable
+                best_status = eligibility.Status.actionable
                 actionable_reasons.append(reason)
-        return (
-            eligibility.Status.worst(best_status_so_far_for_priority_group, worst_status_so_far_for_condition),
-            actionable_reasons,
-            exclusion_reasons,
-        )
+
+        worst_group_status = eligibility.Status.worst(best_status, worst_status_so_far_for_condition)
+        return worst_group_status, actionable_reasons, exclusion_reasons
