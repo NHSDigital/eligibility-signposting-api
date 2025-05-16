@@ -31,26 +31,22 @@ class EligibilityCalculator:
     results: list[eligibility.Condition] = field(default_factory=list)
 
     @cached_property
-    def active_campaigns_condition_names(self) -> set[eligibility.ConditionName]:
-        return {
-            eligibility.ConditionName(cc.target)
+    def active_campaigns(self) -> list[rules.CampaignConfig]:
+        return [
+            cc
             for cc in self.campaign_configs
             if cc.campaign_live and cc.current_iteration
-        }
+        ]
 
     def evaluate_eligibility(self) -> eligibility.EligibilityStatus:
         # Group campaign configs by their 'target' attribute and sort each group by 'target'
         campaign_configs_grouped_by_condition_name = {
             key: sorted(campaign_group, key=attrgetter("target"))
-            for key, campaign_group in groupby(self.campaign_configs, key=attrgetter("target"))
+            for key, campaign_group in groupby(self.active_campaigns, key=attrgetter("target"))
         }
 
         # Iterate over each group of campaign configs
         for condition_name, campaign_group in campaign_configs_grouped_by_condition_name.items():
-            # Skip processing if the condition name is not in the set of valid condition names
-            if condition_name not in self.active_campaigns_condition_names:
-                continue
-
             # Get the base eligible campaigns for the current group
             base_eligible_campaigns = self.get_the_base_eligible_campaigns(campaign_group)
 
@@ -110,7 +106,7 @@ class EligibilityCalculator:
 
         priority_getter = attrgetter("priority")
 
-        status_reason_dict: dict[eligibility.Status, list[eligibility.Reason]] = defaultdict()
+        status_with_reasons: dict[eligibility.Status, list[eligibility.Reason]] = defaultdict()
 
         for iteration in [cc.current_iteration for cc in campaign_group if cc.current_iteration]:
             # Until we see a worse status, we assume someone is actionable for this iteration.
@@ -126,16 +122,16 @@ class EligibilityCalculator:
                 ) = self.evaluate_priority_group(iteration_rule_group, worst_status_so_far_for_condition)
                 actionable_reasons.extend(campaign_group_actionable_reasons)
                 exclusion_reasons.extend(campaign_group_exclusion_reasons)
-            condition_status_entry = status_reason_dict.setdefault(worst_status_so_far_for_condition, [])
+            condition_status_entry = status_with_reasons.setdefault(worst_status_so_far_for_condition, [])
             condition_status_entry.extend(
                 actionable_reasons
                 if worst_status_so_far_for_condition is eligibility.Status.actionable
                 else exclusion_reasons
             )
 
-        best_status = eligibility.Status.best(*list(status_reason_dict.keys()))
+        best_status = eligibility.Status.best(*list(status_with_reasons.keys()))
 
-        return best_status, status_reason_dict[best_status]
+        return best_status, status_with_reasons[best_status]
 
     def evaluate_priority_group(
         self,
