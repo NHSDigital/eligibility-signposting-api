@@ -11,7 +11,6 @@ from typing import Any
 from wireup import service
 
 from eligibility_signposting_api.model import eligibility, rules
-from eligibility_signposting_api.model.eligibility import Reason, Status
 from eligibility_signposting_api.services.calculators.rule_calculator import RuleCalculator
 
 Row = Collection[Mapping[str, Any]]
@@ -53,23 +52,21 @@ class EligibilityCalculator:
                 continue
 
             # Get the base eligible campaigns or base ineligibility reasons for the current group
-            base_eligible_campaigns, status, reasons = (
-                self.get_the_base_eligible_campaigns_or_base_ineligibility_reasons(campaign_group)
-            )
+            base_eligible_campaigns = self.get_the_base_eligible_campaigns(campaign_group)
 
             # If there are base eligible campaigns, further evaluate them by iteration rules
             if base_eligible_campaigns:
                 status, reasons = self.evaluate_eligibility_by_iteration_rules(base_eligible_campaigns)
-
-            # Append the evaluation result for this condition to the results list
-            self.results.append(eligibility.Condition(condition_name, status, reasons))
+                # Append the evaluation result for this condition to the results list
+                self.results.append(eligibility.Condition(condition_name, status, reasons))
+            else:
+                # Create and append the evaluation result, as no campaign config is base eligible
+                self.results.append(eligibility.Condition(condition_name, eligibility.Status.not_eligible, []))
 
         # Return the overall eligibility status, constructed from the list of condition results
         return eligibility.EligibilityStatus(conditions=list(self.results))
 
-    def get_the_base_eligible_campaigns_or_base_ineligibility_reasons(
-        self, campaign_group: list[rules.CampaignConfig]
-    ) -> tuple[list[rules.CampaignConfig], Status, list[Reason]]:
+    def get_the_base_eligible_campaigns(self, campaign_group: list[rules.CampaignConfig]) -> list[rules.CampaignConfig]:
         """Get all campaigns in the group for which the person is base eligible,
                                                                         i.e. those which *might* provide eligibility.
 
@@ -84,8 +81,8 @@ class EligibilityCalculator:
                 base_eligible_campaigns.append(campaign_config)
 
         if base_eligible_campaigns:
-            return base_eligible_campaigns, Status.nothing, []
-        return [], eligibility.Status.not_eligible, []
+            return base_eligible_campaigns
+        return []
 
     def check_base_eligibility(self, iteration: rules.Iteration | None) -> set[str]:
         """Return cohorts for which person is base eligible."""
@@ -105,7 +102,7 @@ class EligibilityCalculator:
 
     def evaluate_eligibility_by_iteration_rules(
         self, campaign_group: list[rules.CampaignConfig]
-    ) -> tuple[Status, list[Reason]]:
+    ) -> tuple[eligibility.Status, list[eligibility.Reason]]:
         """Evaluate iteration rules to see if the person is actionable, not actionable (due to "F" rules),
         or not eligible (due to "S" rules").
 
@@ -113,7 +110,7 @@ class EligibilityCalculator:
 
         priority_getter = attrgetter("priority")
 
-        status_reason_dict: dict[Status, list[Reason]] = defaultdict()
+        status_reason_dict: dict[eligibility.Status, list[eligibility.Reason]] = defaultdict()
 
         for iteration in [cc.current_iteration for cc in campaign_group if cc.current_iteration]:
             # Until we see a worse status, we assume someone is actionable for this iteration.
