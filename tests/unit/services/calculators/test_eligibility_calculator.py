@@ -446,7 +446,7 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
     )
 
 
-def test_multiple_conditions_where_one_is_actionable_other_is_not_actionable(faker: Faker):
+def test_multiple_conditions_where_all_give_unique_statuses(faker: Faker):
     # Given
     nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=78))
@@ -471,6 +471,15 @@ def test_multiple_conditions_where_one_is_actionable_other_is_not_actionable(fak
                 )
             ],
         ),
+        rule_builder.CampaignConfigFactory.build(
+            target="FLU",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort2")],
+                    iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-85")],
+                )
+            ],
+        ),
     ]
 
     calculator = EligibilityCalculator(person_rows, campaign_configs)
@@ -485,6 +494,7 @@ def test_multiple_conditions_where_one_is_actionable_other_is_not_actionable(fak
             has_items(
                 is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable),
                 is_condition().with_condition_name(ConditionName("COVID")).and_status(Status.not_actionable),
+                is_condition().with_condition_name(ConditionName("FLU")).and_status(Status.not_eligible),
             )
         ),
     )
