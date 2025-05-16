@@ -43,11 +43,8 @@ class EligibilityCalculator:
 
         # Iterate over each group of campaign configs
         for condition_name, campaign_group in campaign_configs_grouped_by_condition_name.items():
-            # Get the base eligible campaigns for the current group
-            base_eligible_campaigns = self.get_the_base_eligible_campaigns(campaign_group)
-
             # If there are base eligible campaigns, further evaluate them by iteration rules
-            if base_eligible_campaigns:
+            if base_eligible_campaigns := self.get_the_base_eligible_campaigns(campaign_group):
                 status, reasons = self.evaluate_eligibility_by_iteration_rules(base_eligible_campaigns)
                 # Append the evaluation result for this condition to the results list
                 self.results.append(eligibility.Condition(condition_name, status, reasons))
