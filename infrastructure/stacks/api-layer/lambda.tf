@@ -22,5 +22,5 @@ module "eligibility_signposting_lambda_function" {
   handler                       = "eligibility_signposting_api.app.lambda_handler"
   eligibility_rules_bucket_name = module.s3_rules_bucket.storage_bucket_name
   eligibility_status_table_name = module.eligibility_status_table.table_name
+  stack_name                    = local.stack_name
 }
-
