@@ -51,7 +51,7 @@ class EligibilityCalculator:
             if condition_name not in self.condition_names:
                 continue
 
-            # Get the base eligible campaigns or base ineligibility reasons for the current group
+            # Get the base eligible campaigns for the current group
             base_eligible_campaigns = self.get_the_base_eligible_campaigns(campaign_group)
 
             # If there are base eligible campaigns, further evaluate them by iteration rules
