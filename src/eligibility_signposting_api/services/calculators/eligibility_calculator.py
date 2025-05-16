@@ -31,7 +31,7 @@ class EligibilityCalculator:
     results: list[eligibility.Condition] = field(default_factory=list)
 
     @cached_property
-    def condition_names(self) -> set[eligibility.ConditionName]:
+    def active_campaigns_condition_names(self) -> set[eligibility.ConditionName]:
         return {
             eligibility.ConditionName(cc.target)
             for cc in self.campaign_configs
@@ -48,7 +48,7 @@ class EligibilityCalculator:
         # Iterate over each group of campaign configs
         for condition_name, campaign_group in campaign_configs_grouped_by_condition_name.items():
             # Skip processing if the condition name is not in the set of valid condition names
-            if condition_name not in self.condition_names:
+            if condition_name not in self.active_campaigns_condition_names:
                 continue
 
             # Get the base eligible campaigns for the current group
