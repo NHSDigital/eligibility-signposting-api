@@ -39,6 +39,4 @@ locals {
   role_arn_prod = "arn:aws:iam::232116723729:role/db-system-worker"
 
   selected_role_arn = var.environment == "prod" ? local.role_arn_prod : local.role_arn_pre
-
-  is_iam_owner = terraform.workspace == var.iam_owner_workspace
 }
