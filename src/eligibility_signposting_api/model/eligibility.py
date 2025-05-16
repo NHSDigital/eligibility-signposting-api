@@ -10,6 +10,7 @@ NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
 Postcode = NewType("Postcode", str)
 ConditionName = NewType("ConditionName", str)
+ICB = NewType("ICB", str)
 
 RuleName = NewType("RuleName", str)
 RuleResult = NewType("RuleResult", str)

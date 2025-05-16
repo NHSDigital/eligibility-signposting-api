@@ -14,6 +14,7 @@ def person_rows_builder(
     postcode: eligibility.Postcode | None = None,
     cohorts: Sequence[str] | None = None,
     vaccines: Sequence[str] | None = None,
+    icb: eligibility.ICB |None = None,
 ) -> list[dict[str, Any]]:
     faker = Faker("en_UK")
 
@@ -28,6 +29,7 @@ def person_rows_builder(
             "ATTRIBUTE_TYPE": "PERSON",
             "DATE_OF_BIRTH": date_of_birth.strftime("%Y%m%d"),
             "POSTCODE": postcode,
+            "ICB": icb
         },
         {
             "NHS_NUMBER": key,
