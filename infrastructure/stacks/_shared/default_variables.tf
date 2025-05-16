@@ -15,9 +15,3 @@ variable "default_aws_region" {
   description = "Default AWS region"
   type        = string
 }
-
-variable "iam_owner_workspace" {
-  description = "The workspace that owns and creates the IAM role"
-  type        = string
-  default     = "default"
-}
