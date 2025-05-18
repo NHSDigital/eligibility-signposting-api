@@ -4,7 +4,6 @@ from _operator import attrgetter
 from collections import defaultdict
 from collections.abc import Collection, Iterator, Mapping
 from dataclasses import dataclass, field
-from functools import cached_property
 from itertools import groupby
 from typing import Any
 
@@ -30,20 +29,25 @@ class EligibilityCalculator:
 
     results: list[eligibility.Condition] = field(default_factory=list)
 
-    @cached_property
+    @property
     def active_campaigns(self) -> list[rules.CampaignConfig]:
         return [cc for cc in self.campaign_configs if cc.campaign_live and cc.current_iteration]
 
-    def evaluate_eligibility(self) -> eligibility.EligibilityStatus:
-        # Group campaign configs by their 'target' attribute and sort each group by 'target'
-        campaign_configs_grouped_by_condition_name = {
-            key: sorted(campaign_group, key=attrgetter("target"))
-            for key, campaign_group in groupby(self.active_campaigns, key=attrgetter("target"))
-        }
+    @property
+    def campaigns_grouped_by_condition_name(
+        self,
+    ) -> Iterator[tuple[eligibility.ConditionName, list[rules.CampaignConfig]]]:
+        """Generator function to iterate over campaign groups by condition name."""
 
-        # Iterate over each group of campaign configs
-        for condition_name, campaign_group in campaign_configs_grouped_by_condition_name.items():
-            # If there are base eligible campaigns, further evaluate them by iteration rules
+        for condition_name, campaign_group in groupby(
+            sorted(self.active_campaigns, key=attrgetter("target")), key=attrgetter("target")
+        ):
+            yield condition_name, list(campaign_group)
+
+    def evaluate_eligibility(self) -> eligibility.EligibilityStatus:
+        """Iterates over campaign groups, evaluates eligibility, and returns a consolidated status."""
+
+        for condition_name, campaign_group in self.campaigns_grouped_by_condition_name:
             if base_eligible_campaigns := self.get_the_base_eligible_campaigns(campaign_group):
                 status, reasons = self.evaluate_eligibility_by_iteration_rules(base_eligible_campaigns)
                 # Append the evaluation result for this condition to the results list
@@ -72,6 +76,7 @@ class EligibilityCalculator:
 
     def check_base_eligibility(self, iteration: rules.Iteration | None) -> set[str]:
         """Return cohorts for which person is base eligible."""
+
         if not iteration:
             return set()
         iteration_cohorts: set[str] = {
