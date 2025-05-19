@@ -63,9 +63,7 @@ class EligibilityCalculator:
         """Return campaigns for which the person is base eligible via cohorts."""
 
         base_eligible_campaigns: list[rules.CampaignConfig] = [
-            campaign
-            for campaign in campaign_group
-            if self.check_base_eligibility(campaign.current_iteration)
+            campaign for campaign in campaign_group if self.check_base_eligibility(campaign.current_iteration)
         ]
 
         if base_eligible_campaigns:
