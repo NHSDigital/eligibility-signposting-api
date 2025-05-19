@@ -15,7 +15,7 @@ module "eligibility_signposting_lambda_function" {
   eligibility_lambda_role_arn   = aws_iam_role.eligibility_lambda_role.arn
   workspace                     = local.workspace
   environment                   = var.environment
-  lambda_func_name              = "eligibility_signposting_api${terraform.workspace == "default" ? "" : "-${terraform.workspace}"}"
+  lambda_func_name              = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}eligibility_signposting_api"
   security_group_ids            = [data.aws_security_group.main_sg.id]
   vpc_intra_subnets             = [for v in data.aws_subnet.private_subnets : v.id]
   file_name                     = "../../../dist/lambda.zip"
