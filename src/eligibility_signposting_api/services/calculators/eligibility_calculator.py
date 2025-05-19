@@ -65,9 +65,7 @@ class EligibilityCalculator:
         base_eligible_campaigns: list[rules.CampaignConfig] = [
             campaign
             for campaign in campaign_group
-            if campaign.campaign_live
-            and campaign.current_iteration
-            and self.check_base_eligibility(campaign.current_iteration)
+            if self.check_base_eligibility(campaign.current_iteration)
         ]
 
         if base_eligible_campaigns:
@@ -91,8 +89,8 @@ class EligibilityCalculator:
     def evaluate_eligibility_by_iteration_rules(
         self, campaign_group: list[rules.CampaignConfig]
     ) -> tuple[eligibility.Status, list[eligibility.Reason]]:
-        """Evaluate iteration rules to see if the person is actionable, not actionable (due to "F" rules),
-        or not eligible (due to "S" rules").
+        """Evaluate iteration rules to see if the person is actionable, not actionable (due to "S" rules),
+        or not eligible (due to "F" rules").
 
         For each condition, evaluate all iterations for inclusion or exclusion."""
 
