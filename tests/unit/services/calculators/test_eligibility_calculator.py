@@ -635,7 +635,7 @@ def test_not_actionable_status_on_target_when_last_successful_date_lte_today(
 ):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
-    target_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], last_successful_date=last_successful_date)
+    target_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], vaccines=["RSV", last_successful_date])
 
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
