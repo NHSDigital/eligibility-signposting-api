@@ -5,6 +5,7 @@ from faker import Faker
 from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, empty, has_item, has_items
 
+from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
 from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Postcode, Status
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
@@ -635,21 +636,37 @@ def test_not_actionable_status_on_target_when_last_successful_date_lte_today(
 ):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
-    target_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], vaccines=["RSV", last_successful_date])
+
+    target_rows = person_rows_builder(
+        nhs_number,
+        cohorts=["cohort1"],
+        vaccines=[
+            (
+                "RSV",
+                datetime.datetime.strptime(last_successful_date, "%Y%m%d").replace(tzinfo=datetime.UTC)
+                if last_successful_date
+                else None,
+            )
+        ],
+    )
 
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
             target="RSV",
             iterations=[
                 rule_builder.IterationFactory.build(
-                    iteration_rules=[rule_builder.IterationRuleFactory.build(type = rules.RuleType.suppression, 
-                        name = rules.RuleName("You have already been vaccinated against RSV"), 
-                        description = rules.RuleDescription("Exclude anyone Completed RSV Vaccination"), 
-                        operator = rules.RuleOperator.day_lte, 
-                        attribute_level = rules.RuleAttributeLevel.TARGET, 
-                        attribute_name = rules.RuleAttributeName("LAST_SUCCESSFUL_DATE"), 
-                        comparator = rules.RuleComparator("0"), 
-                        attribute_target = rules.RuleAttributeTarget("RSV"))],
+                    iteration_rules=[
+                        rule_builder.IterationRuleFactory.build(
+                            type=rules.RuleType.suppression,
+                            name=rules.RuleName("You have already been vaccinated against RSV"),
+                            description=rules.RuleDescription("Exclude anyone Completed RSV Vaccination"),
+                            operator=rules.RuleOperator.day_lte,
+                            attribute_level=rules.RuleAttributeLevel.TARGET,
+                            attribute_name=rules.RuleAttributeName("LAST_SUCCESSFUL_DATE"),
+                            comparator=rules.RuleComparator("0"),
+                            attribute_target=rules.RuleAttributeTarget("RSV"),
+                        )
+                    ],
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                 )
             ],

@@ -65,15 +65,3 @@ class ICBSuppressionRuleFactory(IterationRuleFactory):
     attribute_level = rules.RuleAttributeLevel.PERSON
     attribute_name = rules.RuleAttributeName("ICB")
     comparator = rules.RuleComparator("QE1")
-
-
-class TargetAlreadyVaccinatedSuppressionRuleFactory(IterationRuleFactory):
-    type = rules.RuleType.suppression
-    name = rules.RuleName("You have already been vaccinated against RSV")
-    description = rules.RuleDescription("Exclude anyone Completed RSV Vaccination")
-    priority = rules.RulePriority(160)
-    operator = rules.RuleOperator.day_lte
-    attribute_level = rules.RuleAttributeLevel.TARGET
-    attribute_name = rules.RuleAttributeName("LAST_SUCCESSFUL_DATE")
-    comparator = rules.RuleComparator("0")
-    attribute_target = rules.RuleAttributeTarget("RSV")
