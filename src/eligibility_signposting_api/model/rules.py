@@ -23,6 +23,7 @@ RuleName = NewType("RuleName", str)
 RuleDescription = NewType("RuleDescription", str)
 RulePriority = NewType("RulePriority", int)
 RuleAttributeName = NewType("RuleAttributeName", str)
+RuleAttributeTarget = NewType("RuleAttributeTarget", str)
 RuleComparator = NewType("RuleComparator", str)
 StartDate = NewType("StartDate", date)
 EndDate = NewType("EndDate", date)
@@ -96,7 +97,7 @@ class IterationRule(BaseModel):
     cohort_label: CohortLabel | None = Field(None, alias="CohortLabel")
     operator: RuleOperator = Field(..., alias="Operator")
     comparator: RuleComparator = Field(..., alias="Comparator")
-    attribute_target: str | None = Field(None, alias="AttributeTarget")
+    attribute_target: RuleAttributeTarget | None = Field(None, alias="AttributeTarget")
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 

@@ -27,6 +27,7 @@ def person_rows_builder(  # noqa:PLR0913
     de: bool | None = ...,
     msoa: str | None = ...,
     lsoa: str | None = ...,
+    last_successful_date: str = "",
 ) -> list[dict[str, Any]]:
     faker = Faker("en_UK")
     faker.add_provider(PersonDetailProvider)
@@ -36,7 +37,7 @@ def person_rows_builder(  # noqa:PLR0913
     gender = gender if gender is not ... else choice(get_args(Gender))
     postcode = postcode if postcode is not ... else faker.postcode()
     cohorts = cohorts if cohorts is not ... else ["cohort-a", "cohort-b"]
-    vaccines = vaccines if vaccines is not ... else [("RSV", faker.past_date("-5y")), ("COVID", faker.past_date("-5y"))]
+    vaccines = vaccines if vaccines is not ... else [("RSV", last_successful_date), ("COVID", last_successful_date)]
     icb = icb if icb is not ... else faker.icb()
     gp_practice = gp_practice if gp_practice is not ... else faker.gp_practice()
     pcn = pcn if pcn is not ... else faker.pcn()
@@ -79,7 +80,7 @@ def person_rows_builder(  # noqa:PLR0913
         {
             "NHS_NUMBER": key,
             "ATTRIBUTE_TYPE": vaccine,
-            "LAST_SUCCESSFUL_DATE": last_successful_date.strftime("%Y%m%d"),
+            "LAST_SUCCESSFUL_DATE": last_successful_date,
             "OPTOUT": choice(["Y", "N"]),
             "LAST_INVITE_DATE": faker.past_date("-5y").strftime("%Y%m%d"),
         }
