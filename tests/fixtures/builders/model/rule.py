@@ -54,3 +54,14 @@ class PostcodeSuppressionRuleFactory(IterationRuleFactory):
     attribute_level = rules.RuleAttributeLevel.PERSON
     attribute_name = rules.RuleAttributeName("POSTCODE")
     comparator = rules.RuleComparator("SW19")
+
+
+class ICBSuppressionRuleFactory(IterationRuleFactory):
+    type = rules.RuleType.filter
+    name = rules.RuleName("Not in QE1")
+    description = rules.RuleDescription("Not in QE1")
+    priority = rules.RulePriority(10)
+    operator = rules.RuleOperator.ne
+    attribute_level = rules.RuleAttributeLevel.PERSON
+    attribute_name = rules.RuleAttributeName("ICB")
+    comparator = rules.RuleComparator("QE1")

@@ -30,7 +30,7 @@ def test_person_found(person_table: Any, persisted_person: NHSNumber):
 
 def test_person_not_found(person_table: Any, faker: Faker):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
     repo = PersonRepo(person_table)
 
     # When, Then

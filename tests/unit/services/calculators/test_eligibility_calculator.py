@@ -15,7 +15,7 @@ from tests.fixtures.matchers.eligibility import is_condition, is_eligibility_sta
 
 def test_not_base_eligible(faker: Faker):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
 
     person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"])
     campaign_configs = [
@@ -48,7 +48,7 @@ def test_not_base_eligible(faker: Faker):
 @freeze_time("2025-04-25")
 def test_only_live_campaigns_considered(faker: Faker):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
 
     person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"])
     campaign_configs = [
@@ -95,7 +95,7 @@ def test_only_live_campaigns_considered(faker: Faker):
 
 def test_base_eligible_and_simple_rule_includes(faker: Faker):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=79))
 
     person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
@@ -127,7 +127,7 @@ def test_base_eligible_and_simple_rule_includes(faker: Faker):
 
 def test_base_eligible_but_simple_rule_excludes(faker: Faker):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=74))
 
     person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
@@ -160,7 +160,7 @@ def test_base_eligible_but_simple_rule_excludes(faker: Faker):
 @freeze_time("2025-04-25")
 def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=66, maximum_age=74))
 
     person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
@@ -207,7 +207,7 @@ def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
 @freeze_time("2025-04-25")
 def test_campaign_with_no_active_iteration_not_considered(faker: Faker):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
 
     person_rows = person_rows_builder(nhs_number)
     campaign_configs = [
@@ -240,7 +240,7 @@ def test_campaign_with_no_active_iteration_not_considered(faker: Faker):
 )
 def test_rule_types_cause_correct_statuses(rule_type: rules_model.RuleType, expected_status: Status, faker: Faker):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=74))
 
     person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
@@ -272,7 +272,7 @@ def test_rule_types_cause_correct_statuses(rule_type: rules_model.RuleType, expe
 
 def test_multiple_rule_types_cause_correct_status(faker: Faker):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=74))
 
     person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
@@ -369,7 +369,7 @@ def test_rules_with_same_priority_must_all_match_to_exclude(
     faker: Faker,
 ):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=66, maximum_age=74))
 
     person_rows = person_rows_builder(
@@ -404,7 +404,7 @@ def test_rules_with_same_priority_must_all_match_to_exclude(
 
 def test_multiple_conditions_where_both_are_actionable(faker: Faker):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=78))
 
     person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
@@ -448,7 +448,7 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
 
 def test_multiple_conditions_where_all_give_unique_statuses(faker: Faker):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=78))
 
     person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
@@ -551,7 +551,7 @@ def test_multiple_campaigns_for_single_condition(
     test_comment: str, campaign1: rules_model.CampaignConfig, campaign2: rules_model.CampaignConfig, faker: Faker
 ):
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=78))
 
     person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
@@ -569,4 +569,50 @@ def test_multiple_campaigns_for_single_condition(
             contains_exactly(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable))
         ),
         test_comment,
+    )
+
+
+@pytest.mark.parametrize(
+    ("icb", "rule_type", "expected_status"),
+    [
+        ("QE1", rules_model.RuleType.suppression, Status.actionable),
+        ("QWU", rules_model.RuleType.suppression, Status.not_actionable),
+        ("", rules_model.RuleType.suppression, Status.not_actionable),
+        (None, rules_model.RuleType.suppression, Status.not_actionable),
+        ("QE1", rules_model.RuleType.filter, Status.actionable),
+        ("QWU", rules_model.RuleType.filter, Status.not_eligible),
+        ("", rules_model.RuleType.filter, Status.not_eligible),
+        (None, rules_model.RuleType.filter, Status.not_eligible),
+    ],
+)
+def test_base_eligible_and_icb_example(
+    icb: str | None, rule_type: rules_model.RuleType, expected_status: Status, faker: Faker
+):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb=icb)
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_rules=[rule_builder.ICBSuppressionRuleFactory.build(type=rule_type)],
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status))
+        ),
     )

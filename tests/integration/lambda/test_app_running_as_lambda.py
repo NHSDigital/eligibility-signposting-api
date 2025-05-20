@@ -94,7 +94,7 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
 ):
     """Given lambda installed into localstack, run it via http, with a nonexistent NHS number specified"""
     # Given
-    nhs_number = NHSNumber(f"5{faker.random_int(max=999999999):09d}")
+    nhs_number = NHSNumber(faker.nhs_number())
 
     # When
     response = httpx.get(str(flask_function_url / "eligibility" / nhs_number))
