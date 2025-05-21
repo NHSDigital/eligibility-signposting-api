@@ -622,10 +622,11 @@ def test_base_eligible_and_icb_example(
 @pytest.mark.parametrize(
     ("last_successful_date", "expected_status", "test_comment"),
     [
-        ("20240101", Status.not_actionable, "last_successful_date is a past date"),
+        ("20240601", Status.not_actionable, "last_successful_date is a past date"),
         ("20250101", Status.not_actionable, "last_successful_date is today"),
         # Below is a non-ideal situation (might be due to a data entry error), so considered as actionable.
         ("20260101", Status.actionable, "last_successful_date is a future date"),
+        ("20230601", Status.actionable, "last_successful_date is a long past"),
         ("", Status.actionable, "last_successful_date is empty"),
         (None, Status.actionable, "last_successful_date is none"),
     ],
@@ -658,14 +659,28 @@ def test_not_actionable_status_on_target_when_last_successful_date_lte_today(
                     iteration_rules=[
                         rule_builder.IterationRuleFactory.build(
                             type=rules.RuleType.suppression,
-                            name=rules.RuleName("You have already been vaccinated against RSV"),
-                            description=rules.RuleDescription("Exclude anyone Completed RSV Vaccination"),
+                            name=rules.RuleName("You have already been vaccinated against RSV in the last year"),
+                            description=rules.RuleDescription(
+                                "Exclude anyone Completed RSV Vaccination in the last year"
+                            ),
+                            priority=10,
+                            operator=rules.RuleOperator.day_gte,
+                            attribute_level=rules.RuleAttributeLevel.TARGET,
+                            attribute_name=rules.RuleAttributeName("LAST_SUCCESSFUL_DATE"),
+                            comparator=rules.RuleComparator("-365"),
+                            attribute_target=rules.RuleAttributeTarget("RSV"),
+                        ),
+                        rule_builder.IterationRuleFactory.build(
+                            type=rules.RuleType.suppression,
+                            name=rules.RuleName("You have a future booking to be vaccinated against RSV"),
+                            description=rules.RuleDescription("Exclude anyone with future Completed RSV Vaccination"),
+                            priority=10,
                             operator=rules.RuleOperator.day_lte,
                             attribute_level=rules.RuleAttributeLevel.TARGET,
                             attribute_name=rules.RuleAttributeName("LAST_SUCCESSFUL_DATE"),
                             comparator=rules.RuleComparator("0"),
                             attribute_target=rules.RuleAttributeTarget("RSV"),
-                        )
+                        ),
                     ],
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                 )
