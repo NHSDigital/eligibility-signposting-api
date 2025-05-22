@@ -70,7 +70,7 @@ class EligibilityCalculator:
             return base_eligible_campaigns
         return []
 
-    def check_base_eligibility(self, iteration: rules.Iteration | None) -> bool | set[Any]:
+    def check_base_eligibility(self, iteration: rules.Iteration | None) -> bool:
         """Return cohorts for which person is base eligible."""
 
         if not iteration:
