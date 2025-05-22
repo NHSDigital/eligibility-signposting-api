@@ -70,11 +70,11 @@ class EligibilityCalculator:
             return base_eligible_campaigns
         return []
 
-    def check_base_eligibility(self, iteration: rules.Iteration | None) -> set[str]:
+    def check_base_eligibility(self, iteration: rules.Iteration | None) -> bool | set[Any]:
         """Return cohorts for which person is base eligible."""
 
         if not iteration:
-            return set()
+            return False
         iteration_cohorts: set[str] = {
             cohort.cohort_label for cohort in iteration.iteration_cohorts if cohort.cohort_label
         }
@@ -82,7 +82,7 @@ class EligibilityCalculator:
             (row for row in self.person_data if row.get("ATTRIBUTE_TYPE") == "COHORTS"), {}
         )
         person_cohorts: set[str] = set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
-        return iteration_cohorts & person_cohorts
+        return bool(iteration_cohorts & person_cohorts) or ("elid_all_people" in iteration_cohorts)
 
     def evaluate_eligibility_by_iteration_rules(
         self, campaign_group: list[rules.CampaignConfig]
