@@ -13,3 +13,7 @@ output "storage_bucket_arn" {
 output "storage_bucket_name" {
   value = aws_s3_bucket.storage_bucket.bucket
 }
+
+output "storage_bucket_id" {
+  value = aws_s3_bucket.storage_bucket.id
+}
