@@ -13,6 +13,7 @@ from eligibility_signposting_api.model import eligibility, rules
 from eligibility_signposting_api.services.calculators.rule_calculator import RuleCalculator
 
 Row = Collection[Mapping[str, Any]]
+magic_cohort = "elid_all_people"
 
 
 @service
@@ -74,15 +75,18 @@ class EligibilityCalculator:
         """Return cohorts for which person is base eligible."""
 
         if not iteration:
-            return False
+            return False  # pragma: no cover
         iteration_cohorts: set[str] = {
             cohort.cohort_label for cohort in iteration.iteration_cohorts if cohort.cohort_label
         }
+        if magic_cohort in iteration_cohorts:
+            return True
+
         cohorts_row: Mapping[str, dict[str, dict[str, dict[str, Any]]]] = next(
             (row for row in self.person_data if row.get("ATTRIBUTE_TYPE") == "COHORTS"), {}
         )
         person_cohorts: set[str] = set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
-        return bool(iteration_cohorts & person_cohorts) or ("elid_all_people" in iteration_cohorts)
+        return bool(iteration_cohorts & person_cohorts)
 
     def evaluate_eligibility_by_iteration_rules(
         self, campaign_group: list[rules.CampaignConfig]
