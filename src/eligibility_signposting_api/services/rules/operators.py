@@ -165,8 +165,9 @@ class EndsWith(Operator):
 class IsIn(Operator):
     def _matches(self, item: str | None) -> bool:
         item = item if item is not None else self.item_default
-        comparators = str(self.rule_value).split(",")
-        return str(item) in comparators
+        comparators = set(str(self.rule_value).split(","))
+        items = set(str(item).split(","))
+        return bool(items & comparators)
 
 
 @OperatorRegistry.register(RuleOperator.not_in)
@@ -174,8 +175,9 @@ class IsIn(Operator):
 class NotIn(Operator):
     def _matches(self, item: str | None) -> bool:
         item = item if item is not None else self.item_default
-        comparators = str(self.rule_value).split(",")
-        return str(item) not in comparators
+        comparators = set(str(self.rule_value).split(","))
+        items = set(str(item).split(","))
+        return not bool(items & comparators)
 
 
 @OperatorRegistry.register(RuleOperator.is_null)

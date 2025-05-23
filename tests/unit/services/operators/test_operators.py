@@ -374,6 +374,11 @@ cases += [
     ("PP77", RuleOperator.is_in, "QH8,QJG[[NVL:QH8]]", False, "Default value specified, but unused"),
     (None, RuleOperator.is_in, "QH8,QJG[[NVL:QH8]]", True, "Default value used"),
     (None, RuleOperator.is_in, "QH8,QJG[[NVL:PP77]]", False, "Default value used"),
+    ("QH8", RuleOperator.is_in, "QH8", True, ""),
+    ("QH8,QJG", RuleOperator.is_in, "QH8", True, ""),
+    ("QH8,QJG,QGX", RuleOperator.is_in, "QH8,QJG", True, ""),
+    ("QH8,QGX", RuleOperator.is_in, "QH8,QJG", True, ""),
+    ("QH8,QJG", RuleOperator.is_in, "QH8,QJG,QGX", True, ""),
 ]
 
 # is not_in
@@ -386,6 +391,12 @@ cases += [
     ("PP77", RuleOperator.not_in, "QH8,QJG[[NVL:QH8]]", True, "Default value specified, but unused"),
     (None, RuleOperator.not_in, "QH8,QJG[[NVL:QH8]]", False, "Default value used"),
     (None, RuleOperator.not_in, "QH8,QJG[[NVL:PP77]]", True, "Default value used"),
+    ("QH8", RuleOperator.not_in, "QH8", False, ""),
+    ("QH8,QJG", RuleOperator.not_in, "QH8", False, ""),
+    ("QH8,QJG,QGX", RuleOperator.not_in, "QH8,QJG", False, ""),
+    ("QH8,QGX", RuleOperator.not_in, "QH8,QJG", False, ""),
+    ("QH8,QJG", RuleOperator.not_in, "QH8,QJG,QGX", False, ""),
+    ("QH8,QJG", RuleOperator.not_in, "QHX", True, ""),
 ]
 
 # is member_of
