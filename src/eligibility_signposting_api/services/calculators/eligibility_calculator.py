@@ -4,6 +4,7 @@ from _operator import attrgetter
 from collections import defaultdict
 from collections.abc import Collection, Iterator, Mapping
 from dataclasses import dataclass, field
+from functools import cached_property
 from itertools import groupby
 from typing import Any
 
@@ -45,6 +46,13 @@ class EligibilityCalculator:
         ):
             yield condition_name, list(campaign_group)
 
+    @cached_property
+    def person_cohorts(self) -> set[str]:
+        cohorts_row: Mapping[str, dict[str, dict[str, dict[str, Any]]]] = next(
+            (row for row in self.person_data if row.get("ATTRIBUTE_TYPE") == "COHORTS"), {}
+        )
+        return set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
+
     def evaluate_eligibility(self) -> eligibility.EligibilityStatus:
         """Iterates over campaign groups, evaluates eligibility, and returns a consolidated status."""
 
@@ -78,12 +86,7 @@ class EligibilityCalculator:
         }
         if magic_cohort in iteration_cohorts:
             return True
-
-        cohorts_row: Mapping[str, dict[str, dict[str, dict[str, Any]]]] = next(
-            (row for row in self.person_data if row.get("ATTRIBUTE_TYPE") == "COHORTS"), {}
-        )
-        person_cohorts: set[str] = set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
-        return bool(iteration_cohorts & person_cohorts)
+        return bool(iteration_cohorts & self.person_cohorts)
 
     def evaluate_eligibility_by_iteration_rules(
         self, campaign_group: list[rules.CampaignConfig]
@@ -123,8 +126,12 @@ class EligibilityCalculator:
         worst_status_so_far_for_condition: eligibility.Status,
     ) -> tuple[eligibility.Status, list[eligibility.Reason], list[eligibility.Reason]]:
         exclusion_reasons, actionable_reasons = [], []
+
         exclude_capable_rules = [
-            ir for ir in iteration_rule_group if ir.type in (rules.RuleType.filter, rules.RuleType.suppression)
+            ir
+            for ir in iteration_rule_group
+            if ir.type in (rules.RuleType.filter, rules.RuleType.suppression)
+            and (ir.cohort_label is None or (ir.cohort_label in self.person_cohorts))
         ]
 
         best_status = eligibility.Status.not_eligible if exclude_capable_rules else eligibility.Status.actionable
