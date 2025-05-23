@@ -720,7 +720,7 @@ def test_status_on_target_based_on_last_successful_date(
     )
 
 
-def test_status_on_cohort_attribute_level_(faker: Faker):
+def test_status_on_cohort_attribute_level(faker: Faker):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
 
