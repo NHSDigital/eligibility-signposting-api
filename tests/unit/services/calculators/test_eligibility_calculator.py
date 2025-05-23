@@ -333,48 +333,48 @@ def test_multiple_rule_types_cause_correct_status(faker: Faker):
     ("test_comment", "rule1", "rule2", "expected_status"),
     [
         (
-                "two rules, both exclude, same priority, should exclude",
-                rule_builder.PersonAgeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
-                rule_builder.PostcodeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
-                Status.not_actionable,
+            "two rules, both exclude, same priority, should exclude",
+            rule_builder.PersonAgeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
+            rule_builder.PostcodeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
+            Status.not_actionable,
         ),
         (
-                "two rules, rule 1 excludes, same priority, should allow",
-                rule_builder.PersonAgeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
-                rule_builder.PostcodeSuppressionRuleFactory.build(
-                    priority=rules_model.RulePriority(5), comparator=rules_model.RuleComparator("NW1")
-                ),
-                Status.actionable,
+            "two rules, rule 1 excludes, same priority, should allow",
+            rule_builder.PersonAgeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
+            rule_builder.PostcodeSuppressionRuleFactory.build(
+                priority=rules_model.RulePriority(5), comparator=rules_model.RuleComparator("NW1")
+            ),
+            Status.actionable,
         ),
         (
-                "two rules, rule 2 excludes, same priority, should allow",
-                rule_builder.PersonAgeSuppressionRuleFactory.build(
-                    priority=rules_model.RulePriority(5), comparator=rules_model.RuleComparator("-65")
-                ),
-                rule_builder.PostcodeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
-                Status.actionable,
+            "two rules, rule 2 excludes, same priority, should allow",
+            rule_builder.PersonAgeSuppressionRuleFactory.build(
+                priority=rules_model.RulePriority(5), comparator=rules_model.RuleComparator("-65")
+            ),
+            rule_builder.PostcodeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
+            Status.actionable,
         ),
         (
-                "two rules, rule 1 excludes, different priority, should exclude",
-                rule_builder.PersonAgeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
-                rule_builder.PostcodeSuppressionRuleFactory.build(
-                    priority=rules_model.RulePriority(10), comparator=rules_model.RuleComparator("NW1")
-                ),
-                Status.not_actionable,
+            "two rules, rule 1 excludes, different priority, should exclude",
+            rule_builder.PersonAgeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
+            rule_builder.PostcodeSuppressionRuleFactory.build(
+                priority=rules_model.RulePriority(10), comparator=rules_model.RuleComparator("NW1")
+            ),
+            Status.not_actionable,
         ),
         (
-                "two rules, rule 2 excludes, different priority, should exclude",
-                rule_builder.PersonAgeSuppressionRuleFactory.build(
-                    priority=rules_model.RulePriority(5), comparator=rules_model.RuleComparator("-65")
-                ),
-                rule_builder.PostcodeSuppressionRuleFactory.build(priority=rules_model.RulePriority(10)),
-                Status.not_actionable,
+            "two rules, rule 2 excludes, different priority, should exclude",
+            rule_builder.PersonAgeSuppressionRuleFactory.build(
+                priority=rules_model.RulePriority(5), comparator=rules_model.RuleComparator("-65")
+            ),
+            rule_builder.PostcodeSuppressionRuleFactory.build(priority=rules_model.RulePriority(10)),
+            Status.not_actionable,
         ),
         (
-                "two rules, both excludes, different priority, should exclude",
-                rule_builder.PersonAgeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
-                rule_builder.PostcodeSuppressionRuleFactory.build(priority=rules_model.RulePriority(10)),
-                Status.not_actionable,
+            "two rules, both excludes, different priority, should exclude",
+            rule_builder.PersonAgeSuppressionRuleFactory.build(priority=rules_model.RulePriority(5)),
+            rule_builder.PostcodeSuppressionRuleFactory.build(priority=rules_model.RulePriority(10)),
+            Status.not_actionable,
         ),
     ],
 )
@@ -521,46 +521,46 @@ def test_multiple_conditions_where_all_give_unique_statuses(faker: Faker):
     ("test_comment", "campaign1", "campaign2"),
     [
         (
-                "1st campaign allows, 2nd excludes",
-                rule_builder.CampaignConfigFactory.build(
-                    target="RSV",
-                    iterations=[
-                        rule_builder.IterationFactory.build(
-                            iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                            iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
-                        )
-                    ],
-                ),
-                rule_builder.CampaignConfigFactory.build(
-                    target="RSV",
-                    iterations=[
-                        rule_builder.IterationFactory.build(
-                            iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                            iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-85")],
-                        )
-                    ],
-                ),
+            "1st campaign allows, 2nd excludes",
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                    )
+                ],
+            ),
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-85")],
+                    )
+                ],
+            ),
         ),
         (
-                "1st campaign excludes, 2nd allows",
-                rule_builder.CampaignConfigFactory.build(
-                    target="RSV",
-                    iterations=[
-                        rule_builder.IterationFactory.build(
-                            iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                            iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-85")],
-                        )
-                    ],
-                ),
-                rule_builder.CampaignConfigFactory.build(
-                    target="RSV",
-                    iterations=[
-                        rule_builder.IterationFactory.build(
-                            iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                            iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
-                        )
-                    ],
-                ),
+            "1st campaign excludes, 2nd allows",
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-85")],
+                    )
+                ],
+            ),
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                    )
+                ],
+            ),
         ),
     ],
 )
@@ -724,10 +724,7 @@ def test_status_on_cohort_attribute_level_(faker: Faker):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
 
-    person_row = person_rows_builder(
-        nhs_number,
-        cohorts=["cohort1", "covid_eligibility_complaint_list"]
-    )
+    person_row = person_rows_builder(nhs_number, cohorts=["cohort1", "covid_eligibility_complaint_list"])
 
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
@@ -745,10 +742,10 @@ def test_status_on_cohort_attribute_level_(faker: Faker):
                             priority=15,
                             operator=rules.RuleOperator.member_of,
                             attribute_level=rules.RuleAttributeLevel.COHORT,
-                            attribute_name=rules.RuleAttributeName("COHORT_MAP"), #TODO
+                            attribute_name=rules.RuleAttributeName("COHORT_LABEL"),
                             comparator=rules.RuleComparator("covid_eligibility_complaint_list"),
                         )
-                    ]
+                    ],
                 )
             ],
         )
@@ -764,5 +761,5 @@ def test_status_on_cohort_attribute_level_(faker: Faker):
         actual,
         is_eligibility_status().with_conditions(
             has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_eligible))
-        )
+        ),
     )

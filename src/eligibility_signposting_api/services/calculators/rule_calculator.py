@@ -44,9 +44,9 @@ class RuleCalculator:
                 cohorts: Mapping[str, str | None] | None = next(
                     (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"), None
                 )
-                if self.rule.attribute_name == "COHORT_MAP":
+                if self.rule.attribute_name == "COHORT_LABEL":
                     person_cohorts: set[str] = set(cohorts.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
-                    attribute_value = ','.join(person_cohorts)
+                    attribute_value = ",".join(person_cohorts)
                 else:
                     attribute_value = cohorts.get(self.rule.attribute_name) if cohorts else None
             case rules.RuleAttributeLevel.TARGET:
