@@ -689,7 +689,7 @@ def test_status_on_target_based_on_last_successful_date(
                         ),
                         rule_builder.IterationRuleFactory.build(
                             type=rules.RuleType.suppression,
-                            name=rules.RuleName("You have a future booking to be vaccinated against RSV"),
+                            name=rules.RuleName("You have a vaccination date in the future for RSV"),
                             description=rules.RuleDescription("Exclude anyone with future Completed RSV Vaccination"),
                             priority=10,
                             operator=rules.RuleOperator.day_lte,
