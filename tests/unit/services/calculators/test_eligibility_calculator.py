@@ -766,14 +766,14 @@ def test_status_on_cohort_attribute_level(faker: Faker):
 
 
 @pytest.mark.parametrize(
-    ("person_cohorts", "cohort", "expected_status", "test_comment"),
+    ("person_cohorts", "cohort_label", "expected_status", "test_comment"),
     [
         (["cohort1", "cohort2"], "cohort1", Status.not_actionable, "matches the cohort label"),
         (["cohort2", "cohort3"], "cohort1", Status.actionable, "doesn't match the cohort label"),
     ],
 )
 def test_status_if_iteration_rules_contains_cohort_label_field(
-    person_cohorts, cohort: str, expected_status: Status, test_comment: str, faker: Faker
+    person_cohorts, cohort_label: str, expected_status: Status, test_comment: str, faker: Faker
 ):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
@@ -789,7 +789,7 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
                         rule_builder.IterationCohortFactory.build(cohort_label="cohort1"),
                         rule_builder.IterationCohortFactory.build(cohort_label="cohort2"),
                     ],
-                    iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(cohort_label=cohort)],
+                    iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(cohort_label=cohort_label)],
                 )
             ],
         )
