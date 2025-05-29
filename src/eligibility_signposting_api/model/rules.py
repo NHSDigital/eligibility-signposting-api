@@ -86,10 +86,10 @@ class RuleStop(StrEnum):
     NO = "N"
 
     @classmethod
-    def _missing_(cls, value: object) -> RuleStop | None:
-        if isinstance(value, str) and value == "":
-            return cls.NO
-        return None
+    def _missing_(cls, value: object) -> RuleStop:
+        if isinstance(value, str) and value.upper() == cls.YES.value:
+            return cls.YES
+        return cls.NO
 
 
 class IterationCohort(BaseModel):
