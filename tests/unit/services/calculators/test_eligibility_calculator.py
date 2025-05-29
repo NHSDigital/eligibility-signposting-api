@@ -835,10 +835,15 @@ def test_rules_stop(rule_stop: str, expected_status: Status, test_comment: str, 
                 rule_builder.IterationFactory.build(
                     iteration_rules=[
                         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                            priority=rules_model.RulePriority(10), type=rules_model.RuleType.filter, rule_stop=rule_stop
+                            priority=rules_model.RulePriority(10),
+                            type=rules_model.RuleType.suppression,
+                            rule_stop=rule_stop,
                         ),
                         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                            priority=rules_model.RulePriority(15), type=rules_model.RuleType.suppression
+                            priority=rules_model.RulePriority(10), type=rules_model.RuleType.suppression
+                        ),
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            priority=rules_model.RulePriority(15), type=rules_model.RuleType.filter
                         ),
                     ],
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
