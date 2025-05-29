@@ -822,7 +822,7 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
         (None, Status.not_eligible, "Both the rules are executed"),
     ],
 )
-def test_rules_stop(rule_stop, expected_status, test_comment, faker: Faker):
+def test_rules_stop(rule_stop:str, expected_status:Status, test_comment:str, faker: Faker):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=74))
