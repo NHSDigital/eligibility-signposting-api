@@ -152,5 +152,5 @@ class EligibilityCalculator:
 
         worst_group_status = eligibility.Status.worst(best_status, worst_status_so_far_for_condition)
         if worst_group_status.is_exclusion:
-            is_rule_stop = any(rule.rule_stop == rules.RuleStop.YES for rule in exclude_capable_rules)
+            is_rule_stop = any(rule.rule_stop for rule in exclude_capable_rules)
         return worst_group_status, actionable_reasons, exclusion_reasons, is_rule_stop

@@ -81,17 +81,6 @@ class RuleAttributeLevel(StrEnum):
     COHORT = "COHORT"
 
 
-class RuleStop(StrEnum):
-    YES = "Y"
-    NO = "N"
-
-    @classmethod
-    def _missing_(cls, value: object) -> RuleStop:
-        if isinstance(value, str) and value.upper() == cls.YES.value:
-            return cls.YES
-        return cls.NO
-
-
 class IterationCohort(BaseModel):
     cohort_label: CohortLabel | None = Field(None, alias="CohortLabel")
     priority: int | None = Field(None, alias="Priority")
@@ -110,7 +99,13 @@ class IterationRule(BaseModel):
     operator: RuleOperator = Field(..., alias="Operator")
     comparator: RuleComparator = Field(..., alias="Comparator")
     attribute_target: RuleAttributeTarget | None = Field(None, alias="AttributeTarget")
-    rule_stop: RuleStop | None = Field(None, alias="RuleStop")
+    rule_stop: bool = Field(default=False, alias="RuleStop")
+
+    @field_validator("rule_stop", mode="before")
+    def parse_yn_to_bool(cls, v: str | bool) -> bool:  # noqa: N805
+        if isinstance(v, str):
+            return v.upper() == "Y"
+        return bool(v)
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
