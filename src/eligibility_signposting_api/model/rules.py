@@ -29,7 +29,6 @@ RuleComparator = NewType("RuleComparator", str)
 StartDate = NewType("StartDate", date)
 EndDate = NewType("EndDate", date)
 CohortLabel = NewType("CohortLabel", str)
-RuleStop = NewType("RuleStop", str)
 
 
 class RuleType(StrEnum):
@@ -80,6 +79,17 @@ class RuleAttributeLevel(StrEnum):
     PERSON = "PERSON"
     TARGET = "TARGET"
     COHORT = "COHORT"
+
+
+class RuleStop(StrEnum):
+    YES = "Y"
+    NO = "N"
+
+    @classmethod
+    def _missing_(cls, value: object) -> RuleStop | None:
+        if isinstance(value, str) and value == "":
+            return cls.NO
+        return None
 
 
 class IterationCohort(BaseModel):
