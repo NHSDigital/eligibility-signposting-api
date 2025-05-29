@@ -22,6 +22,7 @@ class IterationCohortFactory(ModelFactory[rules.IterationCohort]): ...
 class IterationRuleFactory(ModelFactory[rules.IterationRule]):
     attribute_target = None
     cohort_label = None
+    rule_stop = None
 
 
 class IterationFactory(ModelFactory[rules.Iteration]):

@@ -5,7 +5,7 @@ from collections import defaultdict
 from collections.abc import Collection, Iterator, Mapping
 from dataclasses import dataclass, field
 from functools import cached_property
-from itertools import groupby
+from itertools import groupby, takewhile
 from typing import Any
 
 from wireup import service
@@ -127,12 +127,17 @@ class EligibilityCalculator:
     ) -> tuple[eligibility.Status, list[eligibility.Reason], list[eligibility.Reason]]:
         exclusion_reasons, actionable_reasons = [], []
 
-        exclude_capable_rules = [
-            ir
-            for ir in iteration_rule_group
-            if ir.type in (rules.RuleType.filter, rules.RuleType.suppression)
-            and (ir.cohort_label is None or (ir.cohort_label in self.person_cohorts))
-        ]
+        exclude_capable_rules = list(
+            takewhile(
+                lambda ir: ir.rule_stop != "Y",
+                [
+                    ir
+                    for ir in iteration_rule_group
+                    if ir.type in (rules.RuleType.filter, rules.RuleType.suppression)
+                       and (ir.cohort_label is None or ir.cohort_label in self.person_cohorts)
+                ],
+            )
+        )
 
         best_status = eligibility.Status.not_eligible if exclude_capable_rules else eligibility.Status.actionable
 
