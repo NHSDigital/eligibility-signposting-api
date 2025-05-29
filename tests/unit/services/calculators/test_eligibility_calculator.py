@@ -854,6 +854,7 @@ def test_rules_stop_behavior(rule_stop: str | None, expected_status: Status, tes
         target="RSV",
         iterations=[
             rule_builder.IterationFactory.build(
+                iteration_rules=[],
                 iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
             )
         ],

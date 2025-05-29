@@ -29,6 +29,7 @@ RuleComparator = NewType("RuleComparator", str)
 StartDate = NewType("StartDate", date)
 EndDate = NewType("EndDate", date)
 CohortLabel = NewType("CohortLabel", str)
+RuleStop = NewType("RuleStop", bool)
 
 
 class RuleType(StrEnum):
@@ -99,7 +100,7 @@ class IterationRule(BaseModel):
     operator: RuleOperator = Field(..., alias="Operator")
     comparator: RuleComparator = Field(..., alias="Comparator")
     attribute_target: RuleAttributeTarget | None = Field(None, alias="AttributeTarget")
-    rule_stop: bool = Field(default=False, alias="RuleStop")
+    rule_stop: RuleStop | None = Field(None, alias="RuleStop")
 
     @field_validator("rule_stop", mode="before")
     def parse_yn_to_bool(cls, v: str) -> bool:  # noqa: N805
