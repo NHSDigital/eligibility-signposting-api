@@ -134,7 +134,7 @@ class EligibilityCalculator:
                     ir
                     for ir in iteration_rule_group
                     if ir.type in (rules.RuleType.filter, rules.RuleType.suppression)
-                       and (ir.cohort_label is None or ir.cohort_label in self.person_cohorts)
+                    and (ir.cohort_label is None or ir.cohort_label in self.person_cohorts)
                 ],
             )
         )

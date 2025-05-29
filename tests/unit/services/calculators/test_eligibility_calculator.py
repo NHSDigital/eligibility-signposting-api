@@ -858,4 +858,5 @@ def test_rules_stop(rule_stop, expected_status, test_comment, faker: Faker):
         is_eligibility_status().with_conditions(
             has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status))
         ),
+        test_comment,
     )

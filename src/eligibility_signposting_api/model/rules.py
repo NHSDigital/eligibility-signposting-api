@@ -100,7 +100,7 @@ class IterationRule(BaseModel):
     operator: RuleOperator = Field(..., alias="Operator")
     comparator: RuleComparator = Field(..., alias="Comparator")
     attribute_target: RuleAttributeTarget | None = Field(None, alias="AttributeTarget")
-    rule_stop: RuleStop| None = Field(None, alias="RuleStop")
+    rule_stop: RuleStop | None = Field(None, alias="RuleStop")
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
