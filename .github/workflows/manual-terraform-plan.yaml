@@ -1,0 +1,71 @@
+name: Github OIDC test
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options: [dev, test, preprod]
+
+jobs:
+  plan-stacks:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ vars.TF_VERSION }}
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Build lambda artefact"
+        run: |
+          make dependencies install-python
+          make build
+      - name: "Upload lambda artefact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda
+          path: dist/lambda.zip
+
+      - name: "Download Built Lambdas"
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda
+          path: ./build
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Terraform Plan Stacks"
+        env:
+          ENVIRONMENT: "dev"
+          WORKSPACE: "default"
+          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
+          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
+          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+
+        run: |
+          mkdir -p ./build
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$ENVIRONMENT stack=networking tf-command=plan args=\"-auto-approve\""
+          make terraform env=$ENVIRONMENT stack=networking tf-command=plan workspace=$ENVIRONMENT
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=plan args=\"-auto-approve\""
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=plan workspace=$WORKSPACE
+
+        working-directory: ./infrastructure

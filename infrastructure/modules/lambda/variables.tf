@@ -1,8 +1,3 @@
-variable "workspace" {
-  description = "Usually the developer short code or the name of the environment."
-  type        = string
-}
-
 variable "eligibility_lambda_role_arn" {
   description = "lambda read role arn for dynamodb"
   type        = string
@@ -42,4 +37,3 @@ variable "eligibility_status_table_name" {
   description = "eligibility datastore table name"
   type        = string
 }
-
