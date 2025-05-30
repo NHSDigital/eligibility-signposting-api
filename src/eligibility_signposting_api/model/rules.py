@@ -29,6 +29,9 @@ RuleComparator = NewType("RuleComparator", str)
 StartDate = NewType("StartDate", date)
 EndDate = NewType("EndDate", date)
 CohortLabel = NewType("CohortLabel", str)
+CohortGroup = NewType("CohortGroup", str)
+PositiveDescription = NewType("PositiveDescription", str)
+NegativeDescription = NewType("NegativeDescription", str)
 RuleStop = NewType("RuleStop", bool)
 
 
@@ -84,6 +87,9 @@ class RuleAttributeLevel(StrEnum):
 
 class IterationCohort(BaseModel):
     cohort_label: CohortLabel | None = Field(None, alias="CohortLabel")
+    cohort_group: CohortGroup | None = Field(None, alias="CohortGroup")
+    positive_description: PositiveDescription | None = Field(None, alias="PositiveDescription")
+    negative_description: NegativeDescription | None = Field(None, alias="NegativeDescription")
     priority: int | None = Field(None, alias="Priority")
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
