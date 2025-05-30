@@ -1,8 +1,11 @@
+# Description: Deploys merged code to the dev environment.
+# Triggered on push to main. Tags the commit with a dev-<timestamp> label.
+# Does not create GitHub Releases or production tags (v1.x.x).
+
 name: "CI/CD publish"
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
       - main
 
@@ -10,7 +13,6 @@ jobs:
   metadata:
     name: "Set CI/CD metadata"
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
     timeout-minutes: 1
     outputs:
       build_datetime: ${{ steps.variables.outputs.build_datetime }}
@@ -23,6 +25,7 @@ jobs:
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
+
       - name: "Set CI/CD variables"
         id: variables
         run: |
@@ -33,52 +36,105 @@ jobs:
           echo "nodejs_version=$(grep "^nodejs" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
           echo "python_version=$(grep "^nodejs" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
           echo "terraform_version=$(grep "^terraform" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
-          # TODO: Get the version, but it may not be the .version file as this should come from the CI/CD Pull Request Workflow
-          echo "version=$(head -n 1 .version 2> /dev/null || echo unknown)" >> $GITHUB_OUTPUT
+          echo "version=dev-$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+
       - name: "List variables"
         run: |
-          export BUILD_DATETIME="${{ steps.variables.outputs.build_datetime }}"
-          export BUILD_TIMESTAMP="${{ steps.variables.outputs.build_timestamp }}"
-          export BUILD_EPOCH="${{ steps.variables.outputs.build_epoch }}"
-          export NODEJS_VERSION="${{ steps.variables.outputs.nodejs_version }}"
-          export PYTHON_VERSION="${{ steps.variables.outputs.python_version }}"
-          export TERRAFORM_VERSION="${{ steps.variables.outputs.terraform_version }}"
-          export VERSION="${{ steps.variables.outputs.version }}"
-          make list-variables
+          echo "Deploying to: DEV"
+          echo "VERSION=${{ steps.variables.outputs.version }}"
+
   publish:
-    name: "Publish packages"
+    name: "Publish to dev"
     runs-on: ubuntu-latest
     needs: [metadata]
-    if: github.event.pull_request.merged == true
-    timeout-minutes: 3
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
     steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v4
-      - name: "Get the artefacts"
-        run: |
-          echo "Getting the artefacts created by the build stage ..."
-          # TODO: Use either action/cache or action/upload-artifact
-      - name: "Create release"
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
         with:
-          tag_name: ${{ needs.metadata.outputs.version }}
-          release_name: Release ${{ needs.metadata.outputs.version }}
-          body: |
-            Release of ${{ needs.metadata.outputs.version }}
-          draft: false
-          prerelease: false
+          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Build lambda artefact"
+        run: |
+          make dependencies install-python
+          make build
+
+      - name: "Upload lambda artefact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda
+          path: dist/lambda.zip
+
+      - name: "Download Built Lambdas"
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda
+          path: ./build
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-dev-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Terraform Plan Stacks"
+        env:
+          ENVIRONMENT: dev
+          WORKSPACE: "default"
+          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
+          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
+          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+
+        # just planning for now for safety and until review
+        run: |
+          mkdir -p ./build
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=plan"
+          make terraform env=$ENVIRONMENT stack=networking tf-command=plan workspace=$WORKSPACE
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=plan"
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=plan workspace=$WORKSPACE
+        working-directory: ./infrastructure
+
+      - name: "Tag the dev deployment"
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ needs.metadata.outputs.version }}
+          git push origin ${{ needs.metadata.outputs.version }}
+
+      # --- Keeping these just in case: Uncomment to release to GitHub ---
+      # - name: "Create release"
+      #   id: create_release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: ${{ needs.metadata.outputs.version }}
+      #     release_name: Release ${{ needs.metadata.outputs.version }}
+      #     body: |
+      #       Release of ${{ needs.metadata.outputs.version }}
+      #     draft: false
+      #     prerelease: true
+
       # - name: "Upload release asset"
       #   uses: actions/upload-release-asset@v1
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       #   with:
       #     upload_url: "${{ steps.create_release.outputs.upload_url }}"
-      #     asset_path: ./*
-      #     asset_name: repository-template-${{ needs.metadata.outputs.version }}.tar.gz
-      #     asset_content_type: "application/gzip"
+      #     asset_path: ./build/lambda.zip
+      #     asset_name: lambda-${{ needs.metadata.outputs.version }}.zip
+      #     asset_content_type: application/zip
   success:
     name: "Success notification"
     runs-on: ubuntu-latest

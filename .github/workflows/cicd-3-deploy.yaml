@@ -1,12 +1,22 @@
+# Deploys a given tag to a given environment and tags for semantic versioning
+# creates semantic release
+
 name: "CI/CD deploy"
 
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "This is the tag that is oging to be deployed"
+        description: "This is the tag that is going to be deployed"
         required: true
         default: "latest"
+      environment:
+        description: "Target environment (e.g., ref or prod)"
+        required: true
+        type: choice
+        options:
+          - ref
+          - prod
 
 jobs:
   metadata:
@@ -23,8 +33,11 @@ jobs:
       version: ${{ steps.variables.outputs.version }}
       tag: ${{ steps.variables.outputs.tag }}
     steps:
-      - name: "Checkout code"
+      - name: "Checkout tag"
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag }}
+
       - name: "Set CI/CD variables"
         id: variables
         run: |
@@ -52,12 +65,85 @@ jobs:
   deploy:
     name: "Deploy to an environment"
     runs-on: ubuntu-latest
-    needs: [metadata]
+    needs: [ metadata ]
     timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
     steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v4
-  # TODO: More jobs or/and steps here
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: "Download Built Lambdas"
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda
+          path: ./build
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-dev-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Terraform Apply"
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          WORKSPACE: "default"
+          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
+          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
+          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+
+        # just planning for now for safety and until review
+        run: |
+          mkdir -p ./build
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=plan"
+          make terraform env=$ENVIRONMENT stack=networking tf-command=plan workspace=$WORKSPACE
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=plan"
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=plan workspace=$WORKSPACE
+        working-directory: ./infrastructure
+
+      - name: "Tag the deployment using incremental semantic versioning"
+        id: next_tag
+        run: |
+          # Fetch all tags and sort them semantically
+          git fetch --tags
+          latest_tag=$(git tag --list 'v*' | sort -V | tail -n 1)
+          echo "Latest tag: $latest_tag"
+
+          if [[ -z "$latest_tag" ]]; then
+            next_tag="v0.1.0"
+          else
+            # Extract the version numbers
+            IFS='.' read -r major minor patch <<< "${latest_tag#v}"
+            patch=$((patch + 1))
+            next_tag="v${major}.${minor}.${patch}"
+          fi
+
+          echo "Next tag: $next_tag"
+          echo "tag=$next_tag" >> $GITHUB_OUTPUT
+
+      - name: "Create GitHub Release"
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.next_tag.outputs.next_tag }}
+          release_name: Release ${{ steps.next_tag.outputs.next_tag }}
+          body: |
+            Auto-release created during deployment.
+          draft: false
+          prerelease: ${{ inputs.environment == 'ref' }}
+
+
+  # TODO: complete notify step
   # success:
   #   name: "Success notification"
   #   runs-on: ubuntu-latest

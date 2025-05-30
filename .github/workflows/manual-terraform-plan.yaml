@@ -1,4 +1,4 @@
-name: Github OIDC test
+name: Manual Terraform Plan
 
 on:
   workflow_dispatch:
@@ -35,6 +35,7 @@ jobs:
         run: |
           make dependencies install-python
           make build
+
       - name: "Upload lambda artefact"
         uses: actions/upload-artifact@v4
         with:
@@ -55,16 +56,16 @@ jobs:
 
       - name: "Terraform Plan Stacks"
         env:
-          ENVIRONMENT: "dev"
-          WORKSPACE: "default"
+          ENVIRONMENT: ${{ inputs.environment }}
+          WORKSPACE: ${{ inputs.environment }}
           TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
           TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
           TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
 
         run: |
           mkdir -p ./build
-          echo "Running: make terraform env=$ENVIRONMENT workspace=$ENVIRONMENT stack=networking tf-command=plan args=\"-auto-approve\""
-          make terraform env=$ENVIRONMENT stack=networking tf-command=plan workspace=$ENVIRONMENT
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=plan args=\"-auto-approve\""
+          make terraform env=$ENVIRONMENT stack=networking tf-command=plan workspace=$WORKSPACE
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=plan args=\"-auto-approve\""
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=plan workspace=$WORKSPACE
 
