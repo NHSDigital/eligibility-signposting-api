@@ -1,8 +1,10 @@
 import pytest
 from dateutil.relativedelta import relativedelta
 from faker import Faker
+from hamcrest import assert_that, equal_to, is_
 
-from tests.fixtures.builders.model.rule import IterationFactory, IterationRuleFactory, RawCampaignConfigFactory
+from eligibility_signposting_api.model.rules import IterationRule
+from tests.fixtures.builders.model.rule import IterationFactory, RawCampaignConfigFactory
 
 
 def test_campaign_must_have_at_least_one_iteration():
@@ -71,8 +73,22 @@ def test_iteration_must_have_active_iteration_from_its_start(faker: Faker):
     ],
 )
 def test_rules_stop_in_iteration_rules_assigns_yn_to_bool(rule_stop: str, expected):
-    # Given, When
-    iteration_rules = IterationRuleFactory.build(rule_stop=rule_stop)
+    # Given
+    iteration_rules_json = {
+        "Type": "F",
+        "Name": "Exclude TOO YOUNG",
+        "Description": "Exclude too Young less than 75 on the day of run",
+        "Priority": 110,
+        "AttributeLevel": "PERSON",
+        "AttributeName": "DATE_OF_BIRTH",
+        "Operator": "Y>",
+        "Comparator": "-75",
+        "CohortLabel": "rsv_75_rolling",
+        "RuleStop": rule_stop,
+    }
+
+    # When
+    iteration_rules = IterationRule.model_validate(iteration_rules_json)
 
     # Then
-    assert iteration_rules.rule_stop is expected
+    assert_that(iteration_rules.rule_stop, is_(equal_to(expected)))
