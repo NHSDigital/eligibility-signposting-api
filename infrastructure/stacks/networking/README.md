@@ -40,16 +40,14 @@ For a high-level overview, see the [VPC Structure Confluence Page](https://nhsd-
 
 ### Public HTTPS Request Flow
 
-1. External client makes HTTPS request → Internet Gateway
-2. Request routes to Load Balancer or API Gateway in public subnet
-3. Request forwards to Lambda (or other application) in private subnet
-4. Lambda processes the request and returns response
-5. Response returns to client through the same path
+1. External client makes HTTPS request to API Gateway
+2. Request forwards to Lambda (or other application) in private subnet
+3. Lambda processes the request and returns response
+4. Response returns to client through the same path
 
 ### Outbound Internet Access
 
-- Lambda functions in private subnets can make outbound internet calls via NAT Gateways
-- No direct inbound access to Lambda from the internet
+- No direct inbound or outbound access to Lambda from the internet
 
 ### Internal-Only Traffic
 
@@ -64,7 +62,6 @@ For a high-level overview, see the [VPC Structure Confluence Page](https://nhsd-
 
 ### Network ACLs
 
-- **Public subnets:** Allow HTTP (80), HTTPS (443), ephemeral ports
 - **Private subnets:** Allow VPC traffic and responses to outbound requests
 
 ### Security Groups
@@ -74,8 +71,7 @@ For a high-level overview, see the [VPC Structure Confluence Page](https://nhsd-
 
 ### Route Tables
 
-- **Public subnets:** Route to Internet Gateway for external access
-- **Private subnets:** Route to NAT Gateways for outbound-only access
+- **Private subnets:** Route to VPC Endpoints only
 
 ---
 

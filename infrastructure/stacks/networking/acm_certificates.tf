@@ -28,8 +28,8 @@ resource "aws_acm_certificate" "domain_validation" {
   }
 
   tags = {
-    Region        = local.region
-    Stack         = local.stack_name
-    CerticateType = "DomainValidation"
+    Region          = local.region
+    Stack           = local.stack_name
+    CertificateType = "DomainValidation"
   }
 }
