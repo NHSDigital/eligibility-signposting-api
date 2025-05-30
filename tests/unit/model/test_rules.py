@@ -2,7 +2,7 @@ import pytest
 from dateutil.relativedelta import relativedelta
 from faker import Faker
 
-from tests.fixtures.builders.model.rule import IterationFactory, RawCampaignConfigFactory
+from tests.fixtures.builders.model.rule import IterationFactory, IterationRuleFactory, RawCampaignConfigFactory
 
 
 def test_campaign_must_have_at_least_one_iteration():
@@ -59,3 +59,20 @@ def test_iteration_must_have_active_iteration_from_its_start(faker: Faker):
         r".*1st iteration starts later",
     ):
         RawCampaignConfigFactory.build(start_date=start_date, iterations=[iteration])
+
+
+@pytest.mark.parametrize(
+    ("rule_stop", "expected"),
+    [
+        ("Y", True),
+        ("N", False),
+        ("", False),
+        (None, False),
+    ],
+)
+def test_rules_stop_in_iteration_rules_assigns_yn_to_bool(rule_stop: str, expected):
+    # Given, When
+    iteration_rules = IterationRuleFactory.build(rule_stop=rule_stop)
+
+    # Then
+    assert iteration_rules.rule_stop is expected

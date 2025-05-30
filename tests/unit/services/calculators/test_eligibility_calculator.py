@@ -8,7 +8,6 @@ from hamcrest import assert_that, contains_exactly, has_item, has_items
 from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
 from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Postcode, Status
-from eligibility_signposting_api.model.rules import IterationRule
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
 from tests.fixtures.builders.model import rule as rule_builder
 from tests.fixtures.builders.repos.person import person_rows_builder
@@ -831,23 +830,13 @@ def test_rules_stop_behavior(rule_stop: str | None, expected_status: Status, tes
 
     # Base rule template
     # Not using model factory to create Iteration rules since it sets boolean values for "Y"/"N"
-    simple_age_data = {
-        "Name": "Exclude too young less than 75",
-        "Description": "Exclude too young less than 75",
-        "AttributeLevel": "PERSON",
-        "AttributeName": "DATE_OF_BIRTH",
-        "Operator": "Y>",
-        "Comparator": "-75",
-    }
-
-    # Build rule variations
-    rule_variants = [
-        {"Type": "S", "Priority": 10, "RuleStop": rule_stop},
-        {"Type": "S", "Priority": 10},
-        {"Type": "F", "Priority": 15},
+    iteration_rules = [
+        rule_builder.PersonAgeSuppressionRuleFactory.build(
+            type=rules.RuleType.suppression, priority=10, rule_stop=rule_stop
+        ),
+        rule_builder.PersonAgeSuppressionRuleFactory.build(type=rules.RuleType.suppression, priority=10),
+        rule_builder.PersonAgeSuppressionRuleFactory.build(type=rules.RuleType.filter, priority=15),
     ]
-
-    iteration_rules = [IterationRule.model_validate({**simple_age_data, **variant}) for variant in rule_variants]
 
     # Build campaign configuration
     campaign_config = rule_builder.CampaignConfigFactory.build(
