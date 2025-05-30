@@ -816,39 +816,30 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
 @pytest.mark.parametrize(
     ("rule_stop", "expected_status", "test_comment"),
     [
-        ("Y", Status.not_actionable, "Stops at the first rule"),
-        ("N", Status.not_eligible, "Both the rules are executed"),
-        ("", Status.not_eligible, "Both the rules are executed"),
-        (None, Status.not_eligible, "Both the rules are executed"),
+        (True, Status.not_actionable, "Stops at the first rule"),
+        (False, Status.not_eligible, "Both the rules are executed"),
     ],
 )
-def test_rules_stop_behavior(rule_stop: str | None, expected_status: Status, test_comment: str, faker: Faker) -> None:
+def test_rules_stop_behavior(rule_stop: bool, expected_status: Status, test_comment: str, faker: Faker) -> None:  # noqa: FBT001
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=74))
     person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
-
-    # Base rule template
-    # Not using model factory to create Iteration rules since it sets boolean values for "Y"/"N"
-    iteration_rules = [
-        rule_builder.PersonAgeSuppressionRuleFactory.build(
-            type=rules.RuleType.suppression, priority=10, rule_stop=rule_stop
-        ),
-        rule_builder.PersonAgeSuppressionRuleFactory.build(type=rules.RuleType.suppression, priority=10),
-        rule_builder.PersonAgeSuppressionRuleFactory.build(type=rules.RuleType.filter, priority=15),
-    ]
 
     # Build campaign configuration
     campaign_config = rule_builder.CampaignConfigFactory.build(
         target="RSV",
         iterations=[
             rule_builder.IterationFactory.build(
-                iteration_rules=[],
+                iteration_rules=[
+                    rule_builder.PersonAgeSuppressionRuleFactory.build(priority=10, rule_stop=rule_stop),
+                    rule_builder.PersonAgeSuppressionRuleFactory.build(priority=10),
+                    rule_builder.PersonAgeSuppressionRuleFactory.build(type=rules.RuleType.filter, priority=15),
+                ],
                 iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
             )
         ],
     )
-    campaign_config.iterations[0].iteration_rules.extend(iteration_rules)
 
     calculator = EligibilityCalculator(person_rows, [campaign_config])
 

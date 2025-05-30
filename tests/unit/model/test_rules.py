@@ -1,10 +1,13 @@
+import json
+
 import pytest
 from dateutil.relativedelta import relativedelta
 from faker import Faker
-from hamcrest import assert_that, equal_to, is_
+from hamcrest import assert_that
 
 from eligibility_signposting_api.model.rules import IterationRule
 from tests.fixtures.builders.model.rule import IterationFactory, RawCampaignConfigFactory
+from tests.fixtures.matchers.rules import is_iteration_rule
 
 
 def test_campaign_must_have_at_least_one_iteration():
@@ -72,23 +75,20 @@ def test_iteration_must_have_active_iteration_from_its_start(faker: Faker):
         (None, False),
     ],
 )
-def test_rules_stop_in_iteration_rules_assigns_yn_to_bool(rule_stop: str, expected):
+def test_iteration_rule_deserialisation(rule_stop: str, expected):
     # Given
-    iteration_rules_json = {
-        "Type": "F",
-        "Name": "Exclude TOO YOUNG",
-        "Description": "Exclude too Young less than 75 on the day of run",
-        "Priority": 110,
-        "AttributeLevel": "PERSON",
-        "AttributeName": "DATE_OF_BIRTH",
-        "Operator": "Y>",
-        "Comparator": "-75",
-        "CohortLabel": "rsv_75_rolling",
-        "RuleStop": rule_stop,
-    }
+    rule_json = f"""{{"Type": "F",
+                "Name": "Exclude TOO YOUNG",
+                "Description": "Exclude too Young less than 75 on the day of run",
+                "Priority": 110,
+                "AttributeLevel": "PERSON",
+                "AttributeName": "DATE_OF_BIRTH",
+                "Operator": "Y>",
+                "Comparator": "-75",
+                "RuleStop": "{rule_stop if rule_stop is not None else "null"}"}}"""
 
     # When
-    iteration_rules = IterationRule.model_validate(iteration_rules_json)
+    actual = IterationRule.model_validate(json.loads(rule_json))
 
     # Then
-    assert_that(iteration_rules.rule_stop, is_(equal_to(expected)))
+    assert_that(actual, is_iteration_rule().with_rule_stop(expected))

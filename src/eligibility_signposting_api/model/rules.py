@@ -103,10 +103,10 @@ class IterationRule(BaseModel):
     rule_stop: RuleStop | None = Field(None, alias="RuleStop")
 
     @field_validator("rule_stop", mode="before")
-    def parse_yn_to_bool(cls, v: str) -> bool:  # noqa: N805
+    def parse_yn_to_bool(cls, v: str | bool) -> bool:  # noqa: N805
         if isinstance(v, str):
             return v.upper() == "Y"
-        return False
+        return v
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
