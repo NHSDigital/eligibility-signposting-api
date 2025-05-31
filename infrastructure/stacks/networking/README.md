@@ -84,8 +84,8 @@ For a high-level overview, see the [VPC Structure Confluence Page](https://nhsd-
 Run the following command to initialize Terraform and generate a plan. Replace `<env>` with your target environment (e.g., `dev`):
 
 ```bash
-make terraform env=dev stack=networking tf-command=init workspace=<env>
-make terraform env=dev stack=networking tf-command=plan workspace=<env>
+make terraform env=dev stack=networking tf-command=init workspace=default
+make terraform env=dev stack=networking tf-command=plan workspace=default
 ```
 
 ### 2. Apply Terraform Changes
@@ -93,7 +93,7 @@ make terraform env=dev stack=networking tf-command=plan workspace=<env>
 Deploy the Terraform configuration:
 
 ```bash
-make terraform env=dev stack=networking tf-command=apply workspace=<env>
+make terraform env=dev stack=networking tf-command=apply workspace=default
 ```
 
 For more on Terraform, see the [Terraform Documentation](https://developer.hashicorp.com/terraform/docs).

@@ -1,1 +1,5 @@
-../_shared/locals.tf
+locals {
+
+    stack_name = "bootstrap"
+
+}

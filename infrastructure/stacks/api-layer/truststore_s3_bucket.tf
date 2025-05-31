@@ -3,6 +3,8 @@ module "s3_truststore_bucket" {
   bucket_name  = "truststore"
   environment  = var.environment
   project_name = var.project_name
+  stack_name   = local.stack_name
+  workspace    = terraform.workspace
 }
 
 resource "aws_s3_bucket_policy" "truststore" {

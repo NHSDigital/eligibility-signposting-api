@@ -62,7 +62,7 @@ make bootstrap-terraform env=<env> tf-command=plan
 Workspaces allow for alternative deployments within the same environment (e.g., testing changes in `dev`). Create a workspace with the same name as the environment:
 
 ```bash
-make terraform-workspace env=<env> stack=bootstrap workspace=<env>
+make terraform-workspace env=<env> stack=bootstrap workspace=default
 ```
 
 ### 1.4 Apply Terraform Changes
@@ -105,7 +105,7 @@ terraform {
 Reinitialize Terraform to migrate the state to the S3 bucket:
 
 ```bash
-make terraform env=<env> workspace=<env> stack=bootstrap tf-command=apply
+make terraform env=<env> workspace=default stack=bootstrap tf-command=apply
 ```
 
 You will see a prompt like the following:
