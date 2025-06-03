@@ -11,7 +11,8 @@ from typing import Any
 from wireup import service
 
 from eligibility_signposting_api.model import eligibility, rules
-from eligibility_signposting_api.model.eligibility import CohortStatus, Condition, ConditionName, Status
+from eligibility_signposting_api.model.eligibility import CohortStatus, Condition, ConditionName, Status, \
+    IterationStatus
 from eligibility_signposting_api.services.calculators.rule_calculator import RuleCalculator
 
 Row = Collection[Mapping[str, Any]]
@@ -83,9 +84,9 @@ class EligibilityCalculator:
     def evaluate_eligibility(self) -> eligibility.EligibilityStatus:
         """Iterates over campaign groups, evaluates eligibility, and returns a consolidated status."""
         priority_getter = attrgetter("priority")
-        results: dict[ConditionName, tuple[Status, list[CohortStatus]]] = defaultdict()
+        results: dict[ConditionName, IterationStatus] = defaultdict()
         for condition_name, campaign_group in self.campaigns_grouped_by_condition_name:
-            iteration_results: dict[str, tuple[Status, list[CohortStatus]]] = defaultdict()
+            iteration_results: dict[str, IterationStatus] = defaultdict()
             for active_iteration in [cc.current_iteration for cc in campaign_group]:
                 cohort_results: dict[str, CohortStatus] = defaultdict()
 
@@ -129,23 +130,19 @@ class EligibilityCalculator:
                         cohort_results[cohort.cohort_label] = CohortStatus(cohort, eligibility.Status.not_eligible, [])
 
                 # Determine Result between cohorts - get the best
-                iteration_results[active_iteration.name] = self.get_best_cohort(cohort_results)  # multiple
+                iteration_results[active_iteration.name] = IterationStatus(*self.get_best_cohort(cohort_results)) # multiple
             # Determine results between iterations - get the best
-            best_so_far: Status = eligibility.Status.not_eligible
-            for iteration_result in iteration_results.values():
-                best_so_far = eligibility.Status.best(best_so_far, iteration_result[0])
-            for iteration_result in iteration_results.values():
-                if iteration_result[0] is best_so_far:
-                    results[condition_name] = iteration_result
-                    break  # if the status is the same, we can break out of the loop - we are picking the first one
+            best_candidate = max(iteration_results.values(), key=lambda r: r.status.value)
+            results[condition_name] = best_candidate
+
         # Consolidate all the results and return
         final_result = [
             Condition(
                 condition_name=condition_name,
-                status=status,
-                reasons=reduce(add, [cohort.reasons for cohort in cohort_status_list], []),
+                status=iteration_result.status,
+                reasons=reduce(add, [cohort.reasons for cohort in iteration_result.cohort_status], []),
             )
-            for condition_name, (status, cohort_status_list) in results.items()
+            for condition_name, iteration_result in results.items()
         ]
         return eligibility.EligibilityStatus(conditions=final_result)
 
