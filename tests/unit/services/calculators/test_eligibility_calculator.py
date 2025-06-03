@@ -769,7 +769,6 @@ def test_status_on_cohort_attribute_level(faker: Faker):
     )
 
 
-@pytest.mark.skip(reason="This test is temporarily ignored. Reason : Cohort label")
 @pytest.mark.parametrize(
     ("person_cohorts", "cohort_label", "expected_status", "test_comment"),
     [
