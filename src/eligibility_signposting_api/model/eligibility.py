@@ -78,6 +78,11 @@ class CohortStatus:
     status: Status
     reasons: list[Reason]
 
+@dataclass
+class IterationStatus:
+    status: Status
+    cohort_status: list[CohortStatus]
+
 
 @dataclass
 class EligibilityStatus:
