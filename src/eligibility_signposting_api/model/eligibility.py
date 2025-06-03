@@ -4,9 +4,10 @@ from dataclasses import dataclass
 from datetime import date
 from enum import Enum, StrEnum, auto
 from functools import total_ordering
-from typing import NewType, Self
+from typing import TYPE_CHECKING, NewType, Self
 
-from eligibility_signposting_api.model import rules
+if TYPE_CHECKING:
+    from eligibility_signposting_api.model import rules
 
 NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
@@ -77,6 +78,7 @@ class CohortStatus:
     cohort: rules.IterationCohort
     status: Status
     reasons: list[Reason]
+
 
 @dataclass
 class IterationStatus:

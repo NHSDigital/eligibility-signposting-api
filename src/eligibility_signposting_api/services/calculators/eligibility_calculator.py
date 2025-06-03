@@ -11,8 +11,13 @@ from typing import Any
 from wireup import service
 
 from eligibility_signposting_api.model import eligibility, rules
-from eligibility_signposting_api.model.eligibility import CohortStatus, Condition, ConditionName, Status, \
-    IterationStatus
+from eligibility_signposting_api.model.eligibility import (
+    CohortStatus,
+    Condition,
+    ConditionName,
+    IterationStatus,
+    Status,
+)
 from eligibility_signposting_api.services.calculators.rule_calculator import RuleCalculator
 
 Row = Collection[Mapping[str, Any]]
@@ -135,7 +140,9 @@ class EligibilityCalculator:
                         cohort_results[cohort.cohort_label] = CohortStatus(cohort, eligibility.Status.not_eligible, [])
 
                 # Determine Result between cohorts - get the best
-                iteration_results[active_iteration.name] = IterationStatus(*self.get_best_cohort(cohort_results)) # multiple
+                iteration_results[active_iteration.name] = IterationStatus(
+                    *self.get_best_cohort(cohort_results)
+                )  # multiple
             # Determine results between iterations - get the best
             best_candidate = max(iteration_results.values(), key=lambda r: r.status.value)
             results[condition_name] = best_candidate
@@ -241,7 +248,6 @@ class EligibilityCalculator:
     def evaluate_rules_priority_group(
         self, iteration_rule_group: Iterator[rules.IterationRule]
     ) -> tuple[eligibility.Status, list[eligibility.Reason], list[eligibility.Reason]]:
-
         exclusion_reasons, actionable_reasons = [], []
         exclude_capable_rules = [
             ir
