@@ -103,28 +103,33 @@ class EligibilityCalculator:
                     if cohort.cohort_label in self.person_cohorts:
                         # Base eligible
                         # Check Eligibility - F - Rules
-                        eli_flag: bool = True
+                        eligibility_flag: bool = True
                         for _, rule_group in groupby(sorted(rules_filter, key=priority_getter), key=priority_getter):
                             # iter F rules by priority and grouping
                             # find first exclusion - throws
                             status, group_actionable, group_exclusions = self.evaluate_rules_priority_group(rule_group)
                             if status.is_exclusion:
                                 cohort_results[cohort.cohort_label] = CohortStatus(cohort, status, group_exclusions)
-                                eli_flag = False
+                                eligibility_flag = False
                                 break
 
-                        if eli_flag:
+                        if eligibility_flag:
+                            actionable_flag: bool = True
                             for _, rule_group in groupby(
                                 sorted(rules_suppression, key=priority_getter), key=priority_getter
                             ):
+                                # iter S rules by priority and grouping
+                                # find first exclusion - throws
                                 status, group_actionable, group_exclusions = self.evaluate_rules_priority_group(
                                     rule_group
                                 )
                                 if status.is_exclusion:
                                     cohort_results[cohort.cohort_label] = CohortStatus(cohort, status, group_exclusions)
+                                    actionable_flag = False
                                     break
                             # No exclusions - actionable
-                            cohort_results[cohort.cohort_label] = CohortStatus(cohort, Status.actionable, [])
+                            if actionable_flag:
+                                cohort_results[cohort.cohort_label] = CohortStatus(cohort, Status.actionable, [])
                     else:
                         # Not base eligibility
                         cohort_results[cohort.cohort_label] = CohortStatus(cohort, eligibility.Status.not_eligible, [])

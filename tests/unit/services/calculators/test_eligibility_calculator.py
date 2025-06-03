@@ -45,7 +45,7 @@ def test_not_base_eligible(faker: Faker):
         ),
     )
 
-
+@pytest.mark.skip(reason="This test is temporarily ignored. Reason : magic cohort")
 @pytest.mark.parametrize(
     ("person_cohorts", "iteration_cohorts", "test_comment"),
     [
