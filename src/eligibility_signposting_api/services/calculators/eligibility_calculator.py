@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from _operator import add, attrgetter
+from _operator import attrgetter
 from collections import defaultdict
 from collections.abc import Collection, Iterator, Mapping
 from dataclasses import dataclass, field
-from functools import cached_property, reduce
+from functools import cached_property
 from itertools import groupby
 from typing import Any
 
@@ -156,10 +156,10 @@ class EligibilityCalculator:
         final_result = [
             Condition(
                 condition_name=condition_name,
-                status=iteration_result.status,
-                reasons=reduce(add, [cohort.reasons for cohort in iteration_result.cohort_statuses], []),
+                status=active_iteration_result.status,
+                cohort_results=active_iteration_result.cohort_statuses,
             )
-            for condition_name, iteration_result in results.items()
+            for condition_name, active_iteration_result in results.items()
         ]
         return eligibility.EligibilityStatus(conditions=final_result)
 
