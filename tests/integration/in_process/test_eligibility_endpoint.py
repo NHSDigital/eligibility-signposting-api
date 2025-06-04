@@ -37,11 +37,14 @@ def test_no_nhs_number_given(client: FlaskClient):
     )
 
 
-def test_actionable_by_rule(client: FlaskClient, persisted_77yo_person: NHSNumber, campaign_config: CampaignConfig):  # noqa: ARG001
+def test_not_base_eligible(client: FlaskClient, persisted_person_no_cohorts: NHSNumber, campaign_config: CampaignConfig):  # noqa: ARG001
     # Given
 
     # When
-    response = client.get(f"/patient-check/{persisted_77yo_person}")
+    response = client.get(f"/patient-check/{persisted_person_no_cohorts}")
+
+    print("here is the respose")
+    print(response.text)
 
     # Then
     assert_that(
@@ -49,7 +52,27 @@ def test_actionable_by_rule(client: FlaskClient, persisted_77yo_person: NHSNumbe
         is_response()
         .with_status_code(HTTPStatus.OK)
         .and_text(
-            is_json_that(has_entry("processedSuggestions", has_item(has_entries(condition="RSV", status="Actionable"))))
+            is_json_that(
+                has_entry("processedSuggestions", has_item(has_entries(condition="RSV", status="NotEligible")))
+            )
+        ),
+    )
+
+def test_not_eligible_by_rule(client: FlaskClient, persisted_person_pc_sw19: NHSNumber, campaign_config: CampaignConfig):  # noqa: ARG001
+    # Given
+
+    # When
+    response = client.get(f"/patient-check/{persisted_person_pc_sw19}")
+
+    # Then
+    assert_that(
+        response,
+        is_response()
+        .with_status_code(HTTPStatus.OK)
+        .and_text(
+            is_json_that(
+                has_entry("processedSuggestions", has_item(has_entries(condition="RSV", status="NotEligible")))
+            )
         ),
     )
 
@@ -71,3 +94,23 @@ def test_not_actionable_by_rule(client: FlaskClient, persisted_person: NHSNumber
             )
         ),
     )
+
+
+def test_actionable_by_rule(client: FlaskClient, persisted_77yo_person: NHSNumber, campaign_config: CampaignConfig):  # noqa: ARG001
+    # Given
+
+    # When
+    response = client.get(f"/patient-check/{persisted_77yo_person}")
+
+    # Then
+    assert_that(
+        response,
+        is_response()
+        .with_status_code(HTTPStatus.OK)
+        .and_text(
+            is_json_that(has_entry("processedSuggestions", has_item(has_entries(condition="RSV", status="Actionable"))))
+        ),
+    )
+
+
+
