@@ -104,8 +104,8 @@ class EligibilityCalculator:
                 }.values()
 
                 for cohort in sorted(active_iteration.iteration_cohorts, key=priority_getter):
-                    # Check base Eligibility
-                    if cohort.cohort_label in self.person_cohorts:
+                    # Check Base Eligibility
+                    if cohort.cohort_label in self.person_cohorts or cohort.cohort_label == magic_cohort:
                         # Base eligible
                         # Check Eligibility - F - Rules
                         eligibility_flag: bool = True
@@ -117,7 +117,8 @@ class EligibilityCalculator:
                                 cohort_results[cohort.cohort_label] = CohortStatus(cohort, status, group_exclusions)
                                 eligibility_flag = False
                                 break
-
+                        # Eligible
+                        # Check Actionable(ity) - S - Rules
                         if eligibility_flag:
                             actionable_flag: bool = True
                             for _, rule_group in groupby(

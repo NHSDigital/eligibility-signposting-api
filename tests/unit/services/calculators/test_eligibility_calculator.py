@@ -46,17 +46,17 @@ def test_not_base_eligible(faker: Faker):
     )
 
 
-@pytest.mark.skip(reason="This test is temporarily ignored. Reason : magic cohort")
 @pytest.mark.parametrize(
-    ("person_cohorts", "iteration_cohorts", "test_comment"),
+    ("person_cohorts", "iteration_cohorts", "status", "test_comment"),
     [
-        (["cohort1"], ["elid_all_people"], "Only magic cohort present"),
-        (["cohort1"], ["elid_all_people", "cohort1"], "Magic cohort with other cohorts"),
-        ([], ["elid_all_people"], "Only magic cohort present without "),
+        (["cohort1"], ["elid_all_people"], Status.actionable, "Only magic cohort present"),
+        (["cohort1"], ["elid_all_people", "cohort1"], Status.actionable, "Magic cohort with other cohorts"),
+        (["cohort1"], ["cohort2"], Status.not_eligible, "No magic cohort. No matching person cohort"),
+        ([], ["elid_all_people"], Status.actionable, "No person cohorts. Only magic cohort present"),
     ],
 )
 def test_base_eligible_with_when_magic_cohort_is_present(
-    faker: Faker, person_cohorts: list[str], iteration_cohorts: list[str], test_comment: str
+    faker: Faker, person_cohorts: list[str], iteration_cohorts: list[str], status: Status, test_comment: str
 ):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
@@ -86,7 +86,7 @@ def test_base_eligible_with_when_magic_cohort_is_present(
     assert_that(
         actual,
         is_eligibility_status().with_conditions(
-            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable))
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(status))
         ),
         test_comment,
     )
