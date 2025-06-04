@@ -70,7 +70,7 @@ class Reason:
 class Condition:
     condition_name: ConditionName
     status: Status
-    reasons: list[Reason]
+    cohort_results: list[CohortStatus]
 
 
 @dataclass
