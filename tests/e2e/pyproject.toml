@@ -1,0 +1,20 @@
+package-mode = false
+[project]
+name = "qa-automation"
+version = "0.1.0"
+description = ""
+authors = [{ name = "ivma1-nhs", email = "ivano.mannella1@nhs.net" }]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pytest (==8.3.5)",
+    "requests (==2.31.0)",
+    "python-dotenv (==1.0.1)",
+    "jsonschema (==4.24.0)",
+    "behave (==1.2.6)",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
