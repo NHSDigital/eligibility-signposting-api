@@ -157,7 +157,7 @@ class EligibilityCalculator:
             Condition(
                 condition_name=condition_name,
                 status=iteration_result.status,
-                reasons=reduce(add, [cohort.reasons for cohort in iteration_result.cohort_status], []),
+                reasons=reduce(add, [cohort.reasons for cohort in iteration_result.cohort_statuses], []),
             )
             for condition_name, iteration_result in results.items()
         ]

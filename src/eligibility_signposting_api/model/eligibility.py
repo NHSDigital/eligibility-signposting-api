@@ -83,7 +83,7 @@ class CohortStatus:
 @dataclass
 class IterationStatus:
     status: Status
-    cohort_status: list[CohortStatus]
+    cohort_statuses: list[CohortStatus]
 
 
 @dataclass
