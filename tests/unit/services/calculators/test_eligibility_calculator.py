@@ -1,5 +1,4 @@
 import datetime
-import itertools
 
 import pytest
 from faker import Faker
@@ -889,9 +888,7 @@ def test_rules_stop_behavior(
     for condition in actual.conditions:
         if condition.condition_name == ConditionName("RSV"):
             for cohort_result in condition.cohort_results:
-                actual_reason_results.extend(
-                    [reason.rule_result for reason in list(itertools.chain(*cohort_result.reasons))]
-                )
+                actual_reason_results.extend([reason.rule_result for reason in cohort_result.reasons])
 
     # Then
     assert_that(

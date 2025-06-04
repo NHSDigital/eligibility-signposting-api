@@ -51,6 +51,13 @@ def build_eligibility_response(
 ) -> eligibility.EligibilityResponse:
     """Return an object representing the API response we are going to send, given an evaluation of the person's
     eligibility."""
+
+    for condition in eligibility_status.conditions:
+        for cohort_result in condition.cohort_results:
+            for reason in cohort_result.reasons:
+                print(f"Debug: {reason}")
+                print(f"Type: {type(reason)}")
+
     return eligibility.EligibilityResponse(  # pyright: ignore[reportCallIssue]
         response_id=uuid.uuid4(),  # pyright: ignore[reportCallIssue]
         meta=eligibility.Meta(last_updated=eligibility.LastUpdated(datetime.now(tz=UTC))),  # pyright: ignore[reportCallIssue]
