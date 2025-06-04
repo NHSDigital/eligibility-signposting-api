@@ -12,10 +12,10 @@ from wireup import service
 
 from eligibility_signposting_api.model import eligibility, rules
 from eligibility_signposting_api.model.eligibility import (
-    CohortStatus,
+    CohortResult,
     Condition,
     ConditionName,
-    IterationStatus,
+    IterationResult,
     Status,
 )
 from eligibility_signposting_api.services.calculators.rule_calculator import RuleCalculator
@@ -61,7 +61,7 @@ class EligibilityCalculator:
         return set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
 
     # Assuming cohort_results contains tuples of (IterationCohort, Status, list[Reason])
-    def get_best_cohort(self, cohort_results: dict[str, CohortStatus]) -> tuple[Status, list[CohortStatus]]:
+    def get_best_cohort(self, cohort_results: dict[str, CohortResult]) -> tuple[Status, list[CohortResult]]:
         # Find the best status across cohorts
         best_status = eligibility.Status.best(*[result.status for result in cohort_results.values()])
 
@@ -72,11 +72,11 @@ class EligibilityCalculator:
     def evaluate_eligibility(self) -> eligibility.EligibilityStatus:
         """Iterates over campaign groups, evaluates eligibility, and returns a consolidated status."""
         priority_getter = attrgetter("priority")
-        results: dict[ConditionName, IterationStatus] = defaultdict()
+        results: dict[ConditionName, IterationResult] = defaultdict()
         for condition_name, campaign_group in self.campaigns_grouped_by_condition_name:
-            iteration_results: dict[str, IterationStatus] = defaultdict()
+            iteration_results: dict[str, IterationResult] = defaultdict()
             for active_iteration in [cc.current_iteration for cc in campaign_group]:
-                cohort_results: dict[str, CohortStatus] = defaultdict()
+                cohort_results: dict[str, CohortResult] = defaultdict()
 
                 # Get the rules for this iteration
                 rules_filter, rules_suppression, rules_redirect = {
@@ -106,7 +106,7 @@ class EligibilityCalculator:
                                 rule_group
                             )
                             if status.is_exclusion:
-                                cohort_results[cohort.cohort_label] = CohortStatus(cohort, status, group_exclusions)
+                                cohort_results[cohort.cohort_label] = CohortResult(cohort, status, group_exclusions)
                                 eligibility_flag = False
                                 break
                         # Eligible
@@ -134,18 +134,18 @@ class EligibilityCalculator:
                                         break
                             # No exclusions - actionable
                             if actionable_flag:
-                                cohort_results[cohort.cohort_label] = CohortStatus(cohort, Status.actionable, [])
+                                cohort_results[cohort.cohort_label] = CohortResult(cohort, Status.actionable, [])
                             else:
-                                cohort_results[cohort.cohort_label] = CohortStatus(
+                                cohort_results[cohort.cohort_label] = CohortResult(
                                     cohort, Status.not_actionable, suppression_reasons
                                 )
 
                     else:
                         # Not base eligibility
-                        cohort_results[cohort.cohort_label] = CohortStatus(cohort, eligibility.Status.not_eligible, [])
+                        cohort_results[cohort.cohort_label] = CohortResult(cohort, eligibility.Status.not_eligible, [])
 
                 # Determine Result between cohorts - get the best
-                iteration_results[active_iteration.name] = IterationStatus(
+                iteration_results[active_iteration.name] = IterationResult(
                     *self.get_best_cohort(cohort_results)
                 )  # multiple
             # Determine results between iterations - get the best
