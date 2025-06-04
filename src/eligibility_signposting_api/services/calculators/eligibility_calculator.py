@@ -129,7 +129,7 @@ class EligibilityCalculator:
                                 )
                                 if status.is_exclusion:
                                     actionable_flag = False
-                                    suppression_reasons.append(group_exclusions)
+                                    suppression_reasons.extend(group_exclusions)
                                     if rule_stop:
                                         break
                             # No exclusions - actionable
