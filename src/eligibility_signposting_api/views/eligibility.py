@@ -66,7 +66,8 @@ def build_eligibility_response(
                         rule_code=eligibility.RuleCode(reason.rule_name),  # pyright: ignore[reportCallIssue]
                         rule_text=eligibility.RuleText(reason.rule_result),  # pyright: ignore[reportCallIssue]
                     )
-                    for reason in condition.reasons
+                    for cohort_result in condition.cohort_results
+                    for reason in cohort_result.reasons
                 ],  # pyright: ignore[reportCallIssue]
                 actions=[],
             )
