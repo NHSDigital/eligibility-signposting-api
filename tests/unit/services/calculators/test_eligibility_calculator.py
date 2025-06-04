@@ -4,11 +4,12 @@ import itertools
 import pytest
 from faker import Faker
 from freezegun import freeze_time
-from hamcrest import assert_that, contains_exactly, has_item, has_items
+from hamcrest import assert_that, contains_exactly, has_item, has_items, contains_inanyorder, equal_to
 
 from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
-from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Postcode, Status
+from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Postcode, Status, \
+    RuleResult
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
 from tests.fixtures.builders.model import rule as rule_builder
 from tests.fixtures.builders.repos.person import person_rows_builder
