@@ -18,7 +18,8 @@ from eligibility_signposting_api.model.eligibility import (
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
 from tests.fixtures.builders.model import rule as rule_builder
 from tests.fixtures.builders.repos.person import person_rows_builder
-from tests.fixtures.matchers.eligibility import is_condition, is_eligibility_status
+from tests.fixtures.matchers.eligibility import is_condition, is_eligibility_status, is_cohort_result, is_reason, \
+    is_iteration_cohort
 
 
 def test_not_base_eligible(faker: Faker):
@@ -884,23 +885,29 @@ def test_rules_stop_behavior(
     # When
     actual = calculator.evaluate_eligibility()
 
-    actual_reason_results: list[RuleResult] = []
-    for condition in actual.conditions:
-        if condition.condition_name == ConditionName("RSV"):
-            for cohort_result in condition.cohort_results:
-                actual_reason_results.extend([reason.rule_result for reason in cohort_result.reasons])
-
-    # Then
-    assert_that(
-        actual_reason_results,
-        contains_inanyorder(*[equal_to(result) for result in expected_reason_results]),
-        test_comment,
-    )
-
     # Then
     assert_that(
         actual,
-        is_eligibility_status(),
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(
+                    equal_to(Status.not_actionable)
+                )
+                .and_cohort_results(
+                    has_items(
+                        is_cohort_result()
+                        .with_reasons(
+                            contains_inanyorder(*[
+                                is_reason().with_rule_result(equal_to(result))
+                                for result in expected_reason_results
+                            ])
+                        )
+                    )
+                )
+            )
+        ),
     )
 
 
@@ -973,13 +980,27 @@ def test_eligibility_results_when_multiple_cohorts(
     # When
     actual = calculator.evaluate_eligibility()
 
-    actual_cohort_labels: list[str] = []
-    actual_cohort_labels.extend(
-        cohort_result.cohort.cohort_label
-        for condition in actual.conditions
-        if condition.condition_name == ConditionName("RSV")
-        for cohort_result in condition.cohort_results
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(expected_status))
+                .and_cohort_results(
+                    contains_inanyorder(
+                        *[
+                            is_cohort_result()
+                            .with_cohort(
+                                is_iteration_cohort()
+                                .with_cohort_label(equal_to(cohort_label))
+                            )
+                            for cohort_label in expected_cohorts
+                        ]
+                    )
+                )
+            )
+        ),
     )
 
-    # Then
-    assert_that(actual_cohort_labels, contains_inanyorder(*expected_cohorts))

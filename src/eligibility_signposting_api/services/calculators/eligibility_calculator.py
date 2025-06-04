@@ -157,7 +157,7 @@ class EligibilityCalculator:
             Condition(
                 condition_name=condition_name,
                 status=active_iteration_result.status,
-                cohort_results=active_iteration_result.cohort_statuses,
+                cohort_results=active_iteration_result.cohort_results,
             )
             for condition_name, active_iteration_result in results.items()
         ]
