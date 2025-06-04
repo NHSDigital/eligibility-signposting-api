@@ -1,6 +1,6 @@
 from hamcrest.core.matcher import Matcher
 
-from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, CohortResult, Reason
+from eligibility_signposting_api.model.eligibility import CohortResult, Condition, EligibilityStatus, Reason
 from eligibility_signposting_api.model.rules import IterationCohort
 
 from .meta import BaseAutoMatcher
@@ -13,6 +13,7 @@ class ConditionMatcher(BaseAutoMatcher[Condition]): ...
 
 
 class CohortResultMatcher(BaseAutoMatcher[CohortResult]): ...
+
 
 class ReasonMatcher(BaseAutoMatcher[Reason]): ...
 
@@ -31,12 +32,10 @@ def is_condition() -> Matcher[Condition]:
 def is_cohort_result() -> Matcher[CohortResult]:
     return CohortResultMatcher()
 
+
 def is_reason() -> Matcher[Reason]:
     return ReasonMatcher()
 
 
 def is_iteration_cohort() -> Matcher[IterationCohort]:
     return IterationCohortMatcher()
-
-
-

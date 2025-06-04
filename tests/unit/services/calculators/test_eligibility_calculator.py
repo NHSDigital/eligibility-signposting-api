@@ -18,8 +18,13 @@ from eligibility_signposting_api.model.eligibility import (
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
 from tests.fixtures.builders.model import rule as rule_builder
 from tests.fixtures.builders.repos.person import person_rows_builder
-from tests.fixtures.matchers.eligibility import is_condition, is_eligibility_status, is_cohort_result, is_reason, \
-    is_iteration_cohort
+from tests.fixtures.matchers.eligibility import (
+    is_cohort_result,
+    is_condition,
+    is_eligibility_status,
+    is_iteration_cohort,
+    is_reason,
+)
 
 
 def test_not_base_eligible(faker: Faker):
@@ -892,17 +897,13 @@ def test_rules_stop_behavior(
             has_items(
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
-                .and_status(
-                    equal_to(Status.not_actionable)
-                )
+                .and_status(equal_to(Status.not_actionable))
                 .and_cohort_results(
                     has_items(
-                        is_cohort_result()
-                        .with_reasons(
-                            contains_inanyorder(*[
-                                is_reason().with_rule_result(equal_to(result))
-                                for result in expected_reason_results
-                            ])
+                        is_cohort_result().with_reasons(
+                            contains_inanyorder(
+                                *[is_reason().with_rule_result(equal_to(result)) for result in expected_reason_results]
+                            )
                         )
                     )
                 )
@@ -991,10 +992,8 @@ def test_eligibility_results_when_multiple_cohorts(
                 .and_cohort_results(
                     contains_inanyorder(
                         *[
-                            is_cohort_result()
-                            .with_cohort(
-                                is_iteration_cohort()
-                                .with_cohort_label(equal_to(cohort_label))
+                            is_cohort_result().with_cohort(
+                                is_iteration_cohort().with_cohort_label(equal_to(cohort_label))
                             )
                             for cohort_label in expected_cohorts
                         ]
@@ -1003,4 +1002,3 @@ def test_eligibility_results_when_multiple_cohorts(
             )
         ),
     )
-
