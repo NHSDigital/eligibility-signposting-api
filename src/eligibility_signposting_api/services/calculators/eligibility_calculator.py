@@ -102,7 +102,9 @@ class EligibilityCalculator:
                         ):
                             # iter F rules by priority and grouping
                             # find first exclusion - throws
-                            status, group_actionable, group_exclusions = self.evaluate_rules_priority_group(rule_group)
+                            status, group_actionable, group_exclusions, rule_stop = self.evaluate_rules_priority_group(
+                                rule_group
+                            )
                             if status.is_exclusion:
                                 cohort_results[cohort.cohort_label] = CohortStatus(cohort, status, group_exclusions)
                                 eligibility_flag = False
@@ -120,16 +122,15 @@ class EligibilityCalculator:
                             for _, rule_group in groupby(
                                 sorted(exclusion_capable_suppression_rules, key=priority_getter), key=priority_getter
                             ):
-                                rule_group = list(rule_group)
                                 # iter S rules by priority and grouping
                                 # find first exclusion - throws
-                                status, group_actionable, group_exclusions = self.evaluate_rules_priority_group(
-                                    iter(rule_group)
+                                status, group_actionable, group_exclusions, rule_stop = (
+                                    self.evaluate_rules_priority_group(rule_group)
                                 )
                                 if status.is_exclusion:
                                     actionable_flag = False
                                     suppression_reasons.append(group_exclusions)
-                                    if any(rule.rule_stop for rule in rule_group):
+                                    if rule_stop:
                                         break
                             # No exclusions - actionable
                             if actionable_flag:
@@ -164,12 +165,15 @@ class EligibilityCalculator:
 
     def evaluate_rules_priority_group(
         self, iteration_rule_group: Iterator[rules.IterationRule]
-    ) -> tuple[eligibility.Status, list[eligibility.Reason], list[eligibility.Reason]]:
+    ) -> tuple[eligibility.Status, list[eligibility.Reason], list[eligibility.Reason], bool]:
+        is_rule_stop: bool = False
+
         exclusion_reasons, actionable_reasons = [], []
 
         best_status = eligibility.Status.not_eligible
 
         for rule in iteration_rule_group:
+            is_rule_stop = True if rule.rule_stop else is_rule_stop
             rule_calculator = RuleCalculator(person_data=self.person_data, rule=rule)
             status, reason = rule_calculator.evaluate_exclusion()
             if status.is_exclusion:
@@ -179,4 +183,4 @@ class EligibilityCalculator:
                 best_status = eligibility.Status.actionable
                 actionable_reasons.append(reason)
 
-        return best_status, actionable_reasons, exclusion_reasons
+        return best_status, actionable_reasons, exclusion_reasons, is_rule_stop
