@@ -37,14 +37,13 @@ def test_no_nhs_number_given(client: FlaskClient):
     )
 
 
-def test_not_base_eligible(client: FlaskClient, persisted_person_no_cohorts: NHSNumber, campaign_config: CampaignConfig):  # noqa: ARG001
+def test_not_base_eligible(
+    client: FlaskClient, persisted_person_no_cohorts: NHSNumber, campaign_config: CampaignConfig
+):
     # Given
 
     # When
     response = client.get(f"/patient-check/{persisted_person_no_cohorts}")
-
-    print("here is the respose")
-    print(response.text)
 
     # Then
     assert_that(
@@ -58,7 +57,10 @@ def test_not_base_eligible(client: FlaskClient, persisted_person_no_cohorts: NHS
         ),
     )
 
-def test_not_eligible_by_rule(client: FlaskClient, persisted_person_pc_sw19: NHSNumber, campaign_config: CampaignConfig):  # noqa: ARG001
+
+def test_not_eligible_by_rule(
+    client: FlaskClient, persisted_person_pc_sw19: NHSNumber, campaign_config: CampaignConfig
+):
     # Given
 
     # When
@@ -111,6 +113,3 @@ def test_actionable_by_rule(client: FlaskClient, persisted_77yo_person: NHSNumbe
             is_json_that(has_entry("processedSuggestions", has_item(has_entries(condition="RSV", status="Actionable"))))
         ),
     )
-
-
-
