@@ -17,3 +17,7 @@ def is_eligibility_status() -> Matcher[EligibilityStatus]:
 
 def is_condition() -> Matcher[Condition]:
     return ConditionMatcher()
+
+
+def is_cohort_result() -> Matcher[Condition]:
+    return ConditionMatcher()

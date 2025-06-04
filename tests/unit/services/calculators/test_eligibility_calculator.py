@@ -897,6 +897,12 @@ def test_rules_stop_behavior(
         test_comment,
     )
 
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status(),
+    )
+
 
 @pytest.mark.parametrize(
     ("person_cohorts", "iteration_cohorts", "expected_status", "expected_cohorts"),
@@ -968,10 +974,12 @@ def test_eligibility_results_when_multiple_cohorts(
     actual = calculator.evaluate_eligibility()
 
     actual_cohort_labels: list[str] = []
-    for condition in actual.conditions:
-        if condition.condition_name == ConditionName("RSV"):
-            for cohort_result in condition.cohort_results:
-                actual_cohort_labels.append(cohort_result.cohort.cohort_label)
+    actual_cohort_labels.extend(
+        cohort_result.cohort.cohort_label
+        for condition in actual.conditions
+        if condition.condition_name == ConditionName("RSV")
+        for cohort_result in condition.cohort_results
+    )
 
     # Then
     assert_that(actual_cohort_labels, contains_inanyorder(*expected_cohorts))

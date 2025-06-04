@@ -69,20 +69,20 @@ class Reason:
 class Condition:
     condition_name: ConditionName
     status: Status
-    cohort_results: list[CohortStatus]
+    cohort_results: list[CohortResult]
 
 
 @dataclass
-class CohortStatus:
+class CohortResult:
     cohort: IterationCohort
     status: Status
     reasons: list[Reason]
 
 
 @dataclass
-class IterationStatus:
+class IterationResult:
     status: Status
-    cohort_statuses: list[CohortStatus]
+    cohort_statuses: list[CohortResult]
 
 
 @dataclass
