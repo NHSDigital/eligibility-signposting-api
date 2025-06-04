@@ -878,3 +878,81 @@ def test_rules_stop_behavior(rule_stop: bool, expected_reason_results: list[Rule
         contains_inanyorder(*[equal_to(result) for result in expected_reason_results]),
         test_comment,
     )
+
+
+@pytest.mark.parametrize(
+    ("person_cohorts", "iteration_cohorts", "expected_status", "expected_cohorts"),
+    [
+        (
+            ["covid_cohort", "flu_cohort"],
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+            Status.not_eligible,
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+        ),
+        (
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+            Status.actionable,
+            ["rsv_clinical_cohort"],
+        ),
+        (
+            ["covid_cohort", "rsv_75_rolling"],
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+            Status.not_actionable,
+            ["rsv_75_rolling"],
+        ),
+        (
+            ["covid_cohort", "rsv_clinical_cohort"],
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+            Status.actionable,
+            ["rsv_clinical_cohort"],
+        ),
+        (
+            ["rsv_75to79_2024", "rsv_75_rolling"],
+            ["rsv_75to79_2024", "rsv_75_rolling"],
+            Status.not_actionable,
+            ["rsv_75_rolling", "rsv_75to79_2024"],
+        ),
+    ],
+)
+def test_eligibility_results_when_multiple_cohorts(
+    person_cohorts: list[str],
+    iteration_cohorts: list[str],
+    expected_status: Status,
+    expected_cohorts: list[str],
+    faker: Faker,
+):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    dob_person_less_than_75 = DateOfBirth(faker.date_of_birth(minimum_age=66, maximum_age=74))
+
+    person_rows = person_rows_builder(nhs_number, date_of_birth=dob_person_less_than_75, cohorts=person_cohorts)
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(cohort_label=cohorts) for cohorts in iteration_cohorts
+                    ],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(cohort_label="rsv_75_rolling"),
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(cohort_label="rsv_75to79_2024"),
+                    ],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status))
+        ),
+    )
