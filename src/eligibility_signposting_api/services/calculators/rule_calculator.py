@@ -39,7 +39,7 @@ class RuleCalculator:
                 person: Mapping[str, str | None] | None = next(
                     (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == "PERSON"), None
                 )
-                attribute_value = person.get(self.rule.attribute_name) if person else None
+                attribute_value = person.get(str(self.rule.attribute_name)) if person else None
             case rules.RuleAttributeLevel.COHORT:
                 cohorts: Mapping[str, str | None] | None = next(
                     (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"), None
@@ -62,7 +62,7 @@ class RuleCalculator:
                 target: Mapping[str, str | None] | None = next(
                     (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == self.rule.attribute_target), None
                 )
-                attribute_value = target.get(self.rule.attribute_name) if target else None
+                attribute_value = target.get(str(self.rule.attribute_name)) if target else None
             case _:  # pragma: no cover
                 msg = f"{self.rule.attribute_level} not implemented"
                 raise NotImplementedError(msg)
