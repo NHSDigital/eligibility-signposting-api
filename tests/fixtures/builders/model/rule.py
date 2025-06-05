@@ -17,6 +17,7 @@ def future_date(days_ahead: int = 365) -> date:
 
 
 class IterationCohortFactory(ModelFactory[rules.IterationCohort]):
+    cohort_group = None
     priority = rules.RulePriority(0)
 
 

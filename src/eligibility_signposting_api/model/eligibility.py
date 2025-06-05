@@ -71,18 +71,11 @@ class Condition:
 
 
 @dataclass
-class IterationCohort:
-    cohort_label: str
-    cohort_group: str
-    positive_description: str
-    negative_description: str
-
-
-@dataclass
 class CohortResult:
-    cohort: IterationCohort
+    cohort_code: str
     status: Status
     reasons: list[Reason]
+    description: str
 
 
 @dataclass

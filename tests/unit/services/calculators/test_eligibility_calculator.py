@@ -23,7 +23,6 @@ from tests.fixtures.matchers.eligibility import (
     is_cohort_result,
     is_condition,
     is_eligibility_status,
-    is_iteration_cohort,
     is_reason,
 )
 
@@ -1000,7 +999,8 @@ def test_eligibility_results_when_multiple_cohorts(
             iterations=[
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[
-                        rule_builder.IterationCohortFactory.build(cohort_label=cohorts) for cohorts in iteration_cohorts
+                        rule_builder.IterationCohortFactory.build(cohort_group=None, cohort_label=cohorts)
+                        for cohorts in iteration_cohorts
                     ],
                     iteration_rules=[
                         rule_builder.PersonAgeSuppressionRuleFactory.build(cohort_label="rsv_75_rolling"),
@@ -1027,9 +1027,7 @@ def test_eligibility_results_when_multiple_cohorts(
                 .and_cohort_results(
                     contains_inanyorder(
                         *[
-                            is_cohort_result().with_cohort(
-                                is_iteration_cohort().with_cohort_label(equal_to(cohort_label))
-                            )
+                            is_cohort_result().with_cohort_code(equal_to(cohort_label))
                             for cohort_label in expected_cohorts
                         ]
                     )
