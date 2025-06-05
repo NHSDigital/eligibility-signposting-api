@@ -88,7 +88,8 @@ def build_eligibility_cohorts(condition: Condition) -> list[eligibility.Eligibil
     grouped_cohort_results = defaultdict(list)
 
     for cohort_result in condition.cohort_results:
-        grouped_cohort_results[cohort_result.cohort_code].append(cohort_result)
+        if condition.status == cohort_result.status:
+            grouped_cohort_results[cohort_result.cohort_code].append(cohort_result)
 
     return [
         eligibility.EligibilityCohort(
