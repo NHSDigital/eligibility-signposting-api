@@ -27,6 +27,16 @@ resource "aws_network_acl" "private" {
     to_port    = 0
   }
 
+  # Block RDP access
+  ingress {
+  rule_no    = 150
+  action     = "deny"
+  cidr_block = "0.0.0.0/0"
+  protocol   = "tcp"
+  from_port  = 3389
+  to_port    = 3389
+  }
+
   # Allow responses to outbound requests (ephemeral ports)
   ingress {
     rule_no    = 200

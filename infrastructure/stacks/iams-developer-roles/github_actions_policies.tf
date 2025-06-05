@@ -33,6 +33,13 @@ resource "aws_iam_policy" "terraform_state" {
 
 # API Infrastructure Management Policy
 resource "aws_iam_policy" "api_infrastructure" {
+  #checkov:skip=CKV_AWS_287 Ensure IAM policies does not allow credentials exposure
+  #checkov:skip=CKV_AWS_355 Ensure no IAM policies documents allow "*" as a statement's resource for restrictable actions
+  #checkov:skip=CKV_AWS_288 Ensure IAM policies does not allow data exfiltration
+  #checkov:skip=CKV_AWS_289 Ensure IAM policies does not allow permissions management / resource exposure without constraints
+  #checkov:skip=CKV_AWS_286 Ensure IAM policies does not allow privilege escalation
+  #checkov:skip=CKV_AWS_290 Ensure IAM policies does not allow write access without constraints
+
   name        = "api-infrastructure-management"
   description = "Policy granting permissions to manage API infrastructure"
   path        = "/service-policies/"

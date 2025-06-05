@@ -18,11 +18,6 @@ resource "aws_acm_certificate" "domain_validation" {
   domain_name       = "${var.environment}.eligibility-signposting-api.nhs.uk"
   validation_method = "DNS"
 
-  subject_alternative_names = var.environment != "prod" ? [
-    "${var.environment}.eligibility-signposting-api.nhs.uk",
-    "*.${var.environment}.eligibility-signposting-api.nhs.uk"
-  ] : null
-
   lifecycle {
     create_before_destroy = true
   }

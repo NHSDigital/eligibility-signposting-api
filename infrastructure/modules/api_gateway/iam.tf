@@ -27,7 +27,7 @@ data "aws_iam_policy_document" "api_gateway_logging" {
       "logs:GetLogEvents",
       "logs:FilterLogEvents"
     ]
-    resources = ["*"]
+    resources = [aws_cloudwatch_log_group.api_gateway.arn]
   }
 }
 

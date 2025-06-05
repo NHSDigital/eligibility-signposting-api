@@ -12,3 +12,7 @@ output "aws_lambda_function_name" {
 output "aws_lambda_invoke_arn" {
   value = aws_lambda_function.eligibility_signposting_lambda.invoke_arn
 }
+
+output "lambda_cmk_arn" {
+  value = aws_kms_key.lambda_cmk.arn
+}

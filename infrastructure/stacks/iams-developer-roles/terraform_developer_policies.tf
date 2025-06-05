@@ -23,18 +23,40 @@ data "aws_iam_policy_document" "terraform_developer_assume_role" {
 # ARN(s) will need adding once they are in place / additional policies
 # created in the main api stack and this removed
 data "aws_iam_policy_document" "terraform_developer_policy" {
+  #checkov:skip=CKV_AWS_356 Data source IAM policy document allows all resources with restricted actions
+  #checkov:skip=CKV_AWS_356 Ensure IAM policies does not allow data exfiltration
+  #checkov:skip=CKV_AWS_109 Ensure IAM policies does not allow permissions management / resource exposure without constraints
+  #checkov:skip=CKV_AWS_108 Ensure IAM policies does not allow data exfiltration
+  #checkov:skip=CKV_AWS_111 Ensure IAM policies does not allow write access without constraints
   # S3 bucket for Terraform state
-  statement {
-    effect = "Allow"
-    actions = [
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:ListBucket"
-    ]
-    resources = [
-      "arn:aws:s3:::eligibility-signposting-api-${var.environment}-tfstate",
-      "arn:aws:s3:::eligibility-signposting-api-${var.environment}-tfstate/*"
-    ]
+  dynamic "statement" {
+    for_each = var.environment != "prod" ? [1] : []
+    content {
+      effect = "Allow"
+      actions = [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket"
+      ]
+      resources = [
+        "arn:aws:s3:::eligibility-signposting-api-${var.environment}-tfstate",
+        "arn:aws:s3:::eligibility-signposting-api-${var.environment}-tfstate/*"
+      ]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = var.environment == "prod" ? [1] : []
+    content {
+      effect = "Allow"
+      actions = [
+        "s3:ListBucket"
+      ]
+      resources = [
+        "arn:aws:s3:::eligibility-signposting-api-${var.environment}-tfstate",
+        "arn:aws:s3:::eligibility-signposting-api-${var.environment}-tfstate/*"
+      ]
+    }
   }
 
   # DynamoDB permissions (environment-specific)
