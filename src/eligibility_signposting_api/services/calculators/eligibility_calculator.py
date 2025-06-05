@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from _operator import attrgetter
-from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
+from collections.abc import Collection, Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from functools import cached_property
 from itertools import groupby
@@ -105,7 +105,7 @@ class EligibilityCalculator:
                 cohort_results: dict[str, CohortResult] = {}
 
                 rules_filter, rules_suppression = self.get_rules_by_type(active_iteration)
-                for cohort in sorted(active_iteration.iteration_cohorts, key=priority_getter):
+                for cohort in sorted(active_iteration.iteration_cohorts, key=attrgetter("priority")):
                     # Check Base Eligibility
                     if cohort.cohort_label in self.person_cohorts or cohort.cohort_label == magic_cohort:
                         is_base_eligible: bool = True
@@ -113,7 +113,6 @@ class EligibilityCalculator:
                             cohort,
                             cohort_results,
                             is_base_eligible=is_base_eligible,
-                            priority_getter=priority_getter,
                             rules_filter=rules_filter,
                         )
 
@@ -122,11 +121,10 @@ class EligibilityCalculator:
                             suppression_reasons, is_actionable = self.evaluate_suppression_rules(
                                 cohort,
                                 is_actionable=is_actionable,
-                                priority_getter=priority_getter,
                                 rules_suppression=rules_suppression,
                             )
                             if cohort.cohort_label is not None:
-                                key = cohort.cohort_label  # if Enum, otherwise just str(cohort.cohort_label)
+                                key = cohort.cohort_label
                                 if is_actionable:
                                     cohort_results[key] = CohortResult(cohort, Status.actionable, [])
                                 else:
@@ -166,9 +164,9 @@ class EligibilityCalculator:
         cohort_results: dict[str, CohortResult],
         *,
         is_base_eligible: bool,
-        priority_getter: Callable,
         rules_filter: Iterable[rules.IterationRule],
     ) -> bool:
+        priority_getter = attrgetter("priority")
         sorted_rules_by_priority = sorted(self.get_exclusion_rules(cohort, rules_filter), key=priority_getter)
 
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
@@ -185,9 +183,9 @@ class EligibilityCalculator:
         cohort: IterationCohort,
         *,
         is_actionable: bool,
-        priority_getter: Callable,
         rules_suppression: Iterable[rules.IterationRule],
     ) -> tuple[list, bool]:
+        priority_getter = attrgetter("priority")
         suppression_reasons = []
         sorted_rules_by_priority = sorted(self.get_exclusion_rules(cohort, rules_suppression), key=priority_getter)
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
