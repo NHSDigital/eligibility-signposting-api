@@ -7,6 +7,7 @@ from hamcrest import (
     assert_that,
     contains_exactly,
     contains_string,
+    equal_to,
     has_entries,
     has_entry,
     has_item,
@@ -64,21 +65,23 @@ def test_not_base_eligible(
             is_json_that(
                 has_entry(
                     "processedSuggestions",
-                    has_item(
-                        has_entries(
-                            condition="RSV",
-                            status="NotEligible",
-                            eligibilityCohorts=[
-                                {
-                                    "cohortCode": "cohort_group1",
-                                    "cohortStatus": "NotEligible",
-                                    "cohortText": "negative_description",
-                                }
-                            ],
-                            actions=[],
-                            suitabilityRules=[],
-                            statusText="Status.not_eligible",
-                        )
+                    equal_to(
+                        [
+                            {
+                                "condition": "RSV",
+                                "status": "NotEligible",
+                                "eligibilityCohorts": [
+                                    {
+                                        "cohortCode": "cohort_group1",
+                                        "cohortStatus": "NotEligible",
+                                        "cohortText": "negative_description",
+                                    }
+                                ],
+                                "actions": [],
+                                "suitabilityRules": [],
+                                "statusText": "Status.not_eligible",
+                            }
+                        ]
                     ),
                 )
             )
@@ -105,21 +108,23 @@ def test_not_eligible_by_rule(
             is_json_that(
                 has_entry(
                     "processedSuggestions",
-                    has_item(
-                        has_entries(
-                            condition="RSV",
-                            status="NotEligible",
-                            eligibilityCohorts=[
-                                {
-                                    "cohortCode": "cohort_group1",
-                                    "cohortStatus": "NotEligible",
-                                    "cohortText": "negative_description",
-                                }
-                            ],
-                            actions=[],
-                            suitabilityRules=[],
-                            statusText="Status.not_eligible",
-                        )
+                    equal_to(
+                        [
+                            {
+                                "condition": "RSV",
+                                "status": "NotEligible",
+                                "eligibilityCohorts": [
+                                    {
+                                        "cohortCode": "cohort_group1",
+                                        "cohortStatus": "NotEligible",
+                                        "cohortText": "negative_description",
+                                    }
+                                ],
+                                "actions": [],
+                                "suitabilityRules": [],
+                                "statusText": "Status.not_eligible",
+                            }
+                        ]
                     ),
                 )
             )
@@ -185,21 +190,23 @@ def test_actionable(client: FlaskClient, persisted_77yo_person: NHSNumber, campa
             is_json_that(
                 has_entry(
                     "processedSuggestions",
-                    has_item(
-                        has_entries(
-                            condition="RSV",
-                            status="Actionable",
-                            eligibilityCohorts=contains_exactly(
-                                has_entries(
-                                    cohortCode="cohort_group1",
-                                    cohortStatus="Actionable",
-                                    cohortText="positive_description",
-                                )
-                            ),
-                            actions=[],
-                            suitabilityRules=[],
-                            statusText="Status.actionable",
-                        )
+                    equal_to(
+                        [
+                            {
+                                "condition": "RSV",
+                                "status": "Actionable",
+                                "eligibilityCohorts": [
+                                    {
+                                        "cohortCode": "cohort_group1",
+                                        "cohortStatus": "Actionable",
+                                        "cohortText": "positive_description",
+                                    }
+                                ],
+                                "actions": [],
+                                "suitabilityRules": [],
+                                "statusText": "Status.actionable",
+                            }
+                        ]
                     ),
                 )
             )
