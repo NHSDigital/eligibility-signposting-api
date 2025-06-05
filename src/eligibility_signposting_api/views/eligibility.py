@@ -12,7 +12,6 @@ from wireup import Injected
 from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.views.response_model import eligibility
-from eligibility_signposting_api.views.response_model.eligibility import EligibilityCohort, SuitabilityRule
 
 STATUS_MAPPING = {
     Status.actionable: eligibility.Status.actionable,
@@ -48,22 +47,21 @@ def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[Eligi
         return make_response(eligibility_response.model_dump(by_alias=True, mode="json"), HTTPStatus.OK)
 
 
-def build_eligibility_response(
-    eligibility_status: EligibilityStatus,
-) -> eligibility.EligibilityResponse:
+def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibility.EligibilityResponse:
     """Return an object representing the API response we are going to send, given an evaluation of the person's
     eligibility."""
 
     return eligibility.EligibilityResponse(  # pyright: ignore[reportCallIssue]
-        response_id=uuid.uuid4(),  # pyright: ignore[reportCallIssue]
-        meta=eligibility.Meta(last_updated=eligibility.LastUpdated(datetime.now(tz=UTC))),  # pyright: ignore[reportCallIssue]
-        processed_suggestions=[  # pyright: ignore[reportCallIssue]
+        responseId=uuid.uuid4(),  # pyright: ignore[reportCallIssue]
+        meta=eligibility.Meta(lastUpdated=eligibility.LastUpdated(datetime.now(tz=UTC))),
+        # pyright: ignore[reportCallIssue]
+        processedSuggestions=[  # pyright: ignore[reportCallIssue]
             eligibility.ProcessedSuggestion(  # pyright: ignore[reportCallIssue]
-                condition_name=eligibility.ConditionName(condition.condition_name),  # pyright: ignore[reportCallIssue]
+                condition=eligibility.ConditionName(condition.condition_name),  # pyright: ignore[reportCallIssue]
                 status=STATUS_MAPPING[condition.status],
-                status_text=eligibility.StatusText(f"{condition.status}"),  # pyright: ignore[reportCallIssue]
-                eligibility_cohorts=build_eligibility_cohorts(condition),  # pyright: ignore[reportCallIssue]
-                suitability_rules=build_suitability_results(condition),  # pyright: ignore[reportCallIssue]
+                statusText=eligibility.StatusText(f"{condition.status}"),  # pyright: ignore[reportCallIssue]
+                eligibilityCohorts=build_eligibility_cohorts(condition),  # pyright: ignore[reportCallIssue]
+                suitabilityRules=build_suitability_results(condition),  # pyright: ignore[reportCallIssue]
                 actions=[],
             )
             for condition in eligibility_status.conditions
@@ -71,12 +69,12 @@ def build_eligibility_response(
     )
 
 
-def build_suitability_results(condition: Condition) -> list[SuitabilityRule]:
-    return [  # pyright: ignore[reportCallIssue]
-        eligibility.SuitabilityRule(  # pyright: ignore[reportCallIssue]
-            type=eligibility.RuleType(reason.rule_type.value),  # pyright: ignore[reportCallIssue]
-            rule_code=eligibility.RuleCode(reason.rule_name),  # pyright: ignore[reportCallIssue]
-            rule_text=eligibility.RuleText(reason.rule_result),  # pyright: ignore[reportCallIssue]
+def build_suitability_results(condition: Condition) -> list[eligibility.SuitabilityRule]:
+    return [
+        eligibility.SuitabilityRule(
+            ruleType=eligibility.RuleType(reason.rule_type.value),
+            ruleCode=eligibility.RuleCode(reason.rule_name),
+            ruleText=eligibility.RuleText(reason.rule_result),
         )
         for cohort_result in condition.cohort_results
         for reason in cohort_result.reasons
@@ -84,7 +82,7 @@ def build_suitability_results(condition: Condition) -> list[SuitabilityRule]:
     ]
 
 
-def build_eligibility_cohorts(condition: Condition) -> list[EligibilityCohort]:
+def build_eligibility_cohorts(condition: Condition) -> list[eligibility.EligibilityCohort]:
     """Group Iteration cohorts and make only one entry per cohort group"""
 
     grouped_cohort_results = defaultdict(list)
@@ -94,13 +92,13 @@ def build_eligibility_cohorts(condition: Condition) -> list[EligibilityCohort]:
 
     return [
         eligibility.EligibilityCohort(
-            cohort_code=cohort_group_code,
-            cohort_text=(
+            cohortCode=cohort_group_code,
+            cohortText=(
                 cohort_group[0].cohort.positive_description
                 if cohort_group[0].status in {Status.actionable, Status.not_actionable}
                 else cohort_group[0].cohort.negative_description
             ),
-            cohort_status=STATUS_MAPPING[cohort_group[0].status],
+            cohortStatus=STATUS_MAPPING[cohort_group[0].status],
         )
         for cohort_group_code, cohort_group in grouped_cohort_results.items()
         if cohort_group
