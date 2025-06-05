@@ -24,11 +24,7 @@ class RuleCalculator:
         reason = eligibility.Reason(
             rule_name=eligibility.RuleName(self.rule.name),
             rule_type=eligibility.RuleType(self.rule.type),
-            rule_result=eligibility.RuleResult(
-                f"Rule {self.rule.name!r} ({self.rule.description!r}) "
-                f"{'' if status.is_exclusion else 'not '}excluding - "
-                f"{self.rule.attribute_name!r} {self.rule.comparator!r} {reason}"
-            ),
+            rule_result=eligibility.RuleResult(self.rule.description),
         )
         return status, reason
 

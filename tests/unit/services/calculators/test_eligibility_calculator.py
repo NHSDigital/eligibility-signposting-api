@@ -862,32 +862,17 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
         (
             rules.RuleStop(True),  # noqa: FBT003
             [
-                RuleResult(
-                    "Rule 'Exclude too young less than 75' ('reason 1') excluding"
-                    " - 'DATE_OF_BIRTH' '-75' was '19980309'"
-                ),
-                RuleResult(
-                    "Rule 'Exclude too young less than 75' ('reason 2') excluding"
-                    " - 'DATE_OF_BIRTH' '-75' was '19980309'"
-                ),
+                RuleResult("reason 1"),
+                RuleResult("reason 2"),
             ],
             "rule_stop is True, last rule should not run",
         ),
         (
             rules.RuleStop(False),  # noqa: FBT003
             [
-                RuleResult(
-                    "Rule 'Exclude too young less than 75' ('reason 1') excluding"
-                    " - 'DATE_OF_BIRTH' '-75' was '19980309'"
-                ),
-                RuleResult(
-                    "Rule 'Exclude too young less than 75' ('reason 2') excluding"
-                    " - 'DATE_OF_BIRTH' '-75' was '19980309'"
-                ),
-                RuleResult(
-                    "Rule 'Exclude too young less than 75' ('reason 3') excluding"
-                    " - 'DATE_OF_BIRTH' '-75' was '19980309'"
-                ),
+                RuleResult("reason 1"),
+                RuleResult("reason 2"),
+                RuleResult("reason 3"),
             ],
             "rule_stop is False, last rule should run",
         ),

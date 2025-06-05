@@ -5,12 +5,9 @@ from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask.testing import FlaskClient
 from hamcrest import (
     assert_that,
-    contains_exactly,
-    contains_string,
     equal_to,
     has_entries,
     has_entry,
-    has_item,
     has_key,
 )
 
@@ -147,27 +144,29 @@ def test_not_actionable(client: FlaskClient, persisted_person: NHSNumber, campai
             is_json_that(
                 has_entry(
                     "processedSuggestions",
-                    has_item(
-                        has_entries(
-                            condition="RSV",
-                            status="NotActionable",
-                            eligibilityCohorts=contains_exactly(
-                                has_entries(
-                                    cohortCode="cohort_group1",
-                                    cohortStatus="NotActionable",
-                                    cohortText="positive_description",
-                                )
-                            ),
-                            actions=[],
-                            suitabilityRules=contains_exactly(
-                                has_entries(
-                                    ruleCode="Exclude too young less than 75",
-                                    ruleText=contains_string("Exclude too young less than 75"),
-                                    ruleType="S",
-                                )
-                            ),
-                            statusText="Status.not_actionable",
-                        )
+                    equal_to(
+                        [
+                            {
+                                "condition": "RSV",
+                                "status": "NotActionable",
+                                "eligibilityCohorts": [
+                                    {
+                                        "cohortCode": "cohort_group1",
+                                        "cohortStatus": "NotActionable",
+                                        "cohortText": "positive_description",
+                                    }
+                                ],
+                                "actions": [],
+                                "suitabilityRules": [
+                                    {
+                                        "ruleCode": "Exclude too young less than 75",
+                                        "ruleText": "Exclude too young less than 75",
+                                        "ruleType": "S",
+                                    }
+                                ],
+                                "statusText": "Status.not_actionable",
+                            }
+                        ]
                     ),
                 )
             )
