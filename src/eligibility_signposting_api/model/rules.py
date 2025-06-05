@@ -100,7 +100,7 @@ class IterationRule(BaseModel):
     description: RuleDescription = Field(..., alias="Description")
     priority: RulePriority = Field(..., alias="Priority")
     attribute_level: RuleAttributeLevel = Field(..., alias="AttributeLevel")
-    attribute_name: RuleAttributeName = Field(..., alias="AttributeName")
+    attribute_name: RuleAttributeName | None = Field(None, alias="AttributeName")
     cohort_label: CohortLabel | None = Field(None, alias="CohortLabel")
     operator: RuleOperator = Field(..., alias="Operator")
     comparator: RuleComparator = Field(..., alias="Comparator")

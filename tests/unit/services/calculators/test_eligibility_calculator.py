@@ -1,4 +1,5 @@
 import datetime
+from typing import Any
 
 import pytest
 from faker import Faker
@@ -737,11 +738,38 @@ def test_status_on_target_based_on_last_successful_date(
     )
 
 
-def test_status_on_cohort_attribute_level(faker: Faker):
+@pytest.mark.parametrize(
+    ("attribute_name", "expected_status", "test_comment"),
+    [
+        (
+            rules.RuleAttributeName("COHORT_LABEL"),
+            Status.not_eligible,
+            "cohort label provided",
+        ),
+        (
+            None,
+            Status.not_eligible,
+            "cohort label is the default attribute name for the cohort attribute level",
+        ),
+        (
+            rules.RuleAttributeName("LOCATION"),
+            Status.actionable,
+            "attribute name that is not cohort label",
+        ),
+    ],
+)
+def test_status_on_cohort_attribute_level(
+    attribute_name: rules.RuleAttributeName, expected_status: Status, test_comment: str, faker: Faker
+):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
 
-    person_row = person_rows_builder(nhs_number, cohorts=["cohort1", "covid_eligibility_complaint_list"])
+    person_row: list[dict[str, Any]] = person_rows_builder(
+        nhs_number, cohorts=["cohort1", "covid_eligibility_complaint_list"]
+    )
+    person_row_with_extra_items_in_cohort_row = [
+        {**r, "LOCATION": "HP1"} for r in person_row if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"
+    ]
 
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
@@ -759,7 +787,7 @@ def test_status_on_cohort_attribute_level(faker: Faker):
                             priority=15,
                             operator=rules.RuleOperator.member_of,
                             attribute_level=rules.RuleAttributeLevel.COHORT,
-                            attribute_name=rules.RuleAttributeName("COHORT_LABEL"),
+                            attribute_name=attribute_name,
                             comparator=rules.RuleComparator("covid_eligibility_complaint_list"),
                         )
                     ],
@@ -768,7 +796,7 @@ def test_status_on_cohort_attribute_level(faker: Faker):
         )
     ]
 
-    calculator = EligibilityCalculator(person_row, campaign_configs)
+    calculator = EligibilityCalculator(person_row_with_extra_items_in_cohort_row, campaign_configs)
 
     # When
     actual = calculator.evaluate_eligibility()
@@ -777,8 +805,9 @@ def test_status_on_cohort_attribute_level(faker: Faker):
     assert_that(
         actual,
         is_eligibility_status().with_conditions(
-            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_eligible))
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status))
         ),
+        test_comment,
     )
 
 
