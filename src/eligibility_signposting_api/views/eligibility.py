@@ -1,5 +1,6 @@
 import logging
 import uuid
+from collections import defaultdict
 from datetime import UTC, datetime
 from http import HTTPStatus
 
@@ -66,18 +67,46 @@ def build_eligibility_response(
                 condition_name=eligibility.ConditionName(condition.condition_name),  # pyright: ignore[reportCallIssue]
                 status=STATUS_MAPPING[condition.status],
                 status_text=eligibility.StatusText(f"{condition.status}"),  # pyright: ignore[reportCallIssue]
-                eligibility_cohorts=[],  # pyright: ignore[reportCallIssue]
-                suitability_rules=[  # pyright: ignore[reportCallIssue]
-                    eligibility.SuitabilityRule(  # pyright: ignore[reportCallIssue]
-                        type=eligibility.RuleType(reason.rule_type.value),  # pyright: ignore[reportCallIssue]
-                        rule_code=eligibility.RuleCode(reason.rule_name),  # pyright: ignore[reportCallIssue]
-                        rule_text=eligibility.RuleText(reason.rule_result),  # pyright: ignore[reportCallIssue]
-                    )
-                    for cohort_result in condition.cohort_results
-                    for reason in cohort_result.reasons
-                ],  # pyright: ignore[reportCallIssue]
+                eligibility_cohorts=build_eligibility_cohorts(condition),  # pyright: ignore[reportCallIssue]
+                suitability_rules=build_suitability_results(condition),  # pyright: ignore[reportCallIssue]
                 actions=[],
             )
             for condition in eligibility_status.conditions
         ],
     )
+
+
+def build_suitability_results(condition):
+    return [  # pyright: ignore[reportCallIssue]
+        eligibility.SuitabilityRule(  # pyright: ignore[reportCallIssue]
+            type=eligibility.RuleType(reason.rule_type.value),  # pyright: ignore[reportCallIssue]
+            rule_code=eligibility.RuleCode(reason.rule_name),  # pyright: ignore[reportCallIssue]
+            rule_text=eligibility.RuleText(reason.rule_result),  # pyright: ignore[reportCallIssue]
+        )
+        for cohort_result in condition.cohort_results
+        for reason in cohort_result.reasons
+        if condition.status == Status.not_actionable
+    ]
+
+
+def build_eligibility_cohorts(condition):
+    """Group Iteration cohorts and make only one entry per cohort group"""
+
+    grouped_cohort_results = defaultdict(list)
+
+    for cohort_result in condition.cohort_results:
+        grouped_cohort_results[cohort_result.cohort.cohort_group].append(cohort_result)
+
+    return [
+        eligibility.EligibilityCohort(
+            cohort_code=cohort_group_code,
+            cohort_text=(
+                cohort_group[0].cohort.positive_description
+                if cohort_group[0].status in {Status.actionable, Status.not_actionable}
+                else cohort_group[0].cohort.negative_description
+            ),
+            cohort_status=STATUS_MAPPING[cohort_group[0].status],
+        )
+        for cohort_group_code, cohort_group in grouped_cohort_results.items()
+        if cohort_group
+    ]

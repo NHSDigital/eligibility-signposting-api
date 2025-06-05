@@ -256,8 +256,10 @@ def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[el
 
 @pytest.fixture
 def persisted_person_pc_sw19(person_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
-    nhs_number = eligibility.NHSNumber(faker.nhs_number())
-    for row in (rows := person_rows_builder(nhs_number, postcode="SW19")):
+    nhs_number = eligibility.NHSNumber(
+        faker.nhs_number(),
+    )
+    for row in (rows := person_rows_builder(nhs_number, postcode="SW19", cohorts=["cohort1"])):
         person_table.put_item(Item=row)
 
     yield nhs_number
@@ -282,9 +284,16 @@ def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[rule
             rule.IterationFactory.build(
                 iteration_rules=[
                     rule.PostcodeSuppressionRuleFactory.build(type=rules.RuleType.filter),
-                    rule.PersonAgeSuppressionRuleFactory.build()
+                    rule.PersonAgeSuppressionRuleFactory.build(),
                 ],
-                iteration_cohorts=[rule.IterationCohortFactory.build(cohort_label="cohort1")],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort1",
+                        cohort_group="cohort_group1",
+                        positive_description="positive_description",
+                        negative_description="negative_description",
+                    )
+                ],
             )
         ],
     )
@@ -294,5 +303,3 @@ def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[rule
     )
     yield campaign
     s3_client.delete_object(Bucket=bucket, Key=f"{campaign.name}.json")
-
-
