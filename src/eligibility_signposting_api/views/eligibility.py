@@ -69,19 +69,6 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibi
     )
 
 
-def build_suitability_results(condition: Condition) -> list[eligibility.SuitabilityRule]:
-    return [
-        eligibility.SuitabilityRule(
-            ruleType=eligibility.RuleType(reason.rule_type.value),
-            ruleCode=eligibility.RuleCode(reason.rule_name),
-            ruleText=eligibility.RuleText(reason.rule_result),
-        )
-        for cohort_result in condition.cohort_results
-        for reason in cohort_result.reasons
-        if condition.status == Status.not_actionable
-    ]
-
-
 def build_eligibility_cohorts(condition: Condition) -> list[eligibility.EligibilityCohort]:
     """Group Iteration cohorts and make only one entry per cohort group"""
 
@@ -100,3 +87,26 @@ def build_eligibility_cohorts(condition: Condition) -> list[eligibility.Eligibil
         for cohort_group_code, cohort_group in grouped_cohort_results.items()
         if cohort_group
     ]
+
+
+def build_suitability_results(condition: Condition) -> list[eligibility.SuitabilityRule]:
+    if not condition.status.not_actionable:
+        return []
+
+    unique_rule_codes = set()
+    suitability_results = []
+
+    for cohort_result in condition.cohort_results:
+        if cohort_result.status.not_actionable:
+            for reason in cohort_result.reasons:
+                if reason.rule_name not in unique_rule_codes:
+                    unique_rule_codes.add(reason.rule_name)
+                    suitability_results.append(
+                        eligibility.SuitabilityRule(
+                            ruleType=eligibility.RuleType(reason.rule_type.value),
+                            ruleCode=eligibility.RuleCode(reason.rule_name),
+                            ruleText=eligibility.RuleText(reason.rule_result),
+                        )
+                    )
+
+    return suitability_results
