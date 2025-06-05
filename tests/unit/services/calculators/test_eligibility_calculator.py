@@ -861,28 +861,33 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
     ("rule_stop", "expected_reason_results", "test_comment"),  # Changed expected_reasons to expected_reason_results
     [
         (
-            True,
+            rules.RuleStop(True),  # noqa: FBT003
             [
                 RuleResult(
-                    "Rule 'Exclude too young less than 75' ('reason 1') excluding - 'DATE_OF_BIRTH' '-75' was '19980309'"
+                    "Rule 'Exclude too young less than 75' ('reason 1') excluding"
+                    " - 'DATE_OF_BIRTH' '-75' was '19980309'"
                 ),
                 RuleResult(
-                    "Rule 'Exclude too young less than 75' ('reason 2') excluding - 'DATE_OF_BIRTH' '-75' was '19980309'"
+                    "Rule 'Exclude too young less than 75' ('reason 2') excluding"
+                    " - 'DATE_OF_BIRTH' '-75' was '19980309'"
                 ),
             ],
             "rule_stop is True, last rule should not run",
         ),
         (
-            False,
+            rules.RuleStop(False),  # noqa: FBT003
             [
                 RuleResult(
-                    "Rule 'Exclude too young less than 75' ('reason 1') excluding - 'DATE_OF_BIRTH' '-75' was '19980309'"
+                    "Rule 'Exclude too young less than 75' ('reason 1') excluding"
+                    " - 'DATE_OF_BIRTH' '-75' was '19980309'"
                 ),
                 RuleResult(
-                    "Rule 'Exclude too young less than 75' ('reason 2') excluding - 'DATE_OF_BIRTH' '-75' was '19980309'"
+                    "Rule 'Exclude too young less than 75' ('reason 2') excluding"
+                    " - 'DATE_OF_BIRTH' '-75' was '19980309'"
                 ),
                 RuleResult(
-                    "Rule 'Exclude too young less than 75' ('reason 3') excluding - 'DATE_OF_BIRTH' '-75' was '19980309'"
+                    "Rule 'Exclude too young less than 75' ('reason 3') excluding"
+                    " - 'DATE_OF_BIRTH' '-75' was '19980309'"
                 ),
             ],
             "rule_stop is False, last rule should run",
@@ -890,11 +895,11 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
     ],
 )
 def test_rules_stop_behavior(
-    rule_stop: bool, expected_reason_results: list[RuleResult], test_comment: str, faker: Faker
+    rule_stop: rules.RuleStop, expected_reason_results: list[RuleResult], test_comment: str, faker: Faker
 ) -> None:
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
-    date_obj = datetime.datetime.strptime("19980309", "%Y%m%d").date()
+    date_obj = datetime.datetime.strptime("19980309", "%Y%m%d").replace(tzinfo=datetime.UTC).date()
     person_rows = person_rows_builder(nhs_number, date_of_birth=(DateOfBirth(date_obj)), cohorts=["cohort1"])
 
     # Build campaign configuration
@@ -938,6 +943,7 @@ def test_rules_stop_behavior(
                 )
             )
         ),
+        test_comment,
     )
 
 

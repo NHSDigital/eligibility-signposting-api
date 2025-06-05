@@ -46,7 +46,9 @@ def test_no_nhs_number_given(client: FlaskClient):
 
 
 def test_not_base_eligible(
-    client: FlaskClient, persisted_person_no_cohorts: NHSNumber, campaign_config: CampaignConfig
+    client: FlaskClient,
+    persisted_person_no_cohorts: NHSNumber,
+    campaign_config: CampaignConfig,  # noqa: ARG001
 ):
     # Given
 
@@ -85,7 +87,9 @@ def test_not_base_eligible(
 
 
 def test_not_eligible_by_rule(
-    client: FlaskClient, persisted_person_pc_sw19: NHSNumber, campaign_config: CampaignConfig
+    client: FlaskClient,
+    persisted_person_pc_sw19: NHSNumber,
+    campaign_config: CampaignConfig,  # noqa: ARG001
 ):
     # Given
 

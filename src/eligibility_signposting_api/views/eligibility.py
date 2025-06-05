@@ -9,9 +9,10 @@ from flask import Blueprint, make_response
 from flask.typing import ResponseReturnValue
 from wireup import Injected
 
-from eligibility_signposting_api.model.eligibility import EligibilityStatus, NHSNumber, Status
+from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.views.response_model import eligibility
+from eligibility_signposting_api.views.response_model.eligibility import EligibilityCohort, SuitabilityRule
 
 STATUS_MAPPING = {
     Status.actionable: eligibility.Status.actionable,
@@ -53,12 +54,6 @@ def build_eligibility_response(
     """Return an object representing the API response we are going to send, given an evaluation of the person's
     eligibility."""
 
-    for condition in eligibility_status.conditions:
-        for cohort_result in condition.cohort_results:
-            for reason in cohort_result.reasons:
-                print(f"Debug: {reason}")
-                print(f"Type: {type(reason)}")
-
     return eligibility.EligibilityResponse(  # pyright: ignore[reportCallIssue]
         response_id=uuid.uuid4(),  # pyright: ignore[reportCallIssue]
         meta=eligibility.Meta(last_updated=eligibility.LastUpdated(datetime.now(tz=UTC))),  # pyright: ignore[reportCallIssue]
@@ -76,7 +71,7 @@ def build_eligibility_response(
     )
 
 
-def build_suitability_results(condition):
+def build_suitability_results(condition: Condition) -> list[SuitabilityRule]:
     return [  # pyright: ignore[reportCallIssue]
         eligibility.SuitabilityRule(  # pyright: ignore[reportCallIssue]
             type=eligibility.RuleType(reason.rule_type.value),  # pyright: ignore[reportCallIssue]
@@ -89,7 +84,7 @@ def build_suitability_results(condition):
     ]
 
 
-def build_eligibility_cohorts(condition):
+def build_eligibility_cohorts(condition: Condition) -> list[EligibilityCohort]:
     """Group Iteration cohorts and make only one entry per cohort group"""
 
     grouped_cohort_results = defaultdict(list)

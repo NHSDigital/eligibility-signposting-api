@@ -69,7 +69,7 @@ class EligibilityCalculator:
         best_cohorts = [result for result in cohort_results.values() if result.status == best_status]
         return best_status, best_cohorts
 
-    def evaluate_eligibility(self) -> eligibility.EligibilityStatus:
+    def evaluate_eligibility(self) -> eligibility.EligibilityStatus:  # noqa: C901,PLR0912
         """Iterates over campaign groups, evaluates eligibility, and returns a consolidated status."""
         priority_getter = attrgetter("priority")
         results: dict[ConditionName, IterationResult] = defaultdict()
