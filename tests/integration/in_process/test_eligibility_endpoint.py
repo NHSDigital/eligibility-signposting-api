@@ -74,8 +74,6 @@ def test_not_base_eligible(
                                         "cohortText": "negative_description",
                                     }
                                 ],
-                                "actions": [],
-                                "suitabilityRules": [],
                                 "statusText": "Status.not_eligible",
                             }
                         ]
@@ -117,8 +115,6 @@ def test_not_eligible_by_rule(
                                         "cohortText": "negative_description",
                                     }
                                 ],
-                                "actions": [],
-                                "suitabilityRules": [],
                                 "statusText": "Status.not_eligible",
                             }
                         ]
@@ -156,7 +152,6 @@ def test_not_actionable(client: FlaskClient, persisted_person: NHSNumber, campai
                                         "cohortText": "positive_description",
                                     }
                                 ],
-                                "actions": [],
                                 "suitabilityRules": [
                                     {
                                         "ruleCode": "Exclude too young less than 75",
@@ -202,7 +197,6 @@ def test_actionable(client: FlaskClient, persisted_77yo_person: NHSNumber, campa
                                     }
                                 ],
                                 "actions": [],
-                                "suitabilityRules": [],
                                 "statusText": "Status.actionable",
                             }
                         ]

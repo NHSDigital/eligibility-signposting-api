@@ -59,8 +59,8 @@ class ProcessedSuggestion(BaseModel):
     status: Status
     status_text: StatusText = Field(..., alias="statusText")
     eligibility_cohorts: list[EligibilityCohort] = Field(..., alias="eligibilityCohorts")
-    suitability_rules: list[SuitabilityRule] = Field(..., alias="suitabilityRules")
-    actions: list[Action]
+    suitability_rules: list[SuitabilityRule] | None = Field(..., alias="suitabilityRules")
+    actions: list[Action] | None
 
     model_config = {"populate_by_name": True}
 

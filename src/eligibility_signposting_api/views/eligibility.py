@@ -44,7 +44,9 @@ def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[Eligi
         return make_response(problem.model_dump(by_alias=True, mode="json"), HTTPStatus.NOT_FOUND)
     else:
         eligibility_response = build_eligibility_response(eligibility_status)
-        return make_response(eligibility_response.model_dump(by_alias=True, mode="json"), HTTPStatus.OK)
+        return make_response(
+            eligibility_response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK
+        )
 
 
 def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibility.EligibilityResponse:
@@ -62,7 +64,7 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibi
                 statusText=eligibility.StatusText(f"{condition.status}"),  # pyright: ignore[reportCallIssue]
                 eligibilityCohorts=build_eligibility_cohorts(condition),  # pyright: ignore[reportCallIssue]
                 suitabilityRules=build_suitability_results(condition),  # pyright: ignore[reportCallIssue]
-                actions=[],
+                actions=[] if condition.status == Status.actionable else None,
             )
             for condition in eligibility_status.conditions
         ],
@@ -89,9 +91,9 @@ def build_eligibility_cohorts(condition: Condition) -> list[eligibility.Eligibil
     ]
 
 
-def build_suitability_results(condition: Condition) -> list[eligibility.SuitabilityRule]:
+def build_suitability_results(condition: Condition) -> list[eligibility.SuitabilityRule] | None:
     if condition.status != Status.not_actionable:
-        return []
+        return None
 
     unique_rule_codes = set()
     suitability_results = []
