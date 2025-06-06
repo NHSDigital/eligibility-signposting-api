@@ -25,3 +25,7 @@ output "logging_policy_attachment" {
 output "iam_role_name" {
   value = aws_iam_role.api_gateway.name
 }
+
+output "kms_key_arn" {
+  value = aws_kms_key.api_gateway.arn
+}

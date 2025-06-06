@@ -23,5 +23,10 @@ resource "aws_dynamodb_table" "dynamodb_table" {
     kms_key_arn = aws_kms_key.dynamodb_cmk.arn
   }
 
+  #checkov:skip=CKV_AWS_28: Point-in-time recovery is enabled only for production environments
+  point_in_time_recovery {
+    enabled = var.environment == "prod"
+  }
+
   tags = var.tags
 }

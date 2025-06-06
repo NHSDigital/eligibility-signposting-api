@@ -1,17 +1,30 @@
 import datetime
+from typing import Any
 
 import pytest
 from faker import Faker
 from freezegun import freeze_time
-from hamcrest import assert_that, contains_exactly, has_item, has_items
+from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_to, has_item, has_items
 
 from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
-from eligibility_signposting_api.model.eligibility import ConditionName, DateOfBirth, NHSNumber, Postcode, Status
+from eligibility_signposting_api.model.eligibility import (
+    ConditionName,
+    DateOfBirth,
+    NHSNumber,
+    Postcode,
+    RuleResult,
+    Status,
+)
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
 from tests.fixtures.builders.model import rule as rule_builder
 from tests.fixtures.builders.repos.person import person_rows_builder
-from tests.fixtures.matchers.eligibility import is_condition, is_eligibility_status
+from tests.fixtures.matchers.eligibility import (
+    is_cohort_result,
+    is_condition,
+    is_eligibility_status,
+    is_reason,
+)
 
 
 def test_not_base_eligible(faker: Faker):
@@ -47,15 +60,16 @@ def test_not_base_eligible(faker: Faker):
 
 
 @pytest.mark.parametrize(
-    ("person_cohorts", "iteration_cohorts", "test_comment"),
+    ("person_cohorts", "iteration_cohorts", "status", "test_comment"),
     [
-        (["cohort1"], ["elid_all_people"], "Only magic cohort present"),
-        (["cohort1"], ["elid_all_people", "cohort1"], "Magic cohort with other cohorts"),
-        ([], ["elid_all_people"], "Only magic cohort present without "),
+        (["cohort1"], ["elid_all_people"], Status.actionable, "Only magic cohort present"),
+        (["cohort1"], ["elid_all_people", "cohort1"], Status.actionable, "Magic cohort with other cohorts"),
+        (["cohort1"], ["cohort2"], Status.not_eligible, "No magic cohort. No matching person cohort"),
+        ([], ["elid_all_people"], Status.actionable, "No person cohorts. Only magic cohort present"),
     ],
 )
 def test_base_eligible_with_when_magic_cohort_is_present(
-    faker: Faker, person_cohorts: list[str], iteration_cohorts: list[str], test_comment: str
+    faker: Faker, person_cohorts: list[str], iteration_cohorts: list[str], status: Status, test_comment: str
 ):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
@@ -85,7 +99,7 @@ def test_base_eligible_with_when_magic_cohort_is_present(
     assert_that(
         actual,
         is_eligibility_status().with_conditions(
-            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable))
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(status))
         ),
         test_comment,
     )
@@ -723,11 +737,38 @@ def test_status_on_target_based_on_last_successful_date(
     )
 
 
-def test_status_on_cohort_attribute_level(faker: Faker):
+@pytest.mark.parametrize(
+    ("attribute_name", "expected_status", "test_comment"),
+    [
+        (
+            rules.RuleAttributeName("COHORT_LABEL"),
+            Status.not_eligible,
+            "cohort label provided",
+        ),
+        (
+            None,
+            Status.not_eligible,
+            "cohort label is the default attribute name for the cohort attribute level",
+        ),
+        (
+            rules.RuleAttributeName("LOCATION"),
+            Status.actionable,
+            "attribute name that is not cohort label",
+        ),
+    ],
+)
+def test_status_on_cohort_attribute_level(
+    attribute_name: rules.RuleAttributeName, expected_status: Status, test_comment: str, faker: Faker
+):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
 
-    person_row = person_rows_builder(nhs_number, cohorts=["cohort1", "covid_eligibility_complaint_list"])
+    person_row: list[dict[str, Any]] = person_rows_builder(
+        nhs_number, cohorts=["cohort1", "covid_eligibility_complaint_list"]
+    )
+    person_row_with_extra_items_in_cohort_row = [
+        {**r, "LOCATION": "HP1"} for r in person_row if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"
+    ]
 
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
@@ -745,7 +786,7 @@ def test_status_on_cohort_attribute_level(faker: Faker):
                             priority=15,
                             operator=rules.RuleOperator.member_of,
                             attribute_level=rules.RuleAttributeLevel.COHORT,
-                            attribute_name=rules.RuleAttributeName("COHORT_LABEL"),
+                            attribute_name=attribute_name,
                             comparator=rules.RuleComparator("covid_eligibility_complaint_list"),
                         )
                     ],
@@ -754,7 +795,7 @@ def test_status_on_cohort_attribute_level(faker: Faker):
         )
     ]
 
-    calculator = EligibilityCalculator(person_row, campaign_configs)
+    calculator = EligibilityCalculator(person_row_with_extra_items_in_cohort_row, campaign_configs)
 
     # When
     actual = calculator.evaluate_eligibility()
@@ -763,16 +804,18 @@ def test_status_on_cohort_attribute_level(faker: Faker):
     assert_that(
         actual,
         is_eligibility_status().with_conditions(
-            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_eligible))
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status))
         ),
+        test_comment,
     )
 
 
 @pytest.mark.parametrize(
     ("person_cohorts", "cohort_label", "expected_status", "test_comment"),
     [
-        (["cohort1", "cohort2"], "cohort1", Status.not_actionable, "matches the cohort label"),
+        (["cohort1", "cohort2"], "cohort1", Status.actionable, "cohort1 is not actionable, cohort 2 is actionable"),
         (["cohort2", "cohort3"], "cohort1", Status.actionable, "doesn't match the cohort label"),
+        (["cohort1"], "cohort1", Status.not_actionable, "cohort1 is not actionable"),
     ],
 )
 def test_status_if_iteration_rules_contains_cohort_label_field(
@@ -814,17 +857,34 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
 
 
 @pytest.mark.parametrize(
-    ("rule_stop", "expected_status", "test_comment"),
+    ("rule_stop", "expected_reason_results", "test_comment"),  # Changed expected_reasons to expected_reason_results
     [
-        (True, Status.not_actionable, "Stops at the first rule"),
-        (False, Status.not_eligible, "Both the rules are executed"),
+        (
+            rules.RuleStop(True),  # noqa: FBT003
+            [
+                RuleResult("reason 1"),
+                RuleResult("reason 2"),
+            ],
+            "rule_stop is True, last rule should not run",
+        ),
+        (
+            rules.RuleStop(False),  # noqa: FBT003
+            [
+                RuleResult("reason 1"),
+                RuleResult("reason 2"),
+                RuleResult("reason 3"),
+            ],
+            "rule_stop is False, last rule should run",
+        ),
     ],
 )
-def test_rules_stop_behavior(rule_stop: bool, expected_status: Status, test_comment: str, faker: Faker) -> None:  # noqa: FBT001
+def test_rules_stop_behavior(
+    rule_stop: rules.RuleStop, expected_reason_results: list[RuleResult], test_comment: str, faker: Faker
+) -> None:
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
-    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=74))
-    person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
+    date_obj = datetime.datetime.strptime("19980309", "%Y%m%d").replace(tzinfo=datetime.UTC).date()
+    person_rows = person_rows_builder(nhs_number, date_of_birth=(DateOfBirth(date_obj)), cohorts=["cohort1"])
 
     # Build campaign configuration
     campaign_config = rule_builder.CampaignConfigFactory.build(
@@ -832,9 +892,11 @@ def test_rules_stop_behavior(rule_stop: bool, expected_status: Status, test_comm
         iterations=[
             rule_builder.IterationFactory.build(
                 iteration_rules=[
-                    rule_builder.PersonAgeSuppressionRuleFactory.build(priority=10, rule_stop=rule_stop),
-                    rule_builder.PersonAgeSuppressionRuleFactory.build(priority=10),
-                    rule_builder.PersonAgeSuppressionRuleFactory.build(type=rules.RuleType.filter, priority=15),
+                    rule_builder.PersonAgeSuppressionRuleFactory.build(
+                        priority=10, description="reason 1", rule_stop=rule_stop
+                    ),
+                    rule_builder.PersonAgeSuppressionRuleFactory.build(priority=10, description="reason 2"),
+                    rule_builder.PersonAgeSuppressionRuleFactory.build(priority=15, description="reason 3"),
                 ],
                 iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
             )
@@ -850,7 +912,111 @@ def test_rules_stop_behavior(rule_stop: bool, expected_status: Status, test_comm
     assert_that(
         actual,
         is_eligibility_status().with_conditions(
-            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status))
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.not_actionable))
+                .and_cohort_results(
+                    has_items(
+                        is_cohort_result().with_reasons(
+                            contains_inanyorder(
+                                *[is_reason().with_rule_result(equal_to(result)) for result in expected_reason_results]
+                            )
+                        )
+                    )
+                )
+            )
         ),
         test_comment,
+    )
+
+
+@pytest.mark.parametrize(
+    ("person_cohorts", "iteration_cohorts", "expected_status", "expected_cohorts"),
+    [
+        (
+            ["covid_cohort", "flu_cohort"],
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+            Status.not_eligible,
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+        ),
+        (
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+            Status.actionable,
+            ["rsv_clinical_cohort"],
+        ),
+        (
+            ["covid_cohort", "rsv_75_rolling"],
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+            Status.not_actionable,
+            ["rsv_75_rolling"],
+        ),
+        (
+            ["covid_cohort", "rsv_clinical_cohort"],
+            ["rsv_clinical_cohort", "rsv_75_rolling"],
+            Status.actionable,
+            ["rsv_clinical_cohort"],
+        ),
+        (
+            ["rsv_75to79_2024", "rsv_75_rolling"],
+            ["rsv_75to79_2024", "rsv_75_rolling"],
+            Status.not_actionable,
+            ["rsv_75_rolling", "rsv_75to79_2024"],
+        ),
+    ],
+)
+def test_eligibility_results_when_multiple_cohorts(
+    person_cohorts: list[str],
+    iteration_cohorts: list[str],
+    expected_status: Status,
+    expected_cohorts: list[str],
+    faker: Faker,
+):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    dob_person_less_than_75 = DateOfBirth(faker.date_of_birth(minimum_age=66, maximum_age=74))
+
+    person_rows = person_rows_builder(nhs_number, date_of_birth=dob_person_less_than_75, cohorts=person_cohorts)
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(cohort_group=None, cohort_label=cohorts)
+                        for cohorts in iteration_cohorts
+                    ],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(cohort_label="rsv_75_rolling"),
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(cohort_label="rsv_75to79_2024"),
+                    ],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(expected_status))
+                .and_cohort_results(
+                    contains_inanyorder(
+                        *[
+                            is_cohort_result().with_cohort_code(equal_to(cohort_label))
+                            for cohort_label in expected_cohorts
+                        ]
+                    )
+                )
+            )
+        ),
     )

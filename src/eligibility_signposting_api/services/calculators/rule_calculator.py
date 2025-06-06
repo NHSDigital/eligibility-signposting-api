@@ -24,11 +24,7 @@ class RuleCalculator:
         reason = eligibility.Reason(
             rule_name=eligibility.RuleName(self.rule.name),
             rule_type=eligibility.RuleType(self.rule.type),
-            rule_result=eligibility.RuleResult(
-                f"Rule {self.rule.name!r} ({self.rule.description!r}) "
-                f"{'' if status.is_exclusion else 'not '}excluding - "
-                f"{self.rule.attribute_name!r} {self.rule.comparator!r} {reason}"
-            ),
+            rule_result=eligibility.RuleResult(self.rule.description),
         )
         return status, reason
 
@@ -39,24 +35,30 @@ class RuleCalculator:
                 person: Mapping[str, str | None] | None = next(
                     (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == "PERSON"), None
                 )
-                attribute_value = person.get(self.rule.attribute_name) if person else None
+                attribute_value = person.get(str(self.rule.attribute_name)) if person else None
             case rules.RuleAttributeLevel.COHORT:
                 cohorts: Mapping[str, str | None] | None = next(
                     (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"), None
                 )
-                if self.rule.attribute_name == "COHORT_LABEL":
-                    cohort_map = self.get_value(cohorts, "COHORT_MAP")
+                if cohorts:
+                    attr_name = (
+                        "COHORT_MAP"
+                        if not self.rule.attribute_name or self.rule.attribute_name == "COHORT_LABEL"
+                        else self.rule.attribute_name
+                    )
+                    cohort_map = self.get_value(cohorts, attr_name)
                     cohorts_dict = self.get_value(cohort_map, "cohorts")
                     m_dict = self.get_value(cohorts_dict, "M")
                     person_cohorts: set[str] = set(m_dict.keys())
                     attribute_value = ",".join(person_cohorts)
                 else:
-                    attribute_value = cohorts.get(self.rule.attribute_name) if cohorts else None
+                    attribute_value = None
+
             case rules.RuleAttributeLevel.TARGET:
                 target: Mapping[str, str | None] | None = next(
                     (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == self.rule.attribute_target), None
                 )
-                attribute_value = target.get(self.rule.attribute_name) if target else None
+                attribute_value = target.get(str(self.rule.attribute_name)) if target else None
             case _:  # pragma: no cover
                 msg = f"{self.rule.attribute_level} not implemented"
                 raise NotImplementedError(msg)

@@ -97,9 +97,14 @@ jobs:
         uses: bridgecrewio/checkov-action@v12
         with:
           directory: infrastructure/
-          soft_fail: true
+          soft_fail: false
           output_format: sarif
           output_file_path: checkov-report.sarif
+      - name: Upload Checkov results to GitHub Security tab
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkov_results
+          path: checkov-report.sarif
   count-lines-of-code:
     name: "Count lines of code"
     runs-on: ubuntu-latest

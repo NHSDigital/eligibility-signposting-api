@@ -16,11 +16,14 @@ def future_date(days_ahead: int = 365) -> date:
     return datetime.now(tz=UTC).date() + timedelta(days=randint(1, days_ahead))
 
 
-class IterationCohortFactory(ModelFactory[rules.IterationCohort]): ...
+class IterationCohortFactory(ModelFactory[rules.IterationCohort]):
+    cohort_group = None
+    priority = rules.RulePriority(0)
 
 
 class IterationRuleFactory(ModelFactory[rules.IterationRule]):
     attribute_target = None
+    attribute_name = None
     cohort_label = None
     rule_stop = False
 

@@ -241,6 +241,33 @@ def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibil
         person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
 
 
+@pytest.fixture
+def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
+    nhs_number = eligibility.NHSNumber(faker.nhs_number())
+
+    for row in (rows := person_rows_builder(nhs_number)):
+        person_table.put_item(Item=row)
+
+    yield nhs_number
+
+    for row in rows:
+        person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
+
+
+@pytest.fixture
+def persisted_person_pc_sw19(person_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
+    nhs_number = eligibility.NHSNumber(
+        faker.nhs_number(),
+    )
+    for row in (rows := person_rows_builder(nhs_number, postcode="SW19", cohorts=["cohort1"])):
+        person_table.put_item(Item=row)
+
+    yield nhs_number
+
+    for row in rows:
+        person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
+
+
 @pytest.fixture(scope="session")
 def bucket(s3_client: BaseClient) -> Generator[BucketName]:
     bucket_name = BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket"))
@@ -255,8 +282,18 @@ def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[rule
         target="RSV",
         iterations=[
             rule.IterationFactory.build(
-                iteration_rules=[rule.PersonAgeSuppressionRuleFactory.build()],
-                iteration_cohorts=[rule.IterationCohortFactory.build(cohort_label="cohort1")],
+                iteration_rules=[
+                    rule.PostcodeSuppressionRuleFactory.build(type=rules.RuleType.filter),
+                    rule.PersonAgeSuppressionRuleFactory.build(),
+                ],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort1",
+                        cohort_group="cohort_group1",
+                        positive_description="positive_description",
+                        negative_description="negative_description",
+                    )
+                ],
             )
         ],
     )

@@ -67,7 +67,21 @@ class Reason:
 class Condition:
     condition_name: ConditionName
     status: Status
+    cohort_results: list[CohortResult]
+
+
+@dataclass
+class CohortResult:
+    cohort_code: str
+    status: Status
     reasons: list[Reason]
+    description: str
+
+
+@dataclass
+class IterationResult:
+    status: Status
+    cohort_results: list[CohortResult]
 
 
 @dataclass

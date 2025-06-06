@@ -1,6 +1,8 @@
 # s3
 # Define bucket
 resource "aws_s3_bucket" "storage_bucket" {
+  #checkov:skip=CKV_AWS_144: We don't want to replicate outside our region
+  #checkov:skip=CKV2_AWS_62: We won't enable event notifications for this bucket, yet
   bucket = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.project_name}-${var.environment}-${var.bucket_name}"
 }
 
@@ -63,6 +65,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "storage_bucket" {
 
 #same again for logging buckets
 resource "aws_s3_bucket" "storage_bucket_access_logs" {
+  #checkov:skip=CKV_AWS_144: We don't want to replicate outside our region
+  #checkov:skip=CKV2_AWS_62: We won't enable event notifications for this bucket, yet
+  #checkov:skip=CKV_AWS_21: Versioning not needed given short lifecycle of logs
   bucket = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.project_name}-${var.environment}-${var.bucket_name}-access-logs"
 }
 
@@ -77,7 +82,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "storage_bucket_ac
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm = "aws:kms"
+      kms_master_key_id = aws_kms_key.storage_bucket_cmk.arn
     }
   }
 }
@@ -99,6 +105,17 @@ resource "aws_s3_bucket_lifecycle_configuration" "storage_bucket_access_logs_obj
       noncurrent_days = var.log_retention_in_days
     }
   }
+  rule {
+    id     = "StorageBucketLogsMultipartUploadExpiration"
+    status = "Enabled"
+
+    filter {
+      prefix = ""
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "storage_bucket_access_logs_public_access_block" {
@@ -109,5 +126,3 @@ resource "aws_s3_bucket_public_access_block" "storage_bucket_access_logs_public_
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
-
-

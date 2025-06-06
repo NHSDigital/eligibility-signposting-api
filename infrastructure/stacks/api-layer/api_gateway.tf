@@ -44,6 +44,8 @@ resource "aws_api_gateway_deployment" "eligibility_signposting_api" {
 }
 
 resource "aws_api_gateway_stage" "eligibility-signposting-api" {
+  #checkov:skip=CKV2_AWS_51: mTLS is enforced at the custom domain, not at the stage level
+  #checkov:skip=CKV_AWS_120: We're not enabling caching for this API Gateway, yet
   deployment_id = aws_api_gateway_deployment.eligibility_signposting_api.id
   rest_api_id   = module.eligibility_signposting_api_gateway.rest_api_id
   stage_name    = "${local.workspace}-eligibility-signposting-api-live"
@@ -61,6 +63,7 @@ resource "aws_api_gateway_stage" "eligibility-signposting-api" {
 }
 
 resource "aws_api_gateway_method_settings" "check_eligibility" {
+  #checkov:skip=CKV_AWS_225: We're not enabling caching for this API Gateway, yet
   rest_api_id = module.eligibility_signposting_api_gateway.rest_api_id
   stage_name  = aws_api_gateway_stage.eligibility-signposting-api.stage_name
   method_path = "*/*"

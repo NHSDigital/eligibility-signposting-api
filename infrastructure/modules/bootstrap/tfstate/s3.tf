@@ -1,5 +1,7 @@
 # Main state bucket
 resource "aws_s3_bucket" "tfstate_bucket" {
+  #checkov:skip=CKV_AWS_144: We don't want to replicate outside our region
+  #checkov:skip=CKV2_AWS_62: We won't enable event notifications for this bucket, yet
   bucket = "${var.project_name}-${var.environment}-tfstate"
   tags = {
     Stack = "Bootstrap"
@@ -95,6 +97,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "tfstate_bucket" {
 # Logging
 
 resource "aws_s3_bucket" "tfstate_s3_access_logs" {
+  #checkov:skip=CKV_AWS_144: We don't want to replicate outside our region
+  #checkov:skip=CKV2_AWS_62: We won't enable event notifications for this bucket, yet
+  #checkov:skip=CKV_AWS_21: Versioning not needed given short lifecycle of logs
   bucket = "${var.project_name}-${var.environment}-tfstate-access-logs"
 }
 
@@ -109,7 +114,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate_s3_access
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.terraform_state_bucket_cmk.arn
     }
   }
 }
@@ -129,6 +135,16 @@ resource "aws_s3_bucket_lifecycle_configuration" "tfstate_s3_access_logs_object_
 
     noncurrent_version_expiration {
       noncurrent_days = var.log_retention_in_days
+    }
+  }
+  rule {
+    id     = "StateBucketLogsMultipartUploadExpiration"
+    status = "Enabled"
+    filter {
+      prefix = ""
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
     }
   }
 }
