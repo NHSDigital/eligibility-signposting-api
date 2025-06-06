@@ -1,0 +1,56 @@
+{
+  "CampaignConfig": {
+    "ID": "id_1",
+    "Version": 1,
+    "Name": "Test Config",
+    "Type": "V",
+    "Target": "COVID",
+    "Manager": "person@test.com",
+    "Approver": "person@test.com",
+    "Reviewer": "person@test.com",
+    "IterationFrequency": "X",
+    "IterationType": "M",
+    "IterationTime": "07:00:00",
+    "DefaultCommsRouting": "Default_Comms_1",
+    "Iterations": [
+      {
+        "ID": "id_1",
+        "DefaultCommsRouting": "Default_Comms_1",
+        "IterationCohorts": [
+          {
+            "CohortLabel": "cohort_1",
+            "Priority": 10
+          },
+          {
+            "CohortLabel": "cohort_2",
+            "Priority": 20
+          }
+        ],
+        "IterationRules": [
+          {
+            "Type": "F",
+            "Name": "Test Rule",
+            "Description": "Test Rule Desc",
+            "Priority": 20,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": ">",
+            "Comparator": "19000101"
+          }
+        ],
+        "Version": 1,
+        "Name": "Test Config",
+        "Type": "M",
+        "IterationDate": "20250101",
+        "IterationNumber": 1,
+        "CommsType": "R",
+        "ApprovalMinimum": 1,
+        "ApprovalMaximum": 5000000
+      }
+    ],
+    "StartDate": "20250101",
+    "EndDate": "20250101",
+    "ApprovalMinimum": 1,
+    "ApprovalMaximum": 5000000
+  }
+}
