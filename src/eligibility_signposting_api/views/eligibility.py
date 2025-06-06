@@ -90,14 +90,14 @@ def build_eligibility_cohorts(condition: Condition) -> list[eligibility.Eligibil
 
 
 def build_suitability_results(condition: Condition) -> list[eligibility.SuitabilityRule]:
-    if not condition.status.not_actionable:
+    if condition.status != Status.not_actionable:
         return []
 
     unique_rule_codes = set()
     suitability_results = []
 
     for cohort_result in condition.cohort_results:
-        if cohort_result.status.not_actionable:
+        if cohort_result.status == Status.not_actionable:
             for reason in cohort_result.reasons:
                 if reason.rule_name not in unique_rule_codes:
                     unique_rule_codes.add(reason.rule_name)
