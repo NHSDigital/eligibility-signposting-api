@@ -35,6 +35,9 @@ python-json-logger = "^3.3.0"
 fhir-resources = "^8.0.0"
 python-dateutil = "^2.9.0"
 pyhamcrest = "^2.1.0"
+requests = "^2.31.0"
+jsonschema = "^4.24.0"
+behave = "^1.2.6"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.11.0"

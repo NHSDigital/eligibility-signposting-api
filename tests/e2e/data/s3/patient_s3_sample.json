@@ -1,0 +1,59 @@
+{
+  "PATIENT": {
+    "NHS_NUMBER": "9876543210",
+    "SCENARIO": "SCN005",
+    "PERSON_ATTRIBUTES": {
+      "DATE_OF_BIRTH": "19880615",
+      "GENDER": "1",
+      "POSTCODE": "M1 1AA",
+      "POSTCODE_SECTOR": "M1",
+      "POSTCODE_OUTCODE": "1AA",
+      "MSOA": "E05000003",
+      "LSOA": "E01000003",
+      "GP_PRACTICE_CODE": "C98765",
+      "PCN": "PCN003",
+      "ICB": "ICB002",
+      "COMMISSIONING_REGION": "RegionZ",
+      "13Q_FLAG": "Y",
+      "CARE_HOME_FLAG": "N",
+      "DE_FLAG": "N"
+    },
+    "TARGET_CONDITIONS": {
+      "COVID": {
+        "VALID_DOSES_COUNT": "2",
+        "INVALID_DOSES_COUNT": "0",
+        "LAST_SUCCESSFUL_DATE": "20241201",
+        "LAST_VALID_DOSE_DATE": "20241201",
+        "BOOKED_APPOINTMENT_DATE": "20250110",
+        "BOOKED_APPOINTMENT_PROVIDER": "Local Clinic",
+        "LAST_INVITE_DATE": "20241115",
+        "LAST_INVITE_STATUS": "Accepted",
+        "OPTOUT": "N"
+      },
+      "FLU": {
+        "VALID_DOSES_COUNT": "1",
+        "INVALID_DOSES_COUNT": "0",
+        "LAST_SUCCESSFUL_DATE": "20241020",
+        "LAST_VALID_DOSE_DATE": "20241020",
+        "LAST_INVITE_DATE": "20240901",
+        "LAST_INVITE_STATUS": "Delivered",
+        "OPTOUT": "N"
+      },
+      "RSV": {
+        "LAST_SUCCESSFUL_DATE": "20241105",
+        "LAST_VALID_DOSE_DATE": "20241105",
+        "OPTOUT": "N"
+      }
+    },
+    "COHORT_MEMBERSHIP": [
+      {
+        "cohort_label": "Trial_Group_A",
+        "date_joined": "20250210"
+      },
+      {
+        "cohort_label": "Manchester_Residents_2024",
+        "date_joined": "20240701"
+      }
+    ]
+  }
+}
