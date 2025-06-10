@@ -86,7 +86,7 @@ class Rsv75to79CohortFactory(IterationCohortFactory):
     cohort_group = rules.CohortGroup("rsv_age_range")
     positive_description = rules.Description("rsv_age_range positive description")
     negative_description = rules.Description("rsv_age_range negative description")
-    priority = 1
+    priority = 2
 
 
 class RsvPretendClinicalCohortFactory(IterationCohortFactory):
@@ -94,7 +94,7 @@ class RsvPretendClinicalCohortFactory(IterationCohortFactory):
     cohort_group = rules.CohortGroup("rsv_clinical_cohort")
     positive_description = rules.Description("rsv_clinical_cohort positive description")
     negative_description = rules.Description("rsv_clinical_cohort negative description")
-    priority = 1
+    priority = 3
 
 
 # Iteration rule factories
