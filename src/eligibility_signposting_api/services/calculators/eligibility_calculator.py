@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from _operator import attrgetter
+from collections import defaultdict
 from collections.abc import Collection, Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from itertools import groupby
@@ -130,15 +131,34 @@ class EligibilityCalculator:
             condition_results[condition_name] = best_candidate
 
         # Consolidate all the results and return
-        final_result = [
-            Condition(
-                condition_name=condition_name,
-                status=active_iteration_result.status,
-                cohort_results=active_iteration_result.cohort_results,
-            )
-            for condition_name, active_iteration_result in condition_results.items()
-        ]
+        final_result = self.build_condition_results(condition_results)
         return eligibility.EligibilityStatus(conditions=final_result)
+
+    @staticmethod
+    def build_condition_results(condition_results: dict[ConditionName, IterationResult]) -> list[Condition]:
+        conditions: list[Condition] = []
+        # iterate over conditions
+        for condition_name, active_iteration_result in condition_results.items():
+            grouped_cohort_results = defaultdict(list)
+            # iterate over cohorts and group them by status and cohort_group
+            for cohort_result in active_iteration_result.cohort_results:
+                if active_iteration_result.status == cohort_result.status:
+                    grouped_cohort_results[cohort_result.cohort_code].append(cohort_result)
+
+            # deduplicate grouped cohort results by cohort_code
+            deduplicated_cohort_results = {
+                cohort_code: results[0] for cohort_code, results in grouped_cohort_results.items() if results
+            }
+
+            # return condition with cohort results
+            conditions.append(
+                Condition(
+                    condition_name=condition_name,
+                    status=active_iteration_result.status,
+                    cohort_results=list(deduplicated_cohort_results.values()),
+                )
+            )
+        return conditions
 
     def is_eligible_by_filter_rules(
         self,

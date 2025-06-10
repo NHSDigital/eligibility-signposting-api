@@ -72,6 +72,32 @@ class CampaignConfigFactory(RawCampaignConfigFactory):
             previous = current
 
 
+# Iteration cohort factories
+class Rsv75RollingCohortFactory(IterationCohortFactory):
+    cohort_label = rules.CohortLabel("rsv_75_rolling")
+    cohort_group = rules.CohortGroup("rsv_age_range")
+    positive_description = rules.Description("rsv_age_range positive description")
+    negative_description = rules.Description("rsv_age_range negative description")
+    priority = 1
+
+
+class Rsv75to79CohortFactory(IterationCohortFactory):
+    cohort_label = rules.CohortLabel("rsv_75to79_2024")
+    cohort_group = rules.CohortGroup("rsv_age_range")
+    positive_description = rules.Description("rsv_age_range positive description")
+    negative_description = rules.Description("rsv_age_range negative description")
+    priority = 1
+
+
+class RsvPretendClinicalCohortFactory(IterationCohortFactory):
+    cohort_label = rules.CohortLabel("rsv_pretend_clinical_cohort")
+    cohort_group = rules.CohortGroup("rsv_clinical_cohort")
+    positive_description = rules.Description("rsv_clinical_cohort positive description")
+    negative_description = rules.Description("rsv_clinical_cohort negative description")
+    priority = 1
+
+
+# Iteration rule factories
 class PersonAgeSuppressionRuleFactory(IterationRuleFactory):
     type = rules.RuleType.suppression
     name = rules.RuleName("Exclude too young less than 75")
