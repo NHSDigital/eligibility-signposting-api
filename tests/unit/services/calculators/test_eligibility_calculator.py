@@ -631,7 +631,7 @@ def test_base_eligible_and_icb_example(
             target="RSV",
             iterations=[
                 rule_builder.IterationFactory.build(
-                    iteration_rules=[rule_builder.ICBSuppressionRuleFactory.build(type=rule_type)],
+                    iteration_rules=[rule_builder.ICBFilterRuleFactory.build(type=rule_type)],
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                 )
             ],
@@ -1295,6 +1295,105 @@ def test_grouped_description_if_the_cohorts_in_group_have_different_descriptions
                 .and_cohort_results(
                     contains_exactly(
                         is_cohort_result().with_cohort_code("rsv_age_range").with_description(expected_description)
+                    )
+                )
+            )
+        ),
+        test_comment,
+    )
+
+
+@pytest.mark.parametrize(
+    ("person_rows", "expected_status", "expected_description", "expected_cohort_code", "test_comment"),
+    [
+        (
+            person_rows_builder(nhs_number="123", cohorts=[], postcode="AC01", de=True, icb="QE1"),
+            Status.not_eligible,
+            "rsv_age_range negative description",
+            "rsv_age_range",
+            "all the cohorts are not-eligible, so the result will not include magic cohort, but all other cohorts",
+        ),
+        (
+            person_rows_builder(nhs_number="123", cohorts=[], postcode="SW19", de=False, icb="QE1"),
+            Status.not_actionable,
+            "rsv_age_range positive description",
+            "rsv_age_range",
+            "all the cohorts are not-actionable, so the result will not include magic cohort, but all other cohorts",
+        ),
+        (
+            person_rows_builder(nhs_number="123", cohorts=[], postcode="AC01", de=False, icb="QE1"),
+            Status.actionable,
+            "rsv_age_range positive description",
+            "rsv_age_range",
+            "all the cohorts are actionable, so the result will not include magic cohort, but all other cohorts",
+        ),
+        (
+            person_rows_builder(nhs_number="123", cohorts=[], postcode="AC01", de=False, icb="NOT_QE1"),
+            Status.actionable,
+            "",
+            "",
+            "magic_cohort is actionable, but not other, so removed cohort membership info from result",
+        ),
+        (
+            person_rows_builder(nhs_number="123", cohorts=[], postcode="SW19", de=False, icb="NOT_QE1"),
+            Status.not_actionable,
+            "",
+            "",
+            "magic_cohort is not-actionable,but others are not eligible,so removed cohort membership info from result",
+        ),
+    ],
+)
+def test_grouped_description_if_magic_cohort_has_same_status_as_other_cohorts(
+    person_rows: list[dict[str, Any]],
+    expected_status: str,
+    expected_description: str,
+    expected_cohort_code: str,
+    test_comment: str,
+):
+    # Given
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.MagicCohortFactory.build(),
+                        rule_builder.Rsv75RollingCohortFactory.build(),
+                    ],
+                    iteration_rules=[
+                        # common rules
+                        rule_builder.DetainedEstateSuppressionRuleFactory.build(type=rules.RuleType.filter),
+                        rule_builder.PostcodeSuppressionRuleFactory.build(
+                            comparator=rules.RuleComparator("SW19"),
+                        ),
+                        # rules for specific cohorts
+                        rule_builder.ICBFilterRuleFactory.build(
+                            cohort_label=rules.CohortLabel("rsv_75_rolling"),
+                        ),
+                    ],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_cohort_results(
+                    contains_exactly(
+                        is_cohort_result()
+                        .with_status(expected_status)
+                        .and_cohort_code(expected_cohort_code)
+                        .and_description(expected_description)
                     )
                 )
             )

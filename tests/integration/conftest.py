@@ -282,7 +282,7 @@ def bucket(s3_client: BaseClient) -> Generator[BucketName]:
     s3_client.delete_bucket(Bucket=bucket_name)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="class")
 def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[rules.CampaignConfig]:
     campaign: rules.CampaignConfig = rule.CampaignConfigFactory.build(
         target="RSV",
@@ -300,6 +300,28 @@ def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[rule
                         negative_description="negative_description",
                     )
                 ],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture(scope="class")
+def campaign_config_with_magic_cohort(s3_client: BaseClient, bucket: BucketName) -> Generator[rules.CampaignConfig]:
+    campaign: rules.CampaignConfig = rule.CampaignConfigFactory.build(
+        target="COVID",
+        iterations=[
+            rule.IterationFactory.build(
+                iteration_rules=[
+                    rule.PostcodeSuppressionRuleFactory.build(type=rules.RuleType.filter),
+                    rule.PersonAgeSuppressionRuleFactory.build(),
+                ],
+                iteration_cohorts=[rule.IterationCohortFactory.build(cohort_label="elid_all_people")],
             )
         ],
     )

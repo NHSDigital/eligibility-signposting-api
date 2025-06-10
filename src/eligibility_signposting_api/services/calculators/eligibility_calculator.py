@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 from itertools import groupby
 from typing import TYPE_CHECKING, Any
 
+from eligibility_signposting_api.config.contants import MAGIC_COHORT_LABEL
+
 if TYPE_CHECKING:
     from eligibility_signposting_api.model.rules import Iteration, IterationCohort
 
@@ -20,10 +22,11 @@ from eligibility_signposting_api.model.eligibility import (
     IterationResult,
     Status,
 )
-from eligibility_signposting_api.services.calculators.rule_calculator import RuleCalculator
+from eligibility_signposting_api.services.calculators.rule_calculator import (
+    RuleCalculator,
+)
 
 Row = Collection[Mapping[str, Any]]
-magic_cohort = "elid_all_people"
 
 
 @service
@@ -50,23 +53,48 @@ class EligibilityCalculator:
     ) -> Iterator[tuple[eligibility.ConditionName, list[rules.CampaignConfig]]]:
         """Generator function to iterate over campaign groups by condition name."""
         for condition_name, campaign_group in groupby(
-            sorted(self.active_campaigns, key=attrgetter("target")), key=attrgetter("target")
+            sorted(self.active_campaigns, key=attrgetter("target")),
+            key=attrgetter("target"),
         ):
             yield condition_name, list(campaign_group)
 
     @property
     def person_cohorts(self) -> set[str]:
         cohorts_row: Mapping[str, dict[str, dict[str, dict[str, Any]]]] = next(
-            (row for row in self.person_data if row.get("ATTRIBUTE_TYPE") == "COHORTS"), {}
+            (row for row in self.person_data if row.get("ATTRIBUTE_TYPE") == "COHORTS"),
+            {},
         )
         return set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
 
     @staticmethod
-    def get_best_cohort(cohort_results: dict[str, CohortResult]) -> tuple[Status, list[CohortResult]]:
+    def get_the_best_cohort_memberships(cohort_results: dict[str, CohortResult]) -> tuple[Status, list[CohortResult]]:
+        """
+        1.Get all the cohorts with the best status
+        2.Case 1: Ignore the magic cohort when other cohorts have a better status,
+        and exclude cohorts lacking either a positive or negative description regardless of the status
+        Case 2: If no cohorts have a better status than magic cohort, the response excludes cohort memberships but
+        will still include actions/suitability rules.
+        """
         if not cohort_results:
             return eligibility.Status.not_eligible, []
         best_status = eligibility.Status.best(*[result.status for result in cohort_results.values()])
         best_cohorts = [result for result in cohort_results.values() if result.status == best_status]
+        if all(cc.cohort_code and str(cc.cohort_code.upper()) == MAGIC_COHORT_LABEL.upper() for cc in best_cohorts):
+            # Update the magic cohort to have no cohort membership information
+            best_cohorts = [
+                CohortResult(
+                    cohort_code="",
+                    status=best_status,
+                    reasons=best_cohorts[0].reasons,
+                    description="",
+                )
+            ]
+        else:
+            best_cohorts = [
+                cc
+                for cc in best_cohorts
+                if cc.cohort_code and str(cc.cohort_code.upper()) != MAGIC_COHORT_LABEL.upper()
+            ]
         return best_status, best_cohorts
 
     @staticmethod
@@ -102,9 +130,10 @@ class EligibilityCalculator:
                 cohort_results: dict[str, CohortResult] = {}
 
                 filter_rules, suppression_rules = self.get_rules_by_type(active_iteration)
+
                 for cohort in sorted(active_iteration.iteration_cohorts, key=attrgetter("priority")):
                     # Base Eligibility - check
-                    if cohort.cohort_label in self.person_cohorts or cohort.cohort_label == magic_cohort:
+                    if cohort.cohort_label in self.person_cohorts or active_iteration.has_magic_cohort:
                         # Eligibility - check
                         if self.is_eligible_by_filter_rules(cohort, cohort_results, filter_rules):
                             # Actionability - evaluation
@@ -113,14 +142,15 @@ class EligibilityCalculator:
                     # Not base eligible
                     elif cohort.cohort_label is not None:
                         cohort_results[cohort.cohort_label] = CohortResult(
-                            cohort.cohort_group if cohort.cohort_group else cohort.cohort_label,
+                            (cohort.cohort_group if cohort.cohort_group else cohort.cohort_label),
                             Status.not_eligible,
                             [],
-                            str(cohort.negative_description),
+                            cohort.negative_description,
                         )
 
                 # Determine Result between cohorts - get the best
-                status, best_cohorts = self.get_best_cohort(cohort_results)
+                status, best_cohorts = self.get_the_best_cohort_memberships(cohort_results)
+
                 iteration_results[active_iteration.name] = IterationResult(status, best_cohorts)
 
             # Determine results between iterations - get the best
@@ -135,7 +165,9 @@ class EligibilityCalculator:
         return eligibility.EligibilityStatus(conditions=final_result)
 
     @staticmethod
-    def build_condition_results(condition_results: dict[ConditionName, IterationResult]) -> list[Condition]:
+    def build_condition_results(
+        condition_results: dict[ConditionName, IterationResult],
+    ) -> list[Condition]:
         conditions: list[Condition] = []
         # iterate over conditions
         for condition_name, active_iteration_result in condition_results.items():
@@ -176,11 +208,11 @@ class EligibilityCalculator:
             )
             if status.is_exclusion:
                 if cohort.cohort_label is not None:
-                    cohort_results[str(cohort.cohort_label)] = CohortResult(
-                        cohort.cohort_group if cohort.cohort_group else cohort.cohort_label,
+                    cohort_results[cohort.cohort_label] = CohortResult(
+                        (cohort.cohort_group if cohort.cohort_group else cohort.cohort_label),
                         Status.not_eligible,
                         [],
-                        str(cohort.negative_description),
+                        cohort.negative_description,
                     )
                 is_eligible = False
                 break
@@ -215,14 +247,14 @@ class EligibilityCalculator:
                     cohort.cohort_group if cohort.cohort_group else key,
                     Status.actionable,
                     [],
-                    str(cohort.positive_description),
+                    cohort.positive_description,
                 )
             else:
                 cohort_results[key] = CohortResult(
                     cohort.cohort_group if cohort.cohort_group else key,
                     Status.not_actionable,
                     suppression_reasons,
-                    str(cohort.positive_description),
+                    cohort.positive_description,
                 )
 
     def evaluate_rules_priority_group(

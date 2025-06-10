@@ -1,6 +1,7 @@
 import logging
 from http import HTTPStatus
 
+import pytest
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask import Flask
@@ -9,6 +10,7 @@ from hamcrest import assert_that, contains_exactly, has_entries, has_key, has_le
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.model.eligibility import (
+    CohortResult,
     Condition,
     EligibilityStatus,
     NHSNumber,
@@ -23,7 +25,11 @@ from eligibility_signposting_api.views.eligibility import (
     build_eligibility_cohorts,
     build_suitability_results,
 )
-from tests.fixtures.builders.model.eligibility import CohortResultFactory, ConditionFactory, EligibilityStatusFactory
+from tests.fixtures.builders.model.eligibility import (
+    CohortResultFactory,
+    ConditionFactory,
+    EligibilityStatusFactory,
+)
 from tests.fixtures.matchers.eligibility import is_eligibility_cohort, is_suitability_rule
 
 logger = logging.getLogger(__name__)
@@ -111,30 +117,52 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
         )
 
 
-def test_build_eligibility_cohorts_results_consider_only_cohorts_with_best_status():
+@pytest.mark.parametrize(
+    ("cohort_results", "expected_eligibility_cohorts", "test_comment"),
+    [
+        (
+            [
+                CohortResultFactory.build(
+                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                ),
+                CohortResultFactory.build(
+                    cohort_code="CohortCode2", status=Status.not_actionable, description="+ve des 2"
+                ),
+            ],
+            [
+                ("CohortCode1", "NotActionable", "+ve des 1"),
+                ("CohortCode2", "NotActionable", "+ve des 2"),
+            ],
+            "two cohort group codes with same status",
+        ),
+        (
+            [
+                CohortResultFactory.build(cohort_code="", status=Status.not_actionable, description=""),
+            ],
+            [],
+            "no cohort code, i.e only magic cohort is present, so no eligibility cohort is populated",
+        ),
+    ],
+)
+def test_build_eligibility_cohorts_results_consider_only_cohorts_that_has_cohort_label(
+    cohort_results: list[CohortResult], expected_eligibility_cohorts: list[tuple[str, str, str]], test_comment
+):
     condition: Condition = ConditionFactory.build(
         status=Status.not_actionable,
-        cohort_results=[
-            CohortResultFactory.build(
-                cohort_code="cohort_group1",
-                status=Status.not_actionable,
-            ),
-            CohortResultFactory.build(
-                cohort_code="cohort_group1",
-                status=Status.not_actionable,
-            ),
-            CohortResultFactory.build(
-                cohort_code="cohort_group2",
-                status=Status.not_eligible,
-            ),
-        ],
+        cohort_results=cohort_results,
     )
 
     results = build_eligibility_cohorts(condition)
 
     assert_that(
         results,
-        contains_exactly(is_eligibility_cohort().with_cohort_code("cohort_group1").and_cohort_status("NotActionable")),
+        contains_exactly(
+            *[
+                is_eligibility_cohort().with_cohort_code(item[0]).and_cohort_status(item[1]).and_cohort_text(item[2])
+                for item in expected_eligibility_cohorts
+            ]
+        ),
+        test_comment,
     )
 
 

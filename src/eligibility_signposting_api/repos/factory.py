@@ -7,7 +7,7 @@ from botocore.client import BaseClient
 from wireup import Inject, service
 from yarl import URL
 
-from eligibility_signposting_api.config import AwsAccessKey, AwsRegion, AwsSecretAccessKey
+from eligibility_signposting_api.config.config import AwsAccessKey, AwsRegion, AwsSecretAccessKey
 
 logger = logging.getLogger(__name__)
 

@@ -10,6 +10,8 @@ from typing import Literal, NewType
 
 from pydantic import BaseModel, Field, field_serializer, field_validator, model_validator
 
+from eligibility_signposting_api.config.contants import MAGIC_COHORT_LABEL
+
 if typing.TYPE_CHECKING:  # pragma: no cover
     from pydantic import SerializationInfo
 
@@ -107,13 +109,13 @@ class IterationRule(BaseModel):
     attribute_target: RuleAttributeTarget | None = Field(None, alias="AttributeTarget")
     rule_stop: RuleStop = Field(RuleStop(False), alias="RuleStop")  # noqa: FBT003
 
+    model_config = {"populate_by_name": True, "extra": "ignore"}
+
     @field_validator("rule_stop", mode="before")
     def parse_yn_to_bool(cls, v: str | bool) -> bool:  # noqa: N805
         if isinstance(v, str):
             return v.upper() == "Y"
         return v
-
-    model_config = {"populate_by_name": True, "extra": "ignore"}
 
 
 class Iteration(BaseModel):
@@ -141,6 +143,17 @@ class Iteration(BaseModel):
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
+
+    @cached_property
+    def has_magic_cohort(self) -> bool:
+        return next(
+            (
+                True
+                for cc in self.iteration_cohorts
+                if cc.cohort_label and cc.cohort_label.upper() == MAGIC_COHORT_LABEL.upper()
+            ),
+            False,
+        )
 
 
 class CampaignConfig(BaseModel):

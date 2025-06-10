@@ -73,6 +73,10 @@ class CampaignConfigFactory(RawCampaignConfigFactory):
 
 
 # Iteration cohort factories
+class MagicCohortFactory(IterationCohortFactory):
+    cohort_label = rules.CohortLabel("elid_all_people")
+
+
 class Rsv75RollingCohortFactory(IterationCohortFactory):
     cohort_label = rules.CohortLabel("rsv_75_rolling")
     cohort_group = rules.CohortGroup("rsv_age_range")
@@ -120,7 +124,18 @@ class PostcodeSuppressionRuleFactory(IterationRuleFactory):
     comparator = rules.RuleComparator("SW19")
 
 
-class ICBSuppressionRuleFactory(IterationRuleFactory):
+class DetainedEstateSuppressionRuleFactory(IterationRuleFactory):
+    type = rules.RuleType.suppression
+    name = rules.RuleName("Detained - Suppress Individuals In Detained Estates")
+    description = rules.RuleDescription("Suppress where individual is identified as being in a Detained Estate")
+    priority = rules.RulePriority(160)
+    attribute_level = rules.RuleAttributeLevel.PERSON
+    attribute_name = rules.RuleAttributeName("DE_FLAG")
+    operator = rules.RuleOperator.equals
+    comparator = rules.RuleComparator("Y")
+
+
+class ICBFilterRuleFactory(IterationRuleFactory):
     type = rules.RuleType.filter
     name = rules.RuleName("Not in QE1")
     description = rules.RuleDescription("Not in QE1")
