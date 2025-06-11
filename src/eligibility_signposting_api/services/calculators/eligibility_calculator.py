@@ -72,7 +72,7 @@ class EligibilityCalculator:
         best_status = eligibility.Status.best(*[result.status for result in cohort_results.values()])
         best_cohorts = [result for result in cohort_results.values() if result.status == best_status]
 
-        validated_best_cohorts = [
+        best_cohorts = [
             CohortResult(
                 cohort_code=cc.cohort_code,
                 status=cc.status,
@@ -82,7 +82,7 @@ class EligibilityCalculator:
             for cc in best_cohorts
         ]
 
-        return best_status, validated_best_cohorts
+        return best_status, best_cohorts
 
     @staticmethod
     def get_exclusion_rules(

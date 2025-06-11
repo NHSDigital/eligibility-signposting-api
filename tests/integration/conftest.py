@@ -236,7 +236,10 @@ def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibil
 
     for row in (
         rows := person_rows_builder(
-            nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1", "cohort2"]
+            nhs_number,
+            date_of_birth=date_of_birth,
+            postcode="hp1",
+            cohorts=["cohort1", "cohort2"],
         )
     ):
         person_table.put_item(Item=row)
@@ -322,6 +325,38 @@ def campaign_config_with_magic_cohort(s3_client: BaseClient, bucket: BucketName)
                     rule.PersonAgeSuppressionRuleFactory.build(),
                 ],
                 iteration_cohorts=[rule.MagicCohortFactory.build(cohort_label="elid_all_people")],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture(scope="class")
+def campaign_config_with_missing_descriptions_missing_rule_text(
+    s3_client: BaseClient, bucket: BucketName
+) -> Generator[rules.CampaignConfig]:
+    campaign: rules.CampaignConfig = rule.CampaignConfigFactory.build(
+        target="FLU",
+        iterations=[
+            rule.IterationFactory.build(
+                iteration_rules=[
+                    rule.PostcodeSuppressionRuleFactory.build(type=rules.RuleType.filter),
+                    rule.PersonAgeSuppressionRuleFactory.build(),
+                    rule.PersonAgeSuppressionRuleFactory.build(name="Exclude 76 rolling", description=""),
+                ],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort1",
+                        cohort_group="cohort_group1",
+                        positive_description="",
+                        negative_description="",
+                    )
+                ],
             )
         ],
     )

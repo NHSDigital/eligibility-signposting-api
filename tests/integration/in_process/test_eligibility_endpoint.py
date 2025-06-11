@@ -228,7 +228,7 @@ class TestStandardResponse:
         )
 
 
-class TestResponseWithMagicCohort:
+class TestMagicCohortResponse:
     def test_not_eligible_by_rule_when_only_magic_cohort_is_present(
         self,
         client: FlaskClient,
@@ -353,6 +353,162 @@ class TestResponseWithMagicCohort:
                                             "cohortText": "magic positive description",
                                         }
                                     ],
+                                    "actions": [],
+                                    "suitabilityRules": [],
+                                    "statusText": "Status.actionable",
+                                }
+                            ]
+                        ),
+                    )
+                )
+            ),
+        )
+
+
+class TestResponseOnMissingAttributes:
+    def test_not_base_eligible(
+        self,
+        client: FlaskClient,
+        persisted_person_no_cohorts: NHSNumber,
+        campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
+    ):
+        # Given
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person_no_cohorts}")
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(
+                is_json_that(
+                    has_entry(
+                        "processedSuggestions",
+                        equal_to(
+                            [
+                                {
+                                    "condition": "FLU",
+                                    "status": "NotEligible",
+                                    "eligibilityCohorts": [],
+                                    "actions": [],
+                                    "suitabilityRules": [],
+                                    "statusText": "Status.not_eligible",
+                                }
+                            ]
+                        ),
+                    )
+                )
+            ),
+        )
+
+    def test_not_eligible_by_rule(
+        self,
+        client: FlaskClient,
+        persisted_person_pc_sw19: NHSNumber,
+        campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
+    ):
+        # Given
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}")
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(
+                is_json_that(
+                    has_entry(
+                        "processedSuggestions",
+                        equal_to(
+                            [
+                                {
+                                    "condition": "FLU",
+                                    "status": "NotEligible",
+                                    "eligibilityCohorts": [],
+                                    "actions": [],
+                                    "suitabilityRules": [],
+                                    "statusText": "Status.not_eligible",
+                                }
+                            ]
+                        ),
+                    )
+                )
+            ),
+        )
+
+    def test_not_actionable(
+        self,
+        client: FlaskClient,
+        persisted_person: NHSNumber,
+        campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
+    ):
+        # Given
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person}")
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(
+                is_json_that(
+                    has_entry(
+                        "processedSuggestions",
+                        equal_to(
+                            [
+                                {
+                                    "condition": "FLU",
+                                    "status": "NotActionable",
+                                    "eligibilityCohorts": [],
+                                    "actions": [],
+                                    "suitabilityRules": [
+                                        {
+                                            "ruleCode": "Exclude too young less than 75",
+                                            "ruleText": "Exclude too young less than 75",
+                                            "ruleType": "S",
+                                        }
+                                    ],
+                                    "statusText": "Status.not_actionable",
+                                }
+                            ]
+                        ),
+                    )
+                )
+            ),
+        )
+
+    def test_actionable(
+        self,
+        client: FlaskClient,
+        persisted_77yo_person: NHSNumber,
+        campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
+    ):
+        # Given
+
+        # When
+        response = client.get(f"/patient-check/{persisted_77yo_person}")
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(
+                is_json_that(
+                    has_entry(
+                        "processedSuggestions",
+                        equal_to(
+                            [
+                                {
+                                    "condition": "FLU",
+                                    "status": "Actionable",
+                                    "eligibilityCohorts": [],
                                     "actions": [],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
