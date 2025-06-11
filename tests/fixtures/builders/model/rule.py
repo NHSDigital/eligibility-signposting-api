@@ -17,7 +17,6 @@ def future_date(days_ahead: int = 365) -> date:
 
 
 class IterationCohortFactory(ModelFactory[rules.IterationCohort]):
-    cohort_group = None
     priority = rules.RulePriority(0)
 
 
@@ -75,6 +74,10 @@ class CampaignConfigFactory(RawCampaignConfigFactory):
 # Iteration cohort factories
 class MagicCohortFactory(IterationCohortFactory):
     cohort_label = rules.CohortLabel("elid_all_people")
+    cohort_group = rules.CohortGroup("magic cohort group")
+    positive_description = rules.Description("magic positive description")
+    negative_description = rules.Description("magic negative description")
+    priority = 1
 
 
 class Rsv75RollingCohortFactory(IterationCohortFactory):
@@ -82,7 +85,7 @@ class Rsv75RollingCohortFactory(IterationCohortFactory):
     cohort_group = rules.CohortGroup("rsv_age_range")
     positive_description = rules.Description("rsv_age_range positive description")
     negative_description = rules.Description("rsv_age_range negative description")
-    priority = 1
+    priority = 2
 
 
 class Rsv75to79CohortFactory(IterationCohortFactory):
@@ -90,7 +93,7 @@ class Rsv75to79CohortFactory(IterationCohortFactory):
     cohort_group = rules.CohortGroup("rsv_age_range")
     positive_description = rules.Description("rsv_age_range positive description")
     negative_description = rules.Description("rsv_age_range negative description")
-    priority = 2
+    priority = 3
 
 
 class RsvPretendClinicalCohortFactory(IterationCohortFactory):
@@ -98,7 +101,7 @@ class RsvPretendClinicalCohortFactory(IterationCohortFactory):
     cohort_group = rules.CohortGroup("rsv_clinical_cohort")
     positive_description = rules.Description("rsv_clinical_cohort positive description")
     negative_description = rules.Description("rsv_clinical_cohort negative description")
-    priority = 3
+    priority = 4
 
 
 # Iteration rule factories

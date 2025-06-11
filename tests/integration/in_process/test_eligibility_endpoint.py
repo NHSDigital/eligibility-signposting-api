@@ -254,7 +254,13 @@ class TestResponseWithMagicCohort:
                                 {
                                     "condition": "COVID",
                                     "status": "NotEligible",
-                                    "eligibilityCohorts": [],
+                                    "eligibilityCohorts": [
+                                        {
+                                            "cohortCode": "magic cohort group",
+                                            "cohortStatus": "NotEligible",
+                                            "cohortText": "magic negative description",
+                                        }
+                                    ],
                                     "actions": [],
                                     "suitabilityRules": [],
                                     "statusText": "Status.not_eligible",
@@ -291,7 +297,13 @@ class TestResponseWithMagicCohort:
                                 {
                                     "condition": "COVID",
                                     "status": "NotActionable",
-                                    "eligibilityCohorts": [],
+                                    "eligibilityCohorts": [
+                                        {
+                                            "cohortCode": "magic cohort group",
+                                            "cohortStatus": "NotActionable",
+                                            "cohortText": "magic positive description",
+                                        }
+                                    ],
                                     "actions": [],
                                     "suitabilityRules": [
                                         {
@@ -334,7 +346,13 @@ class TestResponseWithMagicCohort:
                                 {
                                     "condition": "COVID",
                                     "status": "Actionable",
-                                    "eligibilityCohorts": [],
+                                    "eligibilityCohorts": [
+                                        {
+                                            "cohortCode": "magic cohort group",
+                                            "cohortStatus": "Actionable",
+                                            "cohortText": "magic positive description",
+                                        }
+                                    ],
                                     "actions": [],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",

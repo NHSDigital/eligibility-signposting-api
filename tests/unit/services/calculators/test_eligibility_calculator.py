@@ -13,7 +13,7 @@ from eligibility_signposting_api.model.eligibility import (
     DateOfBirth,
     NHSNumber,
     Postcode,
-    RuleResult,
+    RuleDescription,
     Status,
 )
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
@@ -862,24 +862,24 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
         (
             rules.RuleStop(True),  # noqa: FBT003
             [
-                RuleResult("reason 1"),
-                RuleResult("reason 2"),
+                RuleDescription("reason 1"),
+                RuleDescription("reason 2"),
             ],
             "rule_stop is True, last rule should not run",
         ),
         (
             rules.RuleStop(False),  # noqa: FBT003
             [
-                RuleResult("reason 1"),
-                RuleResult("reason 2"),
-                RuleResult("reason 3"),
+                RuleDescription("reason 1"),
+                RuleDescription("reason 2"),
+                RuleDescription("reason 3"),
             ],
             "rule_stop is False, last rule should run",
         ),
     ],
 )
 def test_rules_stop_behavior(
-    rule_stop: rules.RuleStop, expected_reason_results: list[RuleResult], test_comment: str, faker: Faker
+    rule_stop: rules.RuleStop, expected_reason_results: list[RuleDescription], test_comment: str, faker: Faker
 ) -> None:
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
@@ -898,7 +898,9 @@ def test_rules_stop_behavior(
                     rule_builder.PersonAgeSuppressionRuleFactory.build(priority=10, description="reason 2"),
                     rule_builder.PersonAgeSuppressionRuleFactory.build(priority=15, description="reason 3"),
                 ],
-                iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                iteration_cohorts=[
+                    rule_builder.IterationCohortFactory.build(cohort_group="cohort_group1", cohort_label="cohort1")
+                ],
             )
         ],
     )
@@ -920,7 +922,10 @@ def test_rules_stop_behavior(
                     has_items(
                         is_cohort_result().with_reasons(
                             contains_inanyorder(
-                                *[is_reason().with_rule_result(equal_to(result)) for result in expected_reason_results]
+                                *[
+                                    is_reason().with_rule_description(equal_to(result))
+                                    for result in expected_reason_results
+                                ]
                             )
                         )
                     )
@@ -938,31 +943,31 @@ def test_rules_stop_behavior(
             ["covid_cohort", "flu_cohort"],
             ["rsv_clinical_cohort", "rsv_75_rolling"],
             Status.not_eligible,
-            ["rsv_clinical_cohort", "rsv_75_rolling"],
+            ["rsv_clinical_cohort_group", "rsv_75_rolling_group"],
         ),
         (
             ["rsv_clinical_cohort", "rsv_75_rolling"],
             ["rsv_clinical_cohort", "rsv_75_rolling"],
             Status.actionable,
-            ["rsv_clinical_cohort"],
+            ["rsv_clinical_cohort_group"],
         ),
         (
             ["covid_cohort", "rsv_75_rolling"],
             ["rsv_clinical_cohort", "rsv_75_rolling"],
             Status.not_actionable,
-            ["rsv_75_rolling"],
+            ["rsv_75_rolling_group"],
         ),
         (
             ["covid_cohort", "rsv_clinical_cohort"],
             ["rsv_clinical_cohort", "rsv_75_rolling"],
             Status.actionable,
-            ["rsv_clinical_cohort"],
+            ["rsv_clinical_cohort_group"],
         ),
         (
             ["rsv_75to79_2024", "rsv_75_rolling"],
             ["rsv_75to79_2024", "rsv_75_rolling"],
             Status.not_actionable,
-            ["rsv_75_rolling", "rsv_75to79_2024"],
+            ["rsv_75_rolling_group", "rsv_75to79_2024_group"],
         ),
     ],
 )
@@ -985,7 +990,7 @@ def test_eligibility_results_when_multiple_cohorts(
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[
                         rule_builder.IterationCohortFactory.build(
-                            cohort_group=None,
+                            cohort_group=f"{cohorts}_group",
                             cohort_label=cohorts,
                             positive_description="positive description",
                             negative_description="negative description",
@@ -1309,50 +1314,53 @@ def test_grouped_description_if_the_cohorts_in_group_have_different_descriptions
 
 
 @pytest.mark.parametrize(
-    ("person_rows", "expected_status", "expected_description", "expected_cohort_code", "test_comment"),
+    ("person_rows", "expected_status", "expected_cohort_group_and_description", "test_comment"),
     [
         (
             person_rows_builder(nhs_number="123", cohorts=[], postcode="AC01", de=True, icb="QE1"),
             Status.not_eligible,
-            "rsv_age_range negative description",
-            "rsv_age_range",
+            [
+                ("magic cohort group", "magic negative description"),
+                ("rsv_age_range", "rsv_age_range negative description"),
+            ],
             "all the cohorts are not-eligible, so the result will not include magic cohort, but all other cohorts",
         ),
         (
             person_rows_builder(nhs_number="123", cohorts=[], postcode="SW19", de=False, icb="QE1"),
             Status.not_actionable,
-            "rsv_age_range positive description",
-            "rsv_age_range",
+            [
+                ("magic cohort group", "magic positive description"),
+                ("rsv_age_range", "rsv_age_range positive description"),
+            ],
             "all the cohorts are not-actionable, so the result will not include magic cohort, but all other cohorts",
         ),
         (
             person_rows_builder(nhs_number="123", cohorts=[], postcode="AC01", de=False, icb="QE1"),
             Status.actionable,
-            "rsv_age_range positive description",
-            "rsv_age_range",
+            [
+                ("magic cohort group", "magic positive description"),
+                ("rsv_age_range", "rsv_age_range positive description"),
+            ],
             "all the cohorts are actionable, so the result will not include magic cohort, but all other cohorts",
         ),
         (
             person_rows_builder(nhs_number="123", cohorts=[], postcode="AC01", de=False, icb="NOT_QE1"),
             Status.actionable,
-            "",
-            "",
-            "magic_cohort is actionable, but not other, so removed cohort membership info from result",
+            [("magic cohort group", "magic positive description")],
+            "magic_cohort is actionable, but not other",
         ),
         (
             person_rows_builder(nhs_number="123", cohorts=[], postcode="SW19", de=False, icb="NOT_QE1"),
             Status.not_actionable,
-            "",
-            "",
-            "magic_cohort is not-actionable,but others are not eligible,so removed cohort membership info from result",
+            [("magic cohort group", "magic positive description")],
+            "magic_cohort is not-actionable,but others are not eligible",
         ),
     ],
 )
 def test_grouped_description_if_magic_cohort_has_same_status_as_other_cohorts(
     person_rows: list[dict[str, Any]],
     expected_status: str,
-    expected_description: str,
-    expected_cohort_code: str,
+    expected_cohort_group_and_description: list[tuple[str, str]],
     test_comment: str,
 ):
     # Given
@@ -1395,10 +1403,13 @@ def test_grouped_description_if_magic_cohort_has_same_status_as_other_cohorts(
                 .with_condition_name(ConditionName("RSV"))
                 .and_cohort_results(
                     contains_exactly(
-                        is_cohort_result()
-                        .with_status(expected_status)
-                        .and_cohort_code(expected_cohort_code)
-                        .and_description(expected_description)
+                        *[
+                            is_cohort_result()
+                            .with_cohort_code(item[0])
+                            .with_description(item[1])
+                            .with_status(expected_status)
+                            for item in expected_cohort_group_and_description
+                        ]
                     )
                 )
             )
@@ -1412,49 +1423,45 @@ def test_grouped_description_if_magic_cohort_has_same_status_as_other_cohorts(
     [
         (
             person_rows_builder("123", postcode="SW19", cohorts=[], de=False),
-            [("", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort negative description")],
+            [("rsv_age_range", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort negative description")],
             Status.not_eligible,
         ),
         (
             person_rows_builder("123", postcode="HP1", cohorts=["rsv_75_rolling"], de=False),
-            [("", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort negative description")],
+            [("rsv_age_range", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort negative description")],
             Status.not_eligible,
         ),
         (
             person_rows_builder(
                 "123", postcode="HP1", cohorts=["rsv_75to79_2024", "rsv_pretend_clinical_cohort"], de=True
             ),
-            [("", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort positive description")],
+            [("rsv_age_range", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort positive description")],
             Status.not_actionable,
         ),
         (
             person_rows_builder("123", postcode="HP1", cohorts=["rsv_75to79_2024"], de=True),
-            [("", "")],
+            [("rsv_age_range", "")],
             Status.not_actionable,
         ),
         (
             person_rows_builder(
                 "123", postcode="HP1", cohorts=["rsv_75to79_2024", "rsv_pretend_clinical_cohort"], de=False
             ),
-            [("", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort positive description")],
+            [("rsv_age_range", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort positive description")],
             Status.actionable,
         ),
         (
             person_rows_builder("123", postcode="HP1", cohorts=["rsv_75to79_2024"], de=False),
-            [("", "")],
+            [("rsv_age_range", "")],
             Status.actionable,
         ),
     ],
 )
-def test_cohort_with_no_positive_or_negative_description_or_no_cohort_label_will_be_excluded_in_response(
+def test_cohort_with_no_positive_or_negative_description_will_be_excluded_in_response(
     person_rows: list[dict[str, Any]],
     expected_cohort_group_and_description: list[tuple[str, str]],
     expected_status: Status,
 ):
-    """
-    test: Cohorts that need to be excluded are assigned an empty cohort_code or description.
-    These cohorts will be removed when building the final cohort list in func build_eligibility_cohorts
-    """
     # Given
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
@@ -1462,7 +1469,6 @@ def test_cohort_with_no_positive_or_negative_description_or_no_cohort_label_will
             iterations=[
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[
-                        rule_builder.Rsv75RollingCohortFactory.build(cohort_label=None, priority=1),
                         rule_builder.Rsv75to79CohortFactory.build(
                             positive_description=None, negative_description=None, priority=2
                         ),

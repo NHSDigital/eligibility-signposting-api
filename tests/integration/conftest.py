@@ -321,7 +321,7 @@ def campaign_config_with_magic_cohort(s3_client: BaseClient, bucket: BucketName)
                     rule.PostcodeSuppressionRuleFactory.build(type=rules.RuleType.filter),
                     rule.PersonAgeSuppressionRuleFactory.build(),
                 ],
-                iteration_cohorts=[rule.IterationCohortFactory.build(cohort_label="elid_all_people")],
+                iteration_cohorts=[rule.MagicCohortFactory.build(cohort_label="elid_all_people")],
             )
         ],
     )

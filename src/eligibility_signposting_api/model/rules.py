@@ -87,8 +87,8 @@ class RuleAttributeLevel(StrEnum):
 
 
 class IterationCohort(BaseModel):
-    cohort_label: CohortLabel | None = Field(None, alias="CohortLabel")
-    cohort_group: CohortGroup | None = Field(None, alias="CohortGroup")
+    cohort_label: CohortLabel = Field(alias="CohortLabel")
+    cohort_group: CohortGroup = Field(alias="CohortGroup")
     positive_description: Description | None = Field(None, alias="PositiveDescription")
     negative_description: Description | None = Field(None, alias="NegativeDescription")
     priority: int | None = Field(None, alias="Priority")

@@ -90,13 +90,13 @@ def build_suitability_results(condition: Condition) -> list[eligibility.Suitabil
     for cohort_result in condition.cohort_results:
         if cohort_result.status == Status.not_actionable:
             for reason in cohort_result.reasons:
-                if reason.rule_name not in unique_rule_codes:
+                if reason.rule_name not in unique_rule_codes and reason.rule_description:
                     unique_rule_codes.add(reason.rule_name)
                     suitability_results.append(
                         eligibility.SuitabilityRule(
                             ruleType=eligibility.RuleType(reason.rule_type.value),
                             ruleCode=eligibility.RuleCode(reason.rule_name),
-                            ruleText=eligibility.RuleText(reason.rule_result),
+                            ruleText=eligibility.RuleText(reason.rule_description),
                         )
                     )
 

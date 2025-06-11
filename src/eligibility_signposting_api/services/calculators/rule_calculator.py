@@ -24,7 +24,7 @@ class RuleCalculator:
         reason = eligibility.Reason(
             rule_name=eligibility.RuleName(self.rule.name),
             rule_type=eligibility.RuleType(self.rule.type),
-            rule_result=eligibility.RuleResult(self.rule.description),
+            rule_description=eligibility.RuleDescription(self.rule.description),
         )
         return status, reason
 

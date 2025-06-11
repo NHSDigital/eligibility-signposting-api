@@ -12,7 +12,7 @@ Postcode = NewType("Postcode", str)
 ConditionName = NewType("ConditionName", str)
 
 RuleName = NewType("RuleName", str)
-RuleResult = NewType("RuleResult", str)
+RuleDescription = NewType("RuleDescription", str)
 
 
 class RuleType(StrEnum):
@@ -60,7 +60,7 @@ class Status(Enum):
 class Reason:
     rule_type: RuleType
     rule_name: RuleName
-    rule_result: RuleResult
+    rule_description: RuleDescription | None
 
 
 @dataclass
