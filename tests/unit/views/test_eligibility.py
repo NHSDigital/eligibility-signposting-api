@@ -137,6 +137,20 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
         ),
         (
             [
+                CohortResultFactory.build(cohort_code="", status=Status.not_actionable, description="some description"),
+            ],
+            [],
+            "no cohort code, i.e only magic cohort is present, so no eligibility cohort is populated",
+        ),
+        (
+            [
+                CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable, description=""),
+            ],
+            [],
+            "no cohort code, i.e only magic cohort is present, so no eligibility cohort is populated",
+        ),
+        (
+            [
                 CohortResultFactory.build(cohort_code="", status=Status.not_actionable, description=""),
             ],
             [],
@@ -144,7 +158,7 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
         ),
     ],
 )
-def test_build_eligibility_cohorts_results_consider_only_cohorts_that_has_cohort_label(
+def test_build_eligibility_cohorts_results_consider_only_cohorts_that_has_cohort_label_and_description(
     cohort_results: list[CohortResult], expected_eligibility_cohorts: list[tuple[str, str, str]], test_comment
 ):
     condition: Condition = ConditionFactory.build(
@@ -208,6 +222,18 @@ def test_build_suitability_results_with_deduplication():
                     )
                 ],
             ),
+            CohortResultFactory.build(
+                cohort_code="",
+                description="",
+                status=Status.not_actionable,
+                reasons=[
+                    Reason(
+                        rule_type=RuleType.filter,
+                        rule_name=RuleName("You are already vaccinated"),
+                        rule_result=RuleResult("LAST_SUCCESSFUL_DATE >= 20240901"),
+                    )
+                ],
+            ),
         ],
     )
 
@@ -218,6 +244,9 @@ def test_build_suitability_results_with_deduplication():
         contains_exactly(
             is_suitability_rule().with_rule_code("Exclude too young less than 75").and_rule_text("Age < 75"),
             is_suitability_rule().with_rule_code("Exclude more than 100").and_rule_text("Age > 100"),
+            is_suitability_rule()
+            .with_rule_code("You are already vaccinated")
+            .and_rule_text("LAST_SUCCESSFUL_DATE >= 20240901"),
         ),
     )
 

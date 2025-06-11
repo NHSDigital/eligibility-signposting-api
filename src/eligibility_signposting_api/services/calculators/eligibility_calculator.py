@@ -69,16 +69,20 @@ class EligibilityCalculator:
     @staticmethod
     def get_the_best_cohort_memberships(cohort_results: dict[str, CohortResult]) -> tuple[Status, list[CohortResult]]:
         """
-        1.Get all the cohorts with the best status
-        2.Case 1: Ignore the magic cohort when other cohorts have a better status,
+        step 1: Get all the cohorts with the best status
+        step 2-Case 1: Ignore the magic cohort when other cohorts have a better status,
         and exclude cohorts lacking either a positive or negative description regardless of the status
-        Case 2: If no cohorts have a better status than magic cohort, the response excludes cohort memberships but
-        will still include actions/suitability rules.
+        step 2-Case 2: If no cohorts have a better status than magic cohort, the response excludes cohort memberships
+        but will still include actions/suitability rules.
+        note: cohorts that are to be excluded are made to contain empty cohort_code or description, those cohorts will
+        be excluded while building the final list of cohorts.
         """
         if not cohort_results:
             return eligibility.Status.not_eligible, []
+
         best_status = eligibility.Status.best(*[result.status for result in cohort_results.values()])
         best_cohorts = [result for result in cohort_results.values() if result.status == best_status]
+
         if all(cc.cohort_code and str(cc.cohort_code.upper()) == MAGIC_COHORT_LABEL.upper() for cc in best_cohorts):
             # Update the magic cohort to have no cohort membership information
             best_cohorts = [
@@ -91,10 +95,16 @@ class EligibilityCalculator:
             ]
         else:
             best_cohorts = [
-                cc
+                CohortResult(
+                    cohort_code=(cc.cohort_code or "").strip() if cc.cohort_code and cc.description else "",
+                    status=cc.status,
+                    reasons=cc.reasons,
+                    description=(cc.description or "").strip() if cc.cohort_code and cc.description else "",
+                )
                 for cc in best_cohorts
                 if cc.cohort_code and str(cc.cohort_code.upper()) != MAGIC_COHORT_LABEL.upper()
             ]
+
         return best_status, best_cohorts
 
     @staticmethod

@@ -984,7 +984,12 @@ def test_eligibility_results_when_multiple_cohorts(
             iterations=[
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[
-                        rule_builder.IterationCohortFactory.build(cohort_group=None, cohort_label=cohorts)
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_group=None,
+                            cohort_label=cohorts,
+                            positive_description="positive description",
+                            negative_description="negative description",
+                        )
                         for cohorts in iteration_cohorts
                     ],
                     iteration_rules=[
@@ -1399,4 +1404,103 @@ def test_grouped_description_if_magic_cohort_has_same_status_as_other_cohorts(
             )
         ),
         test_comment,
+    )
+
+
+@pytest.mark.parametrize(
+    ("person_rows", "expected_cohort_group_and_description", "expected_status"),
+    [
+        (
+            person_rows_builder("123", postcode="SW19", cohorts=[], de=False),
+            [("", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort negative description")],
+            Status.not_eligible,
+        ),
+        (
+            person_rows_builder("123", postcode="HP1", cohorts=["rsv_75_rolling"], de=False),
+            [("", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort negative description")],
+            Status.not_eligible,
+        ),
+        (
+            person_rows_builder(
+                "123", postcode="HP1", cohorts=["rsv_75to79_2024", "rsv_pretend_clinical_cohort"], de=True
+            ),
+            [("", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort positive description")],
+            Status.not_actionable,
+        ),
+        (
+            person_rows_builder("123", postcode="HP1", cohorts=["rsv_75to79_2024"], de=True),
+            [("", "")],
+            Status.not_actionable,
+        ),
+        (
+            person_rows_builder(
+                "123", postcode="HP1", cohorts=["rsv_75to79_2024", "rsv_pretend_clinical_cohort"], de=False
+            ),
+            [("", ""), ("rsv_clinical_cohort", "rsv_clinical_cohort positive description")],
+            Status.actionable,
+        ),
+        (
+            person_rows_builder("123", postcode="HP1", cohorts=["rsv_75to79_2024"], de=False),
+            [("", "")],
+            Status.actionable,
+        ),
+    ],
+)
+def test_cohort_with_no_positive_or_negative_description_or_no_cohort_label_will_be_excluded_in_response(
+    person_rows: list[dict[str, Any]],
+    expected_cohort_group_and_description: list[tuple[str, str]],
+    expected_status: Status,
+):
+    """
+    test: Cohorts that need to be excluded are assigned an empty cohort_code or description.
+    These cohorts will be removed when building the final cohort list in func build_eligibility_cohorts
+    """
+    # Given
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.Rsv75RollingCohortFactory.build(cohort_label=None, priority=1),
+                        rule_builder.Rsv75to79CohortFactory.build(
+                            positive_description=None, negative_description=None, priority=2
+                        ),
+                        rule_builder.RsvPretendClinicalCohortFactory.build(priority=3),
+                    ],
+                    iteration_rules=[
+                        rule_builder.PostcodeSuppressionRuleFactory.build(type=rules.RuleType.filter),
+                        rule_builder.DetainedEstateSuppressionRuleFactory.build(),
+                    ],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(expected_status)
+                .and_cohort_results(
+                    contains_exactly(
+                        *[
+                            is_cohort_result()
+                            .with_cohort_code(item[0])
+                            .with_description(item[1])
+                            .with_status(expected_status)
+                            for item in expected_cohort_group_and_description
+                        ]
+                    )
+                )
+            )
+        ),
     )

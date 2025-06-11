@@ -76,7 +76,7 @@ def build_eligibility_cohorts(condition: Condition) -> list[eligibility.Eligibil
             cohortStatus=STATUS_MAPPING[cohort_result.status],
         )
         for cohort_result in condition.cohort_results
-        if cohort_result and cohort_result.cohort_code and cohort_result.cohort_code.strip()
+        if cohort_result and cohort_result.cohort_code and cohort_result.description
     ]
 
 
