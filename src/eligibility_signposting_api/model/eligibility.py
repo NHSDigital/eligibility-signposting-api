@@ -72,7 +72,7 @@ class Condition:
 
 @dataclass
 class CohortResult:
-    cohort_code: str | None
+    cohort_code: str
     status: Status
     reasons: list[Reason]
     description: str | None

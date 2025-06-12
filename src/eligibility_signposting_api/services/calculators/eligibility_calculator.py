@@ -165,16 +165,24 @@ class EligibilityCalculator:
                     grouped_cohort_results[cohort_result.cohort_code].append(cohort_result)
 
             # deduplicate grouped cohort results by cohort_code
-            deduplicated_cohort_results = {
-                cohort_code: results[0] for cohort_code, results in grouped_cohort_results.items() if results
-            }
+            deduplicated_cohort_results = [
+                CohortResult(
+                    cohort_code=group_cohort_code,
+                    status=group[0].status,
+                    reasons=[reason for cohort in group for reason in cohort.reasons],
+                    # Flatten all reasons from the group
+                    description=next((c.description for c in group if c.description), group[0].description),
+                )
+                for group_cohort_code, group in grouped_cohort_results.items()
+                if group
+            ]
 
             # return condition with cohort results
             conditions.append(
                 Condition(
                     condition_name=condition_name,
                     status=active_iteration_result.status,
-                    cohort_results=list(deduplicated_cohort_results.values()),
+                    cohort_results=list(deduplicated_cohort_results),
                 )
             )
         return conditions

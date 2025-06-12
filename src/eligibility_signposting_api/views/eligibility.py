@@ -1,5 +1,6 @@
 import logging
 import uuid
+from collections import defaultdict
 from datetime import UTC, datetime
 from http import HTTPStatus
 
@@ -69,18 +70,27 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibi
 
 
 def build_eligibility_cohorts(condition: Condition) -> list[eligibility.EligibilityCohort]:
+    """Group Iteration cohorts and make only one entry per cohort group"""
+
+    grouped_cohort_results = defaultdict(list)
+
+    for cohort_result in condition.cohort_results:
+        if condition.status == cohort_result.status and cohort_result.description:
+            grouped_cohort_results[cohort_result.cohort_code].append(cohort_result)
+
     return [
         eligibility.EligibilityCohort(
-            cohortCode=eligibility.CohortCode(cohort_result.cohort_code),
-            cohortText=eligibility.CohortText(str(cohort_result.description)),
-            cohortStatus=STATUS_MAPPING[cohort_result.status],
+            cohortCode=cohort_group_code,
+            cohortText=cohort_group[0].description,
+            cohortStatus=STATUS_MAPPING[cohort_group[0].status],
         )
-        for cohort_result in condition.cohort_results
-        if cohort_result and cohort_result.cohort_code and cohort_result.description
+        for cohort_group_code, cohort_group in grouped_cohort_results.items()
+        if cohort_group
     ]
 
 
 def build_suitability_results(condition: Condition) -> list[eligibility.SuitabilityRule]:
+    """Make only one entry if there are duplicate rules"""
     if condition.status != Status.not_actionable:
         return []
 

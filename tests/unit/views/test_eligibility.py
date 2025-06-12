@@ -184,6 +184,102 @@ def test_build_eligibility_cohorts_results_consider_only_cohorts_that_has_descri
     )
 
 
+@pytest.mark.parametrize(
+    ("cohort_results", "expected_eligibility_cohorts", "test_comment"),
+    [
+        (
+            [
+                CohortResultFactory.build(
+                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                ),
+                CohortResultFactory.build(
+                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                ),
+            ],
+            [
+                ("CohortCode1", "NotActionable", "+ve des 1"),
+            ],
+            "two cohort with same group codes",
+        ),
+        (
+            [
+                CohortResultFactory.build(
+                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                ),
+                CohortResultFactory.build(
+                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 2"
+                ),
+            ],
+            [
+                ("CohortCode1", "NotActionable", "+ve des 1"),
+            ],
+            "two cohort with same group codes, but different descriptions, first one is considered",
+        ),
+        (
+            [
+                CohortResultFactory.build(cohort_code="CohortCode1", status=Status.not_actionable, description=""),
+                CohortResultFactory.build(
+                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                ),
+            ],
+            [
+                ("CohortCode1", "NotActionable", "+ve des 1"),
+            ],
+            "two cohorts with same group codes, one has no description but the other has description",
+        ),
+        (
+            [
+                CohortResultFactory.build(cohort_code="CohortCode1", status=Status.not_actionable, description=""),
+                CohortResultFactory.build(
+                    cohort_code="CohortCode2", status=Status.not_actionable, description="+ve des 2"
+                ),
+            ],
+            [
+                ("CohortCode2", "NotActionable", "+ve des 2"),
+            ],
+            "two cohorts with different group codes, one has no description but the other has description, "
+            "CohortCode1 is excluded",
+        ),
+        (
+            [
+                CohortResultFactory.build(
+                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                ),
+                CohortResultFactory.build(
+                    cohort_code="CohortCode2", status=Status.not_actionable, description="+ve des 2"
+                ),
+            ],
+            [
+                ("CohortCode1", "NotActionable", "+ve des 1"),
+                ("CohortCode2", "NotActionable", "+ve des 2"),
+            ],
+            "two cohorts with different group codes, one has no description but the other has description, "
+            "CohortCode1 is excluded",
+        ),
+    ],
+)
+def test_build_eligibility_cohorts_deduplication(
+    cohort_results: list[CohortResult], expected_eligibility_cohorts: list[tuple[str, str, str]], test_comment
+):
+    condition: Condition = ConditionFactory.build(
+        status=Status.not_actionable,
+        cohort_results=cohort_results,
+    )
+
+    results = build_eligibility_cohorts(condition)
+
+    assert_that(
+        results,
+        contains_exactly(
+            *[
+                is_eligibility_cohort().with_cohort_code(item[0]).and_cohort_status(item[1]).and_cohort_text(item[2])
+                for item in expected_eligibility_cohorts
+            ]
+        ),
+        test_comment,
+    )
+
+
 def test_build_suitability_results_with_deduplication():
     condition: Condition = ConditionFactory.build(
         status=Status.not_actionable,
