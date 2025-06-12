@@ -1211,7 +1211,11 @@ def test_cohort_groups_and_their_descriptions_when_best_status_is_not_eligible(
         (
             ["rsv_75_rolling", "rsv_75to79_2024", "rsv_pretend_clinical_cohort"],
             [
-                ("rsv_age_range", "rsv_age_range positive description",["Excluded postcode In SW19", "Excluded postcode In SW19"],),
+                (
+                    "rsv_age_range",
+                    "rsv_age_range positive description",
+                    ["Excluded postcode In SW19", "Excluded postcode In SW19"],
+                ),
                 ("rsv_clinical_cohort", "rsv_clinical_cohort positive description", ["Excluded postcode In SW19"]),
             ],
             "all are not-actionable",

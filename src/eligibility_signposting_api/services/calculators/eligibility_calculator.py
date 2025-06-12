@@ -65,7 +65,9 @@ class EligibilityCalculator:
         return set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
 
     @staticmethod
-    def get_the_best_cohort_memberships(cohort_results: dict[str, CohortGroupResult]) -> tuple[Status, list[CohortGroupResult]]:
+    def get_the_best_cohort_memberships(
+        cohort_results: dict[str, CohortGroupResult],
+    ) -> tuple[Status, list[CohortGroupResult]]:
         if not cohort_results:
             return eligibility.Status.not_eligible, []
 
