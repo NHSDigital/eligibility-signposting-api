@@ -144,7 +144,7 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
                 CohortResultFactory.build(cohort_code="CohortCode3", status=Status.not_actionable, description=""),
             ],
             [("CohortCode1", "NotActionable", "+ve des 1")],
-            "have only the cohorts with description",
+            "only one cohort has description",
         ),
         (
             [

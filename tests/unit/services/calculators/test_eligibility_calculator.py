@@ -1042,7 +1042,7 @@ def test_eligibility_results_when_multiple_cohorts(
                 ("magic cohort group", "magic negative description"),
                 ("rsv_age_range", "rsv_age_range negative description"),
             ],
-            "all the cohorts are not-eligible, so the result will not include magic cohort, but all other cohorts",
+            "all the cohorts are not-eligible",
         ),
         (
             person_rows_builder(nhs_number="123", cohorts=[], postcode="SW19", de=False, icb="QE1"),
@@ -1051,7 +1051,7 @@ def test_eligibility_results_when_multiple_cohorts(
                 ("magic cohort group", "magic positive description"),
                 ("rsv_age_range", "rsv_age_range positive description"),
             ],
-            "all the cohorts are not-actionable, so the result will not include magic cohort, but all other cohorts",
+            "all the cohorts are not-actionable",
         ),
         (
             person_rows_builder(nhs_number="123", cohorts=[], postcode="AC01", de=False, icb="QE1"),
@@ -1060,19 +1060,19 @@ def test_eligibility_results_when_multiple_cohorts(
                 ("magic cohort group", "magic positive description"),
                 ("rsv_age_range", "rsv_age_range positive description"),
             ],
-            "all the cohorts are actionable, so the result will not include magic cohort, but all other cohorts",
+            "all the cohorts are actionable",
         ),
         (
             person_rows_builder(nhs_number="123", cohorts=[], postcode="AC01", de=False, icb="NOT_QE1"),
             Status.actionable,
             [("magic cohort group", "magic positive description")],
-            "magic_cohort is actionable, but not other",
+            "magic_cohort is actionable, but not others",
         ),
         (
             person_rows_builder(nhs_number="123", cohorts=[], postcode="SW19", de=False, icb="NOT_QE1"),
             Status.not_actionable,
             [("magic cohort group", "magic positive description")],
-            "magic_cohort is not-actionable,but others are not eligible",
+            "magic_cohort is not-actionable, but others are not eligible",
         ),
     ],
 )
@@ -1211,11 +1211,7 @@ def test_cohort_groups_and_their_descriptions_when_best_status_is_not_eligible(
         (
             ["rsv_75_rolling", "rsv_75to79_2024", "rsv_pretend_clinical_cohort"],
             [
-                (
-                    "rsv_age_range",
-                    "rsv_age_range positive description",
-                    ["Excluded postcode In SW19", "Excluded postcode In SW19"],
-                ),
+                ("rsv_age_range", "rsv_age_range positive description",["Excluded postcode In SW19", "Excluded postcode In SW19"],),
                 ("rsv_clinical_cohort", "rsv_clinical_cohort positive description", ["Excluded postcode In SW19"]),
             ],
             "all are not-actionable",
@@ -1393,15 +1389,15 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
             iterations=[
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[
-                        rule_builder.Rsv75RollingCohortFactory.build(
-                            positive_description=rules.Description("rsv_age_range positive description 1"),
-                            negative_description=rules.Description("rsv_age_range negative description 1"),
-                            priority=1,
-                        ),
                         rule_builder.Rsv75to79CohortFactory.build(
                             positive_description=rules.Description("rsv_age_range positive description 2"),
                             negative_description=rules.Description("rsv_age_range negative description 2"),
                             priority=2,
+                        ),
+                        rule_builder.Rsv75RollingCohortFactory.build(
+                            positive_description=rules.Description("rsv_age_range positive description 1"),
+                            negative_description=rules.Description("rsv_age_range negative description 1"),
+                            priority=1,
                         ),
                     ],
                     iteration_rules=[rule_builder.PostcodeSuppressionRuleFactory.build()],
@@ -1460,7 +1456,7 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
         (
             person_rows_builder("123", postcode="SW19", cohorts=[], de=False),
             [
-                rule_builder.Rsv75to79CohortFactory.build(negative_description=None, priority=2),
+                rule_builder.Rsv75to79CohortFactory.build(priority=2, negative_description=None),
                 rule_builder.Rsv75RollingCohortFactory.build(priority=3, negative_description="rsv age range -ve 1"),
                 rule_builder.Rsv75RollingCohortFactory.build(
                     cohort_label="rsv_75_rolling_2", priority=4, negative_description="rsv age range -ve 2"
@@ -1473,7 +1469,7 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
         (
             person_rows_builder("123", postcode="HP1", cohorts=["rsv_75to79_2024", "rsv_75_rolling"], de=True),
             [
-                rule_builder.Rsv75to79CohortFactory.build(positive_description=None, priority=2),
+                rule_builder.Rsv75to79CohortFactory.build(priority=2, positive_description=None),
                 rule_builder.Rsv75RollingCohortFactory.build(priority=3, positive_description="rsv age range +ve 1"),
                 rule_builder.Rsv75RollingCohortFactory.build(
                     cohort_label="rsv_75_rolling_2", priority=4, positive_description="rsv age range +ve 2"
@@ -1486,7 +1482,7 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
         (
             person_rows_builder("123", postcode="HP1", cohorts=["rsv_75to79_2024", "rsv_75_rolling"], de=False),
             [
-                rule_builder.Rsv75to79CohortFactory.build(positive_description=None, priority=2),
+                rule_builder.Rsv75to79CohortFactory.build(priority=2, positive_description=None),
                 rule_builder.Rsv75RollingCohortFactory.build(priority=3, positive_description="rsv age range +ve 1"),
                 rule_builder.Rsv75RollingCohortFactory.build(
                     cohort_label="rsv_75_rolling_2", priority=4, positive_description="rsv age range +ve 2"
