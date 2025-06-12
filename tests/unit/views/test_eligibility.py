@@ -10,7 +10,7 @@ from hamcrest import assert_that, contains_exactly, has_entries, has_key, has_le
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.model.eligibility import (
-    CohortResult,
+    CohortGroupResult,
     Condition,
     EligibilityStatus,
     NHSNumber,
@@ -163,7 +163,7 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
     ],
 )
 def test_build_eligibility_cohorts_results_consider_only_cohorts_groups_that_has_description(
-    cohort_results: list[CohortResult], expected_eligibility_cohorts: list[tuple[str, str, str]], test_comment
+    cohort_results: list[CohortGroupResult], expected_eligibility_cohorts: list[tuple[str, str, str]], test_comment
 ):
     condition: Condition = ConditionFactory.build(
         status=Status.not_actionable,
@@ -192,6 +192,11 @@ def test_build_suitability_results_with_deduplication():
                 cohort_code="cohort_group1",
                 status=Status.not_actionable,
                 reasons=[
+                    Reason(
+                        rule_type=RuleType.suppression,
+                        rule_name=RuleName("Exclude too young less than 75"),
+                        rule_description=RuleDescription("your age is greater than 75"),
+                    ),
                     Reason(
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude too young less than 75"),

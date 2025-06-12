@@ -4,7 +4,7 @@ import string
 from polyfactory import Use
 from polyfactory.factories import DataclassFactory
 
-from eligibility_signposting_api.model.eligibility import CohortResult, Condition, EligibilityStatus
+from eligibility_signposting_api.model.eligibility import CohortGroupResult, Condition, EligibilityStatus
 
 
 class ConditionFactory(DataclassFactory[Condition]): ...
@@ -14,7 +14,7 @@ class EligibilityStatusFactory(DataclassFactory[EligibilityStatus]):
     condition = Use(ConditionFactory.batch, size=2)
 
 
-class CohortResultFactory(DataclassFactory[CohortResult]): ...
+class CohortResultFactory(DataclassFactory[CohortGroupResult]): ...
 
 
 def random_str(length: int) -> str:
