@@ -1076,7 +1076,7 @@ def test_eligibility_results_when_multiple_cohorts(
         ),
     ],
 )
-def test_cohort_group_descriptions_when_magic_cohort_is_having_the_best_status(
+def test_cohort_groups_and_their_descriptions_when_magic_cohort_is_having_the_best_status(
     person_rows: list[dict[str, Any]],
     expected_status: str,
     expected_cohort_group_and_description: list[tuple[str, str]],
@@ -1137,7 +1137,7 @@ def test_cohort_group_descriptions_when_magic_cohort_is_having_the_best_status(
     )
 
 
-def test_cohort_group_descriptions_for_multiple_clinical_risk_cohort_groups_when_best_status_is_not_eligible(
+def test_cohort_groups_and_their_descriptions_when_best_status_is_not_eligible(
     faker: Faker,
 ):
     # Given
@@ -1190,31 +1190,41 @@ def test_cohort_group_descriptions_for_multiple_clinical_risk_cohort_groups_when
 
 
 @pytest.mark.parametrize(
-    ("person_cohorts", "expected_cohort_group_and_description", "test_comment"),
+    ("person_cohorts", "expected_cohort_group_and_description_and_s_rule_names", "test_comment"),
     [
         (
             ["rsv_75_rolling"],
-            [("rsv_age_range", "rsv_age_range positive description")],
+            [("rsv_age_range", "rsv_age_range positive description", ["Excluded postcode In SW19"])],
             "rsv_75_rolling is not-actionable, others are not-eligible",
         ),
         (
             ["rsv_75_rolling", "rsv_75to79_2024"],
-            [("rsv_age_range", "rsv_age_range positive description")],
+            [
+                (
+                    "rsv_age_range",
+                    "rsv_age_range positive description",
+                    ["Excluded postcode In SW19", "Excluded postcode In SW19"],
+                )
+            ],
             "rsv_75_rolling, rsv_75to79_2024 is not-actionable, rsv_pretend_clinical_cohort are not-eligible",
         ),
         (
             ["rsv_75_rolling", "rsv_75to79_2024", "rsv_pretend_clinical_cohort"],
             [
-                ("rsv_age_range", "rsv_age_range positive description"),
-                ("rsv_clinical_cohort", "rsv_clinical_cohort positive description"),
+                (
+                    "rsv_age_range",
+                    "rsv_age_range positive description",
+                    ["Excluded postcode In SW19", "Excluded postcode In SW19"],
+                ),
+                ("rsv_clinical_cohort", "rsv_clinical_cohort positive description", ["Excluded postcode In SW19"]),
             ],
             "all are not-actionable",
         ),
     ],
 )
-def test_cohort_group_descriptions_for_multiple_clinical_risk_cohort_groups_when_best_status_is_not_actionable(
+def test_cohort_groups_and_their_descriptions_and_the_collection_of_s_rules_when_best_status_is_not_actionable(
     person_cohorts: list[str],
-    expected_cohort_group_and_description: list[tuple[str, str]],
+    expected_cohort_group_and_description_and_s_rule_names: list[tuple[str, str, list[str]]],
     test_comment: str,
     faker: Faker,
 ):
@@ -1255,8 +1265,13 @@ def test_cohort_group_descriptions_for_multiple_clinical_risk_cohort_groups_when
                 .and_cohort_results(
                     contains_exactly(
                         *[
-                            is_cohort_result().with_cohort_code(item[0]).with_description(item[1])
-                            for item in expected_cohort_group_and_description
+                            is_cohort_result()
+                            .with_cohort_code(item[0])
+                            .and_description(item[1])
+                            .and_reasons(
+                                contains_exactly(*[is_reason().with_rule_name(rule_name) for rule_name in item[2]])
+                            )
+                            for item in expected_cohort_group_and_description_and_s_rule_names
                         ]
                     )
                 ),
@@ -1289,7 +1304,7 @@ def test_cohort_group_descriptions_for_multiple_clinical_risk_cohort_groups_when
         ),
     ],
 )
-def test_cohort_group_descriptions_for_multiple_clinical_risk_cohort_groups_when_best_status_is_actionable(
+def test_cohort_group_and_descriptions_when_best_status_is_actionable(
     person_cohorts: list[str],
     expected_cohort_group_and_description: list[tuple[str, str]],
     test_comment: str,

@@ -118,7 +118,7 @@ class PersonAgeSuppressionRuleFactory(IterationRuleFactory):
 
 class PostcodeSuppressionRuleFactory(IterationRuleFactory):
     type = rules.RuleType.suppression
-    name = rules.RuleName("In SW19")
+    name = rules.RuleName("Excluded postcode In SW19")
     description = rules.RuleDescription("In SW19")
     priority = rules.RulePriority(10)
     operator = rules.RuleOperator.starts_with
