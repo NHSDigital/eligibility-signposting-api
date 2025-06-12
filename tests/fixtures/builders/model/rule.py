@@ -103,3 +103,14 @@ class ICBSuppressionRuleFactory(IterationRuleFactory):
     attribute_level = rules.RuleAttributeLevel.PERSON
     attribute_name = rules.RuleAttributeName("ICB")
     comparator = rules.RuleComparator("QE1")
+
+class ICBRedirectRuleFactory(IterationRuleFactory):
+    type = rules.RuleType.redirect
+    name = rules.RuleName("Not in QE1")
+    description = rules.RuleDescription("Not in QE1")
+    priority = rules.RulePriority(20)
+    operator = rules.RuleOperator.ne
+    attribute_level = rules.RuleAttributeLevel.PERSON
+    attribute_name = rules.RuleAttributeName("ICB")
+    comparator = rules.RuleComparator("QE1")
+    comms_routing = rules.CommsRouting("ActionCode1")

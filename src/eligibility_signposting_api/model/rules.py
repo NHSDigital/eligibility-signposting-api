@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import typing
 from collections import Counter
 from datetime import UTC, date, datetime
@@ -32,7 +33,7 @@ CohortLabel = NewType("CohortLabel", str)
 CohortGroup = NewType("CohortGroup", str)
 Description = NewType("Description", str)
 RuleStop = NewType("RuleStop", bool)
-
+CommsRouting = NewType("CommsRouting", str)
 
 class RuleType(StrEnum):
     filter = "F"
@@ -105,7 +106,8 @@ class IterationRule(BaseModel):
     operator: RuleOperator = Field(..., alias="Operator")
     comparator: RuleComparator = Field(..., alias="Comparator")
     attribute_target: RuleAttributeTarget | None = Field(None, alias="AttributeTarget")
-    rule_stop: RuleStop = Field(RuleStop(False), alias="RuleStop")  # noqa: FBT003
+    rule_stop: RuleStop = Field(RuleStop(False), alias="RuleStop")
+    comms_routing: CommsRouting | None = Field(None, alias="CommsRouting")# noqa: FBT003
 
     @field_validator("rule_stop", mode="before")
     def parse_yn_to_bool(cls, v: str | bool) -> bool:  # noqa: N805
@@ -114,6 +116,9 @@ class IterationRule(BaseModel):
         return v
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
+
+    def __str__(self) -> str:
+        return json.dumps(self.model_dump(by_alias=True), indent=2)
 
 
 class Iteration(BaseModel):
@@ -125,8 +130,10 @@ class Iteration(BaseModel):
     approval_minimum: int | None = Field(None, alias="ApprovalMinimum")
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
     type: Literal["A", "M", "S"] = Field(..., alias="Type")
+    default_comms_routing: str | None = Field(None, alias="DefualtCommsRouting")
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
+    actions_mapper: dict[str, dict[str, str]] | None = Field(default_factory=dict, alias="ActionsMapper")
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
@@ -141,6 +148,9 @@ class Iteration(BaseModel):
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
+
+    def __str__(self) -> str:
+        return json.dumps(self.model_dump(by_alias=True), indent=2)
 
 
 class CampaignConfig(BaseModel):
@@ -217,6 +227,10 @@ class CampaignConfig(BaseModel):
         today = datetime.now(tz=UTC).date()
         iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_date"), reverse=True)
         return next(i for i in iterations_by_date_descending if i.iteration_date <= today)
+
+    def __str__(self) -> str:
+        return json.dumps(self.model_dump(by_alias=True), indent=2)
+
 
 
 class Rules(BaseModel):

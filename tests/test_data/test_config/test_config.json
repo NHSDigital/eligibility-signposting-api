@@ -15,7 +15,13 @@
     "Iterations": [
       {
         "ID": "id_1",
-        "DefaultCommsRouting": "Default_Comms_1",
+        "DefaultCommsRouting": "Default_Comms_1|Default_Comms_2",
+        "ActionsMapper": {
+          "routing_code_1": {"ExternalRoutingCode": "external_routing_code_1","ActionDescription":"Action Text 1", "ActionType":"link", "url_link": "link123"},
+          "routing_code_2": {"ExternalRoutingCode": "external_routing_code_2","ActionDescription":"Action Text 2", "ActionType":"link", "url_link": "link123"},
+          "Default_Comms_1": {"ExternalRoutingCode": "external_routing_default","ActionDescription":" Default action Text", "ActionType":"link", "url_link": "link123"},
+          "Default_Comms_2": {"ExternalRoutingCode": "external_routing_default","ActionDescription":" Default action Text", "ActionType":"link", "url_link": "link123"}
+        },
         "IterationCohorts": [
           {
             "CohortLabel": "cohort_1",

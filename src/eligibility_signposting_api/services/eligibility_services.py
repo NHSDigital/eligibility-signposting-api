@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 class UnknownPersonError(Exception):
     pass
 
+class InvalidQueryParam(Exception):
+    pass
+
 
 @service
 class EligibilityService:
