@@ -1042,10 +1042,19 @@ def test_eligibility_results_when_multiple_cohorts(
                 ("magic cohort group", "magic negative description"),
                 ("rsv_age_range", "rsv_age_range negative description"),
             ],
-            "all the cohorts are not-eligible",
+            "rsv_75_rolling is not base-eligible & magic cohort group not eligible by F rules ",
         ),
         (
-            person_rows_builder(nhs_number="123", cohorts=[], postcode="SW19", de=False, icb="QE1"),
+            person_rows_builder(nhs_number="123", cohorts=["rsv_75_rolling"], postcode="AC01", de=True, icb="QE1"),
+            Status.not_eligible,
+            [
+                ("magic cohort group", "magic negative description"),
+                ("rsv_age_range", "rsv_age_range negative description"),
+            ],
+            "all the cohorts are not-eligible by F rules",
+        ),
+        (
+            person_rows_builder(nhs_number="123", cohorts=["rsv_75_rolling"], postcode="SW19", de=False, icb="QE1"),
             Status.not_actionable,
             [
                 ("magic cohort group", "magic positive description"),
@@ -1054,7 +1063,7 @@ def test_eligibility_results_when_multiple_cohorts(
             "all the cohorts are not-actionable",
         ),
         (
-            person_rows_builder(nhs_number="123", cohorts=[], postcode="AC01", de=False, icb="QE1"),
+            person_rows_builder(nhs_number="123", cohorts=["rsv_75_rolling"], postcode="AC01", de=False, icb="QE1"),
             Status.actionable,
             [
                 ("magic cohort group", "magic positive description"),
@@ -1063,20 +1072,20 @@ def test_eligibility_results_when_multiple_cohorts(
             "all the cohorts are actionable",
         ),
         (
-            person_rows_builder(nhs_number="123", cohorts=[], postcode="AC01", de=False, icb="NOT_QE1"),
+            person_rows_builder(nhs_number="123", cohorts=["rsv_75_rolling"], postcode="AC01", de=False, icb="NOT_QE1"),
             Status.actionable,
             [("magic cohort group", "magic positive description")],
             "magic_cohort is actionable, but not others",
         ),
         (
-            person_rows_builder(nhs_number="123", cohorts=[], postcode="SW19", de=False, icb="NOT_QE1"),
+            person_rows_builder(nhs_number="123", cohorts=["rsv_75_rolling"], postcode="SW19", de=False, icb="NOT_QE1"),
             Status.not_actionable,
             [("magic cohort group", "magic positive description")],
             "magic_cohort is not-actionable, but others are not eligible",
         ),
     ],
 )
-def test_cohort_groups_and_their_descriptions_when_magic_cohort_is_having_the_best_status(
+def test_cohort_groups_and_their_descriptions_when_magic_cohort_is_present(
     person_rows: list[dict[str, Any]],
     expected_status: str,
     expected_cohort_group_and_description: list[tuple[str, str]],
@@ -1089,18 +1098,19 @@ def test_cohort_groups_and_their_descriptions_when_magic_cohort_is_having_the_be
             iterations=[
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[
-                        rule_builder.MagicCohortFactory.build(),
                         rule_builder.Rsv75RollingCohortFactory.build(),
+                        rule_builder.MagicCohortFactory.build(),
                     ],
                     iteration_rules=[
-                        # common rules
+                        # F common rule
                         rule_builder.DetainedEstateSuppressionRuleFactory.build(type=rules.RuleType.filter),
+                        # F rules for rsv_75_rolling
+                        rule_builder.ICBFilterRuleFactory.build(
+                            type=rules.RuleType.filter, cohort_label=rules.CohortLabel("rsv_75_rolling")
+                        ),
+                        # S common rule
                         rule_builder.PostcodeSuppressionRuleFactory.build(
                             comparator=rules.RuleComparator("SW19"),
-                        ),
-                        # rules for specific cohorts
-                        rule_builder.ICBFilterRuleFactory.build(
-                            cohort_label=rules.CohortLabel("rsv_75_rolling"),
                         ),
                     ],
                 )

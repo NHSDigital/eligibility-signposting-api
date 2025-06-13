@@ -95,6 +95,10 @@ class IterationCohort(BaseModel):
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
+    @cached_property
+    def is_magic_cohort(self) -> bool:
+        return self.cohort_label.upper() == MAGIC_COHORT_LABEL.upper()
+
 
 class IterationRule(BaseModel):
     type: RuleType = Field(..., alias="Type")
@@ -143,17 +147,6 @@ class Iteration(BaseModel):
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
-
-    @cached_property
-    def has_magic_cohort(self) -> bool:
-        return next(
-            (
-                True
-                for cc in self.iteration_cohorts
-                if cc.cohort_label and cc.cohort_label.upper() == MAGIC_COHORT_LABEL.upper()
-            ),
-            False,
-        )
 
 
 class CampaignConfig(BaseModel):

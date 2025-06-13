@@ -122,7 +122,7 @@ class EligibilityCalculator:
 
                 for cohort in sorted(active_iteration.iteration_cohorts, key=attrgetter("priority")):
                     # Base Eligibility - check
-                    if cohort.cohort_label in self.person_cohorts or active_iteration.has_magic_cohort:
+                    if cohort.cohort_label in self.person_cohorts or cohort.is_magic_cohort:
                         # Eligibility - check
                         if self.is_eligible_by_filter_rules(cohort, cohort_results, filter_rules):
                             # Actionability - evaluation
