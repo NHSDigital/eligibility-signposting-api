@@ -16,7 +16,7 @@ data "aws_acm_certificate" "validation_cert" {
 }
 
 data "aws_kms_alias" "networking_ssm_key" {
-  name = "alias/dev-Networking-ssm-parameters"
+  name = "alias/${var.environment}-Networking-ssm-parameters"
 }
 
 data "aws_ssm_parameter" "mtls_api_client_cert" {

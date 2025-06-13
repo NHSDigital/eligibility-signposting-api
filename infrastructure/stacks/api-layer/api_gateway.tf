@@ -99,6 +99,14 @@ resource "aws_api_gateway_domain_name" "check_eligibility" {
   lifecycle {
     create_before_destroy = true
   }
+
+  depends_on = [
+    aws_s3_object.pem_file,
+    data.aws_acm_certificate.imported_cert,
+    data.aws_acm_certificate.validation_cert,
+    module.s3_truststore_bucket,
+    module.eligibility_signposting_api_gateway
+  ]
 }
 
 resource "aws_api_gateway_base_path_mapping" "eligibility-signposting-api" {
