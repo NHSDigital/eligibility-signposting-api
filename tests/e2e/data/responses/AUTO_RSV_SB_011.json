@@ -1,0 +1,28 @@
+{
+  "responseId": "<<IGNORE_RESPONSE_ID>>",
+  "meta": {
+    "lastUpdated": "<<IGNORE_DATE>>"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age_rolling",
+          "cohortText": "You are aged 75 to 79 years old.",
+          "cohortStatus": "NotActionable"
+        }
+      ],
+      "suitabilityRules": [
+        {
+          "ruleType": "S",
+          "ruleCode": "OtherSetting",
+          "ruleText": "##Getting the vaccine\nOur record show you're living in a setting where care is provided.\nIf you think you should have the RSV vaccine, speak to a member of staff where you live."
+        }
+      ],
+      "actions": []
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "responseId": "<<IGNORE_RESPONSE_ID>>",
+  "meta": {
+    "lastUpdated": "<<IGNORE_DATE>>"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age_rolling",
+          "cohortText": "You are aged 75 to 79 years old.",
+          "cohortStatus": "NotActionable"
+        }
+      ],
+      "suitabilityRules": [
+        {
+          "ruleType": "S",
+          "ruleCode": "TooClose",
+          "ruleText": "Your previous vaccination was less than 91 days ago."
+        }
+      ],
+      "actions": []
+    }
+  ]
+}

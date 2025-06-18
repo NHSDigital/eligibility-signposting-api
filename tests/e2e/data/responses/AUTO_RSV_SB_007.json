@@ -1,0 +1,28 @@
+{
+  "responseId": "<<IGNORE_RESPONSE_ID>>",
+  "meta": {
+    "lastUpdated": "<<IGNORE_DATE>>"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age_rolling",
+          "cohortText": "You are aged 75 to 79 years old.",
+          "cohortStatus": "NotActionable"
+        }
+      ],
+      "suitabilityRules": [
+        {
+          "ruleType": "S",
+          "ruleCode": "NotAvailable",
+          "ruleText": "Vaccinations are not currently available"
+        }
+      ],
+      "actions": []
+    }
+  ]
+}

@@ -1,0 +1,220 @@
+[
+  {
+    "NHS_NUMBER": "0000000001",
+    "ATTRIBUTE_TYPE": "PERSON",
+    "DATE_OF_BIRTH": "19960302",
+    "GENDER": 1,
+    "POSTCODE": "S18 C1X",
+    "POSTCODE_SECTOR": "S181",
+    "POSTCODE_OUTCODE": "S18",
+    "GP_PRACTICE_CODE": "U69384",
+    "PCN": "QJ2"
+  },
+  {
+    "NHS_NUMBER": "0000000001",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "Flu",
+    "STATUS": "Actionable"
+  },
+  {
+    "NHS_NUMBER": "0000000001",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "RSV",
+    "STATUS": "NotEligible"
+  },
+  {
+    "NHS_NUMBER": "0000000002",
+    "ATTRIBUTE_TYPE": "PERSON",
+    "DATE_OF_BIRTH": "19890518",
+    "GENDER": 1,
+    "POSTCODE": "S18 B1X",
+    "POSTCODE_SECTOR": "S181",
+    "POSTCODE_OUTCODE": "S18",
+    "GP_PRACTICE_CODE": "U33827",
+    "PCN": "RJ3"
+  },
+  {
+    "NHS_NUMBER": "0000000002",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "Flu",
+    "STATUS": "Actionable"
+  },
+  {
+    "NHS_NUMBER": "0000000002",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "RSV",
+    "STATUS": "NotActionable"
+  },
+  {
+    "NHS_NUMBER": "0000000003",
+    "ATTRIBUTE_TYPE": "PERSON",
+    "DATE_OF_BIRTH": "19780323",
+    "GENDER": 1,
+    "POSTCODE": "S18 X9X",
+    "POSTCODE_SECTOR": "S189",
+    "POSTCODE_OUTCODE": "S18",
+    "GP_PRACTICE_CODE": "U90732",
+    "PCN": "QJ2"
+  },
+  {
+    "NHS_NUMBER": "0000000003",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "Flu",
+    "STATUS": "Actionable"
+  },
+  {
+    "NHS_NUMBER": "0000000004",
+    "ATTRIBUTE_TYPE": "PERSON",
+    "DATE_OF_BIRTH": "19570120",
+    "GENDER": 0,
+    "POSTCODE": "S18 B6X",
+    "POSTCODE_SECTOR": "S186",
+    "POSTCODE_OUTCODE": "S18",
+    "GP_PRACTICE_CODE": "U52353",
+    "PCN": "LM8"
+  },
+  {
+    "NHS_NUMBER": "0000000004",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "RSV",
+    "STATUS": "Actionable"
+  },
+  {
+    "NHS_NUMBER": "0000000004",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "RSV",
+    "STATUS": "NotEligible"
+  },
+  {
+    "NHS_NUMBER": "0000000005",
+    "ATTRIBUTE_TYPE": "PERSON",
+    "DATE_OF_BIRTH": "19910411",
+    "GENDER": 1,
+    "POSTCODE": "S18 B5X",
+    "POSTCODE_SECTOR": "S185",
+    "POSTCODE_OUTCODE": "S18",
+    "GP_PRACTICE_CODE": "U54464",
+    "PCN": "LM8"
+  },
+  {
+    "NHS_NUMBER": "0000000005",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "RSV",
+    "STATUS": "NotActionable"
+  },
+  {
+    "NHS_NUMBER": "0000000005",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "Covid",
+    "STATUS": "NotEligible"
+  },
+  {
+    "NHS_NUMBER": "0000000006",
+    "ATTRIBUTE_TYPE": "PERSON",
+    "DATE_OF_BIRTH": "19450206",
+    "GENDER": 1,
+    "POSTCODE": "S18 B9X",
+    "POSTCODE_SECTOR": "S189",
+    "POSTCODE_OUTCODE": "S18",
+    "GP_PRACTICE_CODE": "U97038",
+    "PCN": "RJ3"
+  },
+  {
+    "NHS_NUMBER": "0000000006",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "RSV",
+    "STATUS": "Actionable"
+  },
+  {
+    "NHS_NUMBER": "0000000006",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "Flu",
+    "STATUS": "NotEligible"
+  },
+  {
+    "NHS_NUMBER": "0000000007",
+    "ATTRIBUTE_TYPE": "PERSON",
+    "DATE_OF_BIRTH": "19590705",
+    "GENDER": 0,
+    "POSTCODE": "S18 B3X",
+    "POSTCODE_SECTOR": "S183",
+    "POSTCODE_OUTCODE": "S18",
+    "GP_PRACTICE_CODE": "U56174",
+    "PCN": "TK9"
+  },
+  {
+    "NHS_NUMBER": "0000000007",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "Covid",
+    "STATUS": "NotEligible"
+  },
+  {
+    "NHS_NUMBER": "0000000007",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "Covid",
+    "STATUS": "Actionable"
+  },
+  {
+    "NHS_NUMBER": "0000000008",
+    "ATTRIBUTE_TYPE": "PERSON",
+    "DATE_OF_BIRTH": "19990716",
+    "GENDER": 0,
+    "POSTCODE": "S18 A5X",
+    "POSTCODE_SECTOR": "S185",
+    "POSTCODE_OUTCODE": "S18",
+    "GP_PRACTICE_CODE": "U33386",
+    "PCN": "QJ2"
+  },
+  {
+    "NHS_NUMBER": "0000000008",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "Flu",
+    "STATUS": "NotActionable"
+  },
+  {
+    "NHS_NUMBER": "0000000009",
+    "ATTRIBUTE_TYPE": "PERSON",
+    "DATE_OF_BIRTH": "20100426",
+    "GENDER": 0,
+    "POSTCODE": "S18 X4X",
+    "POSTCODE_SECTOR": "S184",
+    "POSTCODE_OUTCODE": "S18",
+    "GP_PRACTICE_CODE": "U94864",
+    "PCN": "LM8"
+  },
+  {
+    "NHS_NUMBER": "0000000009",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "Flu",
+    "STATUS": "Actionable"
+  },
+  {
+    "NHS_NUMBER": "0000000009",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "Flu",
+    "STATUS": "NotActionable"
+  },
+  {
+    "NHS_NUMBER": "0000000010",
+    "ATTRIBUTE_TYPE": "PERSON",
+    "DATE_OF_BIRTH": "19931007",
+    "GENDER": 1,
+    "POSTCODE": "S18 B5X",
+    "POSTCODE_SECTOR": "S185",
+    "POSTCODE_OUTCODE": "S18",
+    "GP_PRACTICE_CODE": "U74914",
+    "PCN": "LM8"
+  },
+  {
+    "NHS_NUMBER": "0000000010",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "RSV",
+    "STATUS": "NotEligible"
+  },
+  {
+    "NHS_NUMBER": "0000000010",
+    "ATTRIBUTE_TYPE": "ELIGIBILITY",
+    "CONDITION": "Flu",
+    "STATUS": "NotEligible"
+  }
+]

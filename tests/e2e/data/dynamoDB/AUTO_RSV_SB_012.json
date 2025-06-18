@@ -1,0 +1,34 @@
+{
+  "scenario_name": "RSV - Not Actionable despite no cohort membership with reasoning of already vaccinated (type 1 includes unknown cohort)",
+  "data": [
+    {
+      "NHS_NUMBER": "5000000012",
+      "ATTRIBUTE_TYPE": "COHORTS",
+      "COHORT_MEMBERSHIPS": []
+    },
+    {
+      "NHS_NUMBER": "5000000012",
+      "ATTRIBUTE_TYPE": "PERSON",
+      "DATE_OF_BIRTH": "<<DATE_AGE_50>>",
+      "GENDER": "0",
+      "POSTCODE": "LS1 1AB",
+      "POSTCODE_SECTOR": "LS1",
+      "POSTCODE_OUTCODE": "1AB",
+      "MSOA": "E02001111",
+      "LSOA": "E01005348",
+      "GP_PRACTICE_CODE": "B87008",
+      "PCN": "U43084",
+      "ICB": "QWO",
+      "COMMISSIONING_REGION": "Y63",
+      "13Q_FLAG": "N",
+      "CARE_HOME_FLAG": "N",
+      "DE_FLAG": "N"
+    },
+    {
+      "NHS_NUMBER": "5000000012",
+      "ATTRIBUTE_TYPE": "TARGET",
+      "TYPE": "RSV",
+      "LAST_SUCCESSFUL_DATE": "<<DATE_LAST_WEEK>>"
+    }
+  ]
+}
