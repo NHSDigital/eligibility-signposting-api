@@ -1,5 +1,5 @@
 {
-   "scenario_name": "RSV - Not Actionable, membership of Age Cohort, dose not yet due",
+  "scenario_name": "RSV - Not Actionable, membership of Age Cohort, dose not yet due",
   "data": [
     {
       "NHS_NUMBER": "5000000009",
