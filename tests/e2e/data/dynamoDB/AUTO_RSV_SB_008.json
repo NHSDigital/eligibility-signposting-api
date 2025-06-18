@@ -1,5 +1,5 @@
 {
-    "scenario_name": "RSV - No RSV response as no active campaign (not available type 2)",
+  "scenario_name": "RSV - No RSV response as no active campaign (not available type 2)",
   "data": [
     {
       "NHS_NUMBER": "5000000008",

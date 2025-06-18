@@ -1,5 +1,5 @@
 {
-   "scenario_name": "RSV - Not Actionable, membership of Age Cohort, dose not far enough apart",
+  "scenario_name": "RSV - Not Actionable, membership of Age Cohort, dose not far enough apart",
   "data": [
     {
       "NHS_NUMBER": "5000000010",
