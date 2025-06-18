@@ -99,6 +99,7 @@ class CohortGroupResult:
 class IterationResult:
     status: Status
     cohort_results: list[CohortGroupResult]
+    actions: list[SuggestedAction]
 
 
 @dataclass

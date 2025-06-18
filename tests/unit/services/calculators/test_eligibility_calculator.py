@@ -22,7 +22,7 @@ from eligibility_signposting_api.model.eligibility import (
     UrlLabel,
     UrlLink,
 )
-from eligibility_signposting_api.model.rules import AvailableAction, ActionsMapper
+from eligibility_signposting_api.model.rules import ActionsMapper, AvailableAction
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
 from tests.fixtures.builders.model import rule as rule_builder
 from tests.fixtures.builders.repos.person import person_rows_builder
@@ -72,7 +72,7 @@ class TestEligibilityCalculator:
         assert actual_action_mapper == iteration.actions_mapper
         assert actual_default_comms == iteration.default_comms_routing
 
-    # todo
+    # TODO
     # unit test: function handle_redirect_rules() includeActions returns actions=none
 
 
@@ -486,7 +486,7 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
     nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=78))
 
-    person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
+    person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"], icb="QE1")
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
             target="RSV",
@@ -494,6 +494,10 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                     iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                    default_comms_routing="defaultcomms",
+                    actions_mapper=rule_builder.ActionsMapperFactory.build(
+                        root={"rule_1_comms_routing": book_nbs_comms, "defaultcomms": defaultCommsDetail}
+                    ),
                 )
             ],
         ),
@@ -502,7 +506,14 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
             iterations=[
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                    iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(),
+                        rule_builder.ICBRedirectRuleFactory.build(),
+                    ],
+                    default_comms_routing="defaultcomms",
+                    actions_mapper=rule_builder.ActionsMapperFactory.build(
+                        root={"ActionCode1": book_nbs_comms, "defaultcomms": defaultCommsDetail}
+                    ),
                 )
             ],
         ),
@@ -518,8 +529,14 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
         actual,
         is_eligibility_status().with_conditions(
             has_items(
-                is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable),
-                is_condition().with_condition_name(ConditionName("COVID")).and_status(Status.actionable),
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(Status.actionable)
+                .and_actions([suggested_action_for_default_comms]),
+                is_condition()
+                .with_condition_name(ConditionName("COVID"))
+                .and_status(Status.actionable)
+                .and_actions([suggested_action_for_book_nbs]),
             )
         ),
     )
@@ -1626,131 +1643,139 @@ def test_cohort_group_descriptions_pick_first_non_empty_if_available(
     )
 
 
+book_nbs_comms = AvailableAction(
+    ActionType="ButtonAuthLink",
+    ExternalRoutingCode="BookNBS",
+    ActionDescription="Action description",
+    UrlLink="http://www.nhs.uk/book-rsv",
+    UrlLabel="Continue to booking",
+)
 
-# todo
-# test without AvailableAction key for comms routing
+defaultCommsDetail = AvailableAction(
+    ActionType="CareCardWithText",
+    ExternalRoutingCode="BookLocal",
+    ActionDescription="You can get an RSV vaccination at your GP surgery",
+)
+
+suggested_action_for_book_nbs = SuggestedAction(
+    action_type=ActionType(book_nbs_comms.action_type),
+    action_code=ActionCode(book_nbs_comms.action_code),
+    action_description=ActionDescription(book_nbs_comms.action_description),
+    url_link=UrlLink(book_nbs_comms.url_link),
+    url_label=UrlLabel(book_nbs_comms.url_label),
+)
+
+suggested_action_for_default_comms = SuggestedAction(
+    action_type=ActionType(defaultCommsDetail.action_type),
+    action_code=ActionCode(defaultCommsDetail.action_code),
+    action_description=ActionDescription(defaultCommsDetail.action_description),
+    url_link=None,
+    url_label=None,
+)
+
+
 @pytest.mark.parametrize(
-    ("default_comms_routing", "actions_mapper", "test_comment"),
+    ("test_comment", "default_comms_routing", "comms_routing", "actions_mapper", "expected_actions"),
     [
         (
+            "Rule match: default_comms_routing present, action_mapper present, return actions from matching comms from rule",
             "defaultcomms",
-            {
-                "ActionCode1": AvailableAction(
-                    ActionType="ActionType",
-                    ExternalRoutingCode="ActionCode1",
-                    ActionDescription="Action description",
-                    UrlLink="ActionLink",
-                    UrlLabel="Label",
-                ),
-                "defaultcomms": AvailableAction(
-                    ActionType="ActionType",
-                    ExternalRoutingCode="defaultcomms",
-                    ActionDescription="Action description",
-                    UrlLink="ActionLink",
-                    UrlLabel="Label",
-                ),
-            },
-            "If actionable, then return action with ActionCode1 from redirect rule, default comms ignored",
+            "InternalBookNBS",
+            {"InternalBookNBS": book_nbs_comms, "defaultcomms": defaultCommsDetail},
+            [suggested_action_for_book_nbs],
         ),
-
         (
-            "",
-            {
-                "ActionCode1": AvailableAction(
-                    ActionType="ActionType",
-                    ExternalRoutingCode="ActionCode1",
-                    ActionDescription="Action description",
-                    UrlLink="ActionLink",
-                    UrlLabel="Label",
-                )
-            },
-            "If actionable, then ??",
-        ),
-
-        (
-            "defaultcommskeywithoutactionmapper",
-            {
-                "ActionCode1": AvailableAction(
-                    ActionType="ActionType",
-                    ExternalRoutingCode="ActionCode1",
-                    ActionDescription="Action description",
-                    UrlLink="ActionLink",
-                    UrlLabel="Label",
-                )
-                # Override redirect rule, to not match
-            },
-            "If actionable, then ??",
-        ),
-
-        (
+            "Rule match: default_comms_routing has multiple values, comms missing in rule, all default comms should be returned in actions",
             "defaultcomms1|defaultcomms2",
-            {
-                "defaultcomms1": AvailableAction(
-                    ActionType="ActionType",
-                    ExternalRoutingCode="defaultcomms",
-                    ActionDescription="Action description",
-                    UrlLink="ActionLink",
-                    UrlLabel="Label",
-                ),
-                "defaultcomms2": AvailableAction(
-                    ActionType="ActionType",
-                    ExternalRoutingCode="defaultcomms",
-                    ActionDescription="Action description",
-                    UrlLink="ActionLink",
-                    UrlLabel="Label",
-                ),
-                # Override redirect rule, to not match
-            },
-            "If actionable, redirect rule not matched, return 2 default comms actions",
+            None,
+            {"defaultcomms1": defaultCommsDetail, "defaultcomms2": defaultCommsDetail},
+            [suggested_action_for_default_comms, suggested_action_for_default_comms],
         ),
-
         (
-            "defaultcomms",
-            {
-                "defaultcomms": AvailableAction(
-                    ActionType="ActionType",
-                    ExternalRoutingCode="defaultcomms",
-                    ActionDescription="Action description",
-                    UrlLink="ActionLink",
-                    UrlLabel="Label",
-                ),
-                # Override redirect rule, to match, missing comms code
-            },
-            "If actionable, then use default comms, when redirect rule comms is missing",
-        ),
-
-        (
-            "defaultcomms",
-            {
-                "defaultcomms": AvailableAction(
-                    ActionType="ActionType",
-                    ExternalRoutingCode="defaultcomms",
-                    ActionDescription="Action description",
-                    UrlLink="ActionLink",
-                    UrlLabel="Label",
-                ),
-                # Override redirect rule, to match, incorrect comms code key
-            },
-            "If actionable, then use default comms, when redirect rule comms has incorrect key",
-        ),
-
-        (
+            "Rule match: default_comms_routing has multiple values, comms is empty string, all default comms should be returned in actions",
+            "defaultcomms1",
             "",
-            {
-                {}
-                # Override redirect rule, to match, missing comms code key, missing default comms
-            },
-            "If actionable, ??",
+            {"defaultcomms1": defaultCommsDetail},
+            [suggested_action_for_default_comms],
         ),
-
-        #
-        # Override redirect rule, with action support optional url link and url label
-        #
-    ]
+        (
+            # TODO: check this behaviour
+            "Rule match: default_comms_routing present, action_mapper missing for matching comms, return default_comms in actions",
+            "defaultcomms",
+            "InternalBookNBS",
+            {"defaultcomms": defaultCommsDetail},
+            [suggested_action_for_default_comms],
+        ),
+        (
+            # TODO: check this behaviour
+            "Rule match: default_comms_routing present, rule has an incorrect comms key, return default_comms in actions",
+            "defaultcomms",
+            "InvalidCode",
+            {"defaultcomms": defaultCommsDetail},
+            [suggested_action_for_default_comms],
+        ),
+        (
+            "Rule match: action_mapper present without url, return actions from matching comms from rule",
+            "defaultcomms",
+            "InternalBookNBS",
+            {
+                "InternalBookNBS": AvailableAction(
+                    ActionType=book_nbs_comms.action_type,
+                    ExternalRoutingCode=book_nbs_comms.action_code,
+                    ActionDescription=book_nbs_comms.action_description,
+                )
+            },
+            # TODO: check this behaviour
+            [
+                SuggestedAction(
+                    action_type=ActionType(book_nbs_comms.action_type),
+                    action_code=ActionCode(book_nbs_comms.action_code),
+                    action_description=ActionDescription(book_nbs_comms.action_description),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
+        ),
+        (
+            # TODO: check this behaviour
+            "Rule match: default_comms_routing missing, comms present in rule, action_mapper missing, return no actions",
+            "",
+            "InternalBookNBS",
+            {},
+            [],
+        ),
+        (
+            "Rule match: default_comms_routing missing, but action_mapper present, return actions from matching comms from rule",
+            "",
+            "InternalBookNBS",
+            {"InternalBookNBS": book_nbs_comms},
+            [suggested_action_for_book_nbs],
+        ),
+        (
+            # TODO: check this behaviour
+            "Rule match: default_comms_routing present, comms present in rule, but action_mapper missing, return no actions",
+            "defaultcommskeywithoutactionmapper",
+            "InternalBookNBS",
+            {},
+            [],
+        ),
+        (
+            "Rule match: default_comms_routing has multiple values, one of the value is invalid, valid values should be returned in actions",
+            "defaultcomms1|invaliddefault",
+            None,
+            {"defaultcomms1": defaultCommsDetail},
+            [suggested_action_for_default_comms],
+        ),
+    ],
 )
 def test_correct_actions_determined_from_redirect_r_rules(
-    default_comms_routing: str, actions_mapper: ActionsMapper, test_comment: str,
-    faker: Faker):
+    test_comment: str,
+    default_comms_routing: str,
+    comms_routing: str,
+    actions_mapper: ActionsMapper,
+    expected_actions: list[SuggestedAction],
+    faker: Faker,
+):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
 
@@ -1764,10 +1789,8 @@ def test_correct_actions_determined_from_redirect_r_rules(
                     rule_builder.IterationFactory.build(
                         iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                         default_comms_routing=default_comms_routing,
-                        actions_mapper=rule_builder.ActionsMapperFactory.build(
-                            root=actions_mapper,
-                        ),
-                        iteration_rules=[rule_builder.ICBRedirectRuleFactory.build()],
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(root=actions_mapper),
+                        iteration_rules=[rule_builder.ICBRedirectRuleFactory.build(comms_routing=comms_routing)],
                     )
                 ],
             )
@@ -1778,16 +1801,6 @@ def test_correct_actions_determined_from_redirect_r_rules(
 
     # When
     actual = calculator.evaluate_eligibility()
-
-    expected_actions = [
-        SuggestedAction(
-            action_type=ActionType("ActionType"),
-            action_code=ActionCode("ActionCode1"),
-            action_description=ActionDescription("Action description"),
-            url_link=UrlLink("ActionLink"),
-            url_label=UrlLabel("Label"),
-        )
-    ]
 
     # Then
     assert_that(
@@ -1801,6 +1814,7 @@ def test_correct_actions_determined_from_redirect_r_rules(
             )
         ),
     )
+
 
 def test_cohort_label_not_supported_used_in_r_rules(faker: Faker):
     # Given
@@ -1817,20 +1831,8 @@ def test_cohort_label_not_supported_used_in_r_rules(faker: Faker):
                         default_comms_routing="defaultcomms",
                         actions_mapper=rule_builder.ActionsMapperFactory.build(
                             root={
-                                "ActionCode1": AvailableAction(
-                                    ActionType="ActionType",
-                                    ExternalRoutingCode="ActionCode1",
-                                    ActionDescription="Action description",
-                                    UrlLink="ActionLink",
-                                    UrlLabel="Label",
-                                ),
-                                "defaultcomms": AvailableAction(
-                                    ActionType="ActionType",
-                                    ExternalRoutingCode="defaultcomms",
-                                    ActionDescription="Action description",
-                                    UrlLink="ActionLink",
-                                    UrlLabel="Label",
-                                ),
+                                "ActionCode1": book_nbs_comms,
+                                "defaultcomms": defaultCommsDetail,
                             }
                         ),
                         iteration_rules=[
@@ -1847,15 +1849,60 @@ def test_cohort_label_not_supported_used_in_r_rules(faker: Faker):
     # When
     actual = calculator.evaluate_eligibility()
 
-    expected_actions = [
-        SuggestedAction(
-            action_type=ActionType("ActionType"),
-            action_code=ActionCode("ActionCode1"),
-            action_description=ActionDescription("Action description"),
-            url_link=UrlLink("ActionLink"),
-            url_label=UrlLabel("Label"),
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to([suggested_action_for_book_nbs]))
+            )
+        ),
+    )
+
+
+def test_multiple_r_rules_match_with_same_priority(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing="defaultcomms",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "rule_1_comms_routing": book_nbs_comms,
+                                "rule_2_comms_routing": book_nbs_comms,
+                                "rule_3_comms_routing": book_nbs_comms,
+                                "defaultcomms": defaultCommsDetail,
+                            }
+                        ),
+                        iteration_rules=[
+                            rule_builder.ICBRedirectRuleFactory.build(comms_routing="rule_1_comms_routing"),
+                            rule_builder.ICBRedirectRuleFactory.build(comms_routing="rule_2_comms_routing"),
+                            rule_builder.ICBRedirectRuleFactory.build(
+                                priority=2,
+                                attribute_name=rules.RuleAttributeName("ICBMismatch"),
+                                comms_routing="rule_3_comms_routing",
+                            ),
+                        ],
+                    )
+                ],
+            )
         )
     ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
 
     # Then
     assert_that(
@@ -1865,7 +1912,128 @@ def test_cohort_label_not_supported_used_in_r_rules(faker: Faker):
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to(expected_actions))
+                .and_actions(equal_to([suggested_action_for_book_nbs]))
+            )
+        ),
+    )
+
+
+def test_multiple_r_rules_with_same_priority_one_rule_mismatch_should_return_default_comms(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing="defaultcomms",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "rule_1_comms_routing": book_nbs_comms,
+                                "rule_2_comms_routing": book_nbs_comms,
+                                "rule_3_comms_routing": book_nbs_comms,
+                                "defaultcomms": defaultCommsDetail,
+                            }
+                        ),
+                        iteration_rules=[
+                            rule_builder.ICBRedirectRuleFactory.build(comms_routing="rule_1_comms_routing"),
+                            rule_builder.ICBRedirectRuleFactory.build(comms_routing="rule_2_comms_routing"),
+                            rule_builder.ICBRedirectRuleFactory.build(
+                                attribute_name=rules.RuleAttributeName("ICBMismatch"),
+                                comms_routing="rule_3_comms_routing",
+                            ),
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to([suggested_action_for_default_comms]))
+            )
+        ),
+    )
+
+
+def test_only_highest_priority_rule_is_applied_and_return_actions_only_for_that_rule(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing="defaultcomms",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "rule_1_comms_routing": AvailableAction(
+                                    ActionType="ButtonAuthLink",
+                                    ExternalRoutingCode="BookNBS",
+                                    ActionDescription="Action description",
+                                ),
+                                "rule_2_comms_routing": AvailableAction(
+                                    ActionType="AuthLink",
+                                    ExternalRoutingCode="BookNBS",
+                                    ActionDescription="Action description",
+                                    UrlLink="http://www.nhs.uk/book-rsv",
+                                    UrlLabel="Continue to booking",
+                                ),
+                                "defaultcomms": defaultCommsDetail,
+                            }
+                        ),
+                        iteration_rules=[
+                            rule_builder.ICBRedirectRuleFactory.build(priority=2, comms_routing="rule_2_comms_routing"),
+                            rule_builder.ICBRedirectRuleFactory.build(priority=1, comms_routing="rule_1_comms_routing"),
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    expected_actions = SuggestedAction(
+        action_type=ActionType("ButtonAuthLink"),
+        action_code=ActionCode("BookNBS"),
+        action_description=ActionDescription("Action description"),
+        url_link=None,
+        url_label=None,
+    )
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to([expected_actions]))
             )
         ),
     )
