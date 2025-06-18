@@ -1,0 +1,22 @@
+{
+  "responseId": "<<IGNORE_RESPONSE_ID>>",
+  "meta": {
+    "lastUpdated": "<<IGNORE_DATE>>"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "eligibilityCohorts": [],
+      "suitabilityRules": [
+        {
+          "ruleType": "S",
+          "ruleCode": "AlreadyVaccinated",
+          "ruleText": "##You've had your RSV vaccination\nBased on our records, you recently had this vaccination. You do not need to do anything."
+        }
+      ],
+      "actions": []
+    }
+  ]
+}

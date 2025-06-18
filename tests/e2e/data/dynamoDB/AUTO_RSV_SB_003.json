@@ -1,0 +1,33 @@
+{
+  "scenario_name": "RSV - Actionable due to membership of an alternative Age Cohort incl. suggested action",
+  "data": [
+    {
+      "NHS_NUMBER": "5000000003",
+      "ATTRIBUTE_TYPE": "COHORTS",
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "rsv_age_catchup",
+          "DATE_JOINED": "2025-01-01"
+        }
+      ]
+    },
+    {
+      "NHS_NUMBER": "5000000003",
+      "ATTRIBUTE_TYPE": "PERSON",
+      "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
+      "GENDER": "0",
+      "POSTCODE": "LS1 1AB",
+      "POSTCODE_SECTOR": "LS1",
+      "POSTCODE_OUTCODE": "1AB",
+      "MSOA": "E02001111",
+      "LSOA": "E01005348",
+      "GP_PRACTICE_CODE": "B87008",
+      "PCN": "U43084",
+      "ICB": "QWO",
+      "COMMISSIONING_REGION": "Y63",
+      "13Q_FLAG": "N",
+      "CARE_HOME_FLAG": "N",
+      "DE_FLAG": "N"
+    }
+  ]
+}
