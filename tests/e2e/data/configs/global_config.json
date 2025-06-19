@@ -11,7 +11,7 @@
     "IterationFrequency": "X",
     "IterationType": "A",
     "IterationTime": "07:00:00",
-    "DefaultCommsRouting": "CONTACTGP",
+    "DefaultCommsRouting": "CONTACT_GP",
     "StartDate": "20250601",
     "EndDate": "20260601",
     "ApprovalMinimum": 0,
@@ -19,7 +19,7 @@
     "Iterations": [
       {
         "ID": ",<<RANDOM_GUID>>",
-        "DefaultCommsRouting": "CONTACTGP",
+        "DefaultCommsRouting": "CONTACT_GP",
         "Version": 1,
         "Name": "Automation RSV - Campaign 1 Iteration 1",
         "IterationDate": "20250601",
@@ -128,9 +128,32 @@
             "AttributeName": "BOOKED_DATE",
             "Operator": "D>=",
             "Comparator": "0",
-            "CommsRouting": "BookNBS"
+            "CommsRouting": "AMEND_NBS"
           }
-        ]
+        ],
+        "ActionsMapper": {
+          "BOOK_NBS": {
+            "ExternalRoutingCode": "BookNBS",
+            "ActionDescription": "",
+            "ActionType": "ButtonAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Continue to booking"
+          },
+          "AMEND_NBS": {
+            "ExternalRoutingCode": "AmendNBS",
+            "ActionDescription": "",
+            "ActionType": "ButtonAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Update or Cancel booking"
+          },
+          "CONTACT_GP": {
+            "actionType": "InfoText",
+            "actionCode": "ContactGP",
+            "description": "Contact your GP surgery to get vaccinated",
+            "UrlLink": "",
+            "urlLabel": ""
+          }
+        }
       }
     ],
     "AvailableActions": [
