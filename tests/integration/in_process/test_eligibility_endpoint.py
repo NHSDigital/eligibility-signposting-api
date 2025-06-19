@@ -11,10 +11,10 @@ from hamcrest import (
     has_key,
 )
 
-from eligibility_signposting_api.model.eligibility import NHSNumber, SuggestedAction, ActionType, ActionCode, \
-    ActionDescription
+from eligibility_signposting_api.model.eligibility import (
+    NHSNumber,
+)
 from eligibility_signposting_api.model.rules import CampaignConfig
-from tests.unit.services.calculators.test_eligibility_calculator import default_comms_detail
 
 
 class TestBaseLine:
@@ -218,7 +218,7 @@ class TestStandardResponse:
                                             "cohortText": "positive_description",
                                         }
                                     ],
-                                    "actions": [{'action_type': 'defaultcomms'}],
+                                    "actions": [{"action_type": "defaultcomms"}],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }
@@ -355,7 +355,7 @@ class TestMagicCohortResponse:
                                             "cohortText": "magic positive description",
                                         }
                                     ],
-                                    "actions": [{'action_type': 'defaultcomms'}],
+                                    "actions": [{"action_type": "defaultcomms"}],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }
@@ -511,7 +511,7 @@ class TestResponseOnMissingAttributes:
                                     "condition": "FLU",
                                     "status": "Actionable",
                                     "eligibilityCohorts": [],
-                                    "actions": [{'action_type': 'defaultcomms'}],
+                                    "actions": [{"action_type": "defaultcomms"}],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }
@@ -521,7 +521,6 @@ class TestResponseOnMissingAttributes:
                 )
             ),
         )
-
 
     def test_actionable_no_actions(
         self,
