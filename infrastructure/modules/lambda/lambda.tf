@@ -20,6 +20,7 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
       PERSON_TABLE_NAME = var.eligibility_status_table_name,
       RULES_BUCKET_NAME = var.eligibility_rules_bucket_name,
       ENV               = var.environment
+      LOG_LEVEL         = var.log_level
     }
   }
 

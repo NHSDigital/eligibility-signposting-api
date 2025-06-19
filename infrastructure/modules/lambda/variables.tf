@@ -37,3 +37,8 @@ variable "eligibility_status_table_name" {
   description = "eligibility datastore table name"
   type        = string
 }
+
+variable "log_level" {
+  description = "log level"
+  type        = string
+}
