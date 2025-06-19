@@ -28,12 +28,6 @@
       "13Q_FLAG": "N",
       "CARE_HOME_FLAG": "N",
       "DE_FLAG": "N"
-    },
-    {
-      "NHS_NUMBER": "5000000001",
-      "ATTRIBUTE_TYPE": "RSV",
-      "BOOKED_APPOINTMENT_DATE": "<<DATE_TOMORROW>>",
-      "BOOKED_APPOINTMENT_PROVIDER": "NBS"
     }
   ]
 }
