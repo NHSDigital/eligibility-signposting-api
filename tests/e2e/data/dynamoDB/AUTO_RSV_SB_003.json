@@ -2,17 +2,17 @@
   "scenario_name": "RSV - Actionable due to membership of an alternative Age Cohort incl. suggested action",
   "data": [
     {
-      "NHS_NUMBER": "5000000003",
+      "NHS_NUMBER": "PERSON#5000000003",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [
         {
           "COHORT_LABEL": "rsv_age_catchup",
-          "DATE_JOINED": "2025-01-01"
+          "DATE_JOINED": "20250101"
         }
       ]
     },
     {
-      "NHS_NUMBER": "5000000003",
+      "NHS_NUMBER": "PERSON#5000000003",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",

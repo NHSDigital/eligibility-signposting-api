@@ -2,17 +2,17 @@
   "scenario_name": "RSV - Actionable due to membership of an Age Cohort incl. suggested actions (with local booking)",
   "data": [
     {
-      "NHS_NUMBER": "5000000005",
+      "NHS_NUMBER": "PERSON#5000000005",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [
         {
           "COHORT_LABEL": "rsv_75_rolling",
-          "DATE_JOINED": "2025-01-01"
+          "DATE_JOINED": "20250101"
         }
       ]
     },
     {
-      "NHS_NUMBER": "5000000005",
+      "NHS_NUMBER": "PERSON#5000000005",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
@@ -30,9 +30,8 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "5000000005",
-      "ATTRIBUTE_TYPE": "TARGET",
-      "TYPE": "RSV",
+      "NHS_NUMBER": "PERSON#5000000005",
+      "ATTRIBUTE_TYPE": "RSV",
       "BOOKED_APPOINTMENT_DATE": "<<DATE_TOMORROW>>",
       "BOOKED_APPOINTMENT_PROVIDER": "ACC"
     }
