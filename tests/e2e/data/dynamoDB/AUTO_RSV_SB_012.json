@@ -2,12 +2,12 @@
   "scenario_name": "RSV - Not Actionable despite no cohort membership with reasoning of already vaccinated (type 1 includes unknown cohort)",
   "data": [
     {
-      "NHS_NUMBER": "PERSON#5000000012",
+      "NHS_NUMBER": "5000000012",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": []
     },
     {
-      "NHS_NUMBER": "PERSON#5000000012",
+      "NHS_NUMBER": "5000000012",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_50>>",
       "GENDER": "0",
@@ -25,7 +25,7 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "PERSON#5000000012",
+      "NHS_NUMBER": "5000000012",
       "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": "<<DATE_LAST_WEEK>>"
     }
