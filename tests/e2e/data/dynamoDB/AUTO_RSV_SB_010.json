@@ -2,7 +2,7 @@
   "scenario_name": "RSV - Not Actionable, membership of Age Cohort, dose not far enough apart",
   "data": [
     {
-      "NHS_NUMBER": "PERSON#5000000010",
+      "NHS_NUMBER": "5000000010",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [
         {
@@ -12,7 +12,7 @@
       ]
     },
     {
-      "NHS_NUMBER": "PERSON#5000000010",
+      "NHS_NUMBER": "5000000010",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
@@ -30,7 +30,7 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "PERSON#5000000010",
+      "NHS_NUMBER": "5000000010",
       "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": "2023-07-01"
     }
