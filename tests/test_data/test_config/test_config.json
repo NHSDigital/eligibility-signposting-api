@@ -1,7 +1,7 @@
 {
   "CampaignConfig": {
     "ID": "id_100",
-    "Version": 1,
+    "Version": "1",
     "Name": "Test Config",
     "Type": "V",
     "Target": "COVID",
@@ -44,7 +44,7 @@
             "Comparator": "19000101"
           }
         ],
-        "Version": 1,
+        "Version": "1",
         "Name": "Test Config",
         "Type": "M",
         "IterationDate": "20250101",
