@@ -521,3 +521,40 @@ class TestResponseOnMissingAttributes:
                 )
             ),
         )
+
+
+    def test_actionable_no_actions(
+        self,
+        client: FlaskClient,
+        persisted_77yo_person: NHSNumber,
+        campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
+    ):
+        # Given
+
+        # When
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=N")
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(
+                is_json_that(
+                    has_entry(
+                        "processedSuggestions",
+                        equal_to(
+                            [
+                                {
+                                    "condition": "FLU",
+                                    "status": "Actionable",
+                                    "eligibilityCohorts": [],
+                                    "suitabilityRules": [],
+                                    "statusText": "Status.actionable",
+                                }
+                            ]
+                        ),
+                    )
+                )
+            ),
+        )
