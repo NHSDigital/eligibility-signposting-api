@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import typing
 from collections import Counter
 from datetime import UTC, date, datetime
@@ -10,7 +11,7 @@ from typing import Literal, NewType
 
 from pydantic import BaseModel, Field, RootModel, field_serializer, field_validator, model_validator
 
-from eligibility_signposting_api.config.contants import MAGIC_COHORT_LABEL
+from eligibility_signposting_api.config.contants import MAGIC_COHORT_LABEL, RULE_STOP_DEFAULT
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from pydantic import SerializationInfo
@@ -112,7 +113,7 @@ class IterationRule(BaseModel):
     operator: RuleOperator = Field(..., alias="Operator")
     comparator: RuleComparator = Field(..., alias="Comparator")
     attribute_target: RuleAttributeTarget | None = Field(None, alias="AttributeTarget")
-    rule_stop: RuleStop = Field(RuleStop(False), alias="RuleStop")
+    rule_stop: RuleStop = Field(RuleStop(RULE_STOP_DEFAULT), alias="RuleStop")
     comms_routing: CommsRouting | None = Field(None, alias="CommsRouting")
 
     model_config = {"populate_by_name": True, "extra": "ignore"}

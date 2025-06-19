@@ -1,13 +1,14 @@
 import json
 import logging
 from http import HTTPStatus
+from unittest.mock import Mock, patch
 
 import pytest
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
-from flask import Flask
+from flask import Flask, Request
 from flask.testing import FlaskClient
-from hamcrest import assert_that, contains_exactly, empty, has_entries, has_entry, has_key, has_length, not_
+from hamcrest import assert_that, contains_exactly, empty, has_entries, has_entry, has_length, not_
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.model.eligibility import (
@@ -22,9 +23,11 @@ from eligibility_signposting_api.model.eligibility import (
     Status,
 )
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
+from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
 from eligibility_signposting_api.views.eligibility import (
     build_eligibility_cohorts,
     build_suitability_results,
+    get_include_actions_flag,
 )
 from tests.fixtures.builders.model.eligibility import (
     CohortResultFactory,
@@ -40,7 +43,12 @@ class FakeEligibilityService(EligibilityService):
     def __init__(self):
         pass
 
-    def get_eligibility_status(self, _: NHSNumber | None = None) -> EligibilityStatus:
+    def get_eligibility_status(
+        self,
+        _: NHSNumber | None = None,
+        *,
+        include_actions_flag: bool = False,  # noqa: ARG002
+    ) -> EligibilityStatus:
         return EligibilityStatusFactory.build()
 
 
@@ -48,7 +56,12 @@ class FakeUnknownPersonEligibilityService(EligibilityService):
     def __init__(self):
         pass
 
-    def get_eligibility_status(self, _: NHSNumber | None = None) -> EligibilityStatus:
+    def get_eligibility_status(
+        self,
+        _: NHSNumber | None = None,
+        *,
+        include_actions_flag: bool = False,  # noqa: ARG002
+    ) -> EligibilityStatus:
         raise UnknownPersonError
 
 
@@ -56,7 +69,12 @@ class FakeUnexpectedErrorEligibilityService(EligibilityService):
     def __init__(self):
         pass
 
-    def get_eligibility_status(self, _: NHSNumber | None = None) -> EligibilityStatus:
+    def get_eligibility_status(
+        self,
+        _: NHSNumber | None = None,
+        *,
+        include_actions_flag: bool = False,  # noqa: ARG002
+    ) -> EligibilityStatus:
         raise ValueError
 
 
@@ -71,7 +89,7 @@ def test_nhs_number_given(app: Flask, client: FlaskClient):
         data = json.loads(response.get_data(as_text=True))
 
         for suggestion in data["processedSuggestions"]:
-            assert_that(suggestion, has_entry("actions", empty()))
+            assert_that(suggestion, has_entry("actions", not_(empty())))
 
 
 def test_no_nhs_number_given(app: Flask, client: FlaskClient):
@@ -343,7 +361,7 @@ def test_no_suitability_rules_for_actionable():
     assert_that(results, has_length(0))
 
 
-def test_nhs_number_and_include_actions_param_yes_given(app: Flask, client: FlaskClient):
+def test_nhs_number_and_include_actions_param_given_and_is_yes(app: Flask, client: FlaskClient):
     # Given
     with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
         # When
@@ -351,10 +369,6 @@ def test_nhs_number_and_include_actions_param_yes_given(app: Flask, client: Flas
 
         # Then
         assert_that(response, is_response().with_status_code(HTTPStatus.OK))
-        data = json.loads(response.get_data(as_text=True))
-
-        for suggestion in data["processedSuggestions"]:
-            assert_that(suggestion, has_entry("actions", empty()))
 
 
 def test_nhs_number_and_include_actions_param_no_given(app: Flask, client: FlaskClient):
@@ -365,12 +379,9 @@ def test_nhs_number_and_include_actions_param_no_given(app: Flask, client: Flask
 
         # Then
         assert_that(response, is_response().with_status_code(HTTPStatus.OK))
-        data = json.loads(response.get_data(as_text=True))
-        for suggestion in data["processedSuggestions"]:
-            assert_that(suggestion, not_(has_key("actions")))
 
 
-def test_nhs_number_and_include_actions_param_incorrect_given(app: Flask, client: FlaskClient):
+def test_nhs_number_and_include_actions_param_value_is_incorrect(app: Flask, client: FlaskClient):
     # Given
     with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
         # When
@@ -396,7 +407,7 @@ def test_nhs_number_and_include_actions_param_incorrect_given(app: Flask, client
         )
 
 
-def test_nhs_number_and_include_actions_param_incorrect_given_2(app: Flask, client: FlaskClient):
+def test_nhs_number_and_unrecognised_query_param_provided(app: Flask, client: FlaskClient):
     # Given
     with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
         # When
@@ -420,3 +431,61 @@ def test_nhs_number_and_include_actions_param_incorrect_given_2(app: Flask, clie
                 )
             ),
         )
+
+
+def test_query_param_include_actions_flag_with_yes():
+    # Given:
+    mock_request = Mock(spec=Request)
+    mock_request.args = {"includeActions": "Y"}
+    with patch("eligibility_signposting_api.views.eligibility.request", mock_request):
+        # When:
+        result = get_include_actions_flag()
+
+    # Then:
+    assert result is True
+
+
+def test_query_param_include_actions_flag_with_no():
+    # Given:
+    mock_request = Mock(spec=Request)
+    mock_request.args = {"includeActions": "N"}
+    with patch("eligibility_signposting_api.views.eligibility.request", mock_request):
+        # When:
+        result = get_include_actions_flag()
+
+    # Then:
+    assert result is False
+
+
+def test_query_param_include_actions_flag_with_no_param():
+    # Given:
+    mock_request = Mock(spec=Request)
+    mock_request.args = {}
+    with patch("eligibility_signposting_api.views.eligibility.request", mock_request):
+        # When:
+        result = get_include_actions_flag()
+
+    # Then:
+    assert result is True
+
+
+def test_query_param_include_actions_flag_with_invalid_value():
+    # Given:
+    mock_request = Mock(spec=Request)
+    mock_request.args = {"includeActions": "invalid"}
+    with (
+        patch("eligibility_signposting_api.views.eligibility.request", mock_request),
+        pytest.raises(InvalidQueryParamError),
+    ):
+        get_include_actions_flag()
+
+
+def test_query_param_include_actions_flag_with_other_params():
+    # Given:
+    mock_request = Mock(spec=Request)
+    mock_request.args = {"otherParam": "value"}
+    with (
+        patch("eligibility_signposting_api.views.eligibility.request", mock_request),
+        pytest.raises(InvalidQueryParamError),
+    ):
+        get_include_actions_flag()

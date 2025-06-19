@@ -7,7 +7,6 @@ from typing import Never
 from fhir.resources.R4B.operationoutcome import OperationOutcome, OperationOutcomeIssue
 from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
-from pygments.lexer import include
 from wireup import Injected
 
 from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
@@ -32,41 +31,13 @@ eligibility_blueprint = Blueprint("eligibility", __name__)
 def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[EligibilityService]) -> ResponseReturnValue:
     logger.debug("checking nhs_number %r in %r", nhs_number, eligibility_service, extra={"nhs_number": nhs_number})
     try:
-        include_actions = request.args.get("includeActions")
-        if "includeActions" in request.args:
-            if include_actions not in ("Y", "N", None):
-                raise_invalid_query_param_error()
-        elif len(request.args) != 0 and "includeActions" not in request.args:
-            raise_invalid_query_param_error()
-
-        include_actions_flag = include_actions == "Y"
-        eligibility_status = eligibility_service.get_eligibility_status(include_actions_flag, nhs_number)
+        eligibility_status = eligibility_service.get_eligibility_status(
+            nhs_number, include_actions_flag=get_include_actions_flag()
+        )
     except InvalidQueryParamError:
-        logger.debug(
-            "Invalid query param",
-        )
-        problem = OperationOutcome(
-            issue=[
-                OperationOutcomeIssue(
-                    severity="error",
-                    code="invalid",
-                    diagnostics="Invalid query param key or value.",
-                )  # pyright: ignore[reportCallIssue]
-            ]
-        )
-        return make_response(problem.model_dump(by_alias=True, mode="json"), HTTPStatus.BAD_REQUEST)
+        return handle_invalid_query_param_error()
     except UnknownPersonError:
-        logger.debug("nhs_number %r not found", nhs_number, extra={"nhs_number": nhs_number})
-        problem = OperationOutcome(
-            issue=[
-                OperationOutcomeIssue(
-                    severity="information",
-                    code="nhs-number-not-found",
-                    diagnostics=f'NHS Number "{nhs_number}" not found.',
-                )  # pyright: ignore[reportCallIssue]
-            ]
-        )
-        return make_response(problem.model_dump(by_alias=True, mode="json"), HTTPStatus.NOT_FOUND)
+        return handle_unknown_person_error(nhs_number)
     else:
         eligibility_response = build_eligibility_response(eligibility_status)
         return make_response(
@@ -74,13 +45,52 @@ def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[Eligi
         )
 
 
+def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:
+    logger.debug("nhs_number %r not found", nhs_number, extra={"nhs_number": nhs_number})
+    problem = OperationOutcome(
+        issue=[
+            OperationOutcomeIssue(
+                severity="information",
+                code="nhs-number-not-found",
+                diagnostics=f'NHS Number "{nhs_number}" not found.',
+            )  # pyright: ignore[reportCallIssue]
+        ]
+    )
+    return make_response(problem.model_dump(by_alias=True, mode="json"), HTTPStatus.NOT_FOUND)
+
+
+def handle_invalid_query_param_error() -> ResponseReturnValue:
+    logger.debug(
+        "Invalid query param",
+    )
+    problem = OperationOutcome(
+        issue=[
+            OperationOutcomeIssue(
+                severity="error",
+                code="invalid",
+                diagnostics="Invalid query param key or value.",
+            )  # pyright: ignore[reportCallIssue]
+        ]
+    )
+    return make_response(problem.model_dump(by_alias=True, mode="json"), HTTPStatus.BAD_REQUEST)
+
+
+def get_include_actions_flag() -> bool:
+    include_actions = request.args.get("includeActions")
+    if "includeActions" in request.args:
+        normalized = include_actions.upper() if include_actions is not None else None
+        if normalized not in ("Y", "N", None):
+            raise_invalid_query_param_error()
+    elif len(request.args) != 0 and "includeActions" not in request.args:
+        raise_invalid_query_param_error()
+    return include_actions is None or include_actions.upper() == "Y"
+
+
 def raise_invalid_query_param_error() -> Never:
     raise InvalidQueryParamError
 
 
-def build_eligibility_response(
-    eligibility_status: EligibilityStatus, *
-) -> eligibility.EligibilityResponse:
+def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibility.EligibilityResponse:
     """Return an object representing the API response we are going to send, given an evaluation of the person's
     eligibility."""
 
