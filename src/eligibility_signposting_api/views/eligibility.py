@@ -7,6 +7,7 @@ from typing import Never
 from fhir.resources.R4B.operationoutcome import OperationOutcome, OperationOutcomeIssue
 from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
+from pygments.lexer import include
 from wireup import Injected
 
 from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
@@ -31,13 +32,15 @@ eligibility_blueprint = Blueprint("eligibility", __name__)
 def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[EligibilityService]) -> ResponseReturnValue:
     logger.debug("checking nhs_number %r in %r", nhs_number, eligibility_service, extra={"nhs_number": nhs_number})
     try:
+        include_actions = request.args.get("includeActions")
         if "includeActions" in request.args:
-            if request.args.get("includeActions") not in ("Y", "N", None):
+            if include_actions not in ("Y", "N", None):
                 raise_invalid_query_param_error()
         elif len(request.args) != 0 and "includeActions" not in request.args:
             raise_invalid_query_param_error()
 
-        eligibility_status = eligibility_service.get_eligibility_status(nhs_number)
+        include_actions_flag = include_actions == "Y"
+        eligibility_status = eligibility_service.get_eligibility_status(include_actions_flag, nhs_number)
     except InvalidQueryParamError:
         logger.debug(
             "Invalid query param",
@@ -65,12 +68,7 @@ def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[Eligi
         )
         return make_response(problem.model_dump(by_alias=True, mode="json"), HTTPStatus.NOT_FOUND)
     else:
-        include_actions = request.args.get("includeActions")
-        if include_actions == "N":
-            include_actions_flag = False
-        else:
-            include_actions_flag = True
-        eligibility_response = build_eligibility_response(eligibility_status, include_actions_flag=include_actions_flag)
+        eligibility_response = build_eligibility_response(eligibility_status)
         return make_response(
             eligibility_response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK
         )
@@ -81,7 +79,7 @@ def raise_invalid_query_param_error() -> Never:
 
 
 def build_eligibility_response(
-    eligibility_status: EligibilityStatus, *, include_actions_flag: bool
+    eligibility_status: EligibilityStatus, *
 ) -> eligibility.EligibilityResponse:
     """Return an object representing the API response we are going to send, given an evaluation of the person's
     eligibility."""
@@ -89,17 +87,13 @@ def build_eligibility_response(
     processed_suggestions = []
 
     for condition in eligibility_status.conditions:
-        actions = []
-        if not include_actions_flag:
-            actions = None
-
         suggestions = ProcessedSuggestion(  # pyright: ignore[reportCallIssue]
             condition=eligibility.ConditionName(condition.condition_name),  # pyright: ignore[reportCallIssue]
             status=STATUS_MAPPING[condition.status],
             statusText=eligibility.StatusText(f"{condition.status}"),  # pyright: ignore[reportCallIssue]
             eligibilityCohorts=build_eligibility_cohorts(condition),  # pyright: ignore[reportCallIssue]
             suitabilityRules=build_suitability_results(condition),  # pyright: ignore[reportCallIssue]
-            actions=actions,
+            actions=condition.actions,
         )
 
         processed_suggestions.append(suggestions)

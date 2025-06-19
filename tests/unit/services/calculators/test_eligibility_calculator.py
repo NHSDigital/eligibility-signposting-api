@@ -2037,3 +2037,95 @@ def test_only_highest_priority_rule_is_applied_and_return_actions_only_for_that_
             )
         ),
     )
+
+def test_should_include_actions_when_include_actions_flag_is_true(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing="defaultcomms",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "book_nbs": book_nbs_comms,
+                                "defaultcomms": defaultCommsDetail,
+                            }
+                        ),
+                        iteration_rules=[
+                            rule_builder.ICBRedirectRuleFactory.build(priority=2, comms_routing="book_nbs"),
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility(True)
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to([suggested_action_for_book_nbs]))
+            )
+        ),
+    )
+
+def test_should_not_include_actions_when_include_actions_flag_is_false(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing="defaultcomms",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "book_nbs": book_nbs_comms,
+                                "defaultcomms": defaultCommsDetail,
+                            }
+                        ),
+                        iteration_rules=[
+                            rule_builder.ICBRedirectRuleFactory.build(priority=2, comms_routing="book_nbs"),
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility(False)
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to(None))
+            )
+        ),
+    )

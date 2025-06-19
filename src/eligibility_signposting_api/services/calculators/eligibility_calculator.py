@@ -125,7 +125,7 @@ class EligibilityCalculator:
         action_mapper = active_iteration.actions_mapper
         return redirect_rules, action_mapper, default_comms
 
-    def evaluate_eligibility(self) -> eligibility.EligibilityStatus:
+    def evaluate_eligibility(self, include_actions_flag: bool) -> eligibility.EligibilityStatus:
         """Iterates over campaign groups, evaluates eligibility, and returns a consolidated status."""
         condition_results: dict[ConditionName, IterationResult] = {}
         actions: list[SuggestedAction] = []
@@ -154,7 +154,9 @@ class EligibilityCalculator:
             condition_results[condition_name] = best_candidate
 
             if best_candidate.status == Status.actionable:
-                actions = self.handle_redirect_rules(best_active_iteration)
+                if include_actions_flag:
+                    actions = self.handle_redirect_rules(best_active_iteration)
+                actions = None
 
             # add actions to condition results
             condition_results[condition_name].actions = actions
