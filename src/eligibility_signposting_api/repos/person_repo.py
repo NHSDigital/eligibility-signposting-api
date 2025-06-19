@@ -36,7 +36,7 @@ class PersonRepo:
         self.table = table
 
     def get_eligibility_data(self, nhs_number: NHSNumber) -> list[dict[str, Any]]:
-        response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(f"PERSON#{nhs_number}"))
+        response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(nhs_number))
         logger.debug("response %r for %r", response, nhs_number, extra={"response": response, "nhs_number": nhs_number})
 
         if not (items := response.get("Items")):
