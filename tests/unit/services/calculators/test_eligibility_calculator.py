@@ -1829,8 +1829,14 @@ def test_correct_actions_determined_from_redirect_r_rules(  # noqa: PLR0913
         test_comment,
     )
 
-
-def test_cohort_label_not_supported_used_in_r_rules(faker: Faker):
+@pytest.mark.parametrize(
+    ("test_comment", "redirect_r_rule_cohort_label"),
+    [
+        ("cohort_label matches person cohort, result action ActionCode1", "cohort1"),
+        ("cohort_label NOT matches person cohort, result action ActionCode1", "cohort2"),
+    ]
+)
+def test_cohort_label_not_supported_used_in_r_rules(test_comment: str, redirect_r_rule_cohort_label: str, faker: Faker):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
 
@@ -1850,7 +1856,7 @@ def test_cohort_label_not_supported_used_in_r_rules(faker: Faker):
                             }
                         ),
                         iteration_rules=[
-                            rule_builder.ICBRedirectRuleFactory.build(cohort_label=rules.CohortLabel("cohort1"))
+                            rule_builder.ICBRedirectRuleFactory.build(cohort_label=rules.CohortLabel(redirect_r_rule_cohort_label))
                         ],
                     )
                 ],
@@ -1874,6 +1880,7 @@ def test_cohort_label_not_supported_used_in_r_rules(faker: Faker):
                 .and_actions(equal_to([suggested_action_for_book_nbs]))
             )
         ),
+        test_comment
     )
 
 
