@@ -74,9 +74,14 @@ class Reason:
 class SuggestedAction:
     action_type: ActionType
     action_code: ActionCode
-    action_description: ActionDescription
-    url_link: UrlLink
-    url_label: UrlLabel
+    action_description: ActionDescription | None = None
+    url_link: UrlLink | None = None
+    url_label: UrlLabel | None = None
+
+
+@dataclass
+class SuggestedActions:
+    actions: list[SuggestedAction]
 
 
 @dataclass
@@ -84,7 +89,7 @@ class Condition:
     condition_name: ConditionName
     status: Status
     cohort_results: list[CohortGroupResult]
-    actions: list[SuggestedAction]
+    actions: SuggestedActions | None = None
 
 
 @dataclass
@@ -99,7 +104,7 @@ class CohortGroupResult:
 class IterationResult:
     status: Status
     cohort_results: list[CohortGroupResult]
-    actions: list[SuggestedAction]
+    actions: SuggestedActions | None
 
 
 @dataclass

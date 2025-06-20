@@ -218,7 +218,7 @@ class TestStandardResponse:
                                             "cohortText": "positive_description",
                                         }
                                     ],
-                                    "actions": [{"action_type": "defaultcomms"}],
+                                    "actions": [{"action_type": "defaultcomms", "action_code": "action_code"}],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }
@@ -355,7 +355,7 @@ class TestMagicCohortResponse:
                                             "cohortText": "magic positive description",
                                         }
                                     ],
-                                    "actions": [{"action_type": "defaultcomms"}],
+                                    "actions": [{"action_type": "defaultcomms", "action_code": "action_code"}],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }
@@ -511,7 +511,7 @@ class TestResponseOnMissingAttributes:
                                     "condition": "FLU",
                                     "status": "Actionable",
                                     "eligibilityCohorts": [],
-                                    "actions": [{"action_type": "defaultcomms"}],
+                                    "actions": [{"action_code": "action_code", "action_type": "defaultcomms"}],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }

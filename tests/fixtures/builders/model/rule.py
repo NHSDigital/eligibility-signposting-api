@@ -29,7 +29,7 @@ class IterationRuleFactory(ModelFactory[rules.IterationRule]):
 
 class AvailableActionDetailFactory(ModelFactory[rules.AvailableAction]):
     action_type = "defaultcomms"
-    action_code = None
+    action_code = "action_code"
     action_description = None
     url_link = None
     url_label = None

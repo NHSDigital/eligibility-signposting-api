@@ -19,6 +19,7 @@ from eligibility_signposting_api.model.eligibility import (
     RuleDescription,
     Status,
     SuggestedAction,
+    SuggestedActions,
     UrlLabel,
     UrlLink,
 )
@@ -342,7 +343,10 @@ def test_rule_types_cause_correct_statuses(rule_type: rules_model.RuleType, expe
         actual,
         is_eligibility_status().with_conditions(
             has_item(
-                is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status).and_actions([])
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(expected_status)
+                .and_actions(SuggestedActions([]))
             )
         ),
     )
@@ -531,11 +535,11 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(Status.actionable)
-                .and_actions([suggested_action_for_default_comms]),
+                .and_actions(SuggestedActions([suggested_action_for_default_comms])),
                 is_condition()
                 .with_condition_name(ConditionName("COVID"))
                 .and_status(Status.actionable)
-                .and_actions([suggested_action_for_book_nbs]),
+                .and_actions(SuggestedActions([suggested_action_for_book_nbs])),
             )
         ),
     )
@@ -1691,7 +1695,7 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms",
             "InternalBookNBS",
             {"InternalBookNBS": book_nbs_comms, "defaultcomms": default_comms_detail},
-            [suggested_action_for_book_nbs],
+            SuggestedActions([suggested_action_for_book_nbs]),
         ),
         (
             """Rule match: default_comms_routing has multiple values,
@@ -1699,7 +1703,7 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms1|defaultcomms2",
             None,
             {"defaultcomms1": default_comms_detail, "defaultcomms2": default_comms_detail},
-            [suggested_action_for_default_comms, suggested_action_for_default_comms],
+            SuggestedActions([suggested_action_for_default_comms, suggested_action_for_default_comms]),
         ),
         (
             """Rule match: default_comms_routing has multiple values,
@@ -1707,7 +1711,7 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms1",
             "",
             {"defaultcomms1": default_comms_detail},
-            [suggested_action_for_default_comms],
+            SuggestedActions([suggested_action_for_default_comms]),
         ),
         (
             """Rule match: default_comms_routing present,
@@ -1715,7 +1719,7 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms",
             "InternalBookNBS",
             {"defaultcomms": default_comms_detail},
-            [suggested_action_for_default_comms],
+            SuggestedActions([suggested_action_for_default_comms]),
         ),
         (
             """Rule match: default_comms_routing present,
@@ -1723,7 +1727,7 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms",
             "InvalidCode",
             {"defaultcomms": default_comms_detail},
-            [suggested_action_for_default_comms],
+            SuggestedActions([suggested_action_for_default_comms]),
         ),
         (
             """Rule match: action_mapper present without url,
@@ -1737,15 +1741,17 @@ suggested_action_for_default_comms = SuggestedAction(
                     ActionDescription=book_nbs_comms.action_description,
                 )
             },
-            [
-                SuggestedAction(
-                    action_type=ActionType(book_nbs_comms.action_type),
-                    action_code=ActionCode(book_nbs_comms.action_code),
-                    action_description=ActionDescription(book_nbs_comms.action_description),
-                    url_link=None,
-                    url_label=None,
-                )
-            ],
+            SuggestedActions(
+                [
+                    SuggestedAction(
+                        action_type=ActionType(book_nbs_comms.action_type),
+                        action_code=ActionCode(book_nbs_comms.action_code),
+                        action_description=ActionDescription(book_nbs_comms.action_description),
+                        url_link=None,
+                        url_label=None,
+                    )
+                ]
+            ),
         ),
         (
             """Rule match: default_comms_routing missing,
@@ -1753,7 +1759,7 @@ suggested_action_for_default_comms = SuggestedAction(
             "",
             "InternalBookNBS",
             {},
-            [],
+            SuggestedActions([]),
         ),
         (
             """Rule match: default_comms_routing missing, but action_mapper present,
@@ -1761,7 +1767,7 @@ suggested_action_for_default_comms = SuggestedAction(
             "",
             "InternalBookNBS",
             {"InternalBookNBS": book_nbs_comms},
-            [suggested_action_for_book_nbs],
+            SuggestedActions([suggested_action_for_book_nbs]),
         ),
         (
             """Rule match: default_comms_routing present,
@@ -1769,7 +1775,7 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcommskeywithoutactionmapper",
             "InternalBookNBS",
             {},
-            [],
+            SuggestedActions([]),
         ),
         (
             """Rule match: default_comms_routing has multiple values,
@@ -1777,7 +1783,7 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms1|invaliddefault",
             None,
             {"defaultcomms1": default_comms_detail},
-            [suggested_action_for_default_comms],
+            SuggestedActions([suggested_action_for_default_comms]),
         ),
     ],
 )
@@ -1786,7 +1792,7 @@ def test_correct_actions_determined_from_redirect_r_rules(  # noqa: PLR0913
     default_comms_routing: str,
     comms_routing: str,
     actions_mapper: ActionsMapper,
-    expected_actions: list[SuggestedAction],
+    expected_actions: SuggestedActions,
     faker: Faker,
 ):
     # Given
@@ -1829,12 +1835,13 @@ def test_correct_actions_determined_from_redirect_r_rules(  # noqa: PLR0913
         test_comment,
     )
 
+
 @pytest.mark.parametrize(
     ("test_comment", "redirect_r_rule_cohort_label"),
     [
         ("cohort_label matches person cohort, result action ActionCode1", "cohort1"),
         ("cohort_label NOT matches person cohort, result action ActionCode1", "cohort2"),
-    ]
+    ],
 )
 def test_cohort_label_not_supported_used_in_r_rules(test_comment: str, redirect_r_rule_cohort_label: str, faker: Faker):
     # Given
@@ -1856,7 +1863,9 @@ def test_cohort_label_not_supported_used_in_r_rules(test_comment: str, redirect_
                             }
                         ),
                         iteration_rules=[
-                            rule_builder.ICBRedirectRuleFactory.build(cohort_label=rules.CohortLabel(redirect_r_rule_cohort_label))
+                            rule_builder.ICBRedirectRuleFactory.build(
+                                cohort_label=rules.CohortLabel(redirect_r_rule_cohort_label)
+                            )
                         ],
                     )
                 ],
@@ -1877,10 +1886,10 @@ def test_cohort_label_not_supported_used_in_r_rules(test_comment: str, redirect_
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to([suggested_action_for_book_nbs]))
+                .and_actions(equal_to(SuggestedActions([suggested_action_for_book_nbs])))
             )
         ),
-        test_comment
+        test_comment,
     )
 
 
@@ -1933,7 +1942,7 @@ def test_multiple_r_rules_match_with_same_priority(faker: Faker):
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to([suggested_action_for_book_nbs]))
+                .and_actions(equal_to(SuggestedActions([suggested_action_for_book_nbs])))
             )
         ),
     )
@@ -1987,7 +1996,7 @@ def test_multiple_r_rules_with_same_priority_one_rule_mismatch_should_return_def
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to([suggested_action_for_default_comms]))
+                .and_actions(equal_to(SuggestedActions([suggested_action_for_default_comms])))
             )
         ),
     )
@@ -2054,7 +2063,7 @@ def test_only_highest_priority_rule_is_applied_and_return_actions_only_for_that_
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to([expected_actions]))
+                .and_actions(equal_to(SuggestedActions([expected_actions])))
             )
         ),
     )
@@ -2101,7 +2110,7 @@ def test_should_include_actions_when_include_actions_flag_is_true_when_status_is
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to([suggested_action_for_book_nbs]))
+                .and_actions(equal_to(SuggestedActions([suggested_action_for_book_nbs])))
             )
         ),
     )

@@ -1,4 +1,3 @@
-import json
 import logging
 from http import HTTPStatus
 from unittest.mock import Mock, patch
@@ -8,7 +7,7 @@ from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask import Flask, Request
 from flask.testing import FlaskClient
-from hamcrest import assert_that, contains_exactly, empty, has_entries, has_entry, has_length, not_
+from hamcrest import assert_that, contains_exactly, has_entries, has_length
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.model.eligibility import (
@@ -86,10 +85,6 @@ def test_nhs_number_given(app: Flask, client: FlaskClient):
 
         # Then
         assert_that(response, is_response().with_status_code(HTTPStatus.OK))
-        data = json.loads(response.get_data(as_text=True))
-
-        for suggestion in data["processedSuggestions"]:
-            assert_that(suggestion, has_entry("actions", not_(empty())))
 
 
 def test_no_nhs_number_given(app: Flask, client: FlaskClient):

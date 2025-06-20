@@ -129,8 +129,8 @@ class IterationRule(BaseModel):
 
 
 class AvailableAction(BaseModel):
-    action_type: str | None = Field(None, alias="ActionType")
-    action_code: str | None = Field(None, alias="ExternalRoutingCode")
+    action_type: str = Field(..., alias="ActionType")
+    action_code: str = Field(..., alias="ExternalRoutingCode")
     action_description: str | None = Field(None, alias="ActionDescription")
     url_link: str | None = Field(None, alias="UrlLink")
     url_label: str | None = Field(None, alias="UrlLabel")
@@ -152,10 +152,10 @@ class Iteration(BaseModel):
     approval_minimum: int | None = Field(None, alias="ApprovalMinimum")
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
     type: Literal["A", "M", "S"] = Field(..., alias="Type")
-    default_comms_routing: str | None = Field(None, alias="DefaultCommsRouting")
+    default_comms_routing: str = Field(..., alias="DefaultCommsRouting")
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
-    actions_mapper: ActionsMapper | None = Field(..., alias="ActionsMapper")
+    actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 

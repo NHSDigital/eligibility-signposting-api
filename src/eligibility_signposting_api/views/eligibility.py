@@ -103,7 +103,11 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibi
             statusText=eligibility.StatusText(f"{condition.status}"),  # pyright: ignore[reportCallIssue]
             eligibilityCohorts=build_eligibility_cohorts(condition),  # pyright: ignore[reportCallIssue]
             suitabilityRules=build_suitability_results(condition),  # pyright: ignore[reportCallIssue]
-            actions=condition.actions,
+            actions=(
+                condition.actions.actions
+                if condition.actions is not None and condition.actions.actions is not None
+                else None
+            ),
         )
 
         processed_suggestions.append(suggestions)
