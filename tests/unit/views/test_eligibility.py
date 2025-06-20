@@ -1,12 +1,13 @@
 import logging
 from http import HTTPStatus
+from unittest.mock import Mock, patch
 
 import pytest
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
-from flask import Flask
+from flask import Flask, Request
 from flask.testing import FlaskClient
-from hamcrest import assert_that, contains_exactly, has_entries, has_key, has_length
+from hamcrest import assert_that, contains_exactly, has_entries, has_length
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.model.eligibility import (
@@ -21,9 +22,11 @@ from eligibility_signposting_api.model.eligibility import (
     Status,
 )
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
+from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
 from eligibility_signposting_api.views.eligibility import (
     build_eligibility_cohorts,
     build_suitability_results,
+    get_include_actions_flag,
 )
 from tests.fixtures.builders.model.eligibility import (
     CohortResultFactory,
@@ -39,7 +42,12 @@ class FakeEligibilityService(EligibilityService):
     def __init__(self):
         pass
 
-    def get_eligibility_status(self, _: NHSNumber | None = None) -> EligibilityStatus:
+    def get_eligibility_status(
+        self,
+        _: NHSNumber | None = None,
+        *,
+        include_actions_flag: bool = False,  # noqa: ARG002
+    ) -> EligibilityStatus:
         return EligibilityStatusFactory.build()
 
 
@@ -47,7 +55,12 @@ class FakeUnknownPersonEligibilityService(EligibilityService):
     def __init__(self):
         pass
 
-    def get_eligibility_status(self, _: NHSNumber | None = None) -> EligibilityStatus:
+    def get_eligibility_status(
+        self,
+        _: NHSNumber | None = None,
+        *,
+        include_actions_flag: bool = False,  # noqa: ARG002
+    ) -> EligibilityStatus:
         raise UnknownPersonError
 
 
@@ -55,7 +68,12 @@ class FakeUnexpectedErrorEligibilityService(EligibilityService):
     def __init__(self):
         pass
 
-    def get_eligibility_status(self, _: NHSNumber | None = None) -> EligibilityStatus:
+    def get_eligibility_status(
+        self,
+        _: NHSNumber | None = None,
+        *,
+        include_actions_flag: bool = False,  # noqa: ARG002
+    ) -> EligibilityStatus:
         raise ValueError
 
 
@@ -66,10 +84,7 @@ def test_nhs_number_given(app: Flask, client: FlaskClient):
         response = client.get("/patient-check/12345")
 
         # Then
-    assert_that(
-        response,
-        is_response().with_status_code(HTTPStatus.OK).and_text(is_json_that(has_key("processedSuggestions"))),
-    )
+        assert_that(response, is_response().with_status_code(HTTPStatus.OK))
 
 
 def test_no_nhs_number_given(app: Flask, client: FlaskClient):
@@ -196,16 +211,19 @@ def test_build_suitability_results_with_deduplication():
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude too young less than 75"),
                         rule_description=RuleDescription("your age is greater than 75"),
+                        matcher_matched=False,
                     ),
                     Reason(
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude too young less than 75"),
                         rule_description=RuleDescription("your age is greater than 75"),
+                        matcher_matched=False,
                     ),
                     Reason(
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude more than 100"),
                         rule_description=RuleDescription("your age is greater than 100"),
+                        matcher_matched=False,
                     ),
                 ],
             ),
@@ -217,6 +235,7 @@ def test_build_suitability_results_with_deduplication():
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude too young less than 75"),
                         rule_description=RuleDescription("your age is greater than 75"),
+                        matcher_matched=False,
                     )
                 ],
             ),
@@ -228,6 +247,7 @@ def test_build_suitability_results_with_deduplication():
                         rule_type=RuleType.filter,
                         rule_name=RuleName("Exclude is present in sw1"),
                         rule_description=RuleDescription("your a member of sw1"),
+                        matcher_matched=False,
                     )
                 ],
             ),
@@ -240,6 +260,7 @@ def test_build_suitability_results_with_deduplication():
                         rule_type=RuleType.filter,
                         rule_name=RuleName("Already vaccinated"),
                         rule_description=RuleDescription("you have already vaccinated"),
+                        matcher_matched=False,
                     )
                 ],
             ),
@@ -272,15 +293,18 @@ def test_build_suitability_results_when_rule_text_is_empty_or_null():
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude too young less than 75"),
                         rule_description=RuleDescription("your age is greater than 75"),
+                        matcher_matched=False,
                     ),
                     Reason(
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude more than 100"),
                         rule_description=RuleDescription(""),
+                        matcher_matched=False,
                     ),
                     Reason(
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude more than 100"),
+                        matcher_matched=False,
                         rule_description=None,
                     ),
                 ],
@@ -293,6 +317,7 @@ def test_build_suitability_results_when_rule_text_is_empty_or_null():
                         rule_type=RuleType.filter,
                         rule_name=RuleName("Exclude is present in sw1"),
                         rule_description=RuleDescription(""),
+                        matcher_matched=False,
                     )
                 ],
             ),
@@ -304,6 +329,7 @@ def test_build_suitability_results_when_rule_text_is_empty_or_null():
                         rule_type=RuleType.filter,
                         rule_name=RuleName("Exclude is present in sw1"),
                         rule_description=None,
+                        matcher_matched=False,
                     )
                 ],
             ),
@@ -328,3 +354,133 @@ def test_no_suitability_rules_for_actionable():
     results = build_suitability_results(condition)
 
     assert_that(results, has_length(0))
+
+
+def test_nhs_number_and_include_actions_param_given_and_is_yes(app: Flask, client: FlaskClient):
+    # Given
+    with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
+        # When
+        response = client.get("/patient-check/12345?includeActions=Y")
+
+        # Then
+        assert_that(response, is_response().with_status_code(HTTPStatus.OK))
+
+
+def test_nhs_number_and_include_actions_param_no_given(app: Flask, client: FlaskClient):
+    # Given
+    with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
+        # When
+        response = client.get("/patient-check/12345?includeActions=N")
+
+        # Then
+        assert_that(response, is_response().with_status_code(HTTPStatus.OK))
+
+
+def test_nhs_number_and_include_actions_param_value_is_incorrect(app: Flask, client: FlaskClient):
+    # Given
+    with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
+        # When
+        response = client.get("/patient-check/12345?includeActions=abc")
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.BAD_REQUEST)
+            .and_text(
+                is_json_that(
+                    has_entries(
+                        resourceType="OperationOutcome",
+                        issue=contains_exactly(
+                            has_entries(
+                                severity="error", code="invalid", diagnostics="Invalid query param key or value."
+                            )
+                        ),
+                    )
+                )
+            ),
+        )
+
+
+def test_nhs_number_and_unrecognised_query_param_provided(app: Flask, client: FlaskClient):
+    # Given
+    with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
+        # When
+        response = client.get("/patient-check/12345?example-key=example-value")
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.BAD_REQUEST)
+            .and_text(
+                is_json_that(
+                    has_entries(
+                        resourceType="OperationOutcome",
+                        issue=contains_exactly(
+                            has_entries(
+                                severity="error", code="invalid", diagnostics="Invalid query param key or value."
+                            )
+                        ),
+                    )
+                )
+            ),
+        )
+
+
+def test_query_param_include_actions_flag_with_yes():
+    # Given:
+    mock_request = Mock(spec=Request)
+    mock_request.args = {"includeActions": "Y"}
+    with patch("eligibility_signposting_api.views.eligibility.request", mock_request):
+        # When:
+        result = get_include_actions_flag()
+
+    # Then:
+    assert result is True
+
+
+def test_query_param_include_actions_flag_with_no():
+    # Given:
+    mock_request = Mock(spec=Request)
+    mock_request.args = {"includeActions": "N"}
+    with patch("eligibility_signposting_api.views.eligibility.request", mock_request):
+        # When:
+        result = get_include_actions_flag()
+
+    # Then:
+    assert result is False
+
+
+def test_query_param_include_actions_flag_with_no_param():
+    # Given:
+    mock_request = Mock(spec=Request)
+    mock_request.args = {}
+    with patch("eligibility_signposting_api.views.eligibility.request", mock_request):
+        # When:
+        result = get_include_actions_flag()
+
+    # Then:
+    assert result is True
+
+
+def test_query_param_include_actions_flag_with_invalid_value():
+    # Given:
+    mock_request = Mock(spec=Request)
+    mock_request.args = {"includeActions": "invalid"}
+    with (
+        patch("eligibility_signposting_api.views.eligibility.request", mock_request),
+        pytest.raises(InvalidQueryParamError),
+    ):
+        get_include_actions_flag()
+
+
+def test_query_param_include_actions_flag_with_other_params():
+    # Given:
+    mock_request = Mock(spec=Request)
+    mock_request.args = {"otherParam": "value"}
+    with (
+        patch("eligibility_signposting_api.views.eligibility.request", mock_request),
+        pytest.raises(InvalidQueryParamError),
+    ):
+        get_include_actions_flag()

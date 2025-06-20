@@ -13,6 +13,10 @@ class UnknownPersonError(Exception):
     pass
 
 
+class InvalidQueryParamError(Exception):
+    pass
+
+
 @service
 class EligibilityService:
     def __init__(
@@ -26,7 +30,9 @@ class EligibilityService:
         self.campaign_repo = campaign_repo
         self.calculator_factory = calculator_factory
 
-    def get_eligibility_status(self, nhs_number: eligibility.NHSNumber | None = None) -> eligibility.EligibilityStatus:
+    def get_eligibility_status(
+        self, nhs_number: eligibility.NHSNumber | None = None, *, include_actions_flag: bool = True
+    ) -> eligibility.EligibilityStatus:
         """Calculate a person's eligibility for vaccination given an NHS number."""
         if nhs_number:
             try:
@@ -45,6 +51,6 @@ class EligibilityService:
                 raise UnknownPersonError from e
             else:
                 calc: calculator.EligibilityCalculator = self.calculator_factory.get(person_data, campaign_configs)
-                return calc.evaluate_eligibility()
+                return calc.evaluate_eligibility(include_actions_flag=include_actions_flag)
 
         raise UnknownPersonError  # pragma: no cover

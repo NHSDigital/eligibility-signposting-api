@@ -8,17 +8,24 @@ from itertools import groupby
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from eligibility_signposting_api.model.rules import Iteration, IterationCohort
+    from eligibility_signposting_api.model.rules import ActionsMapper, Iteration, IterationCohort
 
 from wireup import service
 
 from eligibility_signposting_api.model import eligibility, rules
 from eligibility_signposting_api.model.eligibility import (
+    ActionCode,
+    ActionDescription,
+    ActionType,
     CohortGroupResult,
     Condition,
     ConditionName,
     IterationResult,
     Status,
+    SuggestedAction,
+    SuggestedActions,
+    UrlLabel,
+    UrlLink,
 )
 from eligibility_signposting_api.services.calculators.rule_calculator import (
     RuleCalculator,
@@ -108,31 +115,77 @@ class EligibilityCalculator:
         )
         return filter_rules, suppression_rules
 
-    def evaluate_eligibility(self) -> eligibility.EligibilityStatus:
+    @staticmethod
+    def get_redirect_rules(
+        active_iteration: Iteration,
+    ) -> tuple[tuple[rules.IterationRule, ...], ActionsMapper, str]:
+        redirect_rules = tuple(
+            rule for rule in active_iteration.iteration_rules if rule.type in rules.RuleType.redirect
+        )
+        default_comms = active_iteration.default_comms_routing
+        action_mapper = active_iteration.actions_mapper
+        return redirect_rules, action_mapper, default_comms
+
+    def evaluate_eligibility(self, *, include_actions_flag: bool = True) -> eligibility.EligibilityStatus:
         """Iterates over campaign groups, evaluates eligibility, and returns a consolidated status."""
         condition_results: dict[ConditionName, IterationResult] = {}
+        actions: SuggestedActions | None = SuggestedActions([])
 
         for condition_name, campaign_group in self.campaigns_grouped_by_condition_name:
-            iteration_results: dict[str, IterationResult] = {}
+            iteration_results: dict[str, tuple[Iteration, IterationResult]] = {}
 
             for active_iteration in [cc.current_iteration for cc in campaign_group]:
                 cohort_results: dict[str, CohortGroupResult] = self.get_cohort_results(active_iteration)
 
                 # Determine Result between cohorts - get the best
                 status, best_cohorts = self.get_the_best_cohort_memberships(cohort_results)
-
-                iteration_results[active_iteration.name] = IterationResult(status, best_cohorts)
+                iteration_results[active_iteration.name] = (
+                    active_iteration,
+                    IterationResult(status, best_cohorts, actions),
+                )
 
             # Determine results between iterations - get the best
             if iteration_results:
-                best_candidate = max(iteration_results.values(), key=lambda r: r.status.value)
+                best_iteration_name, (best_active_iteration, best_candidate) = max(
+                    iteration_results.items(), key=lambda item: item[1][1].status.value
+                )
             else:
-                best_candidate = IterationResult(eligibility.Status.not_eligible, [])
+                best_candidate = IterationResult(eligibility.Status.not_eligible, [], actions)
+                best_active_iteration = None
             condition_results[condition_name] = best_candidate
 
+            if best_candidate.status == Status.actionable and best_active_iteration is not None:
+                actions = self.handle_redirect_rules(best_active_iteration) if include_actions_flag else None
+            if best_candidate.status in (Status.not_eligible, Status.not_actionable) and not include_actions_flag:
+                actions = None
+
+            # add actions to condition results
+            condition_results[condition_name].actions = actions
         # Consolidate all the results and return
         final_result = self.build_condition_results(condition_results)
         return eligibility.EligibilityStatus(conditions=final_result)
+
+    def handle_redirect_rules(self, best_active_iteration: Iteration) -> SuggestedActions | None:
+        redirect_rules, action_mapper, default_comms = self.get_redirect_rules(best_active_iteration)
+        priority_getter = attrgetter("priority")
+        sorted_rules_by_priority = sorted(redirect_rules, key=priority_getter)
+
+        actions: SuggestedActions | None = self.get_actions_from_comms(action_mapper, default_comms)
+        for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
+            rule_group_list = list(rule_group)
+            matcher_matched_list = [
+                RuleCalculator(person_data=self.person_data, rule=rule).evaluate_exclusion()[1].matcher_matched
+                for rule in rule_group_list
+            ]
+
+            comms_routing = rule_group_list[0].comms_routing
+            if comms_routing and all(matcher_matched_list):
+                rule_actions = self.get_actions_from_comms(action_mapper, comms_routing)
+                if rule_actions and len(rule_actions.actions) > 0:
+                    actions = rule_actions
+                break
+
+        return actions
 
     def get_cohort_results(self, active_iteration: rules.Iteration) -> dict[str, CohortGroupResult]:
         cohort_results: dict[str, CohortGroupResult] = {}
@@ -156,9 +209,7 @@ class EligibilityCalculator:
         return cohort_results
 
     @staticmethod
-    def build_condition_results(
-        condition_results: dict[ConditionName, IterationResult],
-    ) -> list[Condition]:
+    def build_condition_results(condition_results: dict[ConditionName, IterationResult]) -> list[Condition]:
         conditions: list[Condition] = []
         # iterate over conditions
         for condition_name, active_iteration_result in condition_results.items():
@@ -188,6 +239,7 @@ class EligibilityCalculator:
                     condition_name=condition_name,
                     status=active_iteration_result.status,
                     cohort_results=list(deduplicated_cohort_results),
+                    actions=condition_results[condition_name].actions,
                 )
             )
         return conditions
@@ -276,3 +328,22 @@ class EligibilityCalculator:
                 inclusion_reasons.append(reason)
 
         return best_status, inclusion_reasons, exclusion_reasons, is_rule_stop
+
+    @staticmethod
+    def get_actions_from_comms(action_mapper: ActionsMapper, comms: str) -> SuggestedActions | None:
+        suggested_actions: SuggestedActions = SuggestedActions([])
+        for comm in comms.split("|"):
+            action = action_mapper.get(comm)
+            if action is not None:
+                suggested_actions.actions.append(
+                    SuggestedAction(
+                        action_type=ActionType(action.action_type),
+                        action_code=ActionCode(action.action_code),
+                        action_description=ActionDescription(action.action_description)
+                        if action.action_description
+                        else None,
+                        url_link=UrlLink(action.url_link) if action.url_link else None,
+                        url_label=UrlLabel(action.url_label) if action.url_label else None,
+                    )
+                )
+        return suggested_actions

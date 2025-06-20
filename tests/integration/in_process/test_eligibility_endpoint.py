@@ -11,7 +11,9 @@ from hamcrest import (
     has_key,
 )
 
-from eligibility_signposting_api.model.eligibility import NHSNumber
+from eligibility_signposting_api.model.eligibility import (
+    NHSNumber,
+)
 from eligibility_signposting_api.model.rules import CampaignConfig
 
 
@@ -216,7 +218,7 @@ class TestStandardResponse:
                                             "cohortText": "positive_description",
                                         }
                                     ],
-                                    "actions": [],
+                                    "actions": [{"action_type": "defaultcomms", "action_code": "action_code"}],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }
@@ -353,7 +355,7 @@ class TestMagicCohortResponse:
                                             "cohortText": "magic positive description",
                                         }
                                     ],
-                                    "actions": [],
+                                    "actions": [{"action_type": "defaultcomms", "action_code": "action_code"}],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }
@@ -509,7 +511,43 @@ class TestResponseOnMissingAttributes:
                                     "condition": "FLU",
                                     "status": "Actionable",
                                     "eligibilityCohorts": [],
-                                    "actions": [],
+                                    "actions": [{"action_code": "action_code", "action_type": "defaultcomms"}],
+                                    "suitabilityRules": [],
+                                    "statusText": "Status.actionable",
+                                }
+                            ]
+                        ),
+                    )
+                )
+            ),
+        )
+
+    def test_actionable_no_actions(
+        self,
+        client: FlaskClient,
+        persisted_77yo_person: NHSNumber,
+        campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
+    ):
+        # Given
+
+        # When
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=N")
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(
+                is_json_that(
+                    has_entry(
+                        "processedSuggestions",
+                        equal_to(
+                            [
+                                {
+                                    "condition": "FLU",
+                                    "status": "Actionable",
+                                    "eligibilityCohorts": [],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }
