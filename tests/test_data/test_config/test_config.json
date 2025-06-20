@@ -42,6 +42,28 @@
             "AttributeName": "DATE_OF_BIRTH",
             "Operator": "=",
             "Comparator": "19000101"
+          },
+          {
+            "Type": "S",
+            "Name": "Already Vaccinated",
+            "Description": "Already Vaccinated|You have already been Vaccinated",
+            "Priority": 30,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "CohortLabel": "rsv_75to79_2024",
+            "Operator": "is_not_null",
+            "Comparator": ""
+          },
+          {
+            "Type": "S",
+            "Name": "In Supressed Cohort",
+            "Description": "In Supressed Cohort|You Are In Supressed Cohort",
+            "Priority": 40,
+            "AttributeLevel": "COHORT",
+            "AttributeName": "COHORT_LABEL",
+            "Operator": "=",
+            "Comparator": "rsv_75to79_2024"
           }
         ],
         "Version": "1",
