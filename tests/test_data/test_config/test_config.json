@@ -15,7 +15,7 @@
     "Iterations": [
       {
         "ID": "id_100",
-        "DefaultCommsRouting": "Default_Comms_1",
+        "DefaultCommsRouting": "INTERNALCONTACTGP1",
         "ActionsMapper": {
           "INTERNALCONTACTGP1": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Text1 description", "ActionType":"text1"},
           "INTERNALCONTACTGP2": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Link description", "ActionType":"link", "UrlLink": "link123", "UrlLabel": "link label"},
