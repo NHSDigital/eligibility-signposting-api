@@ -31,7 +31,7 @@ def person_rows_builder(  # noqa:PLR0913
     faker = Faker("en_UK")
     faker.add_provider(PersonDetailProvider)
 
-    key = f"PERSON#{nhs_number}"
+    key = nhs_number
     date_of_birth = date_of_birth if date_of_birth is not ... else faker.date_of_birth(minimum_age=18, maximum_age=99)
     gender = gender if gender is not ... else choice(get_args(Gender))
     postcode = postcode if postcode is not ... else faker.postcode()

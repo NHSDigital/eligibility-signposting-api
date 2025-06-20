@@ -26,8 +26,7 @@
     },
     {
       "NHS_NUMBER": "5000000012",
-      "ATTRIBUTE_TYPE": "TARGET",
-      "TYPE": "RSV",
+      "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": "<<DATE_LAST_WEEK>>"
     }
   ]

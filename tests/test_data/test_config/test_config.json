@@ -1,7 +1,7 @@
 {
   "CampaignConfig": {
-    "ID": "id_1",
-    "Version": 1,
+    "ID": "id_100",
+    "Version": "1",
     "Name": "Test Config",
     "Type": "V",
     "Target": "COVID",
@@ -14,22 +14,29 @@
     "DefaultCommsRouting": "Default_Comms_1",
     "Iterations": [
       {
-        "ID": "id_1",
-        "DefaultCommsRouting": "INTERNALCONTACTGP1|INTERNALCONTACTGP2",
+        "ID": "id_100",
+        "DefaultCommsRouting": "Default_Comms_1",
         "ActionsMapper": {
           "INTERNALCONTACTGP1": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Text1 description", "ActionType":"text1"},
           "INTERNALCONTACTGP2": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Link description", "ActionType":"link", "UrlLink": "link123", "UrlLabel": "link label"},
           "INTERNALTESCO": {"ExternalRoutingCode": "TESCO","ActionDescription":"Tesco description", "ActionType":"link", "UrlLink": "tesco link", "UrlLabel": "link label"},
           "INTERNALFINDWALKIN": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"}
-        },
+         },
+
         "IterationCohorts": [
           {
-            "CohortLabel": "cohort_1",
-            "Priority": 10
+            "CohortLabel": "rsv_75_rolling",
+            "CohortGroupCode": "rsv_age_range",
+            "CohortGroupDescriptionPositive": "You are currently aged 75 to 79",
+            "CohortGroupDescriptionNegative": "You are not currently aged 75 to 79",
+            "Priority": 0
           },
           {
-            "CohortLabel": "cohort_2",
-            "Priority": 20
+            "CohortLabel": "rsv_75to79_2024",
+            "CohortGroupCode": "rsv_catch_up_age_range",
+            "CohortGroupDescriptionPositive": "You turned 80 after 1 September 2024, so are eligible for the RSV vaccine until 31 August 2025",
+            "CohortGroupDescriptionNegative": "You did not turn 80 after 1 September 2024 and get vaccinated by 31 August 2025",
+            "Priority": 10
           }
         ],
         "IterationRules": [
@@ -40,7 +47,7 @@
             "Priority": 20,
             "AttributeLevel": "PERSON",
             "AttributeName": "DATE_OF_BIRTH",
-            "Operator": ">",
+            "Operator": "=",
             "Comparator": "19000101"
           },
           {
@@ -65,7 +72,7 @@
             "CommsRouting": "INTERNALCONTACTGP1|INTERNALTESCO"
           }
         ],
-        "Version": 1,
+        "Version": "1",
         "Name": "Test Config",
         "Type": "M",
         "IterationDate": "20250101",

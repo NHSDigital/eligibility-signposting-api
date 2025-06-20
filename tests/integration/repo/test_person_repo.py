@@ -20,10 +20,10 @@ def test_person_found(person_table: Any, persisted_person: NHSNumber):
     assert_that(
         actual,
         contains_inanyorder(
-            has_entries({"NHS_NUMBER": f"PERSON#{persisted_person}", "ATTRIBUTE_TYPE": "PERSON"}),
-            has_entries({"NHS_NUMBER": f"PERSON#{persisted_person}", "ATTRIBUTE_TYPE": "COHORTS"}),
-            has_entries({"NHS_NUMBER": f"PERSON#{persisted_person}", "ATTRIBUTE_TYPE": "COVID"}),
-            has_entries({"NHS_NUMBER": f"PERSON#{persisted_person}", "ATTRIBUTE_TYPE": "RSV"}),
+            has_entries({"NHS_NUMBER": persisted_person, "ATTRIBUTE_TYPE": "PERSON"}),
+            has_entries({"NHS_NUMBER": persisted_person, "ATTRIBUTE_TYPE": "COHORTS"}),
+            has_entries({"NHS_NUMBER": persisted_person, "ATTRIBUTE_TYPE": "COVID"}),
+            has_entries({"NHS_NUMBER": persisted_person, "ATTRIBUTE_TYPE": "RSV"}),
         ),
     )
 

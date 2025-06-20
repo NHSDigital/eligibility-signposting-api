@@ -7,7 +7,7 @@
       "COHORT_MEMBERSHIPS": [
         {
           "COHORT_LABEL": "rsv_75_rolling",
-          "DATE_JOINED": "2025-01-01"
+          "DATE_JOINED": "20250101"
         }
       ]
     },
@@ -31,8 +31,7 @@
     },
     {
       "NHS_NUMBER": "5000000010",
-      "ATTRIBUTE_TYPE": "TARGET",
-      "TYPE": "RSV",
+      "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": "2023-07-01"
     }
   ]
