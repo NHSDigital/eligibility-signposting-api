@@ -21,8 +21,7 @@
           "INTERNALCONTACTGP2": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Link description", "ActionType":"link", "UrlLink": "link123", "UrlLabel": "link label"},
           "INTERNALTESCO": {"ExternalRoutingCode": "TESCO","ActionDescription":"Tesco description", "ActionType":"link", "UrlLink": "tesco link", "UrlLabel": "link label"},
           "INTERNALFINDWALKIN": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"}
-         },
-
+        },
         "IterationCohorts": [
           {
             "CohortLabel": "rsv_75_rolling",
