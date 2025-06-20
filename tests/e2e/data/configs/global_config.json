@@ -1,0 +1,182 @@
+{
+  "CampaignConfig": {
+    "ID": "<<RANDOM_GUID>>",
+    "Version": 1,
+    "Name": "Automation RSV - Campaign 1",
+    "Type": "O",
+    "Target": "RSV",
+    "Manager": "adam.waller1@nhs.net",
+    "Approver": "adam.waller1@nhs.net",
+    "Reviewer": "adam.waller1@nhs.net",
+    "IterationFrequency": "X",
+    "IterationType": "A",
+    "IterationTime": "07:00:00",
+    "DefaultCommsRouting": "CONTACT_GP",
+    "StartDate": "20250601",
+    "EndDate": "20260601",
+    "ApprovalMinimum": 0,
+    "ApprovalMaximum": 0,
+    "Iterations": [
+      {
+        "ID": ",<<RANDOM_GUID>>",
+        "DefaultCommsRouting": "CONTACT_GP",
+        "Version": 1,
+        "Name": "Automation RSV - Campaign 1 Iteration 1",
+        "IterationDate": "20250601",
+        "IterationNumber": 1,
+        "CommsType": "I",
+        "ApprovalMinimum": 0,
+        "ApprovalMaximum": 0,
+        "Type": "A",
+        "IterationCohorts": [
+          {
+            "CohortLabel": "rsv_75_rolling",
+            "CohortGroupCode": "rsv_age_range",
+            "CohortGroupDescriptionPositive": "You are currently aged 75 to 79",
+            "CohortGroupDescriptionNegative": "You are not currently aged 75 to 79",
+            "Priority": 0
+          },
+          {
+            "CohortLabel": "rsv_75to79_2024",
+            "CohortGroupCode": "rsv_catch_up_age_range",
+            "CohortGroupDescriptionPositive": "You turned 80 after 1 September 2024, so are eligible for the RSV vaccine until 31 August 2025",
+            "CohortGroupDescriptionNegative": "You did not turn 80 after 1 September 2024 and get vaccinated by 31 August 2025",
+            "Priority": 10
+          },
+          {
+            "CohortLabel": "elid_all_people",
+            "CohortGroupCode": "elid_all_people",
+            "CohortGroupDescriptionPositive": "Our records do not say why you are eligible",
+            "CohortGroupDescriptionNegative": "",
+            "Priority": 10
+          }
+        ],
+        "IterationRules": [
+          {
+            "Type": "F",
+            "Name": "Assure only already vaccinated taken from magic cohort",
+            "Description": "Exclude anyone who has NOT been given a dose of RSV Vaccination from the magic cohort",
+            "Operator": "is_empty",
+            "AttributeTarget": "RSV",
+            "AttributeLevel": "TARGET",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "CohortLabel": "elid_all_people",
+            "Priority": 100
+          },
+          {
+            "Type": "F",
+            "Name": "Assure only already vaccinated taken from magic cohort",
+            "Description": "Exclude anyone who has NOT been given a dose of RSV within the last 25 years from the magic cohort",
+            "Operator": "Y<=",
+            "Comparator": "-25[[NVL:18000101]]",
+            "AttributeTarget": "RSV",
+            "AttributeLevel": "TARGET",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "CohortLabel": "elid_all_people",
+            "Priority": 110
+          },
+          {
+            "Type": "F",
+            "Name": "Under Age - Under 75 Years on day of execution",
+            "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 75 years is filtered out.",
+            "Priority": 120,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "Y>",
+            "Comparator": "-75"
+          },
+          {
+            "Type": "F",
+            "Name": "Exclude Too OLD",
+            "Description": "Exclude anyone over 80",
+            "Priority": 130,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "<",
+            "Comparator": "-80"
+          },
+          {
+            "Type": "S",
+            "Name": "Dose Interval - Make NotActionable everyone who has been given a dose of RSV Vaccination in the last 25 years",
+            "Description": "AlreadyVaccinated|##You've had your RSV vaccination\\nBased on our records, you recently had this vaccination. You do not need to do anything.",
+            "Priority": 200,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "Operator": "Y>=",
+            "Comparator": "-25",
+            "RuleStop": "Y"
+          },
+          {
+            "Type": "S",
+            "Name": "Future Booking",
+            "Description": "AlreadyBooked|You are already Booked.",
+            "Priority": 200,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "BOOKED_DATE",
+            "Operator": "D>=",
+            "Comparator": "0"
+          },
+          {
+            "Type": "R",
+            "Name": "Future Booking",
+            "Description": "AlreadyBooked|You are already Booked.",
+            "Priority": 1000,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "BOOKED_DATE",
+            "Operator": "D>=",
+            "Comparator": "0",
+            "CommsRouting": "AMEND_NBS"
+          }
+        ],
+        "ActionsMapper": {
+          "BOOK_NBS": {
+            "ExternalRoutingCode": "BookNBS",
+            "ActionDescription": "",
+            "ActionType": "ButtonAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Continue to booking"
+          },
+          "AMEND_NBS": {
+            "ExternalRoutingCode": "AmendNBS",
+            "ActionDescription": "",
+            "ActionType": "ButtonAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Update or Cancel booking"
+          },
+          "CONTACT_GP": {
+            "actionType": "InfoText",
+            "actionCode": "ContactGP",
+            "description": "Contact your GP surgery to get vaccinated",
+            "UrlLink": "",
+            "urlLabel": ""
+          }
+        }
+      }
+    ],
+    "AvailableActions": [
+      {
+        "actionType": "ButtonAuthLink",
+        "actionCode": "BookNBS",
+        "description": "",
+        "urlLink": "http://www.nhs.uk/book-rsv",
+        "urlLabel": "Continue to booking"
+      },
+      {
+        "actionType": "Link",
+        "actionCode": "FindWalkin",
+        "description": "Find a walk-in service for RSV vaccinations",
+        "urlLink": "www.england.nhs.uk/rsv-east",
+        "urlLabel": ""
+      },
+      {
+        "actionType": "InfoText",
+        "actionCode": "ContactGP",
+        "description": "Contact your GP surgery to get vaccinated",
+        "urlLabel": ""
+      }
+    ]
+  }
+}

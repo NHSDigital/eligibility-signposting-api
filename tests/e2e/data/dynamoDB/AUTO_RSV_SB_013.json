@@ -4,12 +4,19 @@
     {
       "NHS_NUMBER": "5000000013",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MEMBERSHIPS": [
-        {
-          "COHORT_LABEL": "covid_16+_immunosuppression",
-          "DATE_JOINED": "20250101"
+      "COHORT_MAP": {
+        "cohorts": {
+          "M": {
+            "covid_16+_immunosuppression": {
+              "M": {
+                "dateJoined": {
+                  "S": "20230515"
+                }
+              }
+            }
+          }
         }
-      ]
+      }
     },
     {
       "NHS_NUMBER": "5000000013",

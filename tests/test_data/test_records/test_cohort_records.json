@@ -1,2 +1,24 @@
-{"NHS_NUMBER": "1234567890", "ATTRIBUTE_TYPE": "COHORTS", "COHORT_MEMBERSHIPS": [{"COHORT_LABEL": "under_75", "DATE_JOINED": "2025-01-01"},{"COHORT_LABEL": "over_75", "DATE_JOINED": "2025-01-01"}]}
-{"NHS_NUMBER": "2345678901", "ATTRIBUTE_TYPE": "COHORTS", "COHORT_MEMBERSHIPS": [{"COHORT_LABEL": "under_75", "DATE_JOINED": "2025-01-01"},{"COHORT_LABEL": "over_75", "DATE_JOINED": "2025-01-01"}]}
+{
+  "NHS_NUMBER": "5000000001",
+  "ATTRIBUTE_TYPE": "COHORTS",
+  "COHORT_MAP": {
+    "cohorts": {
+      "M": {
+        "rsv_75_rolling": {
+          "M": {
+            "dateJoined": {
+              "S": "20230515"
+            }
+          }
+        },
+        "rsv_75to79_2024": {
+          "M": {
+            "dateJoined": {
+              "S": "20221120"
+            }
+          }
+        }
+      }
+    }
+  }
+}

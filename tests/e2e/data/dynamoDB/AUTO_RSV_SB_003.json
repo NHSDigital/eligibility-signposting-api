@@ -4,12 +4,19 @@
     {
       "NHS_NUMBER": "5000000003",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MEMBERSHIPS": [
-        {
-          "COHORT_LABEL": "rsv_age_catchup",
-          "DATE_JOINED": "20250101"
+      "COHORT_MAP": {
+        "cohorts": {
+          "M": {
+            "rsv_75to79_2024": {
+              "M": {
+                "dateJoined": {
+                  "S": "20221120"
+                }
+              }
+            }
+          }
         }
-      ]
+      }
     },
     {
       "NHS_NUMBER": "5000000003",
