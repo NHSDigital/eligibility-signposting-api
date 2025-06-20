@@ -29,39 +29,6 @@ resource "aws_iam_role_policy" "external_dynamodb_write_policy" {
   policy = data.aws_iam_policy_document.dynamodb_write_policy_doc.json
 }
 
-
-# Deny all S3 actions on the access logs bucket unless requests use secure (SSL) transport.
-data "aws_iam_policy_document" "storage_bucket_access_logs_policy" {
-  statement {
-    sid = "AllowSSLRequestsOnly"
-    actions = [
-      "s3:*",
-    ]
-    effect = "Deny"
-    resources = [
-      module.s3_rules_bucket.storage_bucket_access_logs_arn,
-      "${module.s3_rules_bucket.storage_bucket_access_logs_arn}/*",
-    ]
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-    condition {
-      test = "Bool"
-      values = [
-        "false",
-      ]
-
-      variable = "aws:SecureTransport"
-    }
-  }
-}
-
-resource "aws_s3_bucket_policy" "storage_bucket_access_logs_policy" {
-  bucket = module.s3_rules_bucket.storage_bucket_access_logs_id
-  policy = data.aws_iam_policy_document.storage_bucket_access_logs_policy.json
-}
-
 # Policy doc for S3 Rules bucket
 data "aws_iam_policy_document" "s3_rules_bucket_policy" {
   statement {
@@ -81,7 +48,6 @@ data "aws_iam_policy_document" "s3_rules_bucket_policy" {
     }
   }
 }
-
 
 # Attach s3 read policy to Lambda role
 resource "aws_iam_role_policy" "lambda_s3_read_policy" {
