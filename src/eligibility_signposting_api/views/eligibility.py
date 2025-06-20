@@ -26,7 +26,7 @@ eligibility_blueprint = Blueprint("eligibility", __name__)
 @eligibility_blueprint.get("/", defaults={"nhs_number": ""})
 @eligibility_blueprint.get("/<nhs_number>")
 def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[EligibilityService]) -> ResponseReturnValue:
-    logger.debug("checking nhs_number %r in %r", nhs_number, eligibility_service, extra={"nhs_number": nhs_number})
+    logger.info("checking nhs_number %r in %r", nhs_number, eligibility_service, extra={"nhs_number": nhs_number})
     try:
         eligibility_status = eligibility_service.get_eligibility_status(nhs_number)
     except UnknownPersonError:
