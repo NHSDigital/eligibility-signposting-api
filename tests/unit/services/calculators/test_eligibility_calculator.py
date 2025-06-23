@@ -5,6 +5,7 @@ import pytest
 from faker import Faker
 from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_to, has_item, has_items, is_in
+from pydantic import ValidationError
 
 from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
@@ -180,6 +181,15 @@ def test_campaigns_with_applicable_iteration_types_considered(iteration_type: st
             ),
         ),
     )
+
+
+@pytest.mark.parametrize(
+    "iteration_type",
+    ["NA", "N", "FAKE", "F"],
+)
+def test_invalid_iteration_type_raises_validation_error(iteration_type: str):
+    with pytest.raises(ValidationError):
+        rule_builder.CampaignConfigFactory.build(target="RSV", iteration_type=iteration_type)
 
 
 def test_base_eligible_and_simple_rule_includes(faker: Faker):
