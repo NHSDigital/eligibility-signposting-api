@@ -220,18 +220,18 @@ cryptography = "*"
 
 [[package]]
 name = "awscli"
-version = "1.40.39"
+version = "1.40.40"
 description = "Universal Command Line Environment for AWS."
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "awscli-1.40.39-py3-none-any.whl", hash = "sha256:3bb17cef517d0e7ff03b91c1a85d6b7d3d294587a76def938fa93293b8fdded4"},
-    {file = "awscli-1.40.39.tar.gz", hash = "sha256:82985feb7aff8e7fbfcbff836ce9c1aec0ad5a949a77545b54da0b8130f4d5a9"},
+    {file = "awscli-1.40.40-py3-none-any.whl", hash = "sha256:cc0a498b04da5efb3cc6f8cd5e6389c55b5cfac8f0db95b8fda333ba0b77527d"},
+    {file = "awscli-1.40.40.tar.gz", hash = "sha256:ea584bd86ad0ae3085867f01aab08e0b3aa5da0e4527d4897b6c67f238bc7430"},
 ]
 
 [package.dependencies]
-botocore = "1.38.40"
+botocore = "1.38.41"
 colorama = ">=0.2.5,<0.4.7"
 docutils = ">=0.18.1,<=0.19"
 PyYAML = ">=3.10,<6.1"
@@ -333,14 +333,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.38.40"
+version = "1.38.41"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.9"
 groups = ["main", "dev"]
 files = [
-    {file = "botocore-1.38.40-py3-none-any.whl", hash = "sha256:7528f47945502bf4226e629337c2ac2e454e661ac8fd1dc0fbf7f38082930f3f"},
-    {file = "botocore-1.38.40.tar.gz", hash = "sha256:aefbfe835a7ebe9bbdd88df3999b0f8f484dd025af4ebb3f3387541316ce4349"},
+    {file = "botocore-1.38.41-py3-none-any.whl", hash = "sha256:06069a06f1352accb1f6c9505d6e323753627112be80a9d2e057c6d9c9779ffd"},
+    {file = "botocore-1.38.41.tar.gz", hash = "sha256:98e3fed636ebb519320c4b2d078db6fa6099b052b4bb9b5c66632a5a7fe72507"},
 ]
 
 [package.dependencies]
@@ -3478,4 +3478,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "0ac8be9dfc1718f5a9b8f616d1baa5e82f5dbcbe2633b71bfadcf42ea3f4da11"
+content-hash = "3187babba49b1d371ee09ac254841cc4da8592aa3d3c0dfb63c1195094f5c9b5"
