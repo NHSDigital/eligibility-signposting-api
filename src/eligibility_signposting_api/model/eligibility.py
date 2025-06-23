@@ -74,9 +74,9 @@ class Reason:
 class SuggestedAction:
     action_type: ActionType
     action_code: ActionCode
-    action_description: ActionDescription | None = None
-    url_link: UrlLink | None = None
-    url_label: UrlLabel | None = None
+    action_description: ActionDescription | None
+    url_link: UrlLink | None
+    url_label: UrlLabel | None
 
 
 @dataclass
