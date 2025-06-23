@@ -4,7 +4,9 @@
     {
       "NHS_NUMBER": "5000000012",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MEMBERSHIPS": []
+      "COHORT_MAP": {
+        "cohorts": {}
+      }
     },
     {
       "NHS_NUMBER": "5000000012",
