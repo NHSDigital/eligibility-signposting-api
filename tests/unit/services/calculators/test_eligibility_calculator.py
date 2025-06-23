@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 from faker import Faker
 from freezegun import freeze_time
-from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_to, has_item, has_items
+from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_to, has_item, has_items, is_in
 
 from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
@@ -149,6 +149,35 @@ def test_only_live_campaigns_considered(faker: Faker):
         actual,
         is_eligibility_status().with_conditions(
             has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_eligible))
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    "iteration_type",
+    ["A", "M", "S", "O"],
+)
+def test_campaigns_with_applicable_iteration_types_considered(iteration_type: str, faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number)
+    campaign_configs = [rule_builder.CampaignConfigFactory.build(target="RSV", iteration_type=iteration_type)]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(is_in([Status.actionable, Status.not_actionable, Status.not_eligible]))
+            ),
         ),
     )
 
