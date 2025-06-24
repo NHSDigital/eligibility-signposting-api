@@ -46,3 +46,5 @@ sandbox/specification/*
 /sandbox/specification/*
 /integration-test-results.xml
 /specification/tmp/*
+/tests/e2e/data/out*
+/tests/e2e/reports/*
