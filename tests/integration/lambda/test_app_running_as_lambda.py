@@ -147,11 +147,10 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(
 ):
     """Given lambda installed into localstack, run it via http"""
     # Given
-    nhs_number = NHSNumber(faker.nhs_number())
     # When
     response = httpx.get(
-        str(flask_function_url / "patient-check" / nhs_number),
-        headers={"custom-nhs-number-header-name": str(nhs_number)}
+        str(flask_function_url / "patient-check" / persisted_person),
+        headers={"custom-nhs-number-header-name": str(persisted_person)}
     )
 
     # Then
