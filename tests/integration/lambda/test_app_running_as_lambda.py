@@ -136,3 +136,26 @@ def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
         logGroupName=f"/aws/lambda/{flask_function}", logStreamName=log_stream_name, limit=100
     )
     return [e["message"] for e in log_events["events"]]
+
+
+def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(
+    flask_function_url: URL,
+    persisted_person: NHSNumber,
+    campaign_config: CampaignConfig,
+    faker: Faker,
+    # noqa: ARG001
+):
+    """Given lambda installed into localstack, run it via http"""
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    # When
+    response = httpx.get(
+        str(flask_function_url / "patient-check" / nhs_number),
+        headers={"custom-nhs-number-header-name": str(nhs_number)}
+    )
+
+    # Then
+    assert_that(
+        response,
+        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
+    )

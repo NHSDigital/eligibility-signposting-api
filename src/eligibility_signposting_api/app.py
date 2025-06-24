@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Any
 
@@ -10,6 +11,7 @@ from mangum.types import LambdaContext, LambdaEvent
 from eligibility_signposting_api import repos, services
 from eligibility_signposting_api.config.config import config, init_logging
 from eligibility_signposting_api.error_handler import handle_exception
+from eligibility_signposting_api.wrapper import validate_matching_nhs_number
 from eligibility_signposting_api.views import eligibility_blueprint
 
 init_logging()
@@ -22,8 +24,11 @@ def main() -> None:  # pragma: no cover
     app.run(debug=config()["log_level"] == logging.DEBUG)
 
 
+#@validate_matching_nhs_number()
 def lambda_handler(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]:  # pragma: no cover
     """Run the Flask app as an AWS Lambda."""
+    logger.warning("Lambda event received",
+                   extra={"event_headers": dict(event["headers"])})
     app = create_app()
     app.debug = config()["log_level"] == logging.DEBUG
     handler = Mangum(WsgiToAsgi(app), lifespan="off")
