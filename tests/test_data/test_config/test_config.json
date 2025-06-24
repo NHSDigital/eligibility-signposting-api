@@ -4,7 +4,7 @@
     "Version": "1",
     "Name": "Test Config",
     "Type": "V",
-    "Target": "COVID",
+    "Target": "RSV",
     "Manager": "person@test.com",
     "Approver": "person@test.com",
     "Reviewer": "person@test.com",
@@ -19,16 +19,16 @@
         "IterationCohorts": [
           {
             "CohortLabel": "rsv_75_rolling",
-            "CohortGroupCode": "rsv_age_range",
-            "CohortGroupDescriptionPositive": "You are currently aged 75 to 79",
-            "CohortGroupDescriptionNegative": "You are not currently aged 75 to 79",
+            "CohortGroup": "rsv_age_range",
+            "PositiveDescription": "You are currently aged 75 to 79",
+            "NegativeDescription": "You are not currently aged 75 to 79",
             "Priority": 0
           },
           {
             "CohortLabel": "rsv_75to79_2024",
-            "CohortGroupCode": "rsv_catch_up_age_range",
-            "CohortGroupDescriptionPositive": "You turned 80 after 1 September 2024, so are eligible for the RSV vaccine until 31 August 2025",
-            "CohortGroupDescriptionNegative": "You did not turn 80 after 1 September 2024 and get vaccinated by 31 August 2025",
+            "CohortGroup": "rsv_catch_up_age_range",
+            "PositiveDescription": "You turned 80 after 1 September 2024, so are eligible for the RSV vaccine until 31 August 2025",
+            "NegativeDescription": "You did not turn 80 after 1 September 2024 and get vaccinated by 31 August 2025",
             "Priority": 10
           }
         ],
@@ -42,6 +42,28 @@
             "AttributeName": "DATE_OF_BIRTH",
             "Operator": "=",
             "Comparator": "19000101"
+          },
+          {
+            "Type": "S",
+            "Name": "Already Vaccinated",
+            "Description": "Already Vaccinated|You have already been Vaccinated",
+            "Priority": 30,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "CohortLabel": "rsv_75to79_2024",
+            "Operator": "is_not_null",
+            "Comparator": ""
+          },
+          {
+            "Type": "S",
+            "Name": "In Supressed Cohort",
+            "Description": "In Supressed Cohort|You Are In Supressed Cohort",
+            "Priority": 40,
+            "AttributeLevel": "COHORT",
+            "AttributeName": "COHORT_LABEL",
+            "Operator": "=",
+            "Comparator": "rsv_75to79_2024"
           }
         ],
         "Version": "1",
@@ -55,7 +77,7 @@
       }
     ],
     "StartDate": "20250101",
-    "EndDate": "20250101",
+    "EndDate": "20260101",
     "ApprovalMinimum": 1,
     "ApprovalMaximum": 5000000
   }
