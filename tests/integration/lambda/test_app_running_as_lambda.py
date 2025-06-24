@@ -34,7 +34,12 @@ def test_install_and_call_lambda_flask(
         "routeKey": "GET /",
         "rawPath": "/",
         "rawQueryString": "",
-        "headers": {"accept": "application/json", "content-type": "application/json"},
+        "headers": {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "custom-nhs-number-header-name": str(persisted_person),
+        },
+        "pathParameters": {"id": str(persisted_person)},
         "requestContext": {
             "http": {
                 "sourceIp": "192.0.0.1",
@@ -76,7 +81,10 @@ def test_install_and_call_flask_lambda_over_http(
     # Given
 
     # When
-    response = httpx.get(str(flask_function_url / "patient-check" / persisted_person))
+    response = httpx.get(
+        str(flask_function_url / "patient-check" / persisted_person),
+        headers={"custom-nhs-number-header-name": str(persisted_person)},
+    )
 
     # Then
     assert_that(
@@ -97,7 +105,10 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
     nhs_number = NHSNumber(faker.nhs_number())
 
     # When
-    response = httpx.get(str(flask_function_url / "patient-check" / nhs_number))
+    response = httpx.get(
+        str(flask_function_url / "patient-check" / nhs_number),
+        headers={"custom-nhs-number-header-name": str(nhs_number)},
+    )
 
     # Then
     assert_that(
@@ -139,18 +150,14 @@ def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
 
 
 def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(
-    flask_function_url: URL,
-    persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,
-    faker: Faker,
-    # noqa: ARG001
+    flask_function_url: URL, persisted_person: NHSNumber
 ):
     """Given lambda installed into localstack, run it via http"""
     # Given
     # When
     response = httpx.get(
         str(flask_function_url / "patient-check" / persisted_person),
-        headers={"custom-nhs-number-header-name": str(persisted_person)}
+        headers={"custom-nhs-number-header-name": str(persisted_person)},
     )
 
     # Then
@@ -159,23 +166,20 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(
         is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
     )
 
-def test_given_nhs_number_in_path_doesnot_matches_with_nhs_number_in_headers_resullts_in_error_respose(
-    flask_function_url: URL,
-    persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,
-    faker: Faker,
-    # noqa: ARG001
+
+def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_results_in_error_response(
+    flask_function_url: URL, persisted_person: NHSNumber
 ):
     """Given lambda installed into localstack, run it via http"""
     # Given
     # When
     response = httpx.get(
         str(flask_function_url / "patient-check" / persisted_person),
-        headers={"custom-nhs-number-header-name": f"123{str(persisted_person)}"}
+        headers={"custom-nhs-number-header-name": f"123{persisted_person!s}"},
     )
 
     # Then
     assert_that(
         response,
-        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
+        is_response().with_status_code(HTTPStatus.FORBIDDEN).and_body("NHS number mismatch"),
     )
