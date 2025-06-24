@@ -39,7 +39,7 @@
     {
       "NHS_NUMBER": "50000000014",
       "ATTRIBUTE_TYPE": "RSV",
-      "LAST_SUCCESSFUL_DATE": "<<DATE_LAST_WEEK>>"
+      "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_-7>>"
     }
   ]
 }
