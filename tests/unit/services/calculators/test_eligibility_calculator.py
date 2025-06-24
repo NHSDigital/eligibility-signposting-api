@@ -10,13 +10,21 @@ from pydantic import ValidationError
 from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
 from eligibility_signposting_api.model.eligibility import (
+    ActionCode,
+    ActionDescription,
+    ActionType,
     ConditionName,
     DateOfBirth,
     NHSNumber,
     Postcode,
     RuleDescription,
     Status,
+    SuggestedAction,
+    SuggestedActions,
+    UrlLabel,
+    UrlLink,
 )
+from eligibility_signposting_api.model.rules import ActionsMapper, AvailableAction
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
 from tests.fixtures.builders.model import rule as rule_builder
 from tests.fixtures.builders.repos.person import person_rows_builder
@@ -26,6 +34,45 @@ from tests.fixtures.matchers.eligibility import (
     is_eligibility_status,
     is_reason,
 )
+from tests.fixtures.matchers.rules import is_iteration_rule
+
+
+class TestEligibilityCalculator:
+    @staticmethod
+    def test_get_redirect_rules():
+        # Given
+
+        iteration = rule_builder.IterationFactory.build(
+            iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort2")],
+            default_comms_routing="defaultcomms",
+            actions_mapper=rule_builder.ActionsMapperFactory.build(
+                root={
+                    "ActionCode1": AvailableAction(
+                        ActionType="ActionType1",
+                        ExternalRoutingCode="ActionCode1",
+                        ActionDescription="ActionDescription1",
+                        UrlLink="ActionUrl1",
+                        UrlLabel="ActionLabel1",
+                    ),
+                    "defaultcomms": AvailableAction(
+                        ActionType="ActionType2",
+                        ExternalRoutingCode="defaultcomms",
+                        ActionDescription="ActionDescription2",
+                        UrlLink="ActionUrl2",
+                        UrlLabel="ActionLabel2",
+                    ),
+                }
+            ),
+            iteration_rules=[rule_builder.ICBRedirectRuleFactory.build()],
+        )
+
+        # when
+        actual_rules, actual_action_mapper, actual_default_comms = EligibilityCalculator.get_redirect_rules(iteration)
+
+        # then
+        assert_that(actual_rules, has_item(is_iteration_rule().with_name(iteration.iteration_rules[0].name)))
+        assert actual_action_mapper == iteration.actions_mapper
+        assert actual_default_comms == iteration.default_comms_routing
 
 
 def test_not_base_eligible(faker: Faker):
@@ -305,11 +352,7 @@ def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
 
 @pytest.mark.parametrize(
     ("rule_type", "expected_status"),
-    [
-        (rules_model.RuleType.suppression, Status.not_actionable),
-        (rules_model.RuleType.filter, Status.not_eligible),
-        (rules_model.RuleType.redirect, Status.actionable),
-    ],
+    [(rules_model.RuleType.suppression, Status.not_actionable), (rules_model.RuleType.filter, Status.not_eligible)],
 )
 def test_rule_types_cause_correct_statuses(rule_type: rules_model.RuleType, expected_status: Status, faker: Faker):
     # Given
@@ -338,7 +381,12 @@ def test_rule_types_cause_correct_statuses(rule_type: rules_model.RuleType, expe
     assert_that(
         actual,
         is_eligibility_status().with_conditions(
-            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status))
+            has_item(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(expected_status)
+                .and_actions(SuggestedActions([]))
+            )
         ),
     )
 
@@ -480,7 +528,7 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
     nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=78))
 
-    person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
+    person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"], icb="QE1")
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
             target="RSV",
@@ -488,6 +536,10 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                     iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                    default_comms_routing="defaultcomms",
+                    actions_mapper=rule_builder.ActionsMapperFactory.build(
+                        root={"rule_1_comms_routing": book_nbs_comms, "defaultcomms": default_comms_detail}
+                    ),
                 )
             ],
         ),
@@ -496,7 +548,14 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
             iterations=[
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                    iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(),
+                        rule_builder.ICBRedirectRuleFactory.build(),
+                    ],
+                    default_comms_routing="defaultcomms",
+                    actions_mapper=rule_builder.ActionsMapperFactory.build(
+                        root={"ActionCode1": book_nbs_comms, "defaultcomms": default_comms_detail}
+                    ),
                 )
             ],
         ),
@@ -512,8 +571,14 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
         actual,
         is_eligibility_status().with_conditions(
             has_items(
-                is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable),
-                is_condition().with_condition_name(ConditionName("COVID")).and_status(Status.actionable),
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(Status.actionable)
+                .and_actions(SuggestedActions([suggested_action_for_default_comms])),
+                is_condition()
+                .with_condition_name(ConditionName("COVID"))
+                .and_status(Status.actionable)
+                .and_actions(SuggestedActions([suggested_action_for_book_nbs])),
             )
         ),
     )
@@ -558,16 +623,25 @@ def test_multiple_conditions_where_all_give_unique_statuses(faker: Faker):
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility()
+    actual = calculator.evaluate_eligibility(include_actions_flag=False)
 
     # Then
     assert_that(
         actual,
         is_eligibility_status().with_conditions(
             has_items(
-                is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable),
-                is_condition().with_condition_name(ConditionName("COVID")).and_status(Status.not_actionable),
-                is_condition().with_condition_name(ConditionName("FLU")).and_status(Status.not_eligible),
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(Status.actionable)
+                .and_actions(None),
+                is_condition()
+                .with_condition_name(ConditionName("COVID"))
+                .and_status(Status.not_actionable)
+                .and_actions(None),
+                is_condition()
+                .with_condition_name(ConditionName("FLU"))
+                .and_status(Status.not_eligible)
+                .and_actions(None),
             )
         ),
     )
@@ -1617,4 +1691,512 @@ def test_cohort_group_descriptions_pick_first_non_empty_if_available(
             )
         ),
         test_comment,
+    )
+
+
+book_nbs_comms = AvailableAction(
+    ActionType="ButtonAuthLink",
+    ExternalRoutingCode="BookNBS",
+    ActionDescription="Action description",
+    UrlLink="http://www.nhs.uk/book-rsv",
+    UrlLabel="Continue to booking",
+)
+
+default_comms_detail = AvailableAction(
+    ActionType="CareCardWithText",
+    ExternalRoutingCode="BookLocal",
+    ActionDescription="You can get an RSV vaccination at your GP surgery",
+)
+
+suggested_action_for_book_nbs = SuggestedAction(
+    action_type=ActionType(book_nbs_comms.action_type),
+    action_code=ActionCode(book_nbs_comms.action_code),
+    action_description=ActionDescription(book_nbs_comms.action_description),
+    url_link=UrlLink(book_nbs_comms.url_link),
+    url_label=UrlLabel(book_nbs_comms.url_label),
+)
+
+suggested_action_for_default_comms = SuggestedAction(
+    action_type=ActionType(default_comms_detail.action_type),
+    action_code=ActionCode(default_comms_detail.action_code),
+    action_description=ActionDescription(default_comms_detail.action_description),
+    url_link=None,
+    url_label=None,
+)
+
+
+@pytest.mark.parametrize(
+    ("test_comment", "default_comms_routing", "comms_routing", "actions_mapper", "expected_actions"),
+    [
+        (
+            """Rule match: default_comms_routing present, action_mapper present,
+            return actions from matching comms from rule""",
+            "defaultcomms",
+            "InternalBookNBS",
+            {"InternalBookNBS": book_nbs_comms, "defaultcomms": default_comms_detail},
+            SuggestedActions([suggested_action_for_book_nbs]),
+        ),
+        (
+            """Rule match: default_comms_routing has multiple values,
+            comms missing in rule, all default comms should be returned in actions""",
+            "defaultcomms1|defaultcomms2",
+            None,
+            {"defaultcomms1": default_comms_detail, "defaultcomms2": default_comms_detail},
+            SuggestedActions([suggested_action_for_default_comms, suggested_action_for_default_comms]),
+        ),
+        (
+            """Rule match: default_comms_routing has multiple values,
+            comms is empty string, all default comms should be returned in actions""",
+            "defaultcomms1",
+            "",
+            {"defaultcomms1": default_comms_detail},
+            SuggestedActions([suggested_action_for_default_comms]),
+        ),
+        (
+            """Rule match: default_comms_routing present,
+            action_mapper missing for matching comms, return default_comms in actions""",
+            "defaultcomms",
+            "InternalBookNBS",
+            {"defaultcomms": default_comms_detail},
+            SuggestedActions([suggested_action_for_default_comms]),
+        ),
+        (
+            """Rule match: default_comms_routing present,
+            rule has an incorrect comms key, return default_comms in actions""",
+            "defaultcomms",
+            "InvalidCode",
+            {"defaultcomms": default_comms_detail},
+            SuggestedActions([suggested_action_for_default_comms]),
+        ),
+        (
+            """Rule match: action_mapper present without url,
+            return actions from matching comms from rule""",
+            "defaultcomms",
+            "InternalBookNBS",
+            {
+                "InternalBookNBS": AvailableAction(
+                    ActionType=book_nbs_comms.action_type,
+                    ExternalRoutingCode=book_nbs_comms.action_code,
+                    ActionDescription=book_nbs_comms.action_description,
+                )
+            },
+            SuggestedActions(
+                [
+                    SuggestedAction(
+                        action_type=ActionType(book_nbs_comms.action_type),
+                        action_code=ActionCode(book_nbs_comms.action_code),
+                        action_description=ActionDescription(book_nbs_comms.action_description),
+                        url_link=None,
+                        url_label=None,
+                    )
+                ]
+            ),
+        ),
+        (
+            """Rule match: default_comms_routing missing,
+            comms present in rule, action_mapper missing, return no actions""",
+            "",
+            "InternalBookNBS",
+            {},
+            SuggestedActions([]),
+        ),
+        (
+            """Rule match: default_comms_routing missing, but action_mapper present,
+            return actions from matching comms from rule""",
+            "",
+            "InternalBookNBS",
+            {"InternalBookNBS": book_nbs_comms},
+            SuggestedActions([suggested_action_for_book_nbs]),
+        ),
+        (
+            """Rule match: default_comms_routing present,
+            comms present in rule, but action_mapper missing, return no actions""",
+            "defaultcommskeywithoutactionmapper",
+            "InternalBookNBS",
+            {},
+            SuggestedActions([]),
+        ),
+        (
+            """Rule match: default_comms_routing has multiple values,
+            one of the value is invalid, valid values should be returned in actions""",
+            "defaultcomms1|invaliddefault",
+            None,
+            {"defaultcomms1": default_comms_detail},
+            SuggestedActions([suggested_action_for_default_comms]),
+        ),
+    ],
+)
+def test_correct_actions_determined_from_redirect_r_rules(  # noqa: PLR0913
+    test_comment: str,
+    default_comms_routing: str,
+    comms_routing: str,
+    actions_mapper: ActionsMapper,
+    expected_actions: SuggestedActions,
+    faker: Faker,
+):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing=default_comms_routing,
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(root=actions_mapper),
+                        iteration_rules=[rule_builder.ICBRedirectRuleFactory.build(comms_routing=comms_routing)],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to(expected_actions))
+            )
+        ),
+        test_comment,
+    )
+
+
+@pytest.mark.parametrize(
+    ("test_comment", "redirect_r_rule_cohort_label"),
+    [
+        ("cohort_label matches person cohort, result action ActionCode1", "cohort1"),
+        ("cohort_label NOT matches person cohort, result action ActionCode1", "cohort2"),
+    ],
+)
+def test_cohort_label_not_supported_used_in_r_rules(test_comment: str, redirect_r_rule_cohort_label: str, faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing="defaultcomms",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "ActionCode1": book_nbs_comms,
+                                "defaultcomms": default_comms_detail,
+                            }
+                        ),
+                        iteration_rules=[
+                            rule_builder.ICBRedirectRuleFactory.build(
+                                cohort_label=rules.CohortLabel(redirect_r_rule_cohort_label)
+                            )
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to(SuggestedActions([suggested_action_for_book_nbs])))
+            )
+        ),
+        test_comment,
+    )
+
+
+def test_multiple_r_rules_match_with_same_priority(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing="defaultcomms",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "rule_1_comms_routing": book_nbs_comms,
+                                "rule_2_comms_routing": book_nbs_comms,
+                                "rule_3_comms_routing": book_nbs_comms,
+                                "defaultcomms": default_comms_detail,
+                            }
+                        ),
+                        iteration_rules=[
+                            rule_builder.ICBRedirectRuleFactory.build(comms_routing="rule_1_comms_routing"),
+                            rule_builder.ICBRedirectRuleFactory.build(comms_routing="rule_2_comms_routing"),
+                            rule_builder.ICBRedirectRuleFactory.build(
+                                priority=2,
+                                attribute_name=rules.RuleAttributeName("ICBMismatch"),
+                                comms_routing="rule_3_comms_routing",
+                            ),
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to(SuggestedActions([suggested_action_for_book_nbs])))
+            )
+        ),
+    )
+
+
+def test_multiple_r_rules_with_same_priority_one_rule_mismatch_should_return_default_comms(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing="defaultcomms",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "rule_1_comms_routing": book_nbs_comms,
+                                "rule_2_comms_routing": book_nbs_comms,
+                                "rule_3_comms_routing": book_nbs_comms,
+                                "defaultcomms": default_comms_detail,
+                            }
+                        ),
+                        iteration_rules=[
+                            rule_builder.ICBRedirectRuleFactory.build(comms_routing="rule_1_comms_routing"),
+                            rule_builder.ICBRedirectRuleFactory.build(comms_routing="rule_2_comms_routing"),
+                            rule_builder.ICBRedirectRuleFactory.build(
+                                attribute_name=rules.RuleAttributeName("ICBMismatch"),
+                                comms_routing="rule_3_comms_routing",
+                            ),
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to(SuggestedActions([suggested_action_for_default_comms])))
+            )
+        ),
+    )
+
+
+def test_only_highest_priority_rule_is_applied_and_return_actions_only_for_that_rule(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing="defaultcomms",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "rule_1_comms_routing": AvailableAction(
+                                    ActionType="ButtonAuthLink",
+                                    ExternalRoutingCode="BookNBS",
+                                    ActionDescription="Action description",
+                                ),
+                                "rule_2_comms_routing": AvailableAction(
+                                    ActionType="AuthLink",
+                                    ExternalRoutingCode="BookNBS",
+                                    ActionDescription="Action description",
+                                    UrlLink="http://www.nhs.uk/book-rsv",
+                                    UrlLabel="Continue to booking",
+                                ),
+                                "defaultcomms": default_comms_detail,
+                            }
+                        ),
+                        iteration_rules=[
+                            rule_builder.ICBRedirectRuleFactory.build(priority=2, comms_routing="rule_2_comms_routing"),
+                            rule_builder.ICBRedirectRuleFactory.build(priority=1, comms_routing="rule_1_comms_routing"),
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    expected_actions = SuggestedAction(
+        action_type=ActionType("ButtonAuthLink"),
+        action_code=ActionCode("BookNBS"),
+        action_description=ActionDescription("Action description"),
+        url_link=None,
+        url_label=None,
+    )
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to(SuggestedActions([expected_actions])))
+            )
+        ),
+    )
+
+
+def test_should_include_actions_when_include_actions_flag_is_true_when_status_is_actionable(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing="defaultcomms",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "book_nbs": book_nbs_comms,
+                                "defaultcomms": default_comms_detail,
+                            }
+                        ),
+                        iteration_rules=[
+                            rule_builder.ICBRedirectRuleFactory.build(priority=2, comms_routing="book_nbs"),
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility(include_actions_flag=True)
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to(SuggestedActions([suggested_action_for_book_nbs])))
+            )
+        ),
+    )
+
+
+def test_should_not_include_actions_when_include_actions_flag_is_false_when_status_is_actionable(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb="QE1")
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_comms_routing="defaultcomms",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "book_nbs": book_nbs_comms,
+                                "defaultcomms": default_comms_detail,
+                            }
+                        ),
+                        iteration_rules=[
+                            rule_builder.ICBRedirectRuleFactory.build(priority=2, comms_routing="book_nbs"),
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility(include_actions_flag=False)
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.actionable))
+                .and_actions(equal_to(None))
+            )
+        ),
     )

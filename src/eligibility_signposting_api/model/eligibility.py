@@ -14,6 +14,12 @@ ConditionName = NewType("ConditionName", str)
 RuleName = NewType("RuleName", str)
 RuleDescription = NewType("RuleDescription", str)
 
+ActionType = NewType("ActionType", str)
+ActionCode = NewType("ActionCode", str)
+ActionDescription = NewType("ActionDescription", str)
+UrlLink = NewType("UrlLink", str)
+UrlLabel = NewType("UrlLabel", str)
+
 
 class RuleType(StrEnum):
     filter = "F"
@@ -61,6 +67,21 @@ class Reason:
     rule_type: RuleType
     rule_name: RuleName
     rule_description: RuleDescription | None
+    matcher_matched: bool
+
+
+@dataclass
+class SuggestedAction:
+    action_type: ActionType
+    action_code: ActionCode
+    action_description: ActionDescription | None
+    url_link: UrlLink | None
+    url_label: UrlLabel | None
+
+
+@dataclass
+class SuggestedActions:
+    actions: list[SuggestedAction]
 
 
 @dataclass
@@ -68,6 +89,7 @@ class Condition:
     condition_name: ConditionName
     status: Status
     cohort_results: list[CohortGroupResult]
+    actions: SuggestedActions | None = None
 
 
 @dataclass
@@ -82,6 +104,7 @@ class CohortGroupResult:
 class IterationResult:
     status: Status
     cohort_results: list[CohortGroupResult]
+    actions: SuggestedActions | None
 
 
 @dataclass

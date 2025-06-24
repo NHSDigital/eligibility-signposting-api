@@ -15,7 +15,13 @@
     "Iterations": [
       {
         "ID": "id_100",
-        "DefaultCommsRouting": "Default_Comms_1",
+        "DefaultCommsRouting": "INTERNALCONTACTGP1",
+        "ActionsMapper": {
+          "INTERNALCONTACTGP1": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Text1 description", "ActionType":"text1"},
+          "INTERNALCONTACTGP2": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Link description", "ActionType":"link", "UrlLink": "link123", "UrlLabel": "link label"},
+          "INTERNALTESCO": {"ExternalRoutingCode": "TESCO","ActionDescription":"Tesco description", "ActionType":"link", "UrlLink": "tesco link", "UrlLabel": "link label"},
+          "INTERNALFINDWALKIN": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"}
+        },
         "IterationCohorts": [
           {
             "CohortLabel": "rsv_75_rolling",
@@ -44,6 +50,16 @@
             "Comparator": "19000101"
           },
           {
+            "Type": "F",
+            "Name": "Test Rule",
+            "Description": "Test Rule Desc",
+            "Priority": 30,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "place of birth",
+            "Operator": "=",
+            "Comparator": "london"
+          },
+          {
             "Type": "S",
             "Name": "Already Vaccinated",
             "Description": "Already Vaccinated|You have already been Vaccinated",
@@ -64,6 +80,17 @@
             "AttributeName": "COHORT_LABEL",
             "Operator": "=",
             "Comparator": "rsv_75to79_2024"
+          },
+          {
+            "Type": "R",
+            "Name": "Test Redirect Rule",
+            "Description": "Test Redirect Rule Desc",
+            "Priority": 20,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": ">",
+            "Comparator": "19000101",
+            "CommsRouting": "INTERNALCONTACTGP1|INTERNALTESCO"
           }
         ],
         "Version": "1",
