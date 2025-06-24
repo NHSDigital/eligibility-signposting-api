@@ -158,3 +158,24 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(
         response,
         is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
     )
+
+def test_given_nhs_number_in_path_doesnot_matches_with_nhs_number_in_headers_resullts_in_error_respose(
+    flask_function_url: URL,
+    persisted_person: NHSNumber,
+    campaign_config: CampaignConfig,
+    faker: Faker,
+    # noqa: ARG001
+):
+    """Given lambda installed into localstack, run it via http"""
+    # Given
+    # When
+    response = httpx.get(
+        str(flask_function_url / "patient-check" / persisted_person),
+        headers={"custom-nhs-number-header-name": f"123{str(persisted_person)}"}
+    )
+
+    # Then
+    assert_that(
+        response,
+        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
+    )
