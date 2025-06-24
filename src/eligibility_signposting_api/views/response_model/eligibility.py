@@ -5,6 +5,8 @@ from typing import NewType
 from pydantic import UUID4, BaseModel, Field, HttpUrl, field_serializer
 from pydantic_core.core_schema import SerializationInfo
 
+from eligibility_signposting_api.model.eligibility import SuggestedAction
+
 LastUpdated = NewType("LastUpdated", datetime)
 ConditionName = NewType("ConditionName", str)
 StatusText = NewType("StatusText", str)
@@ -60,7 +62,7 @@ class ProcessedSuggestion(BaseModel):
     status_text: StatusText = Field(..., alias="statusText")
     eligibility_cohorts: list[EligibilityCohort] = Field(..., alias="eligibilityCohorts")
     suitability_rules: list[SuitabilityRule] = Field(..., alias="suitabilityRules")
-    actions: list[Action]
+    actions: list[SuggestedAction] | None
 
     model_config = {"populate_by_name": True}
 

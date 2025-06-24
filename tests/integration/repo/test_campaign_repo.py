@@ -41,6 +41,8 @@ def test_get_campaign_config(s3_client: BaseClient, bucket: BucketName, campaign
                 has_item(
                     is_iteration()
                     .with_id(campaign_config.iterations[0].id)
+                    .and_default_comms_routing(campaign_config.iterations[0].default_comms_routing)
+                    .and_actions_mapper(campaign_config.iterations[0].actions_mapper)
                     .and_iteration_rules(
                         has_item(is_iteration_rule().with_name(campaign_config.iterations[0].iteration_rules[0].name))
                     )

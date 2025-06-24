@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import typing
 from collections import Counter
 from datetime import UTC, date, datetime
@@ -8,9 +9,9 @@ from functools import cached_property
 from operator import attrgetter
 from typing import Literal, NewType
 
-from pydantic import BaseModel, Field, field_serializer, field_validator, model_validator
+from pydantic import BaseModel, Field, RootModel, field_serializer, field_validator, model_validator
 
-from eligibility_signposting_api.config.contants import MAGIC_COHORT_LABEL
+from eligibility_signposting_api.config.contants import MAGIC_COHORT_LABEL, RULE_STOP_DEFAULT
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from pydantic import SerializationInfo
@@ -34,6 +35,7 @@ CohortLabel = NewType("CohortLabel", str)
 CohortGroup = NewType("CohortGroup", str)
 Description = NewType("Description", str)
 RuleStop = NewType("RuleStop", bool)
+CommsRouting = NewType("CommsRouting", str)
 
 
 class RuleType(StrEnum):
@@ -111,7 +113,8 @@ class IterationRule(BaseModel):
     operator: RuleOperator = Field(..., alias="Operator")
     comparator: RuleComparator = Field(..., alias="Comparator")
     attribute_target: RuleAttributeTarget | None = Field(None, alias="AttributeTarget")
-    rule_stop: RuleStop = Field(RuleStop(False), alias="RuleStop")  # noqa: FBT003
+    rule_stop: RuleStop = Field(RuleStop(RULE_STOP_DEFAULT), alias="RuleStop")
+    comms_routing: CommsRouting | None = Field(None, alias="CommsRouting")
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
@@ -120,6 +123,24 @@ class IterationRule(BaseModel):
         if isinstance(v, str):
             return v.upper() == "Y"
         return v
+
+    def __str__(self) -> str:
+        return json.dumps(self.model_dump(by_alias=True), indent=2)
+
+
+class AvailableAction(BaseModel):
+    action_type: str = Field(..., alias="ActionType")
+    action_code: str = Field(..., alias="ExternalRoutingCode")
+    action_description: str | None = Field(None, alias="ActionDescription")
+    url_link: str | None = Field(None, alias="UrlLink")
+    url_label: str | None = Field(None, alias="UrlLabel")
+
+    model_config = {"populate_by_name": True}
+
+
+class ActionsMapper(RootModel[dict[str, AvailableAction]]):
+    def get(self, key: str, default: AvailableAction | None = None) -> AvailableAction | None:
+        return self.root.get(key, default)
 
 
 class Iteration(BaseModel):
@@ -131,8 +152,10 @@ class Iteration(BaseModel):
     approval_minimum: int | None = Field(None, alias="ApprovalMinimum")
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
     type: Literal["A", "M", "S"] = Field(..., alias="Type")
+    default_comms_routing: str = Field(..., alias="DefaultCommsRouting")
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
+    actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
@@ -147,6 +170,9 @@ class Iteration(BaseModel):
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
+
+    def __str__(self) -> str:
+        return json.dumps(self.model_dump(by_alias=True), indent=2)
 
 
 class CampaignConfig(BaseModel):
@@ -223,6 +249,9 @@ class CampaignConfig(BaseModel):
         today = datetime.now(tz=UTC).date()
         iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_date"), reverse=True)
         return next(i for i in iterations_by_date_descending if i.iteration_date <= today)
+
+    def __str__(self) -> str:
+        return json.dumps(self.model_dump(by_alias=True), indent=2)
 
 
 class Rules(BaseModel):

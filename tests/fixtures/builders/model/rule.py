@@ -27,10 +27,24 @@ class IterationRuleFactory(ModelFactory[rules.IterationRule]):
     rule_stop = False
 
 
+class AvailableActionDetailFactory(ModelFactory[rules.AvailableAction]):
+    action_type = "defaultcomms"
+    action_code = "action_code"
+    action_description = None
+    url_link = None
+    url_label = None
+
+
+class ActionsMapperFactory(ModelFactory[rules.ActionsMapper]):
+    root = Use(lambda: {"defaultcomms": AvailableActionDetailFactory.build()})
+
+
 class IterationFactory(ModelFactory[rules.Iteration]):
     iteration_cohorts = Use(IterationCohortFactory.batch, size=2)
     iteration_rules = Use(IterationRuleFactory.batch, size=2)
     iteration_date = Use(past_date)
+    default_comms_routing = "defaultcomms"
+    actions_mapper = Use(ActionsMapperFactory.build)
 
 
 class RawCampaignConfigFactory(ModelFactory[rules.CampaignConfig]):
@@ -147,3 +161,15 @@ class ICBFilterRuleFactory(IterationRuleFactory):
     attribute_level = rules.RuleAttributeLevel.PERSON
     attribute_name = rules.RuleAttributeName("ICB")
     comparator = rules.RuleComparator("QE1")
+
+
+class ICBRedirectRuleFactory(IterationRuleFactory):
+    type = rules.RuleType.redirect
+    name = rules.RuleName("In QE1")
+    description = rules.RuleDescription("In QE1")
+    priority = rules.RulePriority(20)
+    operator = rules.RuleOperator.equals
+    attribute_level = rules.RuleAttributeLevel.PERSON
+    attribute_name = rules.RuleAttributeName("ICB")
+    comparator = rules.RuleComparator("QE1")
+    comms_routing = rules.CommsRouting("ActionCode1")

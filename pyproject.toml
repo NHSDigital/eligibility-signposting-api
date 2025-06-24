@@ -60,6 +60,8 @@ moto = "^5.1.5"
 requests = "^2.31.0"
 jsonschema = "^4.24.0"
 behave = "^1.2.6"
+boto3 = "^1.38.42"
+python-dotenv = "^1.1.1"
 
 [tool.poetry-plugin-lambda-build]
 docker-image = "public.ecr.aws/sam/build-python3.13:1.139-x86_64"  # See https://gallery.ecr.aws/search?searchTerm=%22python%22&architecture=x86-64&popularRegistries=amazon&verified=verified&operatingSystems=Linux
