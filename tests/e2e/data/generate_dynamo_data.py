@@ -46,6 +46,7 @@ class DateVariableResolver:
         msg = f"Unsupported calculation unit: {unit}"
         raise ValueError(msg)
 
+
 class JsonTestDataProcessor:
     def __init__(self, input_dir: Path, output_dir: Path, resolver: DateVariableResolver):
         self.input_dir = input_dir
@@ -95,6 +96,7 @@ class JsonTestDataProcessor:
         except Exception:
             logger.exception("Failed to write output to: %s", output_path)
 
+
 def main():
     input_dir = Path()
     output_dir = Path(OUTPUT_ROOT)
@@ -108,6 +110,7 @@ def main():
                 processor.process_file(file_path)
             else:
                 logger.debug("Skipping non-JSON file: %s", file)
+
 
 if __name__ == "__main__":
     main()
