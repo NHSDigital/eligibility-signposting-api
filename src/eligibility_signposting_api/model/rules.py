@@ -151,7 +151,7 @@ class Iteration(BaseModel):
     iteration_number: int | None = Field(None, alias="IterationNumber")
     approval_minimum: int | None = Field(None, alias="ApprovalMinimum")
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
-    type: Literal["A", "M", "S"] = Field(..., alias="Type")
+    type: Literal["A", "M", "S", "O"] = Field(..., alias="Type")
     default_comms_routing: str = Field(..., alias="DefaultCommsRouting")
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
