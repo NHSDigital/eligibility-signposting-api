@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import time
 from http import HTTPStatus
 
 import httpx
@@ -166,6 +167,8 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(
         headers={"nhs-login-nhs-number": str(persisted_person)},
         timeout=10,
     )
+
+    time.sleep(40)
 
     # Then
     assert_that(

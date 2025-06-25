@@ -98,6 +98,16 @@ def s3_client(boto3_session: Session, localstack: URL) -> BaseClient:
 
 
 @pytest.fixture(scope="session")
+def firehose_client(boto3_session: Session, localstack: URL) -> BaseClient:
+    return boto3_session.client("firehose", endpoint_url=str(localstack))
+
+
+@pytest.fixture(autouse=True)
+def firehose_delivery_stream(firehose_client: BaseClient) -> dict[str, Any]:
+    return firehose_client.create_delivery_stream(DeliveryStreamName="eligibility-signposting-audit-stream")
+
+
+@pytest.fixture(scope="session")
 def iam_role(iam_client: BaseClient) -> Generator[str]:
     role_name = "LambdaExecutionRole"
     policy_name = "LambdaCloudWatchPolicy"
@@ -190,6 +200,7 @@ def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -
                 "Variables": {
                     "DYNAMODB_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "S3_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
+                    "FIREHOSE_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "AWS_REGION": AWS_REGION,
                     "LOG_LEVEL": "DEBUG",
                 }
@@ -372,15 +383,23 @@ def persisted_person_pc_sw19(person_table: Any, faker: Faker) -> Generator[eligi
 
 
 @pytest.fixture(scope="session")
-def bucket(s3_client: BaseClient) -> Generator[BucketName]:
+def rules_bucket(s3_client: BaseClient) -> Generator[BucketName]:
     bucket_name = BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket"))
     s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": AWS_REGION})
     yield bucket_name
     s3_client.delete_bucket(Bucket=bucket_name)
 
 
+@pytest.fixture(scope="session")
+def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
+    bucket_name = BucketName(os.getenv("AUDIT_BUCKET_NAME", "test-audit-bucket"))
+    s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": AWS_REGION})
+    yield bucket_name
+    s3_client.delete_bucket(Bucket=bucket_name)
+
+
 @pytest.fixture(scope="class")
-def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[rules.CampaignConfig]:
+def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[rules.CampaignConfig]:
     campaign: rules.CampaignConfig = rule.CampaignConfigFactory.build(
         target="RSV",
         iterations=[
@@ -402,14 +421,16 @@ def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[rule
     )
     campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
     s3_client.put_object(
-        Bucket=bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
     )
     yield campaign
-    s3_client.delete_object(Bucket=bucket, Key=f"{campaign.name}.json")
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
 @pytest.fixture(scope="class")
-def campaign_config_with_magic_cohort(s3_client: BaseClient, bucket: BucketName) -> Generator[rules.CampaignConfig]:
+def campaign_config_with_magic_cohort(
+    s3_client: BaseClient, rules_bucket: BucketName
+) -> Generator[rules.CampaignConfig]:
     campaign: rules.CampaignConfig = rule.CampaignConfigFactory.build(
         target="COVID",
         iterations=[
@@ -424,15 +445,15 @@ def campaign_config_with_magic_cohort(s3_client: BaseClient, bucket: BucketName)
     )
     campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
     s3_client.put_object(
-        Bucket=bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
     )
     yield campaign
-    s3_client.delete_object(Bucket=bucket, Key=f"{campaign.name}.json")
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
 @pytest.fixture(scope="class")
 def campaign_config_with_missing_descriptions_missing_rule_text(
-    s3_client: BaseClient, bucket: BucketName
+    s3_client: BaseClient, rules_bucket: BucketName
 ) -> Generator[rules.CampaignConfig]:
     campaign: rules.CampaignConfig = rule.CampaignConfigFactory.build(
         target="FLU",
@@ -456,7 +477,7 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
     )
     campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
     s3_client.put_object(
-        Bucket=bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
     )
     yield campaign
-    s3_client.delete_object(Bucket=bucket, Key=f"{campaign.name}.json")
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
