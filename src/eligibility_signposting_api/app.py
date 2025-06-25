@@ -26,7 +26,6 @@ def main() -> None:  # pragma: no cover
 @validate_matching_nhs_number()
 def lambda_handler(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]:  # pragma: no cover
     """Run the Flask app as an AWS Lambda."""
-    logger.warning("Lambda event received", extra={"event_headers": dict(event["headers"])})
     app = create_app()
     app.debug = config()["log_level"] == logging.DEBUG
     handler = Mangum(WsgiToAsgi(app), lifespan="off")

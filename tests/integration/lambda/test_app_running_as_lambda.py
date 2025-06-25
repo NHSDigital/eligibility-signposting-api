@@ -37,7 +37,7 @@ def test_install_and_call_lambda_flask(
         "headers": {
             "accept": "application/json",
             "content-type": "application/json",
-            "custom-nhs-number-header-name": str(persisted_person),
+            "nhs-login-nhs-number": str(persisted_person),
         },
         "pathParameters": {"id": str(persisted_person)},
         "requestContext": {
@@ -83,7 +83,7 @@ def test_install_and_call_flask_lambda_over_http(
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
         invoke_url,
-        headers={"custom-nhs-number-header-name": str(persisted_person)},
+        headers={"nhs-login-nhs-number": str(persisted_person)},
         timeout=10,
     )
 
@@ -109,7 +109,7 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
     invoke_url = f"{api_gateway_endpoint}/patient-check/{nhs_number}"
     response = httpx.get(
         invoke_url,
-        headers={"custom-nhs-number-header-name": str(nhs_number)},
+        headers={"nhs-login-nhs-number": str(nhs_number)},
         timeout=10,
     )
 
@@ -163,7 +163,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
         invoke_url,
-        headers={"custom-nhs-number-header-name": str(persisted_person)},
+        headers={"nhs-login-nhs-number": str(persisted_person)},
         timeout=10,
     )
 
@@ -185,7 +185,7 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
         invoke_url,
-        headers={"custom-nhs-number-header-name": f"123{persisted_person!s}"},
+        headers={"nhs-login-nhs-number": f"123{persisted_person!s}"},
         timeout=10,
     )
 
