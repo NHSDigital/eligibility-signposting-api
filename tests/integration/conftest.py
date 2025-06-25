@@ -102,11 +102,6 @@ def firehose_client(boto3_session: Session, localstack: URL) -> BaseClient:
     return boto3_session.client("firehose", endpoint_url=str(localstack))
 
 
-@pytest.fixture(autouse=True)
-def firehose_delivery_stream(firehose_client: BaseClient) -> dict[str, Any]:
-    return firehose_client.create_delivery_stream(DeliveryStreamName="eligibility-signposting-audit-stream")
-
-
 @pytest.fixture(scope="session")
 def iam_role(iam_client: BaseClient) -> Generator[str]:
     role_name = "LambdaExecutionRole"
@@ -391,12 +386,37 @@ def rules_bucket(s3_client: BaseClient) -> Generator[BucketName]:
 
 
 @pytest.fixture(scope="session")
-def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
+def audit_bucket(s3_client: BaseClient) -> Generator[BucketName, None, None]:
     bucket_name = BucketName(os.getenv("AUDIT_BUCKET_NAME", "test-audit-bucket"))
-    s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": AWS_REGION})
+    s3_client.create_bucket(
+        Bucket=bucket_name,
+        CreateBucketConfiguration={"LocationConstraint": AWS_REGION}
+    )
     yield bucket_name
+
+    # Delete all objects in the bucket before deletion
+    objects = s3_client.list_objects_v2(Bucket=bucket_name).get("Contents", [])
+    for obj in objects:
+        s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
     s3_client.delete_bucket(Bucket=bucket_name)
 
+
+@pytest.fixture(autouse=True)
+def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketName) -> dict[str, Any]:
+    return firehose_client.create_delivery_stream(
+        DeliveryStreamName="eligibility-signposting-audit-stream",
+        DeliveryStreamType="DirectPut",
+        ExtendedS3DestinationConfiguration={
+            "BucketARN": f"arn:aws:s3:::{audit_bucket}",
+            "RoleARN": "arn:aws:iam::000000000000:role/firehose_delivery_role",
+            "Prefix": "audit-logs/",
+            "BufferingHints": {
+                "SizeInMBs": 1,
+                "IntervalInSeconds": 60
+            },
+            "CompressionFormat": "UNCOMPRESSED",
+        }
+    )
 
 @pytest.fixture(scope="class")
 def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[rules.CampaignConfig]:
