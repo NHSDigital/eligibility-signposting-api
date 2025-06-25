@@ -73,17 +73,18 @@ def test_install_and_call_lambda_flask(
 
 
 def test_install_and_call_flask_lambda_over_http(
-    flask_function_url: URL,
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa: ARG001
+    api_gateway_endpoint: URL,
 ):
-    """Given lambda installed into localstack, run it via http"""
+    """Given api-gateway and lambda installed into localstack, run it via http"""
     # Given
-
     # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
-        str(flask_function_url / "patient-check" / persisted_person),
+        invoke_url,
         headers={"custom-nhs-number-header-name": str(persisted_person)},
+        timeout=10,
     )
 
     # Then
@@ -94,10 +95,10 @@ def test_install_and_call_flask_lambda_over_http(
 
 
 def test_install_and_call_flask_lambda_with_unknown_nhs_number(
-    flask_function_url: URL,
     flask_function: str,
     campaign_config: CampaignConfig,  # noqa: ARG001
     logs_client: BaseClient,
+    api_gateway_endpoint: URL,
     faker: Faker,
 ):
     """Given lambda installed into localstack, run it via http, with a nonexistent NHS number specified"""
@@ -105,9 +106,11 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
     nhs_number = NHSNumber(faker.nhs_number())
 
     # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{nhs_number}"
     response = httpx.get(
-        str(flask_function_url / "patient-check" / nhs_number),
+        invoke_url,
         headers={"custom-nhs-number-header-name": str(nhs_number)},
+        timeout=10,
     )
 
     # Then
@@ -150,14 +153,18 @@ def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
 
 
 def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(
-    flask_function_url: URL, persisted_person: NHSNumber
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person: NHSNumber,
+    campaign_config: CampaignConfig,  # noqa:ARG001
+    api_gateway_endpoint: URL,
 ):
-    """Given lambda installed into localstack, run it via http"""
     # Given
     # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
-        str(flask_function_url / "patient-check" / persisted_person),
+        invoke_url,
         headers={"custom-nhs-number-header-name": str(persisted_person)},
+        timeout=10,
     )
 
     # Then
@@ -168,14 +175,18 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(
 
 
 def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_results_in_error_response(
-    flask_function_url: URL, persisted_person: NHSNumber
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person: NHSNumber,
+    campaign_config: CampaignConfig,  # noqa:ARG001
+    api_gateway_endpoint: URL,
 ):
-    """Given lambda installed into localstack, run it via http"""
     # Given
     # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
-        str(flask_function_url / "patient-check" / persisted_person),
+        invoke_url,
         headers={"custom-nhs-number-header-name": f"123{persisted_person!s}"},
+        timeout=10,
     )
 
     # Then

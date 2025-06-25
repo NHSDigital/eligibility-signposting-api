@@ -63,6 +63,11 @@ def boto3_session() -> Session:
 
 
 @pytest.fixture(scope="session")
+def api_gateway_client(boto3_session: Session, localstack: URL) -> BaseClient:
+    return boto3_session.client("apigateway", endpoint_url=str(localstack))
+
+
+@pytest.fixture(scope="session")
 def lambda_client(boto3_session: Session, localstack: URL) -> BaseClient:
     return boto3_session.client("lambda", endpoint_url=str(localstack))
 
@@ -123,18 +128,42 @@ def iam_role(iam_client: BaseClient) -> Generator[str]:
             }
         ],
     }
+    dynamodb_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DeleteItem",
+                    "dynamodb:Scan",
+                    "dynamodb:Query",
+                ],
+                "Resource": "arn:aws:dynamodb:*:*:table/*",
+            }
+        ],
+    }
 
-    # Create the IAM Policy
-    policy = iam_client.create_policy(PolicyName=policy_name, PolicyDocument=json.dumps(log_policy))
-    policy_arn = policy["Policy"]["Arn"]
+    # Create CloudWatch Logs policy (as before)
+    log_policy_resp = iam_client.create_policy(PolicyName=policy_name, PolicyDocument=json.dumps(log_policy))
+    log_policy_arn = log_policy_resp["Policy"]["Arn"]
+    iam_client.attach_role_policy(RoleName=role_name, PolicyArn=log_policy_arn)
 
-    # Attach Policy to Role
-    iam_client.attach_role_policy(RoleName=role_name, PolicyArn=policy_arn)
+    # Create DynamoDB policy
+    ddb_policy_resp = iam_client.create_policy(
+        PolicyName="LambdaDynamoDBPolicy", PolicyDocument=json.dumps(dynamodb_policy)
+    )
+    ddb_policy_arn = ddb_policy_resp["Policy"]["Arn"]
+    iam_client.attach_role_policy(RoleName=role_name, PolicyArn=ddb_policy_arn)
 
     yield role["Role"]["Arn"]
 
-    iam_client.detach_role_policy(RoleName=role_name, PolicyArn=policy_arn)
-    iam_client.delete_policy(PolicyArn=policy_arn)
+    iam_client.detach_role_policy(RoleName=role_name, PolicyArn=log_policy_arn)
+    iam_client.delete_policy(PolicyArn=log_policy_arn)
+    iam_client.detach_role_policy(RoleName=role_name, PolicyArn=ddb_policy_arn)
+    iam_client.delete_policy(PolicyArn=ddb_policy_arn)
     iam_client.delete_role(RoleName=role_name)
 
 
@@ -192,6 +221,71 @@ def wait_for_function_active(function_name, lambda_client):
             logger.info("function_state %s", function_state)
             if function_state != "Active":
                 raise FunctionNotActiveError
+
+
+@pytest.fixture(scope="session")
+def configured_api_gateway(api_gateway_client, lambda_client, flask_function: str):
+    region = lambda_client.meta.region_name
+
+    api = api_gateway_client.create_rest_api(name="API Gateway Lambda integration")
+    rest_api_id = api["id"]
+
+    resources = api_gateway_client.get_resources(restApiId=rest_api_id)
+    root_id = next(item["id"] for item in resources["items"] if item["path"] == "/")
+
+    patient_check_res = api_gateway_client.create_resource(
+        restApiId=rest_api_id, parentId=root_id, pathPart="patient-check"
+    )
+    patient_check_id = patient_check_res["id"]
+
+    id_res = api_gateway_client.create_resource(restApiId=rest_api_id, parentId=patient_check_id, pathPart="{id}")
+    resource_id = id_res["id"]
+
+    api_gateway_client.put_method(
+        restApiId=rest_api_id,
+        resourceId=resource_id,
+        httpMethod="GET",
+        authorizationType="NONE",
+        requestParameters={"method.request.path.id": True},
+    )
+
+    # Integration with actual region
+    lambda_uri = (
+        f"arn:aws:apigateway:{region}:lambda:path/2015-03-31/functions/"
+        f"arn:aws:lambda:{region}:000000000000:function:{flask_function}/invocations"
+    )
+    api_gateway_client.put_integration(
+        restApiId=rest_api_id,
+        resourceId=resource_id,
+        httpMethod="GET",
+        type="AWS_PROXY",
+        integrationHttpMethod="POST",
+        uri=lambda_uri,
+        passthroughBehavior="WHEN_NO_MATCH",
+    )
+
+    # Permission with matching region
+    lambda_client.add_permission(
+        FunctionName=flask_function,
+        StatementId="apigateway-access",
+        Action="lambda:InvokeFunction",
+        Principal="apigateway.amazonaws.com",
+        SourceArn=f"arn:aws:execute-api:{region}:000000000000:{rest_api_id}/*/GET/patient-check/*",
+    )
+
+    # Deploy the API
+    api_gateway_client.create_deployment(restApiId=rest_api_id, stageName="dev")
+
+    return {
+        "rest_api_id": rest_api_id,
+        "resource_id": resource_id,
+        "invoke_url": f"http://{rest_api_id}.execute-api.localhost.localstack.cloud:4566/dev/patient-check/{{id}}",
+    }
+
+
+@pytest.fixture
+def api_gateway_endpoint(configured_api_gateway: dict) -> URL:
+    return URL(f"http://{configured_api_gateway['rest_api_id']}.execute-api.localhost.localstack.cloud:4566/dev")
 
 
 @pytest.fixture(scope="session")

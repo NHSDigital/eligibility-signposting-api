@@ -21,11 +21,6 @@ def validate_matching_nhs_number() -> Callable:
             header_nhs = headers.get("custom-nhs-number-header-name")
             path_nhs = path_params.get("id")
 
-            # Fallback: extract from rawPath
-            if not path_nhs:
-                raw_path = event.get("rawPath", "")
-                path_nhs = raw_path.strip("/").split("/")[-1]
-
             if header_nhs != path_nhs:
                 logger.error("NHS number mismatch", extra={"header_nhs_no": header_nhs, "path_nhs_no": path_nhs})
                 return {"statusCode": 403, "body": "NHS number mismatch"}
