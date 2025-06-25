@@ -56,6 +56,13 @@ resource "aws_iam_role_policy" "lambda_s3_read_policy" {
   policy = data.aws_iam_policy_document.s3_rules_bucket_policy.json
 }
 
+# Attach s3 read policy to kinesis firehose role
+resource "aws_iam_role_policy" "kinesis_firehose_s3_read_policy" {
+  name   = "S3ReadAccess"
+  role   = aws_iam_role.eligibility_audit_firehose_role.id
+  policy = data.aws_iam_policy_document.s3_audit_bucket_policy.json
+}
+
 # Attach AWSLambdaVPCAccessExecutionRole to Lambda
 resource "aws_iam_role_policy_attachment" "AWSLambdaVPCAccessExecutionRole" {
   role       = aws_iam_role.eligibility_lambda_role.id
@@ -193,4 +200,24 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
 resource "aws_kms_key_policy" "s3_audit_kms_key" {
   key_id = module.s3_audit_bucket.storage_bucket_kms_key_arn
   policy = data.aws_iam_policy_document.s3_audit_kms_key_policy.json
+}
+
+data "aws_iam_policy_document" "lambda_firehose_write_policy" {
+  statement {
+    sid    = "AllowLambdaToPutToFirehose"
+    effect = "Allow"
+    actions = [
+      "firehose:PutRecord",
+      "firehose:PutRecordBatch"
+    ]
+    resources = [
+      "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/${module.eligibility_audit_firehose_delivery_stream.firehose_stream_name}"
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_firehose_policy" {
+  name   = "LambdaFirehoseWritePolicy"
+  role   = aws_iam_role.eligibility_lambda_role.id
+  policy = data.aws_iam_policy_document.lambda_firehose_write_policy.json
 }
