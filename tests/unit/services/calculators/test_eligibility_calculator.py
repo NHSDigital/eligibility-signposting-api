@@ -205,7 +205,7 @@ def test_only_live_campaigns_considered(faker: Faker):
     "iteration_type",
     ["A", "M", "S", "O"],
 )
-def test_campaigns_with_applicable_iteration_types_considered(iteration_type: str, faker: Faker):
+def test_campaigns_with_applicable_iteration_types_in_campaign_level_considered(iteration_type: str, faker: Faker):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
 
@@ -232,11 +232,55 @@ def test_campaigns_with_applicable_iteration_types_considered(iteration_type: st
 
 @pytest.mark.parametrize(
     "iteration_type",
+    ["A", "M", "S", "O"],
+)
+def test_campaigns_with_applicable_iteration_types_in_iteration_level_considered(iteration_type: str, faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number)
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV", iterations=[rule_builder.IterationFactory.build(type=iteration_type)]
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(is_in([Status.actionable, Status.not_actionable, Status.not_eligible]))
+            ),
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    "iteration_type",
     ["NA", "N", "FAKE", "F"],
 )
-def test_invalid_iteration_type_raises_validation_error(iteration_type: str):
+def test_invalid_iteration_types_in_campaign_level_raises_validation_error(iteration_type: str):
     with pytest.raises(ValidationError):
         rule_builder.CampaignConfigFactory.build(target="RSV", iteration_type=iteration_type)
+
+
+@pytest.mark.parametrize(
+    "iteration_type",
+    ["NA", "N", "FAKE", "F"],
+)
+def test_invalid_iteration_types_in_iteration_level_raises_validation_error(iteration_type: str):
+    with pytest.raises(ValidationError):
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV", iterations=[rule_builder.IterationFactory.build(type=iteration_type)]
+        )
 
 
 def test_base_eligible_and_simple_rule_includes(faker: Faker):
@@ -1730,7 +1774,7 @@ suggested_action_for_default_comms = SuggestedAction(
     [
         (
             """Rule match: default_comms_routing present, action_mapper present,
-            return actions from matching comms from rule""",
+                return actions from matching comms from rule""",
             "defaultcomms",
             "InternalBookNBS",
             {"InternalBookNBS": book_nbs_comms, "defaultcomms": default_comms_detail},
@@ -1738,7 +1782,7 @@ suggested_action_for_default_comms = SuggestedAction(
         ),
         (
             """Rule match: default_comms_routing has multiple values,
-            comms missing in rule, all default comms should be returned in actions""",
+                comms missing in rule, all default comms should be returned in actions""",
             "defaultcomms1|defaultcomms2",
             None,
             {"defaultcomms1": default_comms_detail, "defaultcomms2": default_comms_detail},
@@ -1746,7 +1790,7 @@ suggested_action_for_default_comms = SuggestedAction(
         ),
         (
             """Rule match: default_comms_routing has multiple values,
-            comms is empty string, all default comms should be returned in actions""",
+                comms is empty string, all default comms should be returned in actions""",
             "defaultcomms1",
             "",
             {"defaultcomms1": default_comms_detail},
@@ -1754,7 +1798,7 @@ suggested_action_for_default_comms = SuggestedAction(
         ),
         (
             """Rule match: default_comms_routing present,
-            action_mapper missing for matching comms, return default_comms in actions""",
+                action_mapper missing for matching comms, return default_comms in actions""",
             "defaultcomms",
             "InternalBookNBS",
             {"defaultcomms": default_comms_detail},
@@ -1762,7 +1806,7 @@ suggested_action_for_default_comms = SuggestedAction(
         ),
         (
             """Rule match: default_comms_routing present,
-            rule has an incorrect comms key, return default_comms in actions""",
+                rule has an incorrect comms key, return default_comms in actions""",
             "defaultcomms",
             "InvalidCode",
             {"defaultcomms": default_comms_detail},
@@ -1770,7 +1814,7 @@ suggested_action_for_default_comms = SuggestedAction(
         ),
         (
             """Rule match: action_mapper present without url,
-            return actions from matching comms from rule""",
+                return actions from matching comms from rule""",
             "defaultcomms",
             "InternalBookNBS",
             {
@@ -1794,7 +1838,7 @@ suggested_action_for_default_comms = SuggestedAction(
         ),
         (
             """Rule match: default_comms_routing missing,
-            comms present in rule, action_mapper missing, return no actions""",
+                comms present in rule, action_mapper missing, return no actions""",
             "",
             "InternalBookNBS",
             {},
@@ -1802,7 +1846,7 @@ suggested_action_for_default_comms = SuggestedAction(
         ),
         (
             """Rule match: default_comms_routing missing, but action_mapper present,
-            return actions from matching comms from rule""",
+                return actions from matching comms from rule""",
             "",
             "InternalBookNBS",
             {"InternalBookNBS": book_nbs_comms},
@@ -1810,7 +1854,7 @@ suggested_action_for_default_comms = SuggestedAction(
         ),
         (
             """Rule match: default_comms_routing present,
-            comms present in rule, but action_mapper missing, return no actions""",
+                comms present in rule, but action_mapper missing, return no actions""",
             "defaultcommskeywithoutactionmapper",
             "InternalBookNBS",
             {},
@@ -1818,7 +1862,7 @@ suggested_action_for_default_comms = SuggestedAction(
         ),
         (
             """Rule match: default_comms_routing has multiple values,
-            one of the value is invalid, valid values should be returned in actions""",
+                one of the value is invalid, valid values should be returned in actions""",
             "defaultcomms1|invaliddefault",
             None,
             {"defaultcomms1": default_comms_detail},
