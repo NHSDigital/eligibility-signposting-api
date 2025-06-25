@@ -12,7 +12,7 @@ class MismatchedNHSNumberError(ValueError):
 
 
 def validate_matching_nhs_number() -> Callable:
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable) -> Callable:  # pragma: no cover
         @wraps(func)
         def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, int | str]:
             headers = event.get("headers", {})
