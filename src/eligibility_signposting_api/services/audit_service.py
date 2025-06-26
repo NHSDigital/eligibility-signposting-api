@@ -4,18 +4,18 @@ from typing import Annotated
 
 from botocore.client import BaseClient
 from wireup import Inject, service
-
-from eligibility_signposting_api.config.contants import ELIGIBILITY_SIGNPOSTING_AUDIT_STREAM
+from yarl import URL
 
 logger = logging.getLogger(__name__)
 
 
 @service
 class AuditService:
-    def __init__(self, firehose: Annotated[BaseClient, Inject(qualifier="firehose")]) -> None:
+
+    def __init__(self, firehose: Annotated[BaseClient, Inject(qualifier="firehose")], audit_delivery_stream: Annotated[URL, Inject(param="kinesis_audit_stream_to_s3")] ) -> None:
         super().__init__()
         self.firehose = firehose
-        self.delivery_stream_name = ELIGIBILITY_SIGNPOSTING_AUDIT_STREAM
+        self.audit_delivery_stream = audit_delivery_stream
 
     def audit(self, audit_record: dict) -> None:
         """
@@ -28,7 +28,7 @@ class AuditService:
             str: The Firehose record ID.
         """
         response = self.firehose.put_record(
-            DeliveryStreamName=self.delivery_stream_name,
+            DeliveryStreamName=self.audit_delivery_stream,
             Record={"Data": (json.dumps(audit_record) + "\n").encode("utf-8")},
         )
         logger.info("Successfully sent to the Firehose", extra={"firehose_record_id": response["RecordId"]})

@@ -401,7 +401,7 @@ def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
 @pytest.fixture(autouse=True)
 def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketName) -> dict[str, Any]:
     return firehose_client.create_delivery_stream(
-        DeliveryStreamName="eligibility-signposting-audit-stream",
+        DeliveryStreamName="test_kinesis_audit_stream_to_s3",
         DeliveryStreamType="DirectPut",
         ExtendedS3DestinationConfiguration={
             "BucketARN": f"arn:aws:s3:::{audit_bucket}",

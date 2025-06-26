@@ -1,13 +1,15 @@
 resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_delivery_stream" {
-  name        = var.audit_firehose_delivery_stream_name
+  name        = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.project_name}-${var.environment}-${var.audit_firehose_delivery_stream_name}"
   destination = "extended_s3"
 
   extended_s3_configuration {
     role_arn   = var.audit_firehose_role_arn
     bucket_arn = var.s3_audit_bucket_arn
 
-    buffering_size = 1
+    buffering_size     = 1
     buffering_interval = 60
     compression_format = "UNCOMPRESSED"
   }
+
+  tags = var.tags
 }
