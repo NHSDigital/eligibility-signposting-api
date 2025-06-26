@@ -22,6 +22,7 @@ module "eligibility_signposting_lambda_function" {
   handler                       = "eligibility_signposting_api.app.lambda_handler"
   eligibility_rules_bucket_name = module.s3_rules_bucket.storage_bucket_name
   eligibility_status_table_name = module.eligibility_status_table.table_name
+   kinesis_audit_stream_to_s3_name =  module.eligibility_audit_firehose_delivery_stream.firehose_stream_name
   log_level                     = "INFO"
   stack_name                    = local.stack_name
 }

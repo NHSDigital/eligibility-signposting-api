@@ -19,6 +19,7 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
     variables = {
       PERSON_TABLE_NAME = var.eligibility_status_table_name,
       RULES_BUCKET_NAME = var.eligibility_rules_bucket_name,
+      KINESIS_AUDIT_STREAM_TO_S3 = var.kinesis_audit_stream_to_s3_name
       ENV               = var.environment
       LOG_LEVEL         = var.log_level
     }
