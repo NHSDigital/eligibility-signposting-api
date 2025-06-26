@@ -6,13 +6,15 @@ from botocore.client import BaseClient
 from wireup import Inject, service
 from yarl import URL
 
+from eligibility_signposting_api.config.config import AwsKinesisFirehoseStreamName
+
 logger = logging.getLogger(__name__)
 
 
 @service
 class AuditService:
 
-    def __init__(self, firehose: Annotated[BaseClient, Inject(qualifier="firehose")], audit_delivery_stream: Annotated[URL, Inject(param="kinesis_audit_stream_to_s3")] ) -> None:
+    def __init__(self, firehose: Annotated[BaseClient, Inject(qualifier="firehose")], audit_delivery_stream: Annotated[AwsKinesisFirehoseStreamName, Inject(param="kinesis_audit_stream_to_s3")] ) -> None:
         super().__init__()
         self.firehose = firehose
         self.audit_delivery_stream = audit_delivery_stream

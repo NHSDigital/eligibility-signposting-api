@@ -9,3 +9,13 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
     Stack = local.stack_name
   }
 }
+
+resource "aws_cloudwatch_log_group" "firehose_audit" {
+  name              = "/aws/kinesisfirehose/${var.project_name}-${var.environment}-audit"
+  retention_in_days = 365
+
+  tags = {
+    Name  = "kinesis-firehose-logs"
+    Stack = local.stack_name
+  }
+}

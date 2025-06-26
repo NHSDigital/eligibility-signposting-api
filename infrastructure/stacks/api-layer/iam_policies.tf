@@ -63,6 +63,29 @@ resource "aws_iam_role_policy" "kinesis_firehose_s3_write_policy" {
   policy = data.aws_iam_policy_document.s3_audit_bucket_policy.json
 }
 
+# Policy doc for firehose logging
+resource "aws_iam_role_policy" "kinesis_firehose_logs_policy" {
+  name   = "CloudWatchLogsAccess"
+  role   = aws_iam_role.eligibility_audit_firehose_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+
 # Attach AWSLambdaVPCAccessExecutionRole to Lambda
 resource "aws_iam_role_policy_attachment" "AWSLambdaVPCAccessExecutionRole" {
   role       = aws_iam_role.eligibility_lambda_role.id

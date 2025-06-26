@@ -15,6 +15,7 @@ LOG_LEVEL = logging.getLevelNamesMapping().get(os.getenv("LOG_LEVEL", ""), loggi
 AwsRegion = NewType("AwsRegion", str)
 AwsAccessKey = NewType("AwsAccessKey", str)
 AwsSecretAccessKey = NewType("AwsSecretAccessKey", str)
+AwsKinesisFirehoseStreamName = NewType("AwsKinesisFirehoseStreamName", str)
 
 
 @cache
@@ -23,7 +24,7 @@ def config() -> dict[str, Any]:
     rules_bucket_name = BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket"))
     audit_bucket_name = BucketName(os.getenv("AUDIT_BUCKET_NAME", "test-audit-bucket"))
     aws_default_region = AwsRegion(os.getenv("AWS_DEFAULT_REGION", "eu-west-1"))
-    kinesis_audit_stream_to_s3 = AwsRegion(os.getenv("KINESIS_AUDIT_STREAM_TO_S3", "test_kinesis_audit_stream_to_s3"))
+    kinesis_audit_stream_to_s3 = AwsKinesisFirehoseStreamName(os.getenv("KINESIS_AUDIT_STREAM_TO_S3", "test_kinesis_audit_stream_to_s3"))
     log_level = LOG_LEVEL
 
     if os.getenv("ENV"):

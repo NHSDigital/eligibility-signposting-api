@@ -9,6 +9,12 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
     buffering_size     = 1
     buffering_interval = 60
     compression_format = "UNCOMPRESSED"
+
+    cloudwatch_logging_options {
+      enabled         = true
+      log_group_name  = var.kinesis_cloud_watch_log_group_name
+      log_stream_name = "to-s3"
+    }
   }
 
   tags = var.tags
