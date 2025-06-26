@@ -8,4 +8,5 @@ module "eligibility_audit_firehose_delivery_stream" {
   workspace                           = local.workspace
   tags                                = local.tags
   kinesis_cloud_watch_log_group_name  = aws_cloudwatch_log_group.firehose_audit.name
+  kinesis_cloud_watch_log_stream      = aws_cloudwatch_log_stream.firehose_audit_stream.name
 }

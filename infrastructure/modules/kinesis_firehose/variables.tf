@@ -18,4 +18,10 @@ variable "kinesis_cloud_watch_log_group_name" {
   type        = string
 }
 
+variable "kinesis_cloud_watch_log_stream" {
+  description = "kinesis cloud watch log stream"
+  type        = string
+}
+
+
 

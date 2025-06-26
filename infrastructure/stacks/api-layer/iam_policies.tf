@@ -175,7 +175,7 @@ data "aws_iam_policy_document" "s3_rules_kms_key_policy" {
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = [aws_iam_role.eligibility_lambda_role.arn]
+      identifiers = [aws_iam_role.eligibility_lambda_role.arn, aws_iam_role.eligibility_audit_firehose_role.arn]
     }
     actions   = ["kms:Decrypt"]
     resources = ["*"]

@@ -19,3 +19,8 @@ resource "aws_cloudwatch_log_group" "firehose_audit" {
     Stack = local.stack_name
   }
 }
+
+resource "aws_cloudwatch_log_stream" "firehose_audit_stream" {
+  name           = "audit_stream_log"
+  log_group_name = aws_cloudwatch_log_group.firehose_audit.name
+}
