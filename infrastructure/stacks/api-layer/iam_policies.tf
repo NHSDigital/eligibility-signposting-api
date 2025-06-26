@@ -65,8 +65,8 @@ resource "aws_iam_role_policy" "kinesis_firehose_s3_write_policy" {
 
 # Policy doc for firehose logging
 resource "aws_iam_role_policy" "kinesis_firehose_logs_policy" {
-  name   = "CloudWatchLogsAccess"
-  role   = aws_iam_role.eligibility_audit_firehose_role.id
+  name = "CloudWatchLogsAccess"
+  role = aws_iam_role.eligibility_audit_firehose_role.id
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -210,7 +210,7 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
       type        = "AWS"
       identifiers = [aws_iam_role.eligibility_lambda_role.arn, aws_iam_role.eligibility_audit_firehose_role.arn]
     }
-    actions   = [
+    actions = [
       "kms:Decrypt",
       "kms:Encrypt",
       "kms:GenerateDataKey",
@@ -244,3 +244,61 @@ resource "aws_iam_role_policy" "lambda_firehose_policy" {
   role   = aws_iam_role.eligibility_lambda_role.id
   policy = data.aws_iam_policy_document.lambda_firehose_write_policy.json
 }
+
+
+data "aws_iam_policy_document" "firehose_kms_key_policy" {
+  statement {
+    sid    = "EnableRootUserPermissions"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  # Your existing statements below...
+  statement {
+    sid    = "AllowFirehoseAccess"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["firehose.amazonaws.com"]
+    }
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = [module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_kms_key_arn]
+  }
+
+  statement {
+    sid    = "AllowFirehoseRoleUsage"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.eligibility_audit_firehose_role.arn]
+    }
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = [module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_kms_key_arn]
+  }
+}
+
+resource "aws_kms_key_policy" "firehose_key_policy" {
+  key_id = module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_kms_key_id
+  policy = data.aws_iam_policy_document.firehose_kms_key_policy.json
+}
+
+
+
+

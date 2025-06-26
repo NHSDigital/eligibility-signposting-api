@@ -10,6 +10,8 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
     buffering_interval = 60
     compression_format = "UNCOMPRESSED"
 
+    kms_key_arn        = aws_kms_key.firehose_key.arn
+
     cloudwatch_logging_options {
       enabled         = true
       log_group_name  = var.kinesis_cloud_watch_log_group_name
