@@ -386,12 +386,9 @@ def rules_bucket(s3_client: BaseClient) -> Generator[BucketName]:
 
 
 @pytest.fixture(scope="session")
-def audit_bucket(s3_client: BaseClient) -> Generator[BucketName, None, None]:
+def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
     bucket_name = BucketName(os.getenv("AUDIT_BUCKET_NAME", "test-audit-bucket"))
-    s3_client.create_bucket(
-        Bucket=bucket_name,
-        CreateBucketConfiguration={"LocationConstraint": AWS_REGION}
-    )
+    s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": AWS_REGION})
     yield bucket_name
 
     # Delete all objects in the bucket before deletion
@@ -410,13 +407,11 @@ def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketNa
             "BucketARN": f"arn:aws:s3:::{audit_bucket}",
             "RoleARN": "arn:aws:iam::000000000000:role/firehose_delivery_role",
             "Prefix": "audit-logs/",
-            "BufferingHints": {
-                "SizeInMBs": 1,
-                "IntervalInSeconds": 60
-            },
+            "BufferingHints": {"SizeInMBs": 1, "IntervalInSeconds": 60},
             "CompressionFormat": "UNCOMPRESSED",
-        }
+        },
     )
+
 
 @pytest.fixture(scope="class")
 def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[rules.CampaignConfig]:

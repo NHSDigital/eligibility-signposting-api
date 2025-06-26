@@ -52,4 +52,5 @@ resource "aws_iam_role" "write_access_role" {
 resource "aws_iam_role" "eligibility_audit_firehose_role" {
   name               = "eligibility_audit_firehouse-role${terraform.workspace == "default" ? "" : "-${terraform.workspace}"}"
   assume_role_policy = data.aws_iam_policy_document.firehose_assume_role.json
+  permissions_boundary = aws_iam_policy.assumed_role_permissions_boundary.arn
 }

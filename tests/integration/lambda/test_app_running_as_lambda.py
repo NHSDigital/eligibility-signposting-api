@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-import time
 from http import HTTPStatus
 
 import httpx
@@ -11,7 +10,7 @@ from botocore.exceptions import ClientError
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.response import is_response
 from faker import Faker
-from hamcrest import assert_that, contains_exactly, contains_string, has_entries, has_item, has_key, any_of, starts_with
+from hamcrest import assert_that, contains_exactly, contains_string, has_entries, has_item, has_key
 from yarl import URL
 
 from eligibility_signposting_api.model.eligibility import NHSNumber
@@ -154,7 +153,7 @@ def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
     return [e["message"] for e in log_events["events"]]
 
 
-def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(
+def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa:ARG001
@@ -170,8 +169,6 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(
         headers={"nhs-login-nhs-number": str(persisted_person)},
         timeout=10,
     )
-
-    time.sleep(40)
 
     # Then
     assert_that(

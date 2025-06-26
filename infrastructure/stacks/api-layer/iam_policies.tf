@@ -56,9 +56,9 @@ resource "aws_iam_role_policy" "lambda_s3_read_policy" {
   policy = data.aws_iam_policy_document.s3_rules_bucket_policy.json
 }
 
-# Attach s3 read policy to kinesis firehose role
-resource "aws_iam_role_policy" "kinesis_firehose_s3_read_policy" {
-  name   = "S3ReadAccess"
+# Attach s3 write policy to kinesis firehose role
+resource "aws_iam_role_policy" "kinesis_firehose_s3_write_policy" {
+  name   = "S3WriteAccess"
   role   = aws_iam_role.eligibility_audit_firehose_role.id
   policy = data.aws_iam_policy_document.s3_audit_bucket_policy.json
 }
