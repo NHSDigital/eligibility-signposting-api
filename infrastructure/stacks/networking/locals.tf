@@ -21,6 +21,7 @@ locals {
     lambda          = "com.amazonaws.${local.region}.lambda"
     sts             = "com.amazonaws.${local.region}.sts"
     sqs             = "com.amazonaws.${local.region}.sqs"
+    firehose        = "com.amazonaws.${local.region}.firehose"
   }
 
   # VPC Gateway Endpoints
