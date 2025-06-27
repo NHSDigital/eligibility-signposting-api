@@ -23,6 +23,16 @@ data "aws_iam_policy_document" "firehose_kms_key_policy" {
   #checkov:skip=CKV_AWS_356: Root user needs full KMS key management
   #checkov:skip=CKV_AWS_109: Root user needs full KMS key management
   statement {
+    sid    = "EnableIamUserPermissions"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+  statement {
     sid    = "EnableRootUserPermissions"
     effect = "Allow"
 
