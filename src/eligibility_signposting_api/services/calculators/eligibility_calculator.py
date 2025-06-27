@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 from itertools import groupby
 from typing import TYPE_CHECKING, Any
 
+from flask import g
+
 if TYPE_CHECKING:
     from eligibility_signposting_api.model.rules import ActionsMapper, Iteration, IterationCohort
 
@@ -132,6 +134,8 @@ class EligibilityCalculator:
         actions: SuggestedActions | None = SuggestedActions([])
 
         for condition_name, campaign_group in self.campaigns_grouped_by_condition_name:
+            g.audit_log.response.responseId = condition_name
+
             iteration_results: dict[str, tuple[Iteration, IterationResult]] = {}
 
             for active_iteration in [cc.current_iteration for cc in campaign_group]:

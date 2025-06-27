@@ -1,4 +1,4 @@
-from eligibility_signposting_api.services.audit_service import RequestAuditData, RequestAuditHeader, \
+from eligibility_signposting_api.audit.audit_service import RequestAuditData, RequestAuditHeader, \
     RequestAuditQueryParams, AuditService
 
 from mangum.types import LambdaEvent
