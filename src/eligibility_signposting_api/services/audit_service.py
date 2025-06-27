@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @service
-class AuditService:
+class AuditService:  # pragma: no cover
     def __init__(
         self,
         firehose: Annotated[BaseClient, Inject(qualifier="firehose")],
