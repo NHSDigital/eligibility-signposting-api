@@ -85,7 +85,7 @@ resource "aws_iam_role_policy" "kinesis_firehose_logs_policy" {
           "logs:DescribeLogGroups",
           "logs:DescribeLogStreams"
         ],
-        Resource = "*"
+        Resource = "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/${module.eligibility_audit_firehose_delivery_stream.firehose_stream_name}"
       }
     ]
   })
