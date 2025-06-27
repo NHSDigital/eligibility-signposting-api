@@ -5,7 +5,3 @@ output "firehose_stream_name" {
 output "kinesis_firehose_cmk_arn" {
   value = aws_kms_key.firehose_cmk.arn
 }
-
-output "kinesis_firehose_cmk_id" {
-  value = aws_kms_key.firehose_cmk.id
-}

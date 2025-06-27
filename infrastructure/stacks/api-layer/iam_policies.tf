@@ -246,61 +246,6 @@ resource "aws_iam_role_policy" "lambda_firehose_policy" {
 }
 
 
-data "aws_iam_policy_document" "firehose_kms_key_policy" {
-  #checkov:skip=CKV_AWS_111: Root user needs full KMS key management
-  #checkov:skip=CKV_AWS_356: Root user needs full KMS key management
-  #checkov:skip=CKV_AWS_109: Root user needs full KMS key management
-  statement {
-    sid    = "EnableRootUserPermissions"
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
-    }
-
-    actions   = ["kms:*"]
-    resources = ["*"]
-  }
-
-  # Your existing statements below...
-  statement {
-    sid    = "AllowFirehoseAccess"
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["firehose.amazonaws.com"]
-    }
-    actions = [
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:GenerateDataKey*",
-      "kms:DescribeKey"
-    ]
-    resources = [module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk_arn]
-  }
-
-  statement {
-    sid    = "AllowFirehoseRoleUsage"
-    effect = "Allow"
-    principals {
-      type        = "AWS"
-      identifiers = [aws_iam_role.eligibility_audit_firehose_role.arn]
-    }
-    actions = [
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:GenerateDataKey*",
-      "kms:DescribeKey"
-    ]
-    resources = [module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk_arn]
-  }
-}
-
-resource "aws_kms_key_policy" "firehose_key_policy" {
-  key_id = module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk_id
-  policy = data.aws_iam_policy_document.firehose_kms_key_policy.json
-}
 
 
 

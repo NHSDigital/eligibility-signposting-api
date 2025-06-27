@@ -22,6 +22,7 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
   server_side_encryption {
     enabled     = true
     key_arn = aws_kms_key.firehose_cmk.arn
+    key_type = "CUSTOMER_MANAGED_CMK"
   }
 
   tags = var.tags
