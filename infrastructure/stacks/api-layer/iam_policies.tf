@@ -75,7 +75,13 @@ resource "aws_iam_role_policy" "kinesis_firehose_logs_policy" {
         Effect = "Allow",
         Action = [
           "logs:CreateLogStream",
-          "logs:PutLogEvents",
+          "logs:PutLogEvents"
+        ],
+        Resource = "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/${module.eligibility_audit_firehose_delivery_stream.firehose_stream_name}:log-stream:*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
           "logs:DescribeLogGroups",
           "logs:DescribeLogStreams"
         ],
@@ -85,7 +91,6 @@ resource "aws_iam_role_policy" "kinesis_firehose_logs_policy" {
   })
 }
 
-
 # Attach AWSLambdaVPCAccessExecutionRole to Lambda
 resource "aws_iam_role_policy_attachment" "AWSLambdaVPCAccessExecutionRole" {
   role       = aws_iam_role.eligibility_lambda_role.id
@@ -94,8 +99,8 @@ resource "aws_iam_role_policy_attachment" "AWSLambdaVPCAccessExecutionRole" {
 
 #Attach AWSLambdaBasicExecutionRole to Lambda
 resource "aws_iam_role_policy_attachment" "lambda_logs_policy_attachment" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
   role       = aws_iam_role.eligibility_lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 # Policy doc for S3 Audit bucket
