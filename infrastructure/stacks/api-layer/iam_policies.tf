@@ -274,7 +274,7 @@ data "aws_iam_policy_document" "firehose_kms_key_policy" {
       "kms:GenerateDataKey*",
       "kms:DescribeKey"
     ]
-    resources = [module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_kms_key_arn]
+    resources = [module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk_arn]
   }
 
   statement {
@@ -290,12 +290,12 @@ data "aws_iam_policy_document" "firehose_kms_key_policy" {
       "kms:GenerateDataKey*",
       "kms:DescribeKey"
     ]
-    resources = [module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_kms_key_arn]
+    resources = [module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk_arn]
   }
 }
 
 resource "aws_kms_key_policy" "firehose_key_policy" {
-  key_id = module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_kms_key_id
+  key_id = module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk_id
   policy = data.aws_iam_policy_document.firehose_kms_key_policy.json
 }
 
