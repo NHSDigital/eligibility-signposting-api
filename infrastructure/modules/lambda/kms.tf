@@ -17,6 +17,9 @@ resource "aws_kms_key_policy" "lambda_cmk" {
 }
 
 data "aws_iam_policy_document" "lambda_cmk" {
+  #checkov:skip=CKV_AWS_111: Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_356: Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_109: Root user needs full KMS key management
   statement {
     sid    = "EnableIamUserPermissions"
     effect = "Allow"
