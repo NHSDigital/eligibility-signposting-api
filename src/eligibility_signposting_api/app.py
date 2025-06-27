@@ -3,11 +3,12 @@ from typing import Any
 
 import wireup.integration.flask
 from asgiref.wsgi import WsgiToAsgi
-from flask import Flask
+from flask import Flask, request
 from mangum import Mangum
 from mangum.types import LambdaContext, LambdaEvent
 
 from eligibility_signposting_api import repos, services
+from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.config.config import config, init_logging
 from eligibility_signposting_api.error_handler import handle_exception
 from eligibility_signposting_api.views import eligibility_blueprint
@@ -16,11 +17,25 @@ from eligibility_signposting_api.wrapper import validate_matching_nhs_number
 init_logging()
 logger = logging.getLogger(__name__)
 
+app = Flask(__name__)
+
 
 def main() -> None:  # pragma: no cover
     """Run the Flask app as a local process."""
     app = create_app()
     app.run(debug=config()["log_level"] == logging.DEBUG)
+
+
+@app.before_request
+def request_audit():
+    AuditService.add_request_details(request)
+
+
+@app.after_request
+def response_audit(response):
+    AuditService.add_response_details(response)
+    # AuditService.audit(asdict(g.audit_log))
+    return response
 
 
 @validate_matching_nhs_number()
@@ -33,7 +48,6 @@ def lambda_handler(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]
 
 
 def create_app() -> Flask:
-    app = Flask(__name__)
     logger.info("app created")
 
     # Register views & error handler
