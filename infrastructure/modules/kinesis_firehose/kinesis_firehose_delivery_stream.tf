@@ -19,5 +19,10 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
     }
   }
 
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = aws_kms_key.firehose_cmk.arn
+  }
+
   tags = var.tags
 }
