@@ -51,6 +51,8 @@ class EligibilityService:
                 raise UnknownPersonError from e
             else:
                 calc: calculator.EligibilityCalculator = self.calculator_factory.get(person_data, campaign_configs)
-                return calc.evaluate_eligibility(include_actions_flag=include_actions_flag)
+                evaluate_eligibility = calc.evaluate_eligibility(include_actions_flag=include_actions_flag)
+                # audit_service.audit(evaluate_eligibility)
+                return evaluate_eligibility
 
         raise UnknownPersonError  # pragma: no cover

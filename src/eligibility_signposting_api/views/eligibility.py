@@ -25,6 +25,10 @@ logger = logging.getLogger(__name__)
 
 eligibility_blueprint = Blueprint("eligibility", __name__)
 
+@eligibility_blueprint.before_request
+def store_request_id():
+    rid = request.headers.get("X-Request-ID", "unknown")
+    # request_id_var.set(rid)
 
 @eligibility_blueprint.get("/", defaults={"nhs_number": ""})
 @eligibility_blueprint.get("/<nhs_number>")

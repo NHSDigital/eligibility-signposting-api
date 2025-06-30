@@ -6,6 +6,8 @@ from enum import Enum, StrEnum, auto
 from functools import total_ordering
 from typing import NewType, Self
 
+from eligibility_signposting_api.model.rules import RulePriority
+
 NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
 Postcode = NewType("Postcode", str)
@@ -66,6 +68,7 @@ class Status(Enum):
 class Reason:
     rule_type: RuleType
     rule_name: RuleName
+    rule_priority: RulePriority
     rule_description: RuleDescription | None
     matcher_matched: bool
 
@@ -98,6 +101,7 @@ class CohortGroupResult:
     status: Status
     reasons: list[Reason]
     description: str | None
+    audit_reasons: list[Reason]
 
 
 @dataclass

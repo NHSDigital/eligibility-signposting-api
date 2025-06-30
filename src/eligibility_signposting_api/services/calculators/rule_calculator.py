@@ -24,6 +24,7 @@ class RuleCalculator:
         reason = eligibility.Reason(
             rule_name=eligibility.RuleName(self.rule.name),
             rule_type=eligibility.RuleType(self.rule.type),
+            rule_priority=eligibility.RulePriority(self.rule.priority),
             rule_description=eligibility.RuleDescription(self.rule.description),
             matcher_matched=matcher_matched,
         )
