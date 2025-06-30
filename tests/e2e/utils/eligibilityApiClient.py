@@ -63,12 +63,12 @@ class EligibilityApiClient:
                 f.write(cert_value)
 
     def make_request(
-        self,
-        nhs_number: str,
-        method: str = "GET",
-        payload: Optional[Union[Dict[str, Any], list]] = None,
-        strict_ssl: bool = False,
-        raise_on_error: bool = True,
+            self,
+            nhs_number: str,
+            method: str = "GET",
+            payload: Optional[Union[Dict[str, Any], list]] = None,
+            strict_ssl: bool = False,
+            raise_on_error: bool = True,
     ) -> Dict[str, Any]:
         url = f"{self.api_url.rstrip('/')}/{nhs_number}"
         cert = (
@@ -119,7 +119,7 @@ class EligibilityApiClient:
         return self._remove_volatile_fields(data, keys_to_ignore)
 
     def _remove_volatile_fields(
-        self, data: Union[Dict[str, Any], list, Any], keys_to_remove: list
+            self, data: Union[Dict[str, Any], list, Any], keys_to_remove: list
     ) -> Any:
         if isinstance(data, dict):
             return {

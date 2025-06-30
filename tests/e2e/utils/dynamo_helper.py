@@ -48,6 +48,7 @@ class DynamoDBHelper:
             print(f"Failed to get item: {e.response['Error']['Message']}")
             raise
 
+
 def insert_into_dynamo(data):
     print("Inserting into Dynamo (fake):", data)
     table = DynamoDBHelper("eligibility-signposting-api-test-eligibility_datastore")

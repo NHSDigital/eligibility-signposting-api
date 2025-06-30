@@ -13,12 +13,12 @@ config_path = STORY_TEST_CONFIGS
 
 s3_manager = S3ConfigManager(S3_BUCKET, S3_PREFIX)
 
-
 param_list = list(all_data.items())
 id_list = [
     f"{filename} - {scenario.get('scenario_name', 'No Scenario')}"
     for filename, scenario in param_list
 ]
+
 
 @pytest.mark.storytest
 @pytest.mark.parametrize("filename, scenario", param_list, ids=id_list)
@@ -41,6 +41,3 @@ def test_run_story_test_cases(filename, scenario, eligibility_client):
         f"Expected: {expected_response}\n"
         f"Actual:   {actual_response}\n"
     )
-
-
-

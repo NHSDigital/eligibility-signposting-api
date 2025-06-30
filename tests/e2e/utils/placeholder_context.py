@@ -11,6 +11,7 @@ class ResolvedPlaceholderContext:
     def all(self):
         return self.values
 
+
 class PlaceholderDTO:
     def __init__(self):
         self.placeholders = {}  # key: filename, value: dict of placeholders per file

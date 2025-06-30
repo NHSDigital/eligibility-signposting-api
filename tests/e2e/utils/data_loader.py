@@ -5,6 +5,7 @@ from .dynamo_helper import insert_into_dynamo
 from .placeholder_utils import resolve_placeholders
 from .placeholder_context import ResolvedPlaceholderContext, PlaceholderDTO
 
+
 def initialise_tests(folder):
     folder_path = os.path.abspath(folder)
     all_data, dto = load_all_test_scenarios(folder_path)
@@ -14,6 +15,7 @@ def initialise_tests(folder):
         insert_into_dynamo(scenario["dynamo_items"])
 
     return all_data, dto
+
 
 def resolve_placeholders_in_data(data, context, file_name):
     if isinstance(data, dict):
@@ -72,16 +74,17 @@ def load_all_expected_responses(folder_path):
 
         # Load JSON
         with open(full_path, "r") as f:
-                raw_json = json.load(f)
+            raw_json = json.load(f)
 
         resolved_data = resolve_placeholders_in_data(raw_json, dto, filename)
-        cleaned_data = clean_expected_response(resolved_data,)
+        cleaned_data = clean_expected_response(resolved_data, )
 
         all_data[filename] = {
             "response_items": cleaned_data
         }
 
     return all_data
+
 
 def load_all_test_scenarios(folder_path, config_folder_path="tests/e2e/data/configs"):
     all_data = {}
@@ -118,6 +121,7 @@ def load_all_test_scenarios(folder_path, config_folder_path="tests/e2e/data/conf
 
     return all_data, dto
 
+
 def clean_expected_response(data: dict) -> dict:
     keys_to_ignore = ["responseId", "lastUpdated"]
     return _remove_volatile_fields(data, keys_to_ignore)
@@ -133,4 +137,3 @@ def _remove_volatile_fields(data, keys_to_remove):
     elif isinstance(data, list):
         return [_remove_volatile_fields(item, keys_to_remove) for item in data]
     return data
-
