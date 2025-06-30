@@ -48,3 +48,4 @@ sandbox/specification/*
 /specification/tmp/*
 /tests/e2e/data/out*
 /tests/e2e/reports/*
+/tests/e2e/.temp/
