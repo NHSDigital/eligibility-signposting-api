@@ -1,0 +1,22 @@
+{
+  "responseId": "<<IGNORE_RESPONSE_ID>>",
+  "meta": {
+    "lastUpdated": "<<IGNORE_DATE>>"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "status": "Actionable",
+      "statusText": "You should have the RSV vaccine",
+      "eligibilityCohorts": [],
+      "suitabilityRules": [],
+      "actions": [
+        {
+          "actionType": "CardWithText",
+          "actionCode": "ManageLocal",
+          "description": "##You have an RSV vaccination appointment\nContact your healthcare provider to change or cancel your appointment."
+        }
+      ]
+    }
+  ]
+}
