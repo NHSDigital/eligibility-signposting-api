@@ -1,0 +1,30 @@
+{
+  "responseId": "<<IGNORE_ID>>",
+  "meta": {
+    "lastUpdated": "<<IGNORE_DATE>>"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "status": "Actionable",
+      "statusText": "Status.actionable",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "eli_291_cohort_1_group",
+          "cohortStatus": "Actionable",
+          "cohortText": "You are currently in eli_291_cohort_1"
+        }
+      ],
+      "suitabilityRules": [],
+      "actions": [
+        {
+          "action_type": "DefaultActionType",
+          "action_code": "DefaultAction",
+          "action_description": "DefaultActionDescription",
+          "url_label": "DefaultLabel",
+          "url_link": "DefaultActionUrl"
+        }
+      ]
+    }
+  ]
+}
