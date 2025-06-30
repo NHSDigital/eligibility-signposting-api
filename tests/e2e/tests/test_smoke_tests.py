@@ -4,8 +4,7 @@ import os
 import pytest
 
 from tests.e2e.tests.test_config import *
-from tests.e2e.utils.data_loader import load_all_expected_responses
-from tests.e2e.utils.new_functions import initialise_tests
+from tests.e2e.utils.data_loader import load_all_expected_responses, initialise_tests
 from tests.e2e.utils.s3ConfigManager import S3ConfigManager
 
 # UPDATE THE BELOW WITH LOCATION OF TEST DATA, EXPECTED RESPONSES AND CONFIGS IN DEFINED IN test_config.py #
