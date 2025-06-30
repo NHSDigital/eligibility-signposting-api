@@ -364,6 +364,8 @@ resource "aws_iam_policy" "iam_management" {
         Resource = [
           # Lambda role
           "arn:aws:iam::*:role/eligibility_lambda-role*",
+          # Kinesis Role
+          "arn:aws:iam::*:role/eligibility_audit_firehose-role*",
           # API Gateway role
           "arn:aws:iam::*:role/*-api-gateway-*-role",
           # External write role
