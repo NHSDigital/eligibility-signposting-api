@@ -1,7 +1,6 @@
 import os
 import json
 
-from .common_test_helpers import clean_response
 from .dynamo_helper import insert_into_dynamo
 from .placeholder_utils import resolve_placeholders
 from .placeholder_context import ResolvedPlaceholderContext, PlaceholderDTO
@@ -60,33 +59,6 @@ def extract_nhs_number_from_data(data):
 
     return find_nhs(data) or "UNKNOWN"
 
-def load_all_test_scenarios_old(folder_path):
-    all_data = {}
-    dto = PlaceholderDTO()  # Shared across all files
-
-    for filename in os.listdir(folder_path):
-        if not filename.endswith(".json"):
-            continue
-
-        full_path = os.path.join(folder_path, filename)
-
-        # Load JSON
-        with open(full_path, "r") as f:
-            raw_json = json.load(f)
-
-        raw_data = raw_json["data"]
-        # Resolve placeholders into a shared DTO
-        resolved_data = resolve_placeholders_in_data(raw_data, dto, filename)
-
-        # Extract NHS number from resolved data (e.g. first item or key field)
-        nhs_number = extract_nhs_number_from_data(resolved_data)  # You must define this!
-
-        all_data[filename] = {
-            "dynamo_items": resolved_data,
-            "nhs_number": nhs_number,
-        }
-
-    return all_data, dto
 
 def load_all_expected_responses(folder_path):
     all_data = {}
@@ -103,7 +75,7 @@ def load_all_expected_responses(folder_path):
                 raw_json = json.load(f)
 
         resolved_data = resolve_placeholders_in_data(raw_json, dto, filename)
-        cleaned_data = clean_response(resolved_data,)
+        cleaned_data = clean_expected_response(resolved_data,)
 
         all_data[filename] = {
             "response_items": cleaned_data
@@ -145,3 +117,20 @@ def load_all_test_scenarios(folder_path, config_folder_path="tests/e2e/data/conf
         }
 
     return all_data, dto
+
+def clean_expected_response(data: dict) -> dict:
+    keys_to_ignore = ["responseId", "lastUpdated"]
+    return _remove_volatile_fields(data, keys_to_ignore)
+
+
+def _remove_volatile_fields(data, keys_to_remove):
+    if isinstance(data, dict):
+        return {
+            key: _remove_volatile_fields(value, keys_to_remove)
+            for key, value in data.items()
+            if key not in keys_to_remove
+        }
+    elif isinstance(data, list):
+        return [_remove_volatile_fields(item, keys_to_remove) for item in data]
+    return data
+
