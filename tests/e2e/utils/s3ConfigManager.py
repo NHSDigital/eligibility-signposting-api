@@ -48,28 +48,28 @@ class S3ConfigManager:
 
 
 
-    # def config_exists_and_matches(self, local_path: str, s3_key: str) -> bool:
-    #     try:
-    #         s3_obj = self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key)
-    #         s3_data = s3_obj["Body"].read()
-    #         s3_hash = hashlib.sha256(s3_data).hexdigest()
-    #         local_hash = self._calculate_file_hash(local_path)
-    #         return s3_hash == local_hash
-    #     except self.s3_client.exceptions.NoSuchKey:
-    #         return False
-    #     except botocore.exceptions.ClientError as e:
-    #         if e.response["Error"]["Code"] == "NoSuchKey":
-    #             return False
-    #         raise
-    #
-    # def upload_if_missing_or_changed(self, local_path: str):
-    #     filename = os.path.basename(local_path)
-    #     s3_key = self._s3_key(filename)
-    #
-    #     if self.config_exists_and_matches(local_path, s3_key):
-    #         print(f"✅ Config '{filename}' already exists and matches in S3. Skipping upload.")
-    #         return
+    def config_exists_and_matches(self, local_path: str, s3_key: str) -> bool:
+        try:
+            s3_obj = self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key)
+            s3_data = s3_obj["Body"].read()
+            s3_hash = hashlib.sha256(s3_data).hexdigest()
+            local_hash = self._calculate_file_hash(local_path)
+            return s3_hash == local_hash
+        except self.s3_client.exceptions.NoSuchKey:
+            return False
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                return False
+            raise
 
-    # print(f"⬆️ Uploading new config '{filename}' to S3 as it is missing or changed...")
-    # self.s3_client.upload_file(local_path, self.bucket_name, s3_key)
-    # print(f"✅ Uploaded to s3://{self.bucket_name}/{s3_key}")
+    def upload_if_missing_or_changed(self, local_path: str):
+        filename = os.path.basename(local_path)
+        s3_key = self._s3_key(filename)
+
+        if self.config_exists_and_matches(local_path, s3_key):
+            print(f"✅ Config '{filename}' already exists and matches in S3. Skipping upload.")
+            return
+
+    print(f"⬆️ Uploading new config '{filename}' to S3 as it is missing or changed...")
+    self.s3_client.upload_file(local_path, self.bucket_name, s3_key)
+    print(f"✅ Uploaded to s3://{self.bucket_name}/{s3_key}")

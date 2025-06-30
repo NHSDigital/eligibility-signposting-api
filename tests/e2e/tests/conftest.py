@@ -7,6 +7,8 @@ import boto3
 import pytest
 from dotenv import load_dotenv
 
+from tests.e2e.utils.eligibilityApiClient import EligibilityApiClient
+
 # Load environment variables from .env.local
 load_dotenv(dotenv_path=".env.local")
 
@@ -28,7 +30,7 @@ def pytest_addoption(parser):
     parser.addoption("--keep-seed", action="store_true", default=False, help="Keep DynamoDB seed data after tests")
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session", autouse=False)
 def setup_dynamodb_data(request):
     """Insert test data into DynamoDB before tests and optionally clean up after."""
     logger.info("[⚙] Connecting to DynamoDB table: %s in region %s", DYNAMODB_TABLE_NAME, AWS_REGION)
@@ -78,3 +80,8 @@ def setup_dynamodb_data(request):
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError):
             logger.exception("[x] Failed to delete item %s", item.get("PK", "<unknown>"))
     logger.info("[✓] Deleted %d/%d items", delete_count, len(items))
+
+@pytest.fixture(scope="session")
+def eligibility_client():
+    base_url = "https://test.eligibility-signposting-api.nhs.uk/patient-check"
+    return EligibilityApiClient(base_url)
