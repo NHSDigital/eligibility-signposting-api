@@ -81,6 +81,7 @@ def setup_dynamodb_data(request):
             logger.exception("[x] Failed to delete item %s", item.get("PK", "<unknown>"))
     logger.info("[✓] Deleted %d/%d items", delete_count, len(items))
 
+
 @pytest.fixture(scope="session")
 def eligibility_client():
     base_url = "https://test.eligibility-signposting-api.nhs.uk/patient-check"

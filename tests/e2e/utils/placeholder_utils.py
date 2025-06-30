@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from calendar import isleap
 
+
 def resolve_placeholders(value, context=None, file_name=None):
     if not isinstance(value, str):
         return value
@@ -15,7 +16,7 @@ def resolve_placeholders(value, context=None, file_name=None):
     parts = placeholder.split("_")
 
     try:
-        if placeholder in  ["IGNORE_RESPONSE_ID", "IGNORE_DATE"]:
+        if placeholder in ["IGNORE_RESPONSE_ID", "IGNORE_DATE"]:
             return value.replace(f"<<{placeholder}>>", placeholder)
         elif len(parts) != 3 or parts[0] not in ["DATE", "RDATE", "IGNORE"]:
             return value  # Unrecognized format

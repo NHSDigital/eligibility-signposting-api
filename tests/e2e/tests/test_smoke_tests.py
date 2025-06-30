@@ -13,12 +13,12 @@ config_path = SMOKE_TEST_CONFIGS
 
 s3_manager = S3ConfigManager(S3_BUCKET, S3_PREFIX)
 
-
 param_list = list(all_data.items())
 id_list = [
     f"{filename} - {scenario.get('scenario_name', 'No Scenario')}"
     for filename, scenario in param_list
 ]
+
 
 @pytest.mark.smoketest
 @pytest.mark.parametrize("filename, scenario", param_list, ids=id_list)
@@ -42,6 +42,7 @@ def test_run_smoke_case(filename, scenario, eligibility_client):
         f"Actual:   {actual_response}\n"
     )
 
+
 @pytest.mark.smoketest
 def test_check_for_missing_person(eligibility_client):
     nhs_number = "1234567890"
@@ -59,4 +60,3 @@ def test_check_for_missing_person(eligibility_client):
 
     assert response["status_code"] == 404
     assert response["body"] == expected_body
-
