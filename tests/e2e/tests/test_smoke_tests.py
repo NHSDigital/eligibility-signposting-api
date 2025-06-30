@@ -37,7 +37,8 @@ def test_run_smoke_case(filename, scenario, eligibility_client):
     expected_response = all_expected_responses.get(filename).get("response_items", {})
 
     # Assert and show details on failure
-    assert actual_response == expected_response, (
+    assert actual_response["status_code"] == 200
+    assert actual_response["body"] == expected_response, (
         f"\n❌ Mismatch in test: {filename}\n"
         f"NHS Number: {nhs_number}\n"
         f"Expected: {expected_response}\n"
