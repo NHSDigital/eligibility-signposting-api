@@ -2,9 +2,19 @@ import os
 import json
 
 from .common_test_helpers import clean_response
+from .dynamo_helper import insert_into_dynamo
 from .placeholder_utils import resolve_placeholders
 from .placeholder_context import ResolvedPlaceholderContext, PlaceholderDTO
 
+def initialise_tests(folder):
+    folder_path = os.path.abspath(folder)
+    all_data, dto = load_all_test_scenarios(folder_path)
+
+    # Insert to Dynamo (placeholder)
+    for scenario in all_data.values():
+        insert_into_dynamo(scenario["dynamo_items"])
+
+    return all_data, dto
 
 def resolve_placeholders_in_data(data, context, file_name):
     if isinstance(data, dict):

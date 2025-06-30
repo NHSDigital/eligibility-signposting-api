@@ -61,15 +61,3 @@ class S3ConfigManager:
             if e.response["Error"]["Code"] == "NoSuchKey":
                 return False
             raise
-
-    # def upload_if_missing_or_changed(self, local_path: str):
-    #     filename = os.path.basename(local_path)
-    #     s3_key = self._s3_key(filename)
-    #
-    #     if self.config_exists_and_matches(local_path, s3_key):
-    #         print(f"✅ Config '{filename}' already exists and matches in S3. Skipping upload.")
-    #         return
-    #
-    # print(f"⬆️ Uploading new config '{filename}' to S3 as it is missing or changed...")
-    # self.s3_client.upload_file(local_path, self.bucket_name, s3_key)
-    # print(f"✅ Uploaded to s3://{self.bucket_name}/{s3_key}")
