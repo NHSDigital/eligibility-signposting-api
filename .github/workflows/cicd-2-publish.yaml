@@ -5,8 +5,9 @@
 name: "CI/CD publish"
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
 
 concurrency:
   group: terraform-dev
