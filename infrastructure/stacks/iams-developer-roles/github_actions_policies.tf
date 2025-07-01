@@ -456,7 +456,9 @@ resource "aws_iam_policy" "firehose_readonly" {
           "firehose:PutRecordBatch",
           "firehose:TagDeliveryStream",
           "firehose:ListTagsForDeliveryStream",
-          "firehose:UntagDeliveryStream"
+          "firehose:UntagDeliveryStream",
+          "firehose:StartDeliveryStreamEncryption",
+          "firehose:StopDeliveryStreamEncryption"
         ]
         Resource = "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/eligibility-signposting-api*"
       }
