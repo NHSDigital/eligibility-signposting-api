@@ -85,11 +85,12 @@ data "aws_iam_policy_document" "firehose_kms_key_policy" {
       "kms:Decrypt",
       "kms:ReEncrypt*",
       "kms:GenerateDataKey*",
-      "kms:DescribeKey"
+      "kms:DescribeKey",
+      "kms:CreateGrant"
     ]
     resources = [aws_kms_key.firehose_cmk.arn]
     condition {
-      test     = "StringEquals"
+      test     = "StringLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
       values   = [
         "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*"
