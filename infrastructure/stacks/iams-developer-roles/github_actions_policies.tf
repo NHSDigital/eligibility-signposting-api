@@ -447,11 +447,17 @@ resource "aws_iam_policy" "firehose_readonly" {
     Statement = [
       {
         Effect = "Allow",
-        Action = [
+        actions = [
+          "firehose:CreateDeliveryStream",
+          "firehose:DeleteDeliveryStream",
           "firehose:DescribeDeliveryStream",
+          "firehose:UpdateDestination",
+          "firehose:PutRecord",
+          "firehose:PutRecordBatch",
+          "firehose:TagDeliveryStream",
           "firehose:ListTagsForDeliveryStream",
-          "firehose:TagDeliveryStream"
-        ],
+          "firehose:UntagDeliveryStream"
+        ]
         Resource = "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/eligibility-signposting-api*"
       }
     ]
