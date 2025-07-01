@@ -7,4 +7,6 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
   lifecycle {
     prevent_destroy = false
   }
+
+  depends_on = [aws_kms_key_policy.api_gateway]
 }

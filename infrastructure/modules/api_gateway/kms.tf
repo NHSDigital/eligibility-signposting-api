@@ -23,17 +23,17 @@ data "aws_iam_policy_document" "api_gateway" {
     sid    = "Enable IAM User Permissions for ${var.api_gateway_name} API Gateway"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-    actions   = ["kms:*"]
+    actions = ["kms:*"]
     resources = [aws_kms_key.api_gateway.arn]
   }
   statement {
     sid    = "APIGatewayCloudwatchKMSAccess"
     effect = "Allow"
     principals {
-      type        = "Service"
+      type = "Service"
       identifiers = ["logs.${var.region}.amazonaws.com"]
     }
     actions = [
@@ -41,8 +41,16 @@ data "aws_iam_policy_document" "api_gateway" {
       "kms:Decrypt*",
       "kms:ReEncrypt*",
       "kms:GenerateDataKey*",
-      "kms:Describe*"
+      "kms:Describe*",
+      "kms:CreateGrant"
     ]
     resources = [aws_kms_key.api_gateway.arn]
+    condition {
+      test     = "StringLike"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+      values = [
+        "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/*"
+      ]
+    }
   }
 }
