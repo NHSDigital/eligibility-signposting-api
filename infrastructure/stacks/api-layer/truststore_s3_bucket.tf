@@ -18,7 +18,7 @@ data "aws_iam_policy_document" "truststore_api_gateway" {
     effect = "Allow"
 
     principals {
-      type        = "Service"
+      type = "Service"
       identifiers = ["apigateway.amazonaws.com"]
     }
 
@@ -38,3 +38,33 @@ resource "aws_s3_object" "pem_file" {
 
   depends_on = [module.s3_truststore_bucket.storage_bucket_versioning_config]
 }
+
+
+resource "aws_kms_key_policy" "storage_bucket_cmk" {
+  key_id = module.s3_truststore_bucket.storage_bucket_id
+  policy = data.aws_iam_policy_document.trust_store_kms_policy.json
+}
+
+data "aws_iam_policy_document" "trust_store_kms_policy" {
+  statement {
+    sid    = "APIGatewayS3TruststoreDecrypt"
+    effect = "Allow"
+    principals {
+      type = "Service"
+      identifiers = [
+        "apigateway.amazonaws.com",
+        "apigateway.${var.default_aws_region}.amazonaws.com"
+      ]
+    }
+    actions = ["kms:Decrypt"]
+    resources = [module.eligibility_signposting_api_gateway.kms_key_arn]
+    condition {
+      test     = "StringEquals"
+      variable = "kms:EncryptionContext:aws:s3:arn"
+      values = [
+        "${module.s3_truststore_bucket.storage_bucket_arn}/truststore.pem"
+      ]
+    }
+  }
+}
+

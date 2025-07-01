@@ -53,22 +53,4 @@ data "aws_iam_policy_document" "api_gateway" {
       ]
     }
   }
-
-  statement {
-    sid    = "APIGatewayS3TruststoreDecrypt"
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["apigateway.amazonaws.com"]
-    }
-    actions = ["kms:Decrypt"]
-    resources = [aws_kms_key.api_gateway.arn]
-    condition {
-      test     = "StringEquals"
-      variable = "kms:EncryptionContext:aws:s3:arn"
-      values = [
-        "${var.trust_store_pem_arn}/truststore.pem"
-      ]
-    }
-  }
 }

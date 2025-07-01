@@ -18,6 +18,10 @@ output "storage_bucket_id" {
   value = aws_s3_bucket.storage_bucket.id
 }
 
+output "storage_bucket_kms_key_id" {
+  value = aws_kms_key.storage_bucket_cmk.id
+}
+
 output "storage_bucket_kms_key_arn" {
   value = aws_kms_key.storage_bucket_cmk.arn
 }
