@@ -2,6 +2,7 @@ module "eligibility_signposting_api_gateway" {
   source                   = "../../modules/api_gateway"
   api_gateway_name         = "eligibility-signposting-api"
   disable_default_endpoint = var.environment == "dev" && local.workspace != "default" ? false : true
+  trust_store_pem_arn      = module.s3_truststore_bucket.storage_bucket_arn
   workspace                = local.workspace
   stack_name               = local.stack_name
   environment              = var.environment
