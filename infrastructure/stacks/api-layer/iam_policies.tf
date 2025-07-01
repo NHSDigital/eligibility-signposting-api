@@ -1,7 +1,7 @@
 # Read-only policy for DynamoDB
 data "aws_iam_policy_document" "dynamodb_read_policy_doc" {
   statement {
-    actions   = ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"]
+    actions = ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"]
     resources = [module.eligibility_status_table.arn]
   }
 }
@@ -16,14 +16,14 @@ resource "aws_iam_role_policy" "lambda_dynamodb_read_policy" {
 # Write-only policy for DynamoDB
 data "aws_iam_policy_document" "dynamodb_write_policy_doc" {
   statement {
-    actions   = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:BatchWriteItem"]
+    actions = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:BatchWriteItem"]
     resources = [module.eligibility_status_table.arn]
   }
 }
 
 # Attach dynamoDB write policy to external write role
 resource "aws_iam_role_policy" "external_dynamodb_write_policy" {
-  count  = length(aws_iam_role.write_access_role)
+  count = length(aws_iam_role.write_access_role)
   name   = "DynamoDBWriteAccess"
   role   = aws_iam_role.write_access_role[count.index].id
   policy = data.aws_iam_policy_document.dynamodb_write_policy_doc.json
@@ -43,7 +43,7 @@ data "aws_iam_policy_document" "s3_rules_bucket_policy" {
     ]
     condition {
       test     = "Bool"
-      values   = ["true"]
+      values = ["true"]
       variable = "aws:SecureTransport"
     }
   }
@@ -106,7 +106,7 @@ resource "aws_iam_role_policy_attachment" "lambda_logs_policy_attachment" {
 # Policy doc for S3 Audit bucket
 data "aws_iam_policy_document" "s3_audit_bucket_policy" {
   statement {
-    sid     = "AllowSSLRequestsOnly"
+    sid = "AllowSSLRequestsOnly"
     actions = ["s3:*"]
     resources = [
       module.s3_audit_bucket.storage_bucket_arn,
@@ -114,7 +114,7 @@ data "aws_iam_policy_document" "s3_audit_bucket_policy" {
     ]
     condition {
       test     = "Bool"
-      values   = ["true"]
+      values = ["true"]
       variable = "aws:SecureTransport"
     }
   }
@@ -136,10 +136,10 @@ data "aws_iam_policy_document" "dynamodb_kms_key_policy" {
     sid    = "EnableIamUserPermissions"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-    actions   = ["kms:*"]
+    actions = ["kms:*"]
     resources = ["*"]
   }
 
@@ -147,7 +147,7 @@ data "aws_iam_policy_document" "dynamodb_kms_key_policy" {
     sid    = "AllowLambdaDecrypt"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [aws_iam_role.eligibility_lambda_role.arn]
     }
     actions = [
@@ -174,10 +174,10 @@ data "aws_iam_policy_document" "s3_rules_kms_key_policy" {
     sid    = "EnableIamUserPermissions"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-    actions   = ["kms:*"]
+    actions = ["kms:*"]
     resources = ["*"]
   }
 
@@ -185,10 +185,10 @@ data "aws_iam_policy_document" "s3_rules_kms_key_policy" {
     sid    = "AllowLambdaDecrypt"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [aws_iam_role.eligibility_lambda_role.arn]
     }
-    actions   = ["kms:Decrypt"]
+    actions = ["kms:Decrypt"]
     resources = ["*"]
   }
 }
@@ -207,10 +207,10 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
     sid    = "EnableIamUserPermissions"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-    actions   = ["kms:*"]
+    actions = ["kms:*"]
     resources = ["*"]
   }
 
@@ -218,7 +218,7 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
     sid    = "AllowLambdaFullWrite"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [aws_iam_role.eligibility_lambda_role.arn, aws_iam_role.eligibility_audit_firehose_role.arn]
     }
     actions = [
@@ -241,8 +241,12 @@ data "aws_iam_policy_document" "lambda_firehose_write_policy" {
     sid    = "AllowLambdaToPutToFirehose"
     effect = "Allow"
     actions = [
+      "firehose:StartDeliveryStreamEncryption",
+      "firehose:StopDeliveryStreamEncryption",
       "firehose:PutRecord",
-      "firehose:PutRecordBatch"
+      "firehose:PutRecordBatch",
+      "firehose:DescribeDeliveryStream",
+      "firehose:ListDeliveryStreams"
     ]
     resources = [
       "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/${module.eligibility_audit_firehose_delivery_stream.firehose_stream_name}"
