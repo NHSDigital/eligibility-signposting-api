@@ -1,3 +1,4 @@
+import http
 import os
 
 import pytest
@@ -20,21 +21,19 @@ id_list = [
 ]
 
 
-@pytest.mark.storytest
+@pytest.mark.storytest_all
 @pytest.mark.parametrize("filename, scenario", param_list, ids=id_list)
 def test_run_story_test_cases(filename, scenario, eligibility_client):
-    # get the nhs_number from the scenario
     nhs_number = scenario["nhs_number"]
-    # get the associated campaign config file from the scenario
     config_filename = scenario.get("config_filename", "")
-    # upload that config file to s3 if it is missing or has changed
+    request_headers = scenario.get("request_headers", {})
     s3_manager.upload_if_missing_or_changed(os.path.abspath(os.path.join(config_path, config_filename)))
 
     actual_response = eligibility_client.make_request(nhs_number, strict_ssl=False)
     expected_response = all_expected_responses.get(filename).get("response_items", {})
 
     # Assert and show details on failure
-    assert actual_response["status_code"] == 200
+    assert actual_response["status_code"] == http.HTTPStatus.OK
     assert actual_response["body"] == expected_response, (
         f"\n❌ Mismatch in test: {filename}\n"
         f"NHS Number: {nhs_number}\n"

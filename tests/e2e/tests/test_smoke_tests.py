@@ -1,3 +1,4 @@
+import http
 import os
 
 import pytest
@@ -58,5 +59,5 @@ def test_check_for_missing_person(eligibility_client):
 
     response = eligibility_client.make_request(nhs_number, raise_on_error=False)
 
-    assert response["status_code"] == 404
+    assert response["status_code"] == http.HTTPStatus.NOT_FOUND
     assert response["body"] == expected_body

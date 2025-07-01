@@ -67,6 +67,46 @@ class EligibilityApiClient:
             nhs_number: str,
             method: str = "GET",
             payload: Optional[Union[Dict[str, Any], list]] = None,
+            headers: Optional[Dict[str, str]] = None,
+            strict_ssl: bool = False,
+            raise_on_error: bool = True,
+    ) -> Dict[str, Any]:
+        url = f"{self.api_url.rstrip('/')}/{nhs_number}"
+        cert = (
+            str(self.cert_paths["client_cert"]),
+            str(self.cert_paths["private_key"]),
+        )
+        verify: Union[bool, str] = str(self.cert_paths["ca_cert"]) if strict_ssl else False
+
+        try:
+            response = requests.request(
+                method=method.upper(),
+                url=url,
+                cert=cert,
+                verify=verify,
+                json=payload,
+                headers=headers,
+                timeout=10,
+            )
+
+            if raise_on_error:
+                response.raise_for_status()
+
+            return self._parse_response(response)
+
+        except requests.exceptions.SSLError as ssl_err:
+            raise RuntimeError(f"SSL error during request: {ssl_err}") from ssl_err
+        except requests.exceptions.RequestException as req_err:
+            response = getattr(req_err, "response", None)
+            if isinstance(response, Response):
+                return self._parse_response(response)
+            raise RuntimeError(f"Request error: {req_err}") from req_err
+
+    def make_request_old(
+            self,
+            nhs_number: str,
+            method: str = "GET",
+            payload: Optional[Union[Dict[str, Any], list]] = None,
             strict_ssl: bool = False,
             raise_on_error: bool = True,
     ) -> Dict[str, Any]:

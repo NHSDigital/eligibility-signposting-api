@@ -102,8 +102,9 @@ def load_all_test_scenarios(folder_path, config_folder_path="tests/e2e/data/conf
 
         raw_data = raw_json["data"]
 
-        config_filename = raw_json.get("config_filename")  # Just the name
-        scenario_name = raw_json.get("scenario_name")  # Just the name
+        config_filename = raw_json.get("config_filename")
+        scenario_name = raw_json.get("scenario_name")
+        request_headers = raw_json.get("request_headers")
 
         # Resolve placeholders with shared DTO
         resolved_data = resolve_placeholders_in_data(raw_data, dto, filename)
@@ -116,6 +117,7 @@ def load_all_test_scenarios(folder_path, config_folder_path="tests/e2e/data/conf
             "dynamo_items": resolved_data,
             "nhs_number": nhs_number,
             "config_filename": config_filename,
+            "request_headers": request_headers,
             "scenario_name": scenario_name,
         }
 
