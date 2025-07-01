@@ -436,6 +436,27 @@ resource "aws_iam_policy" "cloudwatch_logging" {
   tags = merge(local.tags, { Name = "cloudwatch-logging-management" })
 }
 
+resource "aws_iam_policy" "firehose_readonly" {
+  name        = "firehose-describe-access"
+  description = "Allow GitHub Actions to describe Firehose delivery stream"
+  path        = "/service-policies/"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "firehose:DescribeDeliveryStream"
+        ],
+        Resource = "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/eligibility-signposting-api*"
+      }
+    ]
+  })
+
+  tags = merge(local.tags, { Name = "firehose-describe-access" })
+}
+
 # Attach the policies to the role
 resource "aws_iam_role_policy_attachment" "terraform_state" {
   role       = aws_iam_role.github_actions.name
@@ -475,4 +496,9 @@ resource "aws_iam_role_policy_attachment" "iam_management" {
 resource "aws_iam_role_policy_attachment" "cloudwatch_logging" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.cloudwatch_logging.arn
+}
+
+resource "aws_iam_role_policy_attachment" "firehose_readonly_attach" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.firehose_readonly.arn
 }
