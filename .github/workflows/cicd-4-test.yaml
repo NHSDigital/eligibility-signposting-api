@@ -8,6 +8,9 @@ on:
         required: true
         type: choice
         options: [dev, test, preprod]
+      revision:
+        description: Git revision (commit SHA or tag)
+        required: false
 
 jobs:
   listS3:
@@ -18,8 +21,10 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.revision || 'main' }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
