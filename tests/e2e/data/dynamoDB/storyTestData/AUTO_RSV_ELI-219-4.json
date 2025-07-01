@@ -1,15 +1,14 @@
 {
-  "scenario_name": "RSV - Actionable due to membership of an Age Cohort incl. suggested actions (with booking)",
-  "config_filename": "AUTO_RSV_ELI-155.json",
-  "request_headers": {"authenticated_nhs_number": "9000000001","includeActions": "N"},
+  "scenario_name": "ELI-219 - Testing the new requirement from Vita around empty actions ",
+  "config_filename": "AUTO_RSV_ELI-219-4.json",
   "data": [
     {
-      "NHS_NUMBER": "9000000001",
+      "NHS_NUMBER": "9000000005",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MAP": {
         "cohorts": {
           "M": {
-            "eli_155_in": {
+            "eli_291_cohort_4": {
               "M": {
                 "dateJoined": {
                   "S": "20230515"
@@ -21,7 +20,7 @@
       }
     },
     {
-      "NHS_NUMBER": "9000000001",
+      "NHS_NUMBER": "9000000005",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
@@ -39,9 +38,10 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "9000000001",
+      "NHS_NUMBER": "9000000005",
       "ATTRIBUTE_TYPE": "RSV",
-      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+5>>"
+      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+5>>",
+      "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_+5>>"
     }
   ]
 }
