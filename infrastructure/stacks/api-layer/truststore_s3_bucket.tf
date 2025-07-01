@@ -7,11 +7,6 @@ module "s3_truststore_bucket" {
   workspace    = terraform.workspace
 }
 
-resource "aws_s3_bucket_policy" "truststore" {
-  bucket = module.s3_truststore_bucket.storage_bucket_id
-  policy = data.aws_iam_policy_document.truststore_api_gateway.json
-}
-
 data "aws_iam_policy_document" "truststore_api_gateway" {
   statement {
     sid    = "Enable S3 access permissions for API Gateway"
@@ -31,9 +26,16 @@ data "aws_iam_policy_document" "truststore_api_gateway" {
 }
 
 resource "aws_s3_object" "pem_file" {
-  bucket  = module.s3_truststore_bucket.storage_bucket_name
+  bucket  = module.s3_truststore_bucket.storage_bucket_id
   key     = "truststore.pem"
   content = local.pem_file_content
 
   acl = "private"
+}
+
+resource "aws_s3_bucket_policy" "truststore" {
+  bucket = module.s3_truststore_bucket.storage_bucket_id
+  policy = data.aws_iam_policy_document.truststore_api_gateway.json
+
+  depends_on = [aws_s3_object.pem_file]
 }
