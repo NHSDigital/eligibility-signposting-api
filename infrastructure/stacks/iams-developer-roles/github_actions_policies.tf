@@ -426,7 +426,8 @@ resource "aws_iam_policy" "cloudwatch_logging" {
         Effect = "Allow",
         Action = [
           "logs:ListTagsForResource",
-          "logs:DescribeLogGroups"
+          "logs:DescribeLogGroups",
+          "logs:PutRetentionPolicy"
         ],
         Resource = "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*"
       }
