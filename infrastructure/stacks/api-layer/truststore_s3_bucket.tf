@@ -41,7 +41,7 @@ resource "aws_s3_object" "pem_file" {
 
 
 resource "aws_kms_key_policy" "storage_bucket_cmk" {
-  key_id = module.s3_truststore_bucket.storage_bucket_id
+  key_id = module.s3_truststore_bucket.storage_bucket_kms_key_id
   policy = data.aws_iam_policy_document.trust_store_kms_policy.json
 }
 
