@@ -2,6 +2,7 @@
   "scenario_name": "ELI-216 - NHS Number check (NHS login) - No Header",
   "config_filename": "AUTO_RSV_ELI-216.json",
   "request_headers": {},
+  "expected_response_code": 403,
   "data": [
     {
       "NHS_NUMBER": "9000000006",

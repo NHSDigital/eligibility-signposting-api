@@ -33,26 +33,26 @@ class S3ConfigManager:
         try:
             if self.config_exists_and_matches(local_path, s3_key):
                 print(
-                    f"✅ Config '{filename}' already exists and matches in S3. "
+                    f"\n🔍 Config '{filename}' already exists and matches in S3. "
                     "Skipping upload."
                 )
                 return
             print(
-                f"🧹 A different config exists under '{self.s3_prefix}/'. "
+                f"\n🧹 A different config exists under '{self.s3_prefix}/'. "
                 "Deleting all existing files..."
             )
             self._delete_all_in_prefix()
         except self.s3_client.exceptions.NoSuchKey:
-            print(f"🆕 No config found under '{self.s3_prefix}/'. Proceeding to upload.")
+            print(f"\n🆕 No config found under '{self.s3_prefix}/'. Proceeding to upload.")
         except botocore.exceptions.ClientError as error:
             if error.response.get("Error", {}).get("Code") == "NoSuchKey":
-                print(f"🆕 No config found under '{self.s3_prefix}/'. Proceeding to upload.")
+                print(f"\n🆕 No config found under '{self.s3_prefix}/'. Proceeding to upload.")
             else:
                 raise
 
         print(f"⬆️ Uploading new config '{filename}' to S3...")
         self.s3_client.upload_file(local_path, self.bucket_name, s3_key)
-        print(f"✅ Uploaded to s3://{self.bucket_name}/{s3_key}")
+        print(f"📄 Uploaded to s3://{self.bucket_name}/{s3_key}")
 
     def config_exists_and_matches(self, local_path: str, s3_key: str) -> bool:
         try:

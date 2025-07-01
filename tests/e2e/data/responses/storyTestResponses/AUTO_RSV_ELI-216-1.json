@@ -18,11 +18,11 @@
       "suitabilityRules": [],
       "actions": [
         {
-          "action_type": "DefaultActionType",
-          "action_code": "DefaultAction",
-          "action_description": "DefaultActionDescription",
-          "url_label": "DefaultLabel",
-          "url_link": "DefaultActionUrl"
+          "action_code": "ActionOneRoutingCode",
+          "action_description": "ActionOneDescription",
+          "action_type": "ActionOneActionType",
+          "url_label": "ActionOneUrlLabel",
+          "url_link": "http://www.actiononeurl.com"
         }
       ]
     }

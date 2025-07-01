@@ -10,3 +10,7 @@ SMOKE_TEST_CONFIGS: str = "tests/e2e/data/configs/smokeTestConfigs"
 STORY_TEST_DATA: str = "tests/e2e/data/dynamoDB/storyTestData/"
 STORY_TEST_RESPONSES: str = "tests/e2e/data/responses/storyTestResponses/"
 STORY_TEST_CONFIGS: str = "tests/e2e/data/configs/storyTestConfigs"
+# Story Test Data Paths
+REGRESSION_TEST_DATA: str = "tests/e2e/data/dynamoDB/regressionTestData/"
+REGRESSION_RESPONSES: str = "tests/e2e/data/responses/regressionTestResponses/"
+REGRESSION_CONFIGS: str = "tests/e2e/data/configs/regressionTestConfigs"

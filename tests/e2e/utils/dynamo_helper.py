@@ -50,7 +50,7 @@ class DynamoDBHelper:
 
 
 def insert_into_dynamo(data):
-    print("Inserting into Dynamo (fake):", data)
+    print("Inserting into Dynamo:", data)
     table = DynamoDBHelper("eligibility-signposting-api-test-eligibility_datastore")
     for item in data:
         try:

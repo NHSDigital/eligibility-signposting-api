@@ -8,9 +8,9 @@ from tests.e2e.utils.data_loader import load_all_expected_responses, initialise_
 from tests.e2e.utils.s3ConfigManager import S3ConfigManager
 
 # Update the below with the configuration values specified in test_config.py
-all_data, dto = initialise_tests(SMOKE_TEST_DATA)
-all_expected_responses = load_all_expected_responses(SMOKE_TEST_RESPONSES)
-config_path = SMOKE_TEST_CONFIGS
+all_data, dto = initialise_tests(REGRESSION_TEST_DATA)
+all_expected_responses = load_all_expected_responses(REGRESSION_RESPONSES)
+config_path = REGRESSION_CONFIGS
 
 s3_manager = S3ConfigManager(S3_BUCKET, S3_PREFIX)
 
@@ -21,17 +21,15 @@ id_list = [
 ]
 
 
-@pytest.mark.smoketest
+@pytest.mark.regressiontest
 @pytest.mark.parametrize("filename, scenario", param_list, ids=id_list)
-def test_run_smoke_case(filename, scenario, eligibility_client):
-    # get the nhs_number from the scenario
+def test_run_regression_tests(filename, scenario, eligibility_client):
     nhs_number = scenario["nhs_number"]
-    # get the associated campaign config file from the scenario
     config_filename = scenario.get("config_filename", "")
-    # upload that config file to s3 if it is missing or has changed
+    request_headers = scenario.get("request_headers", {})
     s3_manager.upload_if_missing_or_changed(os.path.abspath(os.path.join(config_path, config_filename)))
 
-    actual_response = eligibility_client.make_request(nhs_number, strict_ssl=False)
+    actual_response = eligibility_client.make_request(nhs_number, headers= request_headers, strict_ssl=False)
     expected_response = all_expected_responses.get(filename).get("response_items", {})
 
     # Assert and show details on failure
