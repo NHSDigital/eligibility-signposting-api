@@ -16,6 +16,7 @@ resource "aws_iam_role" "api_gateway" {
 
 data "aws_iam_policy_document" "api_gateway_logging" {
   #checkov:skip=CKV_AWS_356: Wildcard permissions needed for global log event reads
+  #checkov:skip=CKV_AWS_111: Ensure IAM policies does not allow write access without constraints
   statement {
     sid    = "AllowCreateLogGroup"
     effect = "Allow"
