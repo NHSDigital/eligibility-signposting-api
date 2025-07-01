@@ -1,15 +1,15 @@
 {
-  "scenario_name": "ELI-219 - Fails and Rules and Returns Default",
-  "config_filename": "AUTO_RSV_ELI-219-1.json",
-  "request_headers": {"nhs-login-nhs-number": "9000000002"},
+  "scenario_name": "RSV - Regression - Not Eligible, In Cohort, Filter Rule",
+  "request_headers": {"nhs-login-nhs-number": "1000000011"},
+  "config_filename": "AUTO_RSV_REG_001.json",
   "data": [
     {
-      "NHS_NUMBER": "9000000002",
+      "NHS_NUMBER": "1000000011",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MAP": {
         "cohorts": {
           "M": {
-            "eli_291_cohort_1": {
+            "rsv_cohort_1": {
               "M": {
                 "dateJoined": {
                   "S": "20230515"
@@ -21,12 +21,12 @@
       }
     },
     {
-      "NHS_NUMBER": "9000000002",
+      "NHS_NUMBER": "1000000011",
       "ATTRIBUTE_TYPE": "PERSON",
-      "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
+      "DATE_OF_BIRTH": "<<DATE_AGE_74>>",
       "GENDER": "0",
       "POSTCODE": "LS1 1AB",
-      "POSTCODE_SECTOR": "LS1",
+      "POSTCODE_SECTOR": "LS2",
       "POSTCODE_OUTCODE": "1AB",
       "MSOA": "E02001111",
       "LSOA": "E01005348",
@@ -37,12 +37,6 @@
       "13Q_FLAG": "N",
       "CARE_HOME_FLAG": "N",
       "DE_FLAG": "N"
-    },
-    {
-      "NHS_NUMBER": "9000000002",
-      "ATTRIBUTE_TYPE": "RSV",
-      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+5>>",
-      "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_+5>>"
     }
   ]
 }

@@ -61,15 +61,6 @@
             "Operator": "is_not_null",
             "Comparator": "",
             "CommsRouting": "ACTION_ONE"
-          },
-          {
-            "Type": "R",
-            "Name": "Actionable if future appointment is booked with ACC",
-            "Description": "Book An Appointment",
-            "Priority": 1000,
-            "AttributeLevel": "COHORT",
-            "Operator": "in",
-            "CommsRouting": "ACTION_ONE"
           }
         ],
         "ActionsMapper": {

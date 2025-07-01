@@ -13,7 +13,7 @@ from tests.e2e.utils.eligibilityApiClient import EligibilityApiClient
 load_dotenv(dotenv_path=".env.local")
 
 # Constants
-BASE_URL = os.getenv("BASE_URL", "https://sandbox.api.service.nhs.uk/eligibility-signposting-api")
+BASE_URL = os.getenv("BASE_URL", "https://test.eligibility-signposting-api.nhs.uk/patient-check")
 API_KEY = os.getenv("API_KEY", "")
 VALID_NHS_NUMBER = os.getenv("VALID_NHS_NUMBER", "50000000004")
 DYNAMODB_TABLE_NAME = os.getenv("DYNAMODB_TABLE_NAME", "eligibility_data_store")
@@ -84,5 +84,4 @@ def setup_dynamodb_data(request):
 
 @pytest.fixture(scope="session")
 def eligibility_client():
-    base_url = "https://test.eligibility-signposting-api.nhs.uk/patient-check"
-    return EligibilityApiClient(base_url)
+    return EligibilityApiClient(BASE_URL)

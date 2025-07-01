@@ -1,7 +1,7 @@
 {
   "scenario_name": "ELI-216 - NHS Number check (NHS login) - Correct NHS_number",
   "config_filename": "AUTO_RSV_ELI-216.json",
-  "request_headers": {"authenticated_nhs_number": "9000000006"},
+  "request_headers": {"nhs-login-nhs-number": "9000000006"},
   "data": [
     {
       "NHS_NUMBER": "9000000006",

@@ -1,7 +1,7 @@
 {
   "scenario_name": "RSV - Actionable due to membership of an Age Cohort incl. suggested actions (with booking)",
   "config_filename": "AUTO_RSV_ELI-155.json",
-  "request_headers": {"authenticated_nhs_number": "9000000001"},
+  "request_headers": {"nhs-login-nhs-number": "9000000001"},
   "data": [
     {
       "NHS_NUMBER": "9000000001",
