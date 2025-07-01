@@ -34,6 +34,7 @@ resource "aws_s3_object" "pem_file" {
   bucket  = module.s3_truststore_bucket.storage_bucket_name
   key     = "truststore.pem"
   content = local.pem_file_content
+  acl     = "private"
 
-  acl = "private"
+  depends_on = [module.s3_truststore_bucket.storage_bucket_versioning_config]
 }

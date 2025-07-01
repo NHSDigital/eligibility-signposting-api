@@ -21,3 +21,7 @@ output "storage_bucket_id" {
 output "storage_bucket_kms_key_arn" {
   value = aws_kms_key.storage_bucket_cmk.arn
 }
+
+output "storage_bucket_versioning_config" {
+  value = aws_s3_bucket_versioning.storage_bucket_versioning_config
+}
