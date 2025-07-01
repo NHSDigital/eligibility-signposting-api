@@ -150,7 +150,13 @@ data "aws_iam_policy_document" "dynamodb_kms_key_policy" {
       type        = "AWS"
       identifiers = [aws_iam_role.eligibility_lambda_role.arn]
     }
-    actions   = ["kms:Decrypt"]
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
     resources = ["*"]
   }
 }

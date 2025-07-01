@@ -1,4 +1,4 @@
-name: Manual Terraform Plan
+name: Manual Terraform Apply
 
 on:
   workflow_dispatch:
@@ -65,8 +65,8 @@ jobs:
         run: |
           mkdir -p ./build
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=plan args=\"-auto-approve\""
-          make terraform env=$ENVIRONMENT stack=networking tf-command=plan workspace=$WORKSPACE
+          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=plan args=\"-auto-approve\""
-          make terraform env=$ENVIRONMENT stack=api-layer tf-command=plan workspace=$WORKSPACE
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
 
         working-directory: ./infrastructure
