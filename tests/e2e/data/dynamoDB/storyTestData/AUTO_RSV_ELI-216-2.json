@@ -1,14 +1,15 @@
 {
-  "scenario_name": "ELI-219 - Fails and Rules and Returns Default",
-  "config_filename": "AUTO_RSV_ELI-21-91.json",
+  "scenario_name": "ELI-216 - NHS Number check (NHS login) - Incorrect NHS_number",
+  "config_filename": "AUTO_RSV_ELI-216.json",
+  "request_headers": {"authenticated_nhs_number": "9000000001"},
   "data": [
     {
-      "NHS_NUMBER": "9000000002",
+      "NHS_NUMBER": "9000000006",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MAP": {
         "cohorts": {
           "M": {
-            "eli_291_cohort_1": {
+            "eli_216_cohort": {
               "M": {
                 "dateJoined": {
                   "S": "20230515"
@@ -20,7 +21,7 @@
       }
     },
     {
-      "NHS_NUMBER": "9000000002",
+      "NHS_NUMBER": "9000000006",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
@@ -38,7 +39,7 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "9000000002",
+      "NHS_NUMBER": "9000000006",
       "ATTRIBUTE_TYPE": "RSV",
       "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+5>>",
       "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_+5>>"
