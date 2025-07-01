@@ -10,7 +10,7 @@ resource "aws_s3_bucket" "storage_bucket" {
 resource "aws_s3_bucket_versioning" "storage_bucket_versioning_config" {
   bucket = aws_s3_bucket.storage_bucket.id
   versioning_configuration {
-    status = "Suspended"
+    status = "Enabled"
   }
 }
 
