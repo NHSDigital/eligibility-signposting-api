@@ -447,7 +447,7 @@ resource "aws_iam_policy" "firehose_readonly" {
     Statement = [
       {
         Effect = "Allow",
-        actions = [
+        Action = [
           "firehose:CreateDeliveryStream",
           "firehose:DeleteDeliveryStream",
           "firehose:DescribeDeliveryStream",
@@ -462,7 +462,6 @@ resource "aws_iam_policy" "firehose_readonly" {
       }
     ]
   })
-
   tags = merge(local.tags, { Name = "firehose-describe-access" })
 }
 
