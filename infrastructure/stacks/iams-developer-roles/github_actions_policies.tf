@@ -426,7 +426,8 @@ resource "aws_iam_policy" "cloudwatch_logging" {
         Effect = "Allow",
         Action = [
           "logs:ListTagsForResource",
-          "logs:DescribeLogGroups"
+          "logs:DescribeLogGroups",
+          "logs:PutRetentionPolicy"
         ],
         Resource = "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*"
       }
@@ -447,14 +448,20 @@ resource "aws_iam_policy" "firehose_readonly" {
       {
         Effect = "Allow",
         Action = [
+          "firehose:CreateDeliveryStream",
+          "firehose:DeleteDeliveryStream",
           "firehose:DescribeDeliveryStream",
-          "firehose:ListTagsForDeliveryStream"
-        ],
+          "firehose:UpdateDestination",
+          "firehose:PutRecord",
+          "firehose:PutRecordBatch",
+          "firehose:TagDeliveryStream",
+          "firehose:ListTagsForDeliveryStream",
+          "firehose:UntagDeliveryStream"
+        ]
         Resource = "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/eligibility-signposting-api*"
       }
     ]
   })
-
   tags = merge(local.tags, { Name = "firehose-describe-access" })
 }
 

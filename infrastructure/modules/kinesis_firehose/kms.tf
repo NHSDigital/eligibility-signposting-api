@@ -88,6 +88,13 @@ data "aws_iam_policy_document" "firehose_kms_key_policy" {
       "kms:DescribeKey"
     ]
     resources = [aws_kms_key.firehose_cmk.arn]
+    condition {
+      test     = "StringEquals"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+      values   = [
+        "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/${var.project_name}-${var.environment}-audit"
+      ]
+    }
   }
 }
 
