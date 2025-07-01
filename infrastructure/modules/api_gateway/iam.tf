@@ -44,7 +44,8 @@ data "aws_iam_policy_document" "api_gateway_logging" {
       "logs:DescribeLogGroups",
       "logs:DescribeLogStreams",
       "logs:GetLogEvents",
-      "logs:FilterLogEvents"
+      "logs:FilterLogEvents",
+      "logs:PutRetentionPolicy"
     ]
     resources = ["*"]
   }
