@@ -8,6 +8,8 @@ resource "aws_api_gateway_rest_api" "api_gateway" {
     create_before_destroy = true
   }
 
+  depends_on = [aws_kms_key_policy.api_gateway]
+
   tags = {
     Stack = var.stack_name
   }

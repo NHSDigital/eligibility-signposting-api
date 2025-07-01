@@ -57,7 +57,7 @@ jobs:
       - name: "Terraform Plan Stacks"
         env:
           ENVIRONMENT: ${{ inputs.environment }}
-          WORKSPACE: ${{ inputs.environment }}
+          WORKSPACE: "default"
           TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
           TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
           TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}

@@ -25,5 +25,10 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
     key_type = "CUSTOMER_MANAGED_CMK"
   }
 
+  depends_on = [
+    aws_kms_key_policy.firehose_key_policy,
+    var.kinesis_cloud_watch_log_group_name
+  ]
+
   tags = var.tags
 }
