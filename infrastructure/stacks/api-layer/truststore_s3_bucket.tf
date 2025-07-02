@@ -31,10 +31,11 @@ data "aws_iam_policy_document" "truststore_api_gateway" {
 }
 
 resource "aws_s3_object" "pem_file" {
-  bucket  = module.s3_truststore_bucket.storage_bucket_name
-  key     = "truststore.pem"
-  content = local.pem_file_content
-  acl     = "private"
+  bucket     = module.s3_truststore_bucket.storage_bucket_name
+  key        = "truststore.pem"
+  content    = local.pem_file_content
+  acl        = "private"
+  kms_key_id = module.s3_truststore_bucket.storage_bucket_kms_key_id
 
   depends_on = [module.s3_truststore_bucket.storage_bucket_versioning_config]
 }
@@ -50,17 +51,17 @@ data "aws_iam_policy_document" "trust_store_kms_policy" {
   #checkov:skip=CKV_AWS_356: Root user needs full KMS key management
   #checkov:skip=CKV_AWS_109: Root user needs full KMS key management
   statement {
-    sid = "AllowRootAccountFullAccess"
+    sid    = "AllowRootAccountFullAccess"
     effect = "Allow"
 
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [
         "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
       ]
     }
 
-    actions   = ["kms:*"]
+    actions = ["kms:*"]
     resources = ["*"]
   }
 
