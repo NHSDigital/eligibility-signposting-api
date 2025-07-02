@@ -3,6 +3,11 @@ variable "audit_firehose_delivery_stream_name" {
   type        = string
 }
 
+variable "audit_firehose_role" {
+  description = "audit firehose role"
+  type        = any
+}
+
 variable "audit_firehose_role_arn" {
   description = "audit firehose role arn"
   type        = string

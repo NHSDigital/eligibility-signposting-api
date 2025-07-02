@@ -25,5 +25,10 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
     key_type = "CUSTOMER_MANAGED_CMK"
   }
 
+  depends_on = [
+    aws_kms_key.firehose_cmk,
+    var.audit_firehose_role
+  ]
+
   tags = var.tags
 }
