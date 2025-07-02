@@ -1,7 +1,11 @@
+import logging
 import re
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 from calendar import isleap
+from datetime import UTC, datetime, timedelta
+
+from dateutil.relativedelta import relativedelta
+
+logger = logging.getLogger(__name__)
 
 
 def resolve_placeholders(value, context=None, file_name=None):
@@ -10,50 +14,63 @@ def resolve_placeholders(value, context=None, file_name=None):
 
     match = re.search(r"<<(.*?)>>", value)
     if not match:
-        return value  # No placeholder to resolve
+        return value
 
     placeholder = match.group(1)
-    parts = placeholder.split("_")
 
     try:
-        if placeholder in ["IGNORE_RESPONSE_ID", "IGNORE_DATE"]:
-            return value.replace(f"<<{placeholder}>>", placeholder)
-        elif len(parts) != 3 or parts[0] not in ["DATE", "RDATE", "IGNORE"]:
-            return value  # Unrecognized format
-
-        date_type, arg = parts[1], parts[2]
-        today = datetime.today()
-
-        if date_type == "AGE":
-            target_year = today.year - int(arg)
-            try:
-                result_date = today.replace(year=target_year)
-            except ValueError:
-                if today.month == 2 and today.day == 29 and not isleap(target_year):
-                    result_date = datetime(target_year, 2, 28)
-                else:
-                    raise
-
-        elif date_type == "DAY":
-            result_date = today + timedelta(days=int(arg))
-
-        elif date_type == "MONTH":
-            result_date = today + relativedelta(months=int(arg))
-
-        elif date_type == "YEAR":
-            result_date = today + relativedelta(years=int(arg))
-
-        else:
-            return value
-
-        resolved = result_date.strftime("%Y%m%d") if parts[0] == "DATE" else result_date.strftime("%-d %B %Y")
-
+        resolved = _resolve_placeholder_value(placeholder)
         if context:
             context.add(placeholder, resolved, file_name)
-
-        # Replace the single placeholder in the original string
         return value.replace(f"<<{placeholder}>>", resolved)
-
-    except Exception as e:
-        print(f"[ERROR] Could not resolve placeholder '{placeholder}': {e}")
+    except Exception:
+        logger.exception("[ERROR] Could not resolve placeholder %s:", placeholder)
         return value
+
+
+def _resolve_placeholder_value(placeholder: str) -> str:
+    placeholder_parts_length = 3
+    valid_placeholder_types = ["DATE", "RDATE", "IGNORE"]
+    result = f"<<{placeholder}>>"  # Default fallback
+
+    if placeholder in ["IGNORE_RESPONSE_ID", "IGNORE_DATE"]:
+        return placeholder
+
+    parts = placeholder.split("_")
+    if len(parts) != placeholder_parts_length or parts[0] not in valid_placeholder_types:
+        return result
+
+    today = datetime.now(UTC)
+    date_type, arg = parts[1], parts[2]
+
+    try:
+        if date_type == "AGE":
+            result = _resolve_age_placeholder(today, int(arg), parts[0])
+        elif date_type == "DAY":
+            result = _format_date(today + timedelta(days=int(arg)), parts[0])
+        elif date_type == "MONTH":
+            result = _format_date(today + relativedelta(months=int(arg)), parts[0])
+        elif date_type == "YEAR":
+            result = _format_date(today + relativedelta(years=int(arg)), parts[0])
+    except Exception:
+        logger.exception("Failed to resolve placeholder: %s", placeholder)
+        raise
+    return result
+
+
+def _resolve_age_placeholder(today: datetime, years_back: int, format_type: str) -> str:
+    target_year = today.year - years_back
+    february = 2
+    leap_year_day = 29
+    try:
+        result_date = today.replace(year=target_year)
+    except ValueError:
+        if today.month == february and today.day == leap_year_day and not isleap(target_year):
+            result_date = datetime(target_year, 2, 28, tzinfo=UTC)
+        else:
+            raise
+    return _format_date(result_date, format_type)
+
+
+def _format_date(date: datetime, format_type: str) -> str:
+    return date.strftime("%Y%m%d") if format_type == "DATE" else date.strftime("%-d %B %Y")
