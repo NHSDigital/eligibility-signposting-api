@@ -46,7 +46,9 @@ resource "aws_kms_key_policy" "storage_bucket_cmk" {
 }
 
 data "aws_iam_policy_document" "trust_store_kms_policy" {
-  # 1. Retain admin control
+  #checkov:skip=CKV_AWS_111: Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_356: Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_109: Root user needs full KMS key management
   statement {
     sid = "AllowRootAccountFullAccess"
     effect = "Allow"
