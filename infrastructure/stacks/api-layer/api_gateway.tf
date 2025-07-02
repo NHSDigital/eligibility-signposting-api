@@ -85,10 +85,10 @@ resource "aws_api_gateway_domain_name" "check_eligibility" {
   regional_certificate_arn               = data.aws_acm_certificate.imported_cert.arn
   ownership_verification_certificate_arn = data.aws_acm_certificate.validation_cert.arn
 
-  # mutual_tls_authentication {
-  #   truststore_uri     = "s3://${module.s3_truststore_bucket.storage_bucket_name}/truststore.pem"
-  #   truststore_version = aws_s3_object.pem_file.version_id
-  # }
+  mutual_tls_authentication {
+    truststore_uri     = "s3://${module.s3_truststore_bucket.storage_bucket_name}/truststore.pem"
+    truststore_version = aws_s3_object.pem_file.version_id
+  }
 
   security_policy = "TLS_1_2"
 
