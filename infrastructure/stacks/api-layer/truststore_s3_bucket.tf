@@ -46,6 +46,23 @@ resource "aws_kms_key_policy" "storage_bucket_cmk" {
 }
 
 data "aws_iam_policy_document" "trust_store_kms_policy" {
+  # 1. Retain admin control
+  statement {
+    sid = "AllowRootAccountFullAccess"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = [
+        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+      ]
+    }
+
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  # 2. Allow API Gateway to decrypt truststore
   statement {
     sid    = "APIGatewayS3TruststoreDecrypt"
     effect = "Allow"
