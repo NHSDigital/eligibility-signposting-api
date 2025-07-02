@@ -32,7 +32,7 @@ resource "aws_api_gateway_integration" "get_patient_check" {
   http_method             = aws_api_gateway_method.get_patient_check.http_method
   integration_http_method = "POST" # Needed for lambda proxy integration
   type                    = "AWS_PROXY"
-  uri                     = module.eligibility_signposting_lambda_function.aws_lambda_invoke_arn
+  uri                     = data.aws_lambda_function.eligibility_signposting_lambda.invoke_arn
 
   depends_on = [
     aws_api_gateway_method.get_patient_check
@@ -42,7 +42,7 @@ resource "aws_api_gateway_integration" "get_patient_check" {
 resource "aws_lambda_permission" "get_patient_check" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = module.eligibility_signposting_lambda_function.aws_lambda_function_name
+  function_name = data.aws_lambda_function.eligibility_signposting_lambda.function_name
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${module.eligibility_signposting_api_gateway.execution_arn}/*/*"

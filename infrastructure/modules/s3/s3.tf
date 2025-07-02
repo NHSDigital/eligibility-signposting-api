@@ -102,6 +102,9 @@ resource "aws_s3_bucket" "storage_bucket_access_logs" {
   #checkov:skip=CKV2_AWS_62: We won't enable event notifications for this bucket, yet
   #checkov:skip=CKV_AWS_21: Versioning not needed given short lifecycle of logs
   bucket = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.project_name}-${var.environment}-${var.bucket_name}-access-logs"
+  depends_on = [
+    aws_s3_bucket.storage_bucket
+  ]
 }
 
 resource "aws_s3_bucket_logging" "storage_bucket_logging_config" {
