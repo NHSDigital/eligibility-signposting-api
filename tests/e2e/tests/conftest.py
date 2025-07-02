@@ -7,7 +7,7 @@ import boto3
 import pytest
 from dotenv import load_dotenv
 
-from tests.e2e.utils.eligibilityApiClient import EligibilityApiClient
+from tests.e2e.utils.eligibility_api_client import EligibilityApiClient
 
 # Load environment variables from .env.local
 load_dotenv(dotenv_path=".env.local")

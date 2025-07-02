@@ -2,7 +2,7 @@ class ResolvedPlaceholderContext:
     def __init__(self):
         self.values = {}
 
-    def add(self, placeholder: str, resolved_value: str, file_name: str = None):
+    def add(self, placeholder: str, resolved_value: str):
         self.values[placeholder] = resolved_value  # Drop file_name key nesting
 
     def get(self, placeholder: str) -> str:

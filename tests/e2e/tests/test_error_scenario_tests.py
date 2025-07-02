@@ -1,4 +1,5 @@
 import http
+
 import pytest
 
 
@@ -9,12 +10,14 @@ def test_check_for_missing_person(eligibility_client):
     request_headers = {"nhs-login-nhs-number": "1234567890"}
 
     expected_body = {
-        "issue": [{
-            "code": "nhs-number-not-found",
-            "diagnostics": f'NHS Number "{nhs_number}" not found.',
-            "severity": "information"
-        }],
-        "resourceType": "OperationOutcome"
+        "issue": [
+            {
+                "code": "nhs-number-not-found",
+                "diagnostics": f'NHS Number "{nhs_number}" not found.',
+                "severity": "information",
+            }
+        ],
+        "resourceType": "OperationOutcome",
     }
 
     response = eligibility_client.make_request(nhs_number, headers=request_headers, raise_on_error=False)
@@ -23,62 +26,49 @@ def test_check_for_missing_person(eligibility_client):
     assert response["body"] == expected_body
 
 
-
 @pytest.mark.smoketest
 @pytest.mark.parametrize(
-    "scenario, nhs_number, request_headers, expected_status, expected_body",
+    "test_case",
     [
-        (
-            "correct header - NHS number exists but not found in data",
-            "1234567890",
-            {"nhs-login-nhs-number": "1234567890"},
-            http.HTTPStatus.NOT_FOUND,
-            {
-                "issue": [{
-                    "code": "nhs-number-not-found",
-                    "diagnostics": 'NHS Number "1234567890" not found.',
-                    "severity": "information"
-                }],
-                "resourceType": "OperationOutcome"
+        {
+            "scenario": "correct header - NHS number exists but not found in data",
+            "nhs_number": "1234567890",
+            "request_headers": {"nhs-login-nhs-number": "1234567890"},
+            "expected_status": http.HTTPStatus.NOT_FOUND,
+            "expected_body": {
+                "issue": [
+                    {
+                        "code": "nhs-number-not-found",
+                        "diagnostics": 'NHS Number "1234567890" not found.',
+                        "severity": "information",
+                    }
+                ],
+                "resourceType": "OperationOutcome",
             },
-        ),
-        (
-            "incorrect header - NHS number mismatch",
-            "1234567890",
-            {"nhs-login-nhs-number": "12345678900"},
-            http.HTTPStatus.FORBIDDEN,
-            "NHS number mismatch",
-        ),
-        (
-            "missing header - NHS number required",
-            "1234567890",
-            {},
-            http.HTTPStatus.FORBIDDEN,
-            "NHS number mismatch",
-        ),
+        },
+        {
+            "scenario": "incorrect header - NHS number mismatch",
+            "nhs_number": "1234567890",
+            "request_headers": {"nhs-login-nhs-number": "12345678900"},
+            "expected_status": http.HTTPStatus.FORBIDDEN,
+            "expected_body": "NHS number mismatch",
+        },
+        {
+            "scenario": "missing header - NHS number required",
+            "nhs_number": "1234567890",
+            "request_headers": {},
+            "expected_status": http.HTTPStatus.FORBIDDEN,
+            "expected_body": "NHS number mismatch",
+        },
     ],
-    ids=[
-        "correct-header",
-        "incorrect-header",
-        "missing-header"
-    ]
+    ids=["correct-header", "incorrect-header", "missing-header"],
 )
-def test_nhs_login_header_handling(
-    eligibility_client,
-    scenario,
-    nhs_number,
-    request_headers,
-    expected_status,
-    expected_body
-):
+def test_nhs_login_header_handling(eligibility_client, test_case):
     response = eligibility_client.make_request(
-        nhs_number,
-        headers=request_headers,
-        raise_on_error=False
+        test_case["nhs_number"],
+        headers=test_case["request_headers"],
+        raise_on_error=False,
     )
 
-    response_ststus = response["status_code"]
-
-    assert response["status_code"] == expected_status, f"{scenario} failed on status code"
-    assert response["body"] == expected_body, f"{scenario} failed on response body"
-
+    assert response["status_code"] == test_case["expected_status"], f"{test_case['scenario']} failed on status code"
+    assert response["body"] == test_case["expected_body"], f"{test_case['scenario']} failed on response body"
