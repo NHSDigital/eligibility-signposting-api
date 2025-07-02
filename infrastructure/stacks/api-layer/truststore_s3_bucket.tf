@@ -77,13 +77,6 @@ data "aws_iam_policy_document" "trust_store_kms_policy" {
     }
     actions = ["kms:Decrypt"]
     resources = ["*"]
-    condition {
-      test     = "StringEquals"
-      variable = "kms:EncryptionContext:aws:s3:arn"
-      values = [
-        "${module.s3_truststore_bucket.storage_bucket_arn}/truststore.pem"
-      ]
-    }
   }
 }
 
