@@ -25,6 +25,8 @@ data "aws_ssm_parameter" "mtls_api_ca_cert" {
   with_decryption = true
 }
 
-data "aws_lambda_function" "eligibility_signposting_lambda" {
+data "aws_lambda_function" "eligibility_alias" {
   function_name = terraform.workspace == "default" ? "eligibility_signposting_api" : "${terraform.workspace}-eligibility_signposting_api"
+
+  qualifier = terraform.workspace == "default" ? "live" : "${terraform.workspace}-live"
 }
