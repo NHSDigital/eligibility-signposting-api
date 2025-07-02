@@ -35,7 +35,7 @@ resource "aws_s3_object" "pem_file" {
   key        = "truststore.pem"
   content    = local.pem_file_content
   acl        = "private"
-  kms_key_id = module.s3_truststore_bucket.storage_bucket_kms_key_id
+  kms_key_id = module.s3_truststore_bucket.storage_bucket_kms_key_arn
 
   depends_on = [module.s3_truststore_bucket.storage_bucket_versioning_config]
 }
