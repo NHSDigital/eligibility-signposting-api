@@ -12,19 +12,19 @@ from tests.fixtures.matchers.rules import is_campaign_config, is_iteration, is_i
 
 
 @pytest.fixture(scope="module")
-def campaign_config(s3_client: BaseClient, bucket: BucketName) -> Generator[CampaignConfig]:
+def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
     campaign: CampaignConfig = CampaignConfigFactory.build()
     campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
     s3_client.put_object(
-        Bucket=bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
     )
     yield campaign
-    s3_client.delete_object(Bucket=bucket, Key=f"{campaign.name}.json")
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
-def test_get_campaign_config(s3_client: BaseClient, bucket: BucketName, campaign_config: CampaignConfig):
+def test_get_campaign_config(s3_client: BaseClient, rules_bucket: BucketName, campaign_config: CampaignConfig):
     # Given
-    repo = CampaignRepo(s3_client, bucket)
+    repo = CampaignRepo(s3_client, rules_bucket)
 
     # When
     actual = list(repo.get_campaign_configs())

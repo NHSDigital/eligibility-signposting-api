@@ -11,6 +11,7 @@ from eligibility_signposting_api import repos, services
 from eligibility_signposting_api.config.config import config, init_logging
 from eligibility_signposting_api.error_handler import handle_exception
 from eligibility_signposting_api.views import eligibility_blueprint
+from eligibility_signposting_api.wrapper import validate_matching_nhs_number
 
 init_logging()
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ def main() -> None:  # pragma: no cover
     app.run(debug=config()["log_level"] == logging.DEBUG)
 
 
+@validate_matching_nhs_number()
 def lambda_handler(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]:  # pragma: no cover
     """Run the Flask app as an AWS Lambda."""
     app = create_app()

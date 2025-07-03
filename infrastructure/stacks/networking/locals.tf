@@ -14,13 +14,14 @@ locals {
 
   # VPC Interface Endpoints
   vpc_interface_endpoints = {
-    kms             = "com.amazonaws.${local.region}.kms"
-    cloudwatch-logs = "com.amazonaws.${local.region}.logs"
-    ssm             = "com.amazonaws.${local.region}.ssm"
-    secrets-manager = "com.amazonaws.${local.region}.secretsmanager"
-    lambda          = "com.amazonaws.${local.region}.lambda"
-    sts             = "com.amazonaws.${local.region}.sts"
-    sqs             = "com.amazonaws.${local.region}.sqs"
+    kms               = "com.amazonaws.${local.region}.kms"
+    cloudwatch-logs   = "com.amazonaws.${local.region}.logs"
+    ssm               = "com.amazonaws.${local.region}.ssm"
+    secrets-manager   = "com.amazonaws.${local.region}.secretsmanager"
+    lambda            = "com.amazonaws.${local.region}.lambda"
+    sts               = "com.amazonaws.${local.region}.sts"
+    sqs               = "com.amazonaws.${local.region}.sqs"
+    kinesis-firehose  = "com.amazonaws.${local.region}.kinesis-firehose"
   }
 
   # VPC Gateway Endpoints

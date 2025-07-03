@@ -35,3 +35,11 @@ def dynamodb_resource_factory(
 def s3_service_factory(session: Session, s3_endpoint: Annotated[URL, Inject(param="s3_endpoint")]) -> BaseClient:
     endpoint_url = str(s3_endpoint) if s3_endpoint is not None else None
     return session.client("s3", endpoint_url=endpoint_url)
+
+
+@service(qualifier="firehose")
+def firehose_client_factory(
+    session: Session, firehose_endpoint: Annotated[URL, Inject(param="firehose_endpoint")]
+) -> BaseClient:
+    endpoint_url = str(firehose_endpoint) if firehose_endpoint is not None else None
+    return session.client("firehose", endpoint_url=endpoint_url)

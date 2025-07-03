@@ -4,6 +4,7 @@ from wireup import service
 
 from eligibility_signposting_api.model import eligibility
 from eligibility_signposting_api.repos import CampaignRepo, NotFoundError, PersonRepo
+from eligibility_signposting_api.services.audit_service import AuditService
 from eligibility_signposting_api.services.calculators import eligibility_calculator as calculator
 
 logger = logging.getLogger(__name__)
@@ -23,11 +24,13 @@ class EligibilityService:
         self,
         person_repo: PersonRepo,
         campaign_repo: CampaignRepo,
+        audit_service: AuditService,
         calculator_factory: calculator.EligibilityCalculatorFactory,
     ) -> None:
         super().__init__()
         self.person_repo = person_repo
         self.campaign_repo = campaign_repo
+        self.audit_service = audit_service
         self.calculator_factory = calculator_factory
 
     def get_eligibility_status(
@@ -51,6 +54,7 @@ class EligibilityService:
                 raise UnknownPersonError from e
             else:
                 calc: calculator.EligibilityCalculator = self.calculator_factory.get(person_data, campaign_configs)
+                self.audit_service.audit({"test_audit": "check if audit works"})
                 return calc.evaluate_eligibility(include_actions_flag=include_actions_flag)
 
         raise UnknownPersonError  # pragma: no cover
