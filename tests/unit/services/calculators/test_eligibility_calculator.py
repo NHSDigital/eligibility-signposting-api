@@ -5,7 +5,7 @@ import pytest
 from faker import Faker
 from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_to, has_item, has_items, is_in
-from pydantic import ValidationError
+from pydantic import HttpUrl, ValidationError
 
 from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
@@ -51,14 +51,14 @@ class TestEligibilityCalculator:
                         ActionType="ActionType1",
                         ExternalRoutingCode="ActionCode1",
                         ActionDescription="ActionDescription1",
-                        UrlLink="ActionUrl1",
+                        UrlLink=HttpUrl("https://www.ActionUrl1.com"),
                         UrlLabel="ActionLabel1",
                     ),
                     "defaultcomms": AvailableAction(
                         ActionType="ActionType2",
                         ExternalRoutingCode="defaultcomms",
                         ActionDescription="ActionDescription2",
-                        UrlLink="ActionUrl2",
+                        UrlLink=HttpUrl("https://www.ActionUrl2.com"),
                         UrlLabel="ActionLabel2",
                     ),
                 }

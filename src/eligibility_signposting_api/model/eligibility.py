@@ -6,6 +6,8 @@ from enum import Enum, StrEnum, auto
 from functools import total_ordering
 from typing import NewType, Self
 
+from pydantic import HttpUrl
+
 NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
 Postcode = NewType("Postcode", str)
@@ -17,7 +19,7 @@ RuleDescription = NewType("RuleDescription", str)
 ActionType = NewType("ActionType", str)
 ActionCode = NewType("ActionCode", str)
 ActionDescription = NewType("ActionDescription", str)
-UrlLink = NewType("UrlLink", str)
+UrlLink = NewType("UrlLink", HttpUrl)
 UrlLabel = NewType("UrlLabel", str)
 
 
