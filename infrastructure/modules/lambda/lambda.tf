@@ -14,13 +14,14 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   runtime     = "python3.13"
   timeout     = 30
   memory_size = 128 # Default
+  publish     = true # Enables automatic version publishing on updates
 
   environment {
     variables = {
       PERSON_TABLE_NAME          = var.eligibility_status_table_name,
       RULES_BUCKET_NAME          = var.eligibility_rules_bucket_name,
-      KINESIS_AUDIT_STREAM_TO_S3 = var.kinesis_audit_stream_to_s3_name
-      ENV                        = var.environment
+      KINESIS_AUDIT_STREAM_TO_S3 = var.kinesis_audit_stream_to_s3_name,
+      ENV                        = var.environment,
       LOG_LEVEL                  = var.log_level
     }
   }
@@ -35,4 +36,10 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   tracing_config {
     mode = "Active"
   }
+}
+
+resource "aws_lambda_alias" "eligibility" {
+  name             = terraform.workspace == "default" ? "live" : "${terraform.workspace}-live"
+  function_name    = aws_lambda_function.eligibility_signposting_lambda.function_name
+  function_version = aws_lambda_function.eligibility_signposting_lambda.version
 }

@@ -1,0 +1,5 @@
+bucket         = "eligibility-signposting-api-preprod-tfstate"
+key            = "tfstate/api-routing-layer.tfstate"
+region         = "eu-west-2"
+encrypt        = true
+use_lockfile   = true
