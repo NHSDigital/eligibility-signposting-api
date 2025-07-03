@@ -19,7 +19,7 @@ RuleDescription = NewType("RuleDescription", str)
 ActionType = NewType("ActionType", str)
 ActionCode = NewType("ActionCode", str)
 ActionDescription = NewType("ActionDescription", str)
-UrlLink = NewType("UrlLink", HttpUrl)
+UrlLink = NewType("UrlLink", str)
 UrlLabel = NewType("UrlLabel", str)
 
 

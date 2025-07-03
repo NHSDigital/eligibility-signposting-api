@@ -127,7 +127,7 @@ def build_actions(condition: Condition) -> list[eligibility.Action] | None:
                 else None,
                 urlLink=eligibility.HttpUrl(action.url_link) if action.url_link is not None else None,
                 urlLabel=eligibility.UrlLabel(action.url_label) if action.url_label is not None else None,
-            ).model_dump(exclude_none=True)
+            )
             for action in condition.actions.actions
         ]
 
