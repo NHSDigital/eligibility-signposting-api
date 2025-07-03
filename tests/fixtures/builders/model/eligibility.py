@@ -11,11 +11,14 @@ from eligibility_signposting_api.model.eligibility import UrlLink
 class SuggestedActionFactory(DataclassFactory[eligibility.SuggestedAction]):
     url_link = UrlLink("https://test_example.com")
 
+
 class SuggestedActionsFactory(DataclassFactory[eligibility.SuggestedActions]):
     actions = Use(SuggestedActionFactory.batch, size=2)
 
+
 class ConditionFactory(DataclassFactory[eligibility.Condition]):
     actions = SuggestedActionsFactory.build()
+
 
 class EligibilityStatusFactory(DataclassFactory[eligibility.EligibilityStatus]):
     conditions = Use(ConditionFactory.batch, size=2)

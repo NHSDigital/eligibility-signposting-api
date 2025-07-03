@@ -1,8 +1,8 @@
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from http import HTTPStatus
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 from uuid import uuid4
 
 import pytest
@@ -14,6 +14,9 @@ from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.model.eligibility import (
+    ActionCode,
+    ActionDescription,
+    ActionType,
     CohortGroupResult,
     Condition,
     EligibilityStatus,
@@ -22,23 +25,27 @@ from eligibility_signposting_api.model.eligibility import (
     RuleDescription,
     RuleName,
     RuleType,
-    Status, SuggestedActions, SuggestedAction, ActionType, ActionCode, ActionDescription, UrlLink, UrlLabel,
+    Status,
+    SuggestedAction,
+    SuggestedActions,
+    UrlLabel,
+    UrlLink,
 )
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
 from eligibility_signposting_api.views.eligibility import (
+    build_actions,
     build_eligibility_cohorts,
     build_suitability_results,
-    get_include_actions_flag, build_actions,
+    get_include_actions_flag,
 )
 from eligibility_signposting_api.views.response_model import eligibility
-from eligibility_signposting_api.views.response_model.eligibility import Description, EligibilityResponse, LastUpdated
 from tests.fixtures.builders.model.eligibility import (
     CohortResultFactory,
     ConditionFactory,
     EligibilityStatusFactory,
 )
-from tests.fixtures.matchers.eligibility import is_eligibility_cohort, is_suitability_rule, is_action
+from tests.fixtures.matchers.eligibility import is_eligibility_cohort, is_suitability_rule
 
 logger = logging.getLogger(__name__)
 
@@ -141,46 +148,44 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
     ("cohort_results", "expected_eligibility_cohorts", "test_comment"),
     [
         (
-                [
-                    CohortResultFactory.build(
-                        cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
-                    ),
-                    CohortResultFactory.build(
-                        cohort_code="CohortCode2", status=Status.not_actionable, description="+ve des 2"
-                    ),
-                ],
-                [
-                    ("CohortCode1", "NotActionable", "+ve des 1"),
-                    ("CohortCode2", "NotActionable", "+ve des 2"),
-                ],
-                "two cohort group codes with same status, nothing is ignored",
+            [
+                CohortResultFactory.build(
+                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                ),
+                CohortResultFactory.build(
+                    cohort_code="CohortCode2", status=Status.not_actionable, description="+ve des 2"
+                ),
+            ],
+            [
+                ("CohortCode1", "NotActionable", "+ve des 1"),
+                ("CohortCode2", "NotActionable", "+ve des 2"),
+            ],
+            "two cohort group codes with same status, nothing is ignored",
         ),
         (
-                [
-                    CohortResultFactory.build(
-                        cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
-                    ),
-                    CohortResultFactory.build(cohort_code="CohortCode2", status=Status.not_actionable,
-                                              description=None),
-                    CohortResultFactory.build(cohort_code="CohortCode3", status=Status.not_actionable, description=""),
-                ],
-                [("CohortCode1", "NotActionable", "+ve des 1")],
-                "only one cohort has description",
+            [
+                CohortResultFactory.build(
+                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                ),
+                CohortResultFactory.build(cohort_code="CohortCode2", status=Status.not_actionable, description=None),
+                CohortResultFactory.build(cohort_code="CohortCode3", status=Status.not_actionable, description=""),
+            ],
+            [("CohortCode1", "NotActionable", "+ve des 1")],
+            "only one cohort has description",
         ),
         (
-                [
-                    CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable, description=""),
-                ],
-                [],
-                "only one cohort but no description, so it is ignored",
+            [
+                CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable, description=""),
+            ],
+            [],
+            "only one cohort but no description, so it is ignored",
         ),
         (
-                [
-                    CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable,
-                                              description=None),
-                ],
-                [],
-                "only one cohort but no description, so it is ignored",
+            [
+                CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable, description=None),
+            ],
+            [],
+            "only one cohort but no description, so it is ignored",
         ),
     ],
 )
@@ -367,60 +372,58 @@ def test_no_suitability_rules_for_actionable():
     ("suggested_actions", "expected"),
     [
         (
-                SuggestedActions(
-                    actions=[
-                        SuggestedAction(
-                            action_type=ActionType("TYPE_A"),
-                            action_code=ActionCode("CODE123"),
-                            action_description=ActionDescription("Some description"),
-                            url_link=UrlLink("https://example.com"),
-                            url_label=UrlLabel("Learn more"),
-                        )
-                    ]
-                ),
-                [
-                    eligibility.Action(
-                        actionType=eligibility.ActionType("TYPE_A"),
-                        actionCode=eligibility.ActionCode("CODE123"),
-                        description=eligibility.Description("Some description"),
-                        urlLink=eligibility.HttpUrl("https://example.com"),
-                        urlLabel=eligibility.UrlLabel("Learn more"),
+            SuggestedActions(
+                actions=[
+                    SuggestedAction(
+                        action_type=ActionType("TYPE_A"),
+                        action_code=ActionCode("CODE123"),
+                        action_description=ActionDescription("Some description"),
+                        url_link=UrlLink("https://example.com"),
+                        url_label=UrlLabel("Learn more"),
                     )
-                ],
+                ]
+            ),
+            [
+                eligibility.Action(
+                    actionType=eligibility.ActionType("TYPE_A"),
+                    actionCode=eligibility.ActionCode("CODE123"),
+                    description=eligibility.Description("Some description"),
+                    urlLink=eligibility.HttpUrl("https://example.com"),
+                    urlLabel=eligibility.UrlLabel("Learn more"),
+                )
+            ],
         ),
         (
-                SuggestedActions(
-                    actions=[
-                        SuggestedAction(
-                            action_type=ActionType("TYPE_B"),
-                            action_code=ActionCode("CODE123"),
-                            action_description=None,
-                            url_link=None,
-                            url_label=None,
-                        )
-                    ]
-                ),
-                [
-                    eligibility.Action(
-                        actionType=eligibility.ActionType("TYPE_B"),
-                        actionCode=eligibility.ActionCode("CODE123"),
-                        description=None,
-                        urlLink=None,
-                        urlLabel=None,
+            SuggestedActions(
+                actions=[
+                    SuggestedAction(
+                        action_type=ActionType("TYPE_B"),
+                        action_code=ActionCode("CODE123"),
+                        action_description=None,
+                        url_link=None,
+                        url_label=None,
                     )
-                ],
+                ]
+            ),
+            [
+                eligibility.Action(
+                    actionType=eligibility.ActionType("TYPE_B"),
+                    actionCode=eligibility.ActionCode("CODE123"),
+                    description=None,
+                    urlLink=None,
+                    urlLabel=None,
+                )
+            ],
         ),
-        # Case: SuggestedActions is None
         (
-                None,
-                None,
+            None,
+            None,
         ),
-        # Case: SuggestedActions.actions is []
         (
-                SuggestedActions(actions=[]),
-                [],
+            SuggestedActions(actions=[]),
+            [],
         ),
-    ]
+    ],
 )
 def test_build_actions(suggested_actions, expected):
     results = build_actions(ConditionFactory.build(actions=suggested_actions))
@@ -558,3 +561,51 @@ def test_query_param_include_actions_flag_with_other_params():
         pytest.raises(InvalidQueryParamError),
     ):
         get_include_actions_flag()
+
+
+def test_excludes_nulls_via_build_response(client: FlaskClient):
+    mocked_response = eligibility.EligibilityResponse(
+        responseId=uuid4(),
+        meta=eligibility.Meta(lastUpdated=eligibility.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
+        processedSuggestions=[
+            eligibility.ProcessedSuggestion(
+                condition=eligibility.ConditionName("ConditionA"),
+                status=eligibility.Status.actionable,
+                statusText=eligibility.StatusText("Go ahead"),
+                eligibilityCohorts=[],
+                suitabilityRules=[],
+                actions=[
+                    eligibility.Action(
+                        actionType=eligibility.ActionType("TYPE_A"),
+                        actionCode=eligibility.ActionCode("CODE123"),
+                        description=None,  # Should be excluded
+                        urlLink=None,  # Should be excluded
+                        urlLabel=None,  # Should be excluded
+                    )
+                ],
+            )
+        ],
+    )
+
+    with (
+        patch(
+            "eligibility_signposting_api.views.eligibility.EligibilityService.get_eligibility_status",
+            return_value=MagicMock(),  # No effect
+        ),
+        patch(
+            "eligibility_signposting_api.views.eligibility.build_eligibility_response",
+            return_value=mocked_response,
+        ),
+    ):
+        response = client.get("/patient-check/12345")
+        assert response.status_code == HTTPStatus.OK
+
+        payload = json.loads(response.data)
+        suggestion = payload["processedSuggestions"][0]
+        action = suggestion["actions"][0]
+
+        assert action["actionType"] == "TYPE_A"
+        assert action["actionCode"] == "CODE123"
+        assert "description" not in action
+        assert "urlLink" not in action
+        assert "urlLabel" not in action
