@@ -1,0 +1,30 @@
+{
+  "responseId": "<<IGNORE_ID>>",
+  "meta": {
+    "lastUpdated": "<<IGNORE_DATE>>"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "status": "Actionable",
+      "statusText": "Status.actionable",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "eli_291_cohort_2_group",
+          "cohortStatus": "Actionable",
+          "cohortText": "You are currently in eli_291_cohort_2"
+        }
+      ],
+      "suitabilityRules": [],
+      "actions": [
+        {
+          "action_type": "ActionTwoActionType",
+          "action_code": "ActionTwoRoutingCode",
+          "action_description": "ActionTwoDescription",
+          "url_link": "http://www.actiontwourl.com",
+          "url_label": "ActionTwoUrlLabel"
+        }
+      ]
+    }
+  ]
+}

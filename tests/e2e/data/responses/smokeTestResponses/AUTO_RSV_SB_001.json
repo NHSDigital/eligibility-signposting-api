@@ -1,0 +1,29 @@
+{
+  "responseId": "<<IGNORE_RESPONSE_ID>>",
+  "meta": {
+    "lastUpdated": "<<IGNORE_DATE>>"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "status": "Actionable",
+      "statusText": "Status.actionable",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age_rolling",
+          "cohortStatus": "Actionable",
+          "cohortText": "You are aged 75 to 79 years old."
+        }
+      ],
+      "suitabilityRules": [],
+      "actions": [
+        {
+          "action_type": "ButtonWithAuthLink",
+          "action_code": "BookNBS",
+          "url_link": "http://www.nhs.uk/book-rsv",
+          "url_label": "Continue to booking"
+        }
+      ]
+    }
+  ]
+}

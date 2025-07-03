@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-01T19:52:24.529127+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "action_code": "DefaultAction",
+          "action_description": "DefaultActionDescription",
+          "action_type": "DefaultActionType",
+          "url_label": "DefaultLabel",
+          "url_link": "DefaultActionUrl"
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age_group",
+          "cohortStatus": "Actionable",
+          "cohortText": "You are in an age group 2."
+        }
+      ],
+      "status": "Actionable",
+      "statusText": "Status.actionable",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "a53d2e37-7e25-4edd-99c1-9f487c95b347"
+}
