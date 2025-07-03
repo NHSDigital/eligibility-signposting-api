@@ -132,8 +132,8 @@ class AuditContext:
 
     @staticmethod
     def add_response_details(response) -> None:
-        g.audit_log.response.response_id = str(response.response_id)
-        g.audit_log.response.last_updated = str(response.meta.last_updated)
+        g.audit_log.response.response_id = response.response_id
+        g.audit_log.response.last_updated = response.meta.last_updated
 
     @staticmethod
     def write_to_firehose(service: AuditService, response) -> None:

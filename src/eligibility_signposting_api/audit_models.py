@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from uuid import UUID
 
 
 @dataclass
@@ -19,7 +20,7 @@ class RequestAuditQueryParams:
 
 @dataclass
 class RequestAuditData:
-    request_timestamp: datetime = field(default_factory=datetime.utcnow)
+    request_timestamp: datetime = field(default_factory=datetime.utcnow) # TODO: fix use of deprecated datetime.now()
     headers: RequestAuditHeader = field(default_factory=RequestAuditHeader)
     query_params: RequestAuditQueryParams = field(default_factory=RequestAuditQueryParams)
     nhs_number: str | None = None
@@ -86,7 +87,7 @@ class AuditCondition:
 
 @dataclass
 class ResponseAuditData:
-    response_id: str | None = None
+    response_id: UUID | None = None
     last_updated: str | None = None
     condition: list[AuditCondition] = field(default_factory=list)
 
