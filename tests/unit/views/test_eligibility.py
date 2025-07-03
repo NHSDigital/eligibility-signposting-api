@@ -1,13 +1,16 @@
+import json
 import logging
+from datetime import datetime
 from http import HTTPStatus
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
+from uuid import uuid4
 
 import pytest
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask import Flask, Request
 from flask.testing import FlaskClient
-from hamcrest import assert_that, contains_exactly, has_entries, has_length
+from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_, none
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.model.eligibility import (
@@ -19,21 +22,23 @@ from eligibility_signposting_api.model.eligibility import (
     RuleDescription,
     RuleName,
     RuleType,
-    Status,
+    Status, SuggestedActions, SuggestedAction, ActionType, ActionCode, ActionDescription, UrlLink, UrlLabel,
 )
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
 from eligibility_signposting_api.views.eligibility import (
     build_eligibility_cohorts,
     build_suitability_results,
-    get_include_actions_flag,
+    get_include_actions_flag, build_actions,
 )
+from eligibility_signposting_api.views.response_model import eligibility
+from eligibility_signposting_api.views.response_model.eligibility import Description, EligibilityResponse, LastUpdated
 from tests.fixtures.builders.model.eligibility import (
     CohortResultFactory,
     ConditionFactory,
     EligibilityStatusFactory,
 )
-from tests.fixtures.matchers.eligibility import is_eligibility_cohort, is_suitability_rule
+from tests.fixtures.matchers.eligibility import is_eligibility_cohort, is_suitability_rule, is_action
 
 logger = logging.getLogger(__name__)
 
@@ -136,44 +141,46 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
     ("cohort_results", "expected_eligibility_cohorts", "test_comment"),
     [
         (
-            [
-                CohortResultFactory.build(
-                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
-                ),
-                CohortResultFactory.build(
-                    cohort_code="CohortCode2", status=Status.not_actionable, description="+ve des 2"
-                ),
-            ],
-            [
-                ("CohortCode1", "NotActionable", "+ve des 1"),
-                ("CohortCode2", "NotActionable", "+ve des 2"),
-            ],
-            "two cohort group codes with same status, nothing is ignored",
+                [
+                    CohortResultFactory.build(
+                        cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                    ),
+                    CohortResultFactory.build(
+                        cohort_code="CohortCode2", status=Status.not_actionable, description="+ve des 2"
+                    ),
+                ],
+                [
+                    ("CohortCode1", "NotActionable", "+ve des 1"),
+                    ("CohortCode2", "NotActionable", "+ve des 2"),
+                ],
+                "two cohort group codes with same status, nothing is ignored",
         ),
         (
-            [
-                CohortResultFactory.build(
-                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
-                ),
-                CohortResultFactory.build(cohort_code="CohortCode2", status=Status.not_actionable, description=None),
-                CohortResultFactory.build(cohort_code="CohortCode3", status=Status.not_actionable, description=""),
-            ],
-            [("CohortCode1", "NotActionable", "+ve des 1")],
-            "only one cohort has description",
+                [
+                    CohortResultFactory.build(
+                        cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                    ),
+                    CohortResultFactory.build(cohort_code="CohortCode2", status=Status.not_actionable,
+                                              description=None),
+                    CohortResultFactory.build(cohort_code="CohortCode3", status=Status.not_actionable, description=""),
+                ],
+                [("CohortCode1", "NotActionable", "+ve des 1")],
+                "only one cohort has description",
         ),
         (
-            [
-                CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable, description=""),
-            ],
-            [],
-            "only one cohort but no description, so it is ignored",
+                [
+                    CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable, description=""),
+                ],
+                [],
+                "only one cohort but no description, so it is ignored",
         ),
         (
-            [
-                CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable, description=None),
-            ],
-            [],
-            "only one cohort but no description, so it is ignored",
+                [
+                    CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable,
+                                              description=None),
+                ],
+                [],
+                "only one cohort but no description, so it is ignored",
         ),
     ],
 )
@@ -354,6 +361,73 @@ def test_no_suitability_rules_for_actionable():
     results = build_suitability_results(condition)
 
     assert_that(results, has_length(0))
+
+
+@pytest.mark.parametrize(
+    ("suggested_actions", "expected"),
+    [
+        (
+                SuggestedActions(
+                    actions=[
+                        SuggestedAction(
+                            action_type=ActionType("TYPE_A"),
+                            action_code=ActionCode("CODE123"),
+                            action_description=ActionDescription("Some description"),
+                            url_link=UrlLink("https://example.com"),
+                            url_label=UrlLabel("Learn more"),
+                        )
+                    ]
+                ),
+                [
+                    eligibility.Action(
+                        actionType=eligibility.ActionType("TYPE_A"),
+                        actionCode=eligibility.ActionCode("CODE123"),
+                        description=eligibility.Description("Some description"),
+                        urlLink=eligibility.HttpUrl("https://example.com"),
+                        urlLabel=eligibility.UrlLabel("Learn more"),
+                    )
+                ],
+        ),
+        (
+                SuggestedActions(
+                    actions=[
+                        SuggestedAction(
+                            action_type=ActionType("TYPE_B"),
+                            action_code=ActionCode("CODE123"),
+                            action_description=None,
+                            url_link=None,
+                            url_label=None,
+                        )
+                    ]
+                ),
+                [
+                    eligibility.Action(
+                        actionType=eligibility.ActionType("TYPE_B"),
+                        actionCode=eligibility.ActionCode("CODE123"),
+                        description=None,
+                        urlLink=None,
+                        urlLabel=None,
+                    )
+                ],
+        ),
+        # Case: SuggestedActions is None
+        (
+                None,
+                None,
+        ),
+        # Case: SuggestedActions.actions is []
+        (
+                SuggestedActions(actions=[]),
+                [],
+        ),
+    ]
+)
+def test_build_actions(suggested_actions, expected):
+    results = build_actions(ConditionFactory.build(actions=suggested_actions))
+    if expected is None:
+        assert_that(results, is_(none()))
+    else:
+        assert_that(results, contains_exactly(*expected))
 
 
 def test_nhs_number_and_include_actions_param_given_and_is_yes(app: Flask, client: FlaskClient):

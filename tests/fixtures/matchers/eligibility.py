@@ -1,7 +1,7 @@
 from hamcrest.core.matcher import Matcher
 
 from eligibility_signposting_api.model.eligibility import CohortGroupResult, Condition, EligibilityStatus, Reason
-from eligibility_signposting_api.views.response_model.eligibility import EligibilityCohort, SuitabilityRule
+from eligibility_signposting_api.views.response_model.eligibility import EligibilityCohort, SuitabilityRule, Action
 
 from .meta import BaseAutoMatcher
 
@@ -23,6 +23,7 @@ class EligibilityCohortMatcher(BaseAutoMatcher[EligibilityCohort]): ...
 
 class SuitabilityRuleMatcher(BaseAutoMatcher[SuitabilityRule]): ...
 
+class ActionMatcher(BaseAutoMatcher[Action]): ...
 
 def is_eligibility_status() -> Matcher[EligibilityStatus]:
     return EligibilityStatusMatcher()
@@ -46,3 +47,6 @@ def is_eligibility_cohort() -> Matcher[EligibilityCohort]:
 
 def is_suitability_rule() -> Matcher[SuitabilityRule]:
     return SuitabilityRuleMatcher()
+
+def is_action() -> Matcher[Action]:
+    return ActionMatcher()

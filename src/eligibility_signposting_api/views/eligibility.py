@@ -39,7 +39,7 @@ def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[Eligi
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
     else:
-        eligibility_response = build_eligibility_response(eligibility_status)
+        eligibility_response: eligibility.EligibilityResponse = build_eligibility_response(eligibility_status)
         return make_response(
             eligibility_response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK
         )
