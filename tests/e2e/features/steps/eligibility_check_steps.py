@@ -1,20 +1,116 @@
-import jsonschema
-import pytest
+import logging
+import os
+from pathlib import Path
+
+import boto3
 import requests
 from behave import given, then, when
-from utils.config import API_KEY, BASE_URL, ELIGIBILITY_CHECK_SCHEMA
+from botocore.exceptions import ClientError
+from helpers.dynamodb_data_generator import DateVariableResolver, JsonTestDataProcessor
+from helpers.dynamodb_data_uploader import DynamoDBDataUploader
 
-# HTTP Status Code Constants
-HTTP_STATUS_OK = 200
-HTTP_STATUS_BAD_REQUEST = 400
-HTTP_STATUS_NOT_FOUND = 404
-HTTP_STATUS_SERVER_ERROR = 500
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
-@given("the Eligibility Check API base URL is configured")
-def step_impl_base_url(context):
-    context.base_url = BASE_URL
-    context.headers = {"apikey": API_KEY}
+@given("AWS credentials are loaded from the environment")
+def step_impl_load_aws_credentials(context):
+    """Load AWS credentials from environment variables."""
+    context.aws_region = os.getenv("AWS_REGION", "eu-west-2")
+    context.aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+    context.aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+    context.aws_session_token = os.getenv("AWS_SESSION_TOKEN")
+    context.dynamodb_table_name = os.getenv("DYNAMODB_TABLE_NAME", "eligibilty_data_store")
+
+    missing = []
+    if not context.aws_region:
+        missing.append("AWS_REGION")
+    if not context.aws_access_key_id:
+        missing.append("AWS_ACCESS_KEY_ID")
+    if not context.aws_secret_access_key:
+        missing.append("AWS_SECRET_ACCESS_KEY")
+
+    assert not missing, f"Missing required environment variables: {', '.join(missing)}"
+
+    logger.info("AWS credentials loaded successfully")
+
+
+@given("mTLS certificates are downloaded and available in the out/ directory")
+def step_impl_download_certificates(context):
+    """Retrieve mTLS certs from SSM and write them to local files."""
+    cert_param_map = {
+        "private_key": "/test/mtls/api_private_key_cert",
+        "client_cert": "/test/mtls/api_client_cert",
+        "ca_cert": "/test/mtls/api_ca_cert",
+    }
+
+    cert_dir = Path("./data/out")
+    cert_dir.mkdir(parents=True, exist_ok=True)
+
+    ssm = boto3.client(
+        "ssm",
+        region_name=context.aws_region,
+        aws_access_key_id=context.aws_access_key_id,
+        aws_secret_access_key=context.aws_secret_access_key,
+        aws_session_token=context.aws_session_token,
+    )
+
+    context.cert_paths = {}
+    for cert_type, param_name in cert_param_map.items():
+        cert_path = cert_dir / f"{cert_type}.pem"
+        try:
+            logger.info("Retrieving SSM parameter: %s", param_name)
+            response = ssm.get_parameter(Name=param_name, WithDecryption=True)
+            with cert_path.open("w") as f:
+                f.write(response["Parameter"]["Value"])
+            context.cert_paths[cert_type] = str(cert_path)
+        except ClientError as e:
+            msg = f"Failed to retrieve parameter {param_name}: {e}"
+            raise RuntimeError(msg) from e
+
+    logger.info("mTLS certificates written to local files")
+
+
+@given("I generate the test data files")
+def step_impl_generate_data(_context):
+    """Generate test data files with resolved <<DATE_...>> placeholders."""
+    input_dir = Path("data/in/dynamoDB").resolve()
+    output_dir = Path("data/out/dynamoDB").resolve()
+
+    resolver = DateVariableResolver()
+    processor = JsonTestDataProcessor(input_dir, output_dir, resolver)
+
+    if not input_dir.exists():
+        logger.error("Input directory does not exist: %s", input_dir)
+        return
+
+    logger.info("Scanning for JSON files in directory: %s", input_dir)
+    count = 0
+    for root, _, files in os.walk(input_dir):
+        for file in files:
+            if file.endswith(".json"):
+                full_path = Path(root) / file
+                processor.process_file(full_path)
+                count += 1
+
+    if count == 0:
+        logger.warning("No .json files found in %s", input_dir)
+    else:
+        logger.info("Processed %d test data file(s).", count)
+
+
+@given("I upload the test data files to DynamoDB")
+def step_impl_upload_data(context):
+    """Upload generated test data to DynamoDB."""
+    uploader = DynamoDBDataUploader(
+        aws_region=context.aws_region,
+        access_key=context.aws_access_key_id,
+        secret_key=context.aws_secret_access_key,
+        session_token=context.aws_session_token,
+    )
+    inserted = uploader.upload_files_from_path(table_name=context.dynamodb_table_name, path=Path("data/out/dynamoDB"))
+    assert inserted > 0, "No data uploaded to DynamoDB"
+    logger.info("Uploaded %d items to DynamoDB", inserted)
 
 
 @given('I have the NHS number "{nhs_number}"')
@@ -22,64 +118,63 @@ def step_impl_nhs_number(context, nhs_number):
     context.nhs_number = nhs_number
 
 
-@given('I have the NHS number ""')
-def step_impl_empty_nhs_number(context):
-    context.nhs_number = ""
+@then("I clean up DynamoDB test data")
+def step_impl_cleanup_dynamo(context):
+    if hasattr(context, "dynamo_uploader"):
+        context.dynamo_uploader.delete_data()
 
 
-@given('I set the Accept header to "{accept_header}"')
-def step_impl_accept_header(context, accept_header):
-    context.headers["Accept"] = accept_header
+@when("I query the eligibility API")
+def step_impl_call_eligibility_api(context):
+    """Make mTLS call to Eligibility API using local certs and context NHS number."""
+    if not hasattr(context, "nhs_number"):
+        msg = "NHS number not set in context."
+        raise AssertionError(msg)
 
+    if not hasattr(context, "cert_paths"):
+        msg = "mTLS certificate paths not present in context."
+        raise AssertionError(msg)
 
-@when("I request an eligibility check for the NHS number")
-def step_impl_request_eligibility_check(context):
-    # Use the correct endpoint: /patient-check/{nhs_number}
-    if context.nhs_number:
-        url = f"{context.base_url}/patient-check/{context.nhs_number}"
-    else:
-        url = f"{context.base_url}/patient-check/"
-    context.response = requests.get(url, headers=context.headers, timeout=10)
+    api_url = f"https://test.eligibility-signposting-api.nhs.uk/patient-check/{context.nhs_number}"
+    cert = (context.cert_paths["client_cert"], context.cert_paths["private_key"])
+    verify = False
+    headers = {"nhs-login-nhs-number": context.nhs_number}
 
-
-@then("the response status code should be 2xx")
-def step_impl_status_code_2xx(context):
-    assert HTTP_STATUS_OK <= context.response.status_code < HTTP_STATUS_BAD_REQUEST, (
-        f"Expected 2xx, got {context.response.status_code}"
-    )
-
-
-@then("the response status code should be 4xx or 404")
-def step_impl_status_code_4xx_or_404(context):
-    assert (
-        HTTP_STATUS_BAD_REQUEST <= context.response.status_code < HTTP_STATUS_SERVER_ERROR
-    ) or context.response.status_code == HTTP_STATUS_NOT_FOUND, (
-        f"Expected 4xx or 404, got {context.response.status_code}"
-    )
-
-
-@then("the response content type should be application/json")
-def step_impl_content_type_json(context):
-    assert "application/json" in context.response.headers.get("Content-Type", ""), (
-        f"Content-Type is not application/json, got {context.response.headers.get('Content-Type', '')}"
-    )
-
-
-@then("the response should have a JSON body")
-def step_impl_has_json_body(context):
+    logger.info("Querying Eligibility API at %s", api_url)
     try:
-        context.response.json()
-    except (ValueError, TypeError) as e:
-        pytest.fail(f"Response does not have a JSON body: {e}")
+        response = requests.get(
+            api_url, cert=cert, verify=verify, timeout=30, headers=headers
+        )
+        context.response = response
+        logger.info(
+            "Querying Eligibility API response %s - %d",
+            response.apparent_encoding,
+            response.status_code,
+        )
+    except requests.exceptions.RequestException as e:
+        msg = f"API request failed: {e}"
+        raise RuntimeError(msg) from e
 
 
-@then("the response should match the eligibility check schema")
-def step_impl_schema(context):
-    jsonschema.validate(instance=context.response.json(), schema=ELIGIBILITY_CHECK_SCHEMA)
+@then("the response status code should be {status_code:d}")
+def step_impl_check_status_code(context, status_code):
+    """Assert response HTTP status code."""
+    if not hasattr(context, "response"):
+        msg = "No HTTP response in context."
+        raise AssertionError(msg)
+    actual = context.response.status_code
+    assert actual == status_code, f"Expected status {status_code}, got {actual}"
 
 
-@then('the response content type should contain "{expected_content_type}"')
-def step_impl_content_type_contains(context, expected_content_type):
-    assert expected_content_type in context.response.headers.get("Content-Type", ""), (
-        f"Content-Type does not contain {expected_content_type}, got {context.response.headers.get('Content-Type', '')}"
-    )
+@then("the response should be valid JSON")
+def step_impl_validate_json(context):
+    """Assert that response content is valid JSON."""
+    if not hasattr(context, "response"):
+        msg = "No HTTP response in context."
+        raise AssertionError(msg)
+
+    try:
+        context.json_response = context.response.json()
+    except ValueError as e:
+        msg = f"Response is not valid JSON: {e}"
+        raise AssertionError(msg) from e
