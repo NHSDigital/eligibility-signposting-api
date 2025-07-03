@@ -3,13 +3,14 @@ import string
 
 from polyfactory import Use
 from polyfactory.factories import DataclassFactory
+from pydantic import HttpUrl
 
 from eligibility_signposting_api.model import eligibility
 from eligibility_signposting_api.model.eligibility import UrlLink
 
 
 class SuggestedActionFactory(DataclassFactory[eligibility.SuggestedAction]):
-    url_link = UrlLink("https://test_example.com")
+    url_link = UrlLink(HttpUrl("https://test-example.com"))
 
 
 class SuggestedActionsFactory(DataclassFactory[eligibility.SuggestedActions]):
