@@ -463,19 +463,18 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 @pytest.fixture(scope="class")
-def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list, None, None]:
+def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[rules.CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
     campaigns, campaign_data_keys = [], []
 
-    targets = ["RSV", "COVID", "FLU", "FLU"]
+    targets = ["RSV", "COVID", "FLU"]
     target_rules_map = {
         targets[0]: [rule.PersonAgeSuppressionRuleFactory.build(type=rules.RuleType.filter)],
         targets[1]: [rule.PersonAgeSuppressionRuleFactory.build()],
         targets[2]: [rule.ICBRedirectRuleFactory.build()],
-        targets[3]: [],
-    } # TODO: check if targets[3] is working as expected
+    }
 
-    for i in range(4):
+    for i in range(3):
         campaign = rule.CampaignConfigFactory.build(
             name=f"campaign_{i}",
             target=targets[i],

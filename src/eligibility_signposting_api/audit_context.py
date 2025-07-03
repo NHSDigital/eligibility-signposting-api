@@ -15,7 +15,7 @@ from eligibility_signposting_api.audit_models import (
     AuditSuitabilityRule,
     RequestAuditData,
     RequestAuditHeader,
-    RequestAuditQueryParams,
+    RequestAuditQueryParams, AuditEvent,
 )
 from eligibility_signposting_api.model.eligibility import (
     CohortGroupResult,
@@ -33,13 +33,10 @@ logger = logging.getLogger(__name__)
 class AuditContext:
     @staticmethod
     def add_request_details(request: Request) -> None:
+        g.audit_log = AuditEvent()
         resource_id = None
-
         if "nhs_number" in request.view_args:
-            try:
-                resource_id = int(request.view_args["nhs_number"])
-            except (ValueError, TypeError):
-                logger.exception("Could not parse 'nhs_number' from path parameters")  # TODO: fix log
+            resource_id = request.view_args["nhs_number"]
         g.audit_log.request = RequestAuditData(
             nhs_number=resource_id,
             request_timestamp=datetime.now(tz=UTC),
@@ -86,17 +83,17 @@ class AuditContext:
                 )
             )
 
-            # TODO: what if value.audit_reasons is empty?
-            if value.audit_reasons:
+            if value.audit_rules:
                 if best_candidate.status.name == Status.not_eligible.name:
                     audit_filter_rule = AuditFilterRule(
-                        rule_priority=value.audit_reasons[0].rule_priority, rule_name=value.audit_reasons[0].rule_name
+                        rule_priority=int(value.audit_rules[0].rule_priority),
+                        rule_name=value.audit_rules[0].rule_name
                     )
                 if best_candidate.status.name == Status.not_actionable.name:
                     audit_suitability_rule = AuditSuitabilityRule(
-                        rule_priority=value.audit_reasons[0].rule_priority,
-                        rule_name=value.audit_reasons[0].rule_name,
-                        rule_message=value.audit_reasons[0].rule_description,
+                        rule_priority=int(value.audit_rules[0].rule_priority),
+                        rule_name=value.audit_rules[0].rule_name,
+                        rule_message=value.audit_rules[0].rule_description,
                     )
 
         if best_candidate.status.name == Status.actionable.name:
@@ -108,7 +105,11 @@ class AuditContext:
         elif len(suggested_actions.actions) > 0:
             for action in suggested_actions.actions:
                 audit_actions.append(
-                    AuditAction(action_code=action.action_code, action_description=action.action_description)
+                    AuditAction(action_code=action.action_code,
+                                action_type=action.action_type,
+                                action_description=action.action_description,
+                                action_url=action.url_link,
+                                action_url_label=action.url_label)
                 )
 
         audit_condition = AuditCondition(
@@ -127,7 +128,7 @@ class AuditContext:
             actions=audit_actions,
         )
 
-        g.audit_log.response.condition.append(audit_condition)  # TODO: check with multiple conditions
+        g.audit_log.response.condition.append(audit_condition)
 
     @staticmethod
     def add_response_details(response) -> None:

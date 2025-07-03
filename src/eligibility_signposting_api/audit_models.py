@@ -22,7 +22,7 @@ class RequestAuditData:
     request_timestamp: datetime = field(default_factory=datetime.utcnow)
     headers: RequestAuditHeader = field(default_factory=RequestAuditHeader)
     query_params: RequestAuditQueryParams = field(default_factory=RequestAuditQueryParams)
-    nhs_number: int | None = None
+    nhs_number: str | None = None
 
 
 @dataclass

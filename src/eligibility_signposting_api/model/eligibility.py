@@ -100,7 +100,7 @@ class CohortGroupResult:
     status: Status
     reasons: list[Reason]
     description: str | None
-    audit_reasons: list[Reason]
+    audit_rules: list[Reason]
 
 
 @dataclass

@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import time
 from http import HTTPStatus
 
 import httpx
@@ -19,6 +20,7 @@ from hamcrest import (
     has_item,
     has_key,
     is_not,
+    contains_inanyorder
 )
 from yarl import URL
 
@@ -206,7 +208,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_return_
 
     assert_that(audit_data["request"]["request_timestamp"], is_not(equal_to("")))
     assert_that(audit_data["request"]["headers"], equal_to(expected_headers))
-    assert_that(audit_data["request"]["nhs_number"], equal_to(int(persisted_person)))
+    assert_that(audit_data["request"]["nhs_number"], equal_to(persisted_person))
     assert_that(audit_data["request"]["query_params"], equal_to(expected_query_params))
 
     expected_conditions = [
@@ -266,7 +268,7 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
 def test_given_person_has_unique_status_for_different_conditions_with_audit(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person_all_cohorts: NHSNumber,
-    multiple_campaign_configs: CampaignConfig,
+    multiple_campaign_configs: list[CampaignConfig],
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
@@ -287,8 +289,6 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
         timeout=10,
     )
 
-    time.sleep(30)
-    # logger.info("<<<< response.json.processedSuggestions: ", response.json()["processedSuggestions"])
     # Then
     assert_that(
         response,
@@ -300,6 +300,107 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
     latest_key = sorted(object_keys)[-1]
     audit_data = json.loads(s3_client.get_object(Bucket=audit_bucket, Key=latest_key)["Body"].read())
 
-    logger.info("<<<< audit_data.request: ", audit_data["request"])
-    logger.info("<<<< audit_data.response: ", audit_data["response"])
+    expected_headers = {
+        "x_request_id": "x_request_id",
+        "x_correlation_id": "x_correlation_id",
+        "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
+        "nhsd_application_id": "nhsd_application_id",
+    }
+    expected_query_params = {"category": None, "conditions": None, "include_actions": "Y"}
+
+    rsv_campaign = multiple_campaign_configs[0]
+    covid_campaign = multiple_campaign_configs[1]
+    flu_campaign = multiple_campaign_configs[2]
+
+    expected_conditions = [
+        {
+            "campaign_id": rsv_campaign.id,
+            "campaign_version": rsv_campaign.version,
+            "iteration_id": rsv_campaign.iterations[0].id,
+            "iteration_version": rsv_campaign.iterations[0].version,
+            "condition_name": rsv_campaign.target,
+            "status": "not_eligible",
+            "status_text": "not_eligible",
+            "eligibility_cohorts": [{"cohort_code": "cohort_group1", "cohort_status": "not_eligible"}],
+            "eligibility_cohort_groups": [
+                {
+                    "cohort_code": "cohort_group1",
+                    "cohort_text": "negative_desc_1",
+                    "cohort_status": "not_eligible",
+                }
+            ],
+            "filter_rules": {
+                "rule_priority": 10,
+                "rule_name": "Exclude too young less than 75"
+            },
+            "suitability_rules": None,
+            "action_rule": None,
+            "actions": [],
+        },
+        {
+            "campaign_id": covid_campaign.id,
+            "campaign_version": covid_campaign.version,
+            "iteration_id": covid_campaign.iterations[0].id,
+            "iteration_version": covid_campaign.iterations[0].version,
+            "condition_name": covid_campaign.target,
+            "status": "not_actionable",
+            "status_text": "not_actionable",
+            "eligibility_cohorts": [{"cohort_code": "cohort_group2", "cohort_status": "not_actionable"}],
+            "eligibility_cohort_groups": [
+                {
+                    "cohort_code": "cohort_group2",
+                    "cohort_text": "positive_desc_2",
+                    "cohort_status": "not_actionable",
+                }
+            ],
+            "filter_rules": None,
+            "suitability_rules": {
+                "rule_priority": 10,
+                "rule_name": "Exclude too young less than 75",
+                "rule_message": "Exclude too young less than 75"
+            },
+            "action_rule": None,
+            "actions": [],
+        },
+        {
+            "campaign_id": flu_campaign.id,
+            "campaign_version": flu_campaign.version,
+            "iteration_id": flu_campaign.iterations[0].id,
+            "iteration_version": flu_campaign.iterations[0].version,
+            "condition_name": flu_campaign.target,
+            "status": "actionable",
+            "status_text": "actionable",
+            "eligibility_cohorts": [{"cohort_code": "cohort_group3", "cohort_status": "actionable"}],
+            "eligibility_cohort_groups": [
+                {
+                    "cohort_code": "cohort_group3",
+                    "cohort_text": "positive_desc_3",
+                    "cohort_status": "actionable",
+                }
+            ],
+            "filter_rules": None,
+            "suitability_rules": None,
+            "action_rule": {
+                "rule_priority": 20,
+                "rule_name": "In QE1"
+            },
+            "actions": [{
+                "internal_name": None, # TODO: FIX!
+                "action_type": "defaultcomms",
+                "action_code": "action_code",
+                "action_description": None,
+                "action_url": None,
+                "action_url_label": None
+            }],
+        }
+    ]
+
+    assert_that(audit_data["request"]["request_timestamp"], is_not(equal_to("")))
+    assert_that(audit_data["request"]["headers"], equal_to(expected_headers))
+    assert_that(audit_data["request"]["nhs_number"], equal_to(persisted_person_all_cohorts))
+    assert_that(audit_data["request"]["query_params"], equal_to(expected_query_params))
+    assert_that(audit_data["response"]["response_id"], is_not(equal_to("")))
+    assert_that(audit_data["response"]["last_updated"], is_not(equal_to("")))
+    assert_that(audit_data["response"]["condition"], contains_inanyorder(*expected_conditions))
+
 

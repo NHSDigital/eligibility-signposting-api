@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from itertools import groupby
 from typing import TYPE_CHECKING, Any
 
-from eligibility_signposting_api.audit_service import AuditContext
+from eligibility_signposting_api.audit_context import AuditContext
 
 if TYPE_CHECKING:
     from eligibility_signposting_api.model.rules import (
@@ -97,7 +97,7 @@ class EligibilityCalculator:
                 status=cc.status,
                 reasons=cc.reasons,
                 description=(cc.description or "").strip() if cc.description else "",
-                audit_reasons=cc.audit_reasons,  # TODO: remove this or fix it!
+                audit_rules=cc.audit_rules,  # TODO: remove this or fix it!
             )
             for cc in best_cohorts
         ]
@@ -199,11 +199,12 @@ class EligibilityCalculator:
 
             # add actions to condition results
             condition_results[condition_name].actions = actions
+            actions: SuggestedActions | None = SuggestedActions([])
 
             # add audit data
             # TODO: Do we need to use deduplicated cohort results from build_condition_results instead of here?
             AuditContext.append_audit_condition(
-                actions,
+                condition_results[condition_name].actions,
                 condition_name,
                 (best_active_iteration, best_candidate, best_cohort_results),
                 (best_campaign_id, best_campaign_version),
@@ -283,7 +284,7 @@ class EligibilityCalculator:
                     reasons=[reason for cohort in group for reason in cohort.reasons],
                     # get the first nonempty description
                     description=next((c.description for c in group if c.description), group[0].description),
-                    audit_reasons=[],  # TODO: remove this or fix it!
+                    audit_rules=[],  # TODO: remove this or fix it!
                 )
                 for group_cohort_code, group in grouped_cohort_results.items()
                 if group

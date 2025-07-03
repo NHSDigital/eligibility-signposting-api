@@ -9,7 +9,7 @@ from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
 from wireup import Injected
 
-from eligibility_signposting_api.audit_service import AuditContext
+from eligibility_signposting_api.audit_context import AuditContext
 from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.services.audit_service import AuditService

@@ -16,24 +16,11 @@ from eligibility_signposting_api.wrapper import validate_matching_nhs_number
 init_logging()
 logger = logging.getLogger(__name__)
 
-# app = Flask(__name__)
-
 
 def main() -> None:  # pragma: no cover
     """Run the Flask app as a local process."""
     app = create_app()
     app.run(debug=config()["log_level"] == logging.DEBUG)
-
-
-# @app.before_request
-# def request_audit():
-#     AuditService.add_request_details(request)
-#
-#
-# @app.after_request
-# def response_audit(response):
-#     AuditService.audit(asdict(g.audit_log))
-#     return response
 
 
 @validate_matching_nhs_number()
