@@ -9,8 +9,10 @@ from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
 from wireup import Injected
 
+from eligibility_signposting_api.audit_service import AuditContext
 from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
+from eligibility_signposting_api.services.audit_service import AuditService
 from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
 from eligibility_signposting_api.views.response_model import eligibility
 from eligibility_signposting_api.views.response_model.eligibility import ProcessedSuggestion
@@ -25,14 +27,17 @@ logger = logging.getLogger(__name__)
 
 eligibility_blueprint = Blueprint("eligibility", __name__)
 
+
 @eligibility_blueprint.before_request
-def store_request_id():
-    rid = request.headers.get("X-Request-ID", "unknown")
-    # request_id_var.set(rid)
+def before_request() -> None:
+    AuditContext.add_request_details(request)
+
 
 @eligibility_blueprint.get("/", defaults={"nhs_number": ""})
 @eligibility_blueprint.get("/<nhs_number>")
-def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[EligibilityService]) -> ResponseReturnValue:
+def check_eligibility(
+    nhs_number: NHSNumber, eligibility_service: Injected[EligibilityService], audit_service: Injected[AuditService]
+) -> ResponseReturnValue:
     logger.info("checking nhs_number %r in %r", nhs_number, eligibility_service, extra={"nhs_number": nhs_number})
     try:
         eligibility_status = eligibility_service.get_eligibility_status(
@@ -44,6 +49,9 @@ def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[Eligi
         return handle_unknown_person_error(nhs_number)
     else:
         eligibility_response = build_eligibility_response(eligibility_status)
+
+        AuditContext.write_to_firehose(audit_service, eligibility_response)
+
         return make_response(
             eligibility_response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK
         )

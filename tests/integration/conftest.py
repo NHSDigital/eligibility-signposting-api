@@ -349,6 +349,27 @@ def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibil
     for row in rows:
         person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
 
+@pytest.fixture
+def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
+    nhs_number = eligibility.NHSNumber(faker.nhs_number())
+    date_of_birth = eligibility.DateOfBirth(faker.date_of_birth(minimum_age=74, maximum_age=74))
+
+    for row in (
+        rows := person_rows_builder(
+            nhs_number,
+            date_of_birth=date_of_birth,
+            postcode="hp1",
+            cohorts=["cohort1", "cohort2", "cohort3"],
+            icb="QE1"
+        )
+    ):
+        person_table.put_item(Item=row)
+
+    yield nhs_number
+
+    for row in rows:
+        person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
+
 
 @pytest.fixture
 def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
@@ -440,6 +461,50 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
     )
     yield campaign
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+@pytest.fixture(scope="class")
+def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list, None, None]:
+    """Create and upload multiple campaign configs to S3, then clean up after tests."""
+    campaigns, campaign_data_keys = [], []
+
+    targets = ["RSV", "COVID", "FLU", "FLU"]
+    target_rules_map = {
+        targets[0]: [rule.PersonAgeSuppressionRuleFactory.build(type=rules.RuleType.filter)],
+        targets[1]: [rule.PersonAgeSuppressionRuleFactory.build()],
+        targets[2]: [rule.ICBRedirectRuleFactory.build()],
+        targets[3]: [],
+    } # TODO: check if targets[3] is working as expected
+
+    for i in range(4):
+        campaign = rule.CampaignConfigFactory.build(
+            name=f"campaign_{i}",
+            target=targets[i],
+            iterations=[
+                rule.IterationFactory.build(
+                    iteration_rules=target_rules_map.get(targets[i]),
+                    iteration_cohorts=[
+                        rule.IterationCohortFactory.build(
+                            cohort_label=f"cohort1",
+                            cohort_group=f"cohort_group{i+1}",
+                            positive_description=f"positive_desc_{i+1}",
+                            negative_description=f"negative_desc_{i+1}",
+                        )
+                    ],
+                )
+            ],
+        )
+        campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+        key = f"{campaign.name}.json"
+        s3_client.put_object(
+            Bucket=rules_bucket, Key=key, Body=json.dumps(campaign_data), ContentType="application/json"
+        )
+        campaigns.append(campaign)
+        campaign_data_keys.append(key)
+
+    yield campaigns
+
+    for key in campaign_data_keys:
+        s3_client.delete_object(Bucket=rules_bucket, Key=key)
 
 
 @pytest.fixture(scope="class")

@@ -4,10 +4,11 @@ from random import choice, randint
 import pytest
 from faker import Faker
 from faker.providers import BaseProvider
-from flask import Flask
+from flask import Flask, g
 from flask.testing import FlaskClient
 
 from eligibility_signposting_api.app import create_app
+from eligibility_signposting_api.audit_models import AuditEvent
 
 
 @pytest.fixture(scope="session")
@@ -18,6 +19,14 @@ def app() -> Flask:
 @pytest.fixture(scope="session")
 def client(app) -> FlaskClient:
     return app.test_client()
+
+
+@pytest.fixture(autouse=True)
+def audit_log_context(app):
+    with app.app_context():
+        g.audit_log = AuditEvent()
+        yield
+        g.pop("audit_log", None)
 
 
 @pytest.fixture(scope="session")

@@ -18,11 +18,12 @@ from eligibility_signposting_api.model.eligibility import (
     Reason,
     RuleDescription,
     RuleName,
+    RulePriority,
     RuleType,
     Status,
 )
-from eligibility_signposting_api.model.rules import RulePriority
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
+from eligibility_signposting_api.services.audit_service import AuditService
 from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
 from eligibility_signposting_api.views.eligibility import (
     build_eligibility_cohorts,
@@ -37,6 +38,11 @@ from tests.fixtures.builders.model.eligibility import (
 from tests.fixtures.matchers.eligibility import is_eligibility_cohort, is_suitability_rule
 
 logger = logging.getLogger(__name__)
+
+
+class FakeAuditService:
+    def audit(self, audit_record):
+        pass
 
 
 class FakeEligibilityService(EligibilityService):
@@ -80,7 +86,10 @@ class FakeUnexpectedErrorEligibilityService(EligibilityService):
 
 def test_nhs_number_given(app: Flask, client: FlaskClient):
     # Given
-    with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
+    with (
+        get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()),
+        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
+    ):
         # When
         response = client.get("/patient-check/12345")
 
@@ -213,21 +222,21 @@ def test_build_suitability_results_with_deduplication():
                         rule_name=RuleName("Exclude too young less than 75"),
                         rule_description=RuleDescription("your age is greater than 75"),
                         matcher_matched=False,
-                        rule_priority=RulePriority(1)
+                        rule_priority=RulePriority(1),
                     ),
                     Reason(
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude too young less than 75"),
                         rule_description=RuleDescription("your age is greater than 75"),
                         matcher_matched=False,
-                        rule_priority=RulePriority(1)
+                        rule_priority=RulePriority(1),
                     ),
                     Reason(
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude more than 100"),
                         rule_description=RuleDescription("your age is greater than 100"),
                         matcher_matched=False,
-                        rule_priority=RulePriority(1)
+                        rule_priority=RulePriority(1),
                     ),
                 ],
             ),
@@ -240,7 +249,7 @@ def test_build_suitability_results_with_deduplication():
                         rule_name=RuleName("Exclude too young less than 75"),
                         rule_description=RuleDescription("your age is greater than 75"),
                         matcher_matched=False,
-                        rule_priority=RulePriority(1)
+                        rule_priority=RulePriority(1),
                     )
                 ],
             ),
@@ -253,7 +262,7 @@ def test_build_suitability_results_with_deduplication():
                         rule_name=RuleName("Exclude is present in sw1"),
                         rule_description=RuleDescription("your a member of sw1"),
                         matcher_matched=False,
-                        rule_priority=RulePriority(1)
+                        rule_priority=RulePriority(1),
                     )
                 ],
             ),
@@ -267,7 +276,7 @@ def test_build_suitability_results_with_deduplication():
                         rule_name=RuleName("Already vaccinated"),
                         rule_description=RuleDescription("you have already vaccinated"),
                         matcher_matched=False,
-                        rule_priority=RulePriority(1)
+                        rule_priority=RulePriority(1),
                     )
                 ],
             ),
@@ -301,21 +310,21 @@ def test_build_suitability_results_when_rule_text_is_empty_or_null():
                         rule_name=RuleName("Exclude too young less than 75"),
                         rule_description=RuleDescription("your age is greater than 75"),
                         matcher_matched=False,
-                        rule_priority=RulePriority(1)
+                        rule_priority=RulePriority(1),
                     ),
                     Reason(
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude more than 100"),
                         rule_description=RuleDescription(""),
                         matcher_matched=False,
-                        rule_priority=RulePriority(1)
+                        rule_priority=RulePriority(1),
                     ),
                     Reason(
                         rule_type=RuleType.suppression,
                         rule_name=RuleName("Exclude more than 100"),
                         matcher_matched=False,
                         rule_description=None,
-                        rule_priority=RulePriority(1)
+                        rule_priority=RulePriority(1),
                     ),
                 ],
             ),
@@ -328,7 +337,7 @@ def test_build_suitability_results_when_rule_text_is_empty_or_null():
                         rule_name=RuleName("Exclude is present in sw1"),
                         rule_description=RuleDescription(""),
                         matcher_matched=False,
-                        rule_priority=RulePriority(1)
+                        rule_priority=RulePriority(1),
                     )
                 ],
             ),
@@ -341,7 +350,7 @@ def test_build_suitability_results_when_rule_text_is_empty_or_null():
                         rule_name=RuleName("Exclude is present in sw1"),
                         rule_description=None,
                         matcher_matched=False,
-                        rule_priority=RulePriority(1)
+                        rule_priority=RulePriority(1),
                     )
                 ],
             ),
@@ -370,7 +379,10 @@ def test_no_suitability_rules_for_actionable():
 
 def test_nhs_number_and_include_actions_param_given_and_is_yes(app: Flask, client: FlaskClient):
     # Given
-    with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
+    with (
+        get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()),
+        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
+    ):
         # When
         response = client.get("/patient-check/12345?includeActions=Y")
 
@@ -380,7 +392,10 @@ def test_nhs_number_and_include_actions_param_given_and_is_yes(app: Flask, clien
 
 def test_nhs_number_and_include_actions_param_no_given(app: Flask, client: FlaskClient):
     # Given
-    with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
+    with (
+        get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()),
+        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
+    ):
         # When
         response = client.get("/patient-check/12345?includeActions=N")
 

@@ -1,82 +1,97 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List
 
 
 @dataclass
 class RequestAuditHeader:
-    xRequestID: str
-    xCorrelationID: str
-    nhsdEndUserOrganisationODS: str
-    nhsdApplicationID: str
+    x_request_id: str = None
+    x_correlation_id: str = None
+    nhsd_end_user_organisation_ods: str = None
+    nhsd_application_id: str = None
+
 
 @dataclass
 class RequestAuditQueryParams:
     category: str | None = None
     conditions: str | None = None
-    includeActions: str | None = None
+    include_actions: str | None = None
+
 
 @dataclass
 class RequestAuditData:
-    requestTimestamp: datetime
-    headers: RequestAuditHeader
-    queryParams: RequestAuditQueryParams
-    nhsNumber: int
+    request_timestamp: datetime = field(default_factory=datetime.utcnow)
+    headers: RequestAuditHeader = field(default_factory=RequestAuditHeader)
+    query_params: RequestAuditQueryParams = field(default_factory=RequestAuditQueryParams)
+    nhs_number: int | None = None
+
 
 @dataclass
 class AuditEligibilityCohorts:
-    cohortCode: str | None = None
-    cohortStatus: str | None = None
+    cohort_code: str | None = None
+    cohort_status: str | None = None
+
 
 @dataclass
 class AuditEligibilityCohortGroups:
-    cohortCode: str | None = None
-    cohortText: str | None = None
-    cohortStatus: str | None = None
+    cohort_code: str | None = None
+    cohort_text: str | None = None
+    cohort_status: str | None = None
+
 
 @dataclass
 class AuditFilterRule:
-    rulePriority: int | None = None
-    ruleName: str | None = None
+    rule_priority: int | None = None
+    rule_name: str | None = None
+
 
 @dataclass
 class AuditSuitabilityRule:
-    rulePriority: int | None = None
-    ruleName: str | None = None
-    ruleMessage: str | None = None
+    rule_priority: int | None = None
+    rule_name: str | None = None
+    rule_message: str | None = None
+
 
 @dataclass
 class AuditRedirectRule:
-    rulePriority: int | None = None
-    ruleName: str | None = None
+    rule_priority: int | None = None
+    rule_name: str | None = None
+
 
 @dataclass
 class AuditAction:
-    internalName: str | None = None
-    actionType: str | None = None
-    actionCode: str | None = None
-    actionDescription: str | None = None
-    actionUrl: str | None = None
-    actionUrlLabel: str | None = None
+    internal_name: str | None = None
+    action_type: str | None = None
+    action_code: str | None = None
+    action_description: str | None = None
+    action_url: str | None = None
+    action_url_label: str | None = None
+
 
 @dataclass
 class AuditCondition:
-    campaignID: str
-    campaignVersion: int
-    iterationID: str
-    iterationVersion: int
-    conditionName: str
-    status: str
-    statusText: str
-    eligibilityCohorts: List[AuditEligibilityCohorts] | None = None
-    eligibilityCohortGroups: List[AuditEligibilityCohortGroups] | None = None
-    filterRules: AuditFilterRule | None = None
-    suitabilityRules: AuditSuitabilityRule | None = None
-    actionRule: AuditRedirectRule | None = None
-    actions: List[AuditAction] = field(default_factory=list)
+    campaign_id: str = None
+    campaign_version: str = None
+    iteration_id: str = None
+    iteration_version: str = None
+    condition_name: str = None
+    status: str = None
+    status_text: str = None
+    eligibility_cohorts: list[AuditEligibilityCohorts] | None = None
+    eligibility_cohort_groups: list[AuditEligibilityCohortGroups] | None = None
+    filter_rules: AuditFilterRule | None = None
+    suitability_rules: AuditSuitabilityRule | None = None
+    action_rule: AuditRedirectRule | None = None
+    actions: list[AuditAction] = field(default_factory=list)
+
 
 @dataclass
 class ResponseAuditData:
-    responseId: str | None = None
-    lastUpdated: str | None = None
-    condition: List[AuditCondition] = field(default_factory=list)
+    response_id: str | None = None
+    last_updated: str | None = None
+    condition: list[AuditCondition] = field(default_factory=list)
+
+
+@dataclass
+class AuditEvent:
+    request: RequestAuditData = field(default_factory=RequestAuditData)
+    response: ResponseAuditData = field(default_factory=ResponseAuditData)

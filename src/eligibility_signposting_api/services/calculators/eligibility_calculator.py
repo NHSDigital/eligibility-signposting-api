@@ -7,11 +7,18 @@ from dataclasses import dataclass, field
 from itertools import groupby
 from typing import TYPE_CHECKING, Any
 
-from eligibility_signposting_api.audit_service import AuditService
+from eligibility_signposting_api.audit_service import AuditContext
 
 if TYPE_CHECKING:
-    from eligibility_signposting_api.model.rules import ActionsMapper, Iteration, IterationCohort, CampaignID, \
-    CampaignVersion, RulePriority, RuleName
+    from eligibility_signposting_api.model.rules import (
+        ActionsMapper,
+        CampaignID,
+        CampaignVersion,
+        Iteration,
+        IterationCohort,
+        RuleName,
+        RulePriority,
+    )
 
 from wireup import service
 
@@ -90,7 +97,7 @@ class EligibilityCalculator:
                 status=cc.status,
                 reasons=cc.reasons,
                 description=(cc.description or "").strip() if cc.description else "",
-                audit_reasons=cc.audit_reasons,  #TODO: remove this or fix it!
+                audit_reasons=cc.audit_reasons,  # TODO: remove this or fix it!
             )
             for cc in best_cohorts
         ]
@@ -105,8 +112,8 @@ class EligibilityCalculator:
             ir
             for ir in filter_rules
             if ir.cohort_label is None
-               or cohort.cohort_label == ir.cohort_label
-               or (isinstance(ir.cohort_label, (list, set, tuple)) and cohort.cohort_label in ir.cohort_label)
+            or cohort.cohort_label == ir.cohort_label
+            or (isinstance(ir.cohort_label, (list, set, tuple)) and cohort.cohort_label in ir.cohort_label)
         )
 
     @staticmethod
@@ -135,12 +142,11 @@ class EligibilityCalculator:
         condition_results: dict[ConditionName, IterationResult] = {}
         actions: SuggestedActions | None = SuggestedActions([])
         redirect_rule_priority, redirect_rule_name = None, None
-        # g.audit_log.response = ResponseAuditData()
-        # g.audit_log.response.condition = []
 
         for condition_name, campaign_group in self.campaigns_grouped_by_condition_name:
-            # audit_condition = AuditCondition()
-            iteration_results: dict[str, tuple[Iteration, IterationResult, CampaignID, CampaignVersion, dict[str, CohortGroupResult]]] = {}
+            iteration_results: dict[
+                str, tuple[Iteration, IterationResult, CampaignID, CampaignVersion, dict[str, CohortGroupResult]]
+            ] = {}
 
             for cc in campaign_group:
                 active_iteration = cc.current_iteration
@@ -153,17 +159,24 @@ class EligibilityCalculator:
                     IterationResult(status, best_cohorts, actions),
                     cc.id,
                     cc.version,
-                    cohort_results
+                    cohort_results,
                 )
 
             # Determine results between iterations - get the best
             if iteration_results:
-                best_iteration_name, (best_active_iteration, best_candidate, best_campaign_id,
-                                      best_campaign_version, best_cohort_results) = max(
-                    iteration_results.items(), key=lambda item: item[1][1].status.value
-                )
+                (
+                    best_iteration_name,
+                    (
+                        best_active_iteration,
+                        best_candidate,
+                        best_campaign_id,
+                        best_campaign_version,
+                        best_cohort_results,
+                    ),
+                ) = max(iteration_results.items(), key=lambda item: item[1][1].status.value)
             else:
                 best_candidate = IterationResult(eligibility.Status.not_eligible, [], actions)
+                # TODO: Refactor?
                 best_campaign_id = None
                 best_campaign_version = None
                 best_active_iteration = None
@@ -174,7 +187,8 @@ class EligibilityCalculator:
             if best_candidate.status == Status.actionable and best_active_iteration is not None:
                 if include_actions_flag:
                     actions, matched_r_rule_priority, matched_r_rule_name = self.handle_redirect_rules(
-                        best_active_iteration)
+                        best_active_iteration
+                    )
                     redirect_rule_name = matched_r_rule_name
                     redirect_rule_priority = matched_r_rule_priority
                 else:
@@ -187,19 +201,22 @@ class EligibilityCalculator:
             condition_results[condition_name].actions = actions
 
             # add audit data
-            #TODO: Do we need to use deduplicated cohort results from build_condition_results instead of here?
-            AuditService.append_audit_condition(actions, best_active_iteration,
-                                                best_candidate, best_campaign_id,
-                                                best_campaign_version,
-                                                condition_name, best_cohort_results,
-                                                redirect_rule_priority, redirect_rule_name)
+            # TODO: Do we need to use deduplicated cohort results from build_condition_results instead of here?
+            AuditContext.append_audit_condition(
+                actions,
+                condition_name,
+                (best_active_iteration, best_candidate, best_cohort_results),
+                (best_campaign_id, best_campaign_version),
+                (redirect_rule_priority, redirect_rule_name),
+            )
 
         # Consolidate all the results and return
         final_result = self.build_condition_results(condition_results)
         return eligibility.EligibilityStatus(conditions=final_result)
 
-    def handle_redirect_rules(self, best_active_iteration: Iteration) -> tuple[
-        SuggestedActions | None, RulePriority | None, RuleName | None]:
+    def handle_redirect_rules(
+        self, best_active_iteration: Iteration
+    ) -> tuple[SuggestedActions | None, RulePriority | None, RuleName | None]:
         redirect_rules, action_mapper, default_comms = self.get_redirect_rules(best_active_iteration)
         priority_getter = attrgetter("priority")
         sorted_rules_by_priority = sorted(redirect_rules, key=priority_getter)
@@ -242,7 +259,7 @@ class EligibilityCalculator:
                     Status.not_eligible,
                     [],
                     cohort.negative_description,
-                    [] #TODO: remove this or fix it!
+                    [],  # TODO: remove this or fix it!
                 )
         return cohort_results
 
@@ -266,7 +283,7 @@ class EligibilityCalculator:
                     reasons=[reason for cohort in group for reason in cohort.reasons],
                     # get the first nonempty description
                     description=next((c.description for c in group if c.description), group[0].description),
-                    audit_reasons=[] #TODO: remove this or fix it!
+                    audit_reasons=[],  # TODO: remove this or fix it!
                 )
                 for group_cohort_code, group in grouped_cohort_results.items()
                 if group
@@ -336,11 +353,7 @@ class EligibilityCalculator:
             key = cohort.cohort_label
             if is_actionable:
                 cohort_results[key] = CohortGroupResult(
-                    cohort.cohort_group,
-                    Status.actionable,
-                    [],
-                    cohort.positive_description,
-                    suppression_reasons
+                    cohort.cohort_group, Status.actionable, [], cohort.positive_description, suppression_reasons
                 )
             else:
                 cohort_results[key] = CohortGroupResult(
@@ -348,7 +361,7 @@ class EligibilityCalculator:
                     Status.not_actionable,
                     suppression_reasons,
                     cohort.positive_description,
-                    suppression_reasons
+                    suppression_reasons,
                 )
 
     def evaluate_rules_priority_group(
@@ -382,7 +395,8 @@ class EligibilityCalculator:
                         action_type=ActionType(action.action_type),
                         action_code=ActionCode(action.action_code),
                         action_description=ActionDescription(action.action_description)
-                        if action.action_description else None,
+                        if action.action_description
+                        else None,
                         url_link=UrlLink(action.url_link) if action.url_link else None,
                         url_label=UrlLabel(action.url_label) if action.url_label else None,
                     )

@@ -6,8 +6,6 @@ from enum import Enum, StrEnum, auto
 from functools import total_ordering
 from typing import NewType, Self
 
-from eligibility_signposting_api.model.rules import RulePriority
-
 NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
 Postcode = NewType("Postcode", str)
@@ -15,6 +13,7 @@ ConditionName = NewType("ConditionName", str)
 
 RuleName = NewType("RuleName", str)
 RuleDescription = NewType("RuleDescription", str)
+RulePriority = NewType("RulePriority", str)
 
 ActionType = NewType("ActionType", str)
 ActionCode = NewType("ActionCode", str)

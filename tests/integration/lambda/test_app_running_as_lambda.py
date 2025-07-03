@@ -10,7 +10,16 @@ from botocore.exceptions import ClientError
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.response import is_response
 from faker import Faker
-from hamcrest import assert_that, contains_exactly, contains_string, has_entries, has_item, has_key
+from hamcrest import (
+    assert_that,
+    contains_exactly,
+    contains_string,
+    equal_to,
+    has_entries,
+    has_item,
+    has_key,
+    is_not,
+)
 from yarl import URL
 
 from eligibility_signposting_api.model.eligibility import NHSNumber
@@ -152,11 +161,10 @@ def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
     )
     return [e["message"] for e in log_events["events"]]
 
-
-def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(  # noqa: PLR0913
+def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_return_response(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,  # noqa:ARG001
+    campaign_config: CampaignConfig,
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
@@ -166,7 +174,14 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(  # noqa: P
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": str(persisted_person)},
+        headers={
+            "nhs-login-nhs-number": str(persisted_person),
+            "x_request_id": "x_request_id",
+            "x_correlation_id": "x_correlation_id",
+            "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
+            "nhsd_application_id": "nhsd_application_id",
+        },
+        params={"includeActions": "Y"},
         timeout=10,
     )
 
@@ -180,7 +195,51 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers(  # noqa: P
     object_keys = [obj["Key"] for obj in objects]
     latest_key = sorted(object_keys)[-1]
     audit_data = json.loads(s3_client.get_object(Bucket=audit_bucket, Key=latest_key)["Body"].read())
-    assert_that(audit_data, has_entries(test_audit="check if audit works"))
+
+    expected_headers = {
+        "x_request_id": "x_request_id",
+        "x_correlation_id": "x_correlation_id",
+        "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
+        "nhsd_application_id": "nhsd_application_id",
+    }
+    expected_query_params = {"category": None, "conditions": None, "include_actions": "Y"}
+
+    assert_that(audit_data["request"]["request_timestamp"], is_not(equal_to("")))
+    assert_that(audit_data["request"]["headers"], equal_to(expected_headers))
+    assert_that(audit_data["request"]["nhs_number"], equal_to(int(persisted_person)))
+    assert_that(audit_data["request"]["query_params"], equal_to(expected_query_params))
+
+    expected_conditions = [
+        {
+            "campaign_id": campaign_config.id,
+            "campaign_version": campaign_config.version,
+            "iteration_id": campaign_config.iterations[0].id,
+            "iteration_version": campaign_config.iterations[0].version,
+            "condition_name": campaign_config.target,
+            "status": "not_actionable",
+            "status_text": "not_actionable",
+            "eligibility_cohorts": [{"cohort_code": "cohort_group1", "cohort_status": "not_actionable"}],
+            "eligibility_cohort_groups": [
+                {
+                    "cohort_code": "cohort_group1",
+                    "cohort_text": "positive_description",
+                    "cohort_status": "not_actionable",
+                }
+            ],
+            "filter_rules": None,
+            "suitability_rules": {
+                "rule_priority": 10,
+                "rule_name": "Exclude too young less than 75",
+                "rule_message": "Exclude too young less than 75",
+            },
+            "action_rule": None,
+            "actions": [],
+        }
+    ]
+
+    assert_that(audit_data["response"]["response_id"], is_not(equal_to("")))
+    assert_that(audit_data["response"]["last_updated"], is_not(equal_to("")))
+    assert_that(audit_data["response"]["condition"], equal_to(expected_conditions))
 
 
 def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_results_in_error_response(
@@ -203,3 +262,44 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
         response,
         is_response().with_status_code(HTTPStatus.FORBIDDEN).and_body("NHS number mismatch"),
     )
+
+def test_given_person_has_unique_status_for_different_conditions_with_audit(  # noqa: PLR0913
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person_all_cohorts: NHSNumber,
+    multiple_campaign_configs: CampaignConfig,
+    s3_client: BaseClient,
+    audit_bucket: BucketName,
+    api_gateway_endpoint: URL,
+):
+    # Given
+    # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person_all_cohorts}"
+    response = httpx.get(
+        invoke_url,
+        headers={
+            "nhs-login-nhs-number": str(persisted_person_all_cohorts),
+            "x_request_id": "x_request_id",
+            "x_correlation_id": "x_correlation_id",
+            "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
+            "nhsd_application_id": "nhsd_application_id",
+        },
+        params={"includeActions": "Y"},
+        timeout=10,
+    )
+
+    time.sleep(30)
+    # logger.info("<<<< response.json.processedSuggestions: ", response.json()["processedSuggestions"])
+    # Then
+    assert_that(
+        response,
+        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
+    )
+
+    objects = s3_client.list_objects_v2(Bucket=audit_bucket).get("Contents", [])
+    object_keys = [obj["Key"] for obj in objects]
+    latest_key = sorted(object_keys)[-1]
+    audit_data = json.loads(s3_client.get_object(Bucket=audit_bucket, Key=latest_key)["Body"].read())
+
+    logger.info("<<<< audit_data.request: ", audit_data["request"])
+    logger.info("<<<< audit_data.response: ", audit_data["response"])
+
