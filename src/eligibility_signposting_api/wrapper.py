@@ -4,7 +4,7 @@ from functools import wraps
 
 from mangum.types import LambdaContext, LambdaEvent
 
-from eligibility_signposting_api.config.contants import NHS_NUMBER_HEADER_NAME
+from eligibility_signposting_api.config.contants import NHS_NUMBER_HEADER
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ def validate_matching_nhs_number() -> Callable:
             headers = event.get("headers", {})
             path_params = event.get("pathParameters", {})
 
-            header_nhs = headers.get(NHS_NUMBER_HEADER_NAME)
+            header_nhs = headers.get(NHS_NUMBER_HEADER)
             path_nhs = path_params.get("id")
 
             logger.info("nhs numbers from the request", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
