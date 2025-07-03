@@ -83,7 +83,7 @@ ignore = ["COM812", "D"]
 "tests/*" = ["ANN", "INP", "S101", "S106", "S311"]
 
 [tool.pyright]
-include = ["src/"]
+include = ["src/", "tests/"]
 pythonVersion = "3.13"
 
 [tool.pytest.ini_options]

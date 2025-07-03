@@ -12,6 +12,17 @@ from helpers.dynamodb_data_uploader import DynamoDBDataUploader
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+# API endpoints
+API_BASE_URL = os.getenv("API_BASE_URL", "https://" + "test" + ".eligibility-signposting-api.nhs.uk")
+
+# SSM Parameter paths
+SSM_BASE_PATH = "/" + "test" + "/mtls"
+CERT_PARAMS = {
+    "private_key": f"{SSM_BASE_PATH}/api_private_key_cert",
+    "client_cert": f"{SSM_BASE_PATH}/api_client_cert",
+    "ca_cert": f"{SSM_BASE_PATH}/api_ca_cert",
+}
+
 
 @given("AWS credentials are loaded from the environment")
 def step_impl_load_aws_credentials(context):
@@ -38,11 +49,6 @@ def step_impl_load_aws_credentials(context):
 @given("mTLS certificates are downloaded and available in the out/ directory")
 def step_impl_download_certificates(context):
     """Retrieve mTLS certs from SSM and write them to local files."""
-    cert_param_map = {
-        "private_key": "/test/mtls/api_private_key_cert",
-        "client_cert": "/test/mtls/api_client_cert",
-        "ca_cert": "/test/mtls/api_ca_cert",
-    }
 
     cert_dir = Path("./data/out")
     cert_dir.mkdir(parents=True, exist_ok=True)
@@ -56,7 +62,7 @@ def step_impl_download_certificates(context):
     )
 
     context.cert_paths = {}
-    for cert_type, param_name in cert_param_map.items():
+    for cert_type, param_name in CERT_PARAMS.items():
         cert_path = cert_dir / f"{cert_type}.pem"
         try:
             logger.info("Retrieving SSM parameter: %s", param_name)
@@ -135,16 +141,14 @@ def step_impl_call_eligibility_api(context):
         msg = "mTLS certificate paths not present in context."
         raise AssertionError(msg)
 
-    api_url = f"https://test.eligibility-signposting-api.nhs.uk/patient-check/{context.nhs_number}"
+    api_url = f"{API_BASE_URL}/patient-check/{context.nhs_number}"
     cert = (context.cert_paths["client_cert"], context.cert_paths["private_key"])
     verify = False
     headers = {"nhs-login-nhs-number": context.nhs_number}
 
     logger.info("Querying Eligibility API at %s", api_url)
     try:
-        response = requests.get(
-            api_url, cert=cert, verify=verify, timeout=30, headers=headers
-        )
+        response = requests.get(api_url, cert=cert, verify=verify, timeout=30, headers=headers)
         context.response = response
         logger.info(
             "Querying Eligibility API response %s - %d",
