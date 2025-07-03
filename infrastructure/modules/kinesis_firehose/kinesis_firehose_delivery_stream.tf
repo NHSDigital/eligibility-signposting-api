@@ -3,7 +3,7 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
   destination = "extended_s3"
 
   extended_s3_configuration {
-    role_arn   = var.audit_firehose_role_arn
+    role_arn   = var.audit_firehose_role.arn
     bucket_arn = var.s3_audit_bucket_arn
 
     buffering_size     = 1

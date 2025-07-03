@@ -67,7 +67,7 @@ data "aws_iam_policy_document" "firehose_kms_key_policy" {
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = [var.audit_firehose_role_arn]
+      identifiers = [var.audit_firehose_role.arn]
     }
     actions   = ["kms:*"]
     resources = [aws_kms_key.firehose_cmk.arn]

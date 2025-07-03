@@ -1,7 +1,6 @@
 module "eligibility_audit_firehose_delivery_stream" {
   source                              = "../../modules/kinesis_firehose"
   audit_firehose_delivery_stream_name = "audit_stream_to_s3"
-  audit_firehose_role_arn             = aws_iam_role.eligibility_audit_firehose_role.arn
   audit_firehose_role                 = aws_iam_role.eligibility_audit_firehose_role
   s3_audit_bucket_arn                 = module.s3_audit_bucket.storage_bucket_arn
   environment                         = local.environment
