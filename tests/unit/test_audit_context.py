@@ -33,8 +33,7 @@ from tests.fixtures.builders.views.response_model.eligibility import Eligibility
 
 @pytest.fixture
 def app():
-    app = Flask(__name__)
-    return app
+    return Flask(__name__)
 
 
 def test_add_request_details_sets_audit_log_on_g(app):
@@ -141,9 +140,11 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
         assert cond.status_text == best_results[1].status.name
 
 
-def test_add_response_details_adds_to_audit_log_on_G(app):
+def test_add_response_details_adds_to_audit_log_on_g(app):
     eligibility_response = EligibilityResponseFactory.build(
-        response_id=uuid.uuid4(), meta={"last_updated": datetime(2023, 1, 1, 0, 0)}, processed_suggestions=[]
+        response_id=uuid.uuid4(),
+        meta={"last_updated": datetime(2023, 1, 1, 0, 0, tzinfo=UTC)},
+        processed_suggestions=[],
     )
 
     with app.app_context():

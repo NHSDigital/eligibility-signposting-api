@@ -199,6 +199,7 @@ class EligibilityCalculator:
 
             # add actions to condition results
             condition_results[condition_name].actions = actions
+            # reset actions for the next condition
             actions: SuggestedActions | None = SuggestedActions([])
 
             # add audit data
@@ -256,7 +257,7 @@ class EligibilityCalculator:
             # Not base eligible
             elif cohort.cohort_label is not None:
                 cohort_results[cohort.cohort_label] = CohortGroupResult(
-                    (cohort.cohort_group),
+                    cohort.cohort_group,
                     Status.not_eligible,
                     [],
                     cohort.negative_description,
