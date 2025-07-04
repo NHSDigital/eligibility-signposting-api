@@ -39,7 +39,7 @@ def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[Eligi
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
     else:
-        eligibility_response = build_eligibility_response(eligibility_status)
+        eligibility_response: eligibility.EligibilityResponse = build_eligibility_response(eligibility_status)
         return make_response(
             eligibility_response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK
         )
@@ -103,11 +103,7 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibi
             statusText=eligibility.StatusText(f"{condition.status}"),  # pyright: ignore[reportCallIssue]
             eligibilityCohorts=build_eligibility_cohorts(condition),  # pyright: ignore[reportCallIssue]
             suitabilityRules=build_suitability_results(condition),  # pyright: ignore[reportCallIssue]
-            actions=(
-                condition.actions.actions
-                if condition.actions is not None and condition.actions.actions is not None
-                else None
-            ),
+            actions=build_actions(condition),
         )
 
         processed_suggestions.append(suggestions)
@@ -118,6 +114,24 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibi
         # pyright: ignore[reportCallIssue]
         processedSuggestions=processed_suggestions,
     )
+
+
+def build_actions(condition: Condition) -> list[eligibility.Action] | None:
+    if condition.actions is not None:
+        return [
+            eligibility.Action(
+                actionType=eligibility.ActionType(action.action_type),
+                actionCode=eligibility.ActionCode(action.action_code),
+                description=eligibility.Description(action.action_description)
+                if action.action_description is not None
+                else None,
+                urlLink=eligibility.HttpUrl(action.url_link) if action.url_link is not None else None,
+                urlLabel=eligibility.UrlLabel(action.url_label) if action.url_label is not None else None,
+            )
+            for action in condition.actions
+        ]
+
+    return None
 
 
 def build_eligibility_cohorts(condition: Condition) -> list[eligibility.EligibilityCohort]:

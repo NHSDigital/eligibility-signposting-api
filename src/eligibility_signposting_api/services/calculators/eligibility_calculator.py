@@ -23,7 +23,6 @@ from eligibility_signposting_api.model.eligibility import (
     IterationResult,
     Status,
     SuggestedAction,
-    SuggestedActions,
     UrlLabel,
     UrlLink,
 )
@@ -129,7 +128,7 @@ class EligibilityCalculator:
     def evaluate_eligibility(self, *, include_actions_flag: bool = True) -> eligibility.EligibilityStatus:
         """Iterates over campaign groups, evaluates eligibility, and returns a consolidated status."""
         condition_results: dict[ConditionName, IterationResult] = {}
-        actions: SuggestedActions | None = SuggestedActions([])
+        actions: list[SuggestedAction] | None = []
 
         for condition_name, campaign_group in self.campaigns_grouped_by_condition_name:
             iteration_results: dict[str, tuple[Iteration, IterationResult]] = {}
@@ -165,12 +164,12 @@ class EligibilityCalculator:
         final_result = self.build_condition_results(condition_results)
         return eligibility.EligibilityStatus(conditions=final_result)
 
-    def handle_redirect_rules(self, best_active_iteration: Iteration) -> SuggestedActions | None:
+    def handle_redirect_rules(self, best_active_iteration: Iteration) -> list[SuggestedAction] | None:
         redirect_rules, action_mapper, default_comms = self.get_redirect_rules(best_active_iteration)
         priority_getter = attrgetter("priority")
         sorted_rules_by_priority = sorted(redirect_rules, key=priority_getter)
 
-        actions: SuggestedActions | None = self.get_actions_from_comms(action_mapper, default_comms)
+        actions: list[SuggestedAction] | None = self.get_actions_from_comms(action_mapper, default_comms)
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
             rule_group_list = list(rule_group)
             matcher_matched_list = [
@@ -181,7 +180,7 @@ class EligibilityCalculator:
             comms_routing = rule_group_list[0].comms_routing
             if comms_routing and all(matcher_matched_list):
                 rule_actions = self.get_actions_from_comms(action_mapper, comms_routing)
-                if rule_actions and len(rule_actions.actions) > 0:
+                if rule_actions and len(rule_actions) > 0:
                     actions = rule_actions
                 break
 
@@ -330,12 +329,12 @@ class EligibilityCalculator:
         return best_status, inclusion_reasons, exclusion_reasons, is_rule_stop
 
     @staticmethod
-    def get_actions_from_comms(action_mapper: ActionsMapper, comms: str) -> SuggestedActions | None:
-        suggested_actions: SuggestedActions = SuggestedActions([])
+    def get_actions_from_comms(action_mapper: ActionsMapper, comms: str) -> list[SuggestedAction] | None:
+        suggested_actions: list[SuggestedAction] = []
         for comm in comms.split("|"):
             action = action_mapper.get(comm)
             if action is not None:
-                suggested_actions.actions.append(
+                suggested_actions.append(
                     SuggestedAction(
                         action_type=ActionType(action.action_type),
                         action_code=ActionCode(action.action_code),
