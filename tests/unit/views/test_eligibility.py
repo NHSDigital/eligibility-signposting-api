@@ -28,7 +28,6 @@ from eligibility_signposting_api.model.eligibility import (
     RuleType,
     Status,
     SuggestedAction,
-    SuggestedActions,
     UrlLabel,
     UrlLink,
 )
@@ -373,17 +372,15 @@ def test_no_suitability_rules_for_actionable():
     ("suggested_actions", "expected"),
     [
         (
-            SuggestedActions(
-                actions=[
-                    SuggestedAction(
-                        action_type=ActionType("TYPE_A"),
-                        action_code=ActionCode("CODE123"),
-                        action_description=ActionDescription("Some description"),
-                        url_link=UrlLink("https://example.com"),
-                        url_label=UrlLabel("Learn more"),
-                    )
-                ]
-            ),
+            [
+                SuggestedAction(
+                    action_type=ActionType("TYPE_A"),
+                    action_code=ActionCode("CODE123"),
+                    action_description=ActionDescription("Some description"),
+                    url_link=UrlLink(HttpUrl("https://example.com")),
+                    url_label=UrlLabel("Learn more"),
+                )
+            ],
             [
                 eligibility.Action(
                     actionType=eligibility.ActionType("TYPE_A"),
@@ -395,17 +392,15 @@ def test_no_suitability_rules_for_actionable():
             ],
         ),
         (
-            SuggestedActions(
-                actions=[
-                    SuggestedAction(
-                        action_type=ActionType("TYPE_B"),
-                        action_code=ActionCode("CODE123"),
-                        action_description=None,
-                        url_link=None,
-                        url_label=None,
-                    )
-                ]
-            ),
+            [
+                SuggestedAction(
+                    action_type=ActionType("TYPE_B"),
+                    action_code=ActionCode("CODE123"),
+                    action_description=None,
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
             [
                 eligibility.Action(
                     actionType=eligibility.ActionType("TYPE_B"),
@@ -421,7 +416,7 @@ def test_no_suitability_rules_for_actionable():
             None,
         ),
         (
-            SuggestedActions(actions=[]),
+            [],
             [],
         ),
     ],

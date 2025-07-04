@@ -13,12 +13,8 @@ class SuggestedActionFactory(DataclassFactory[eligibility.SuggestedAction]):
     url_link = UrlLink(HttpUrl("https://test-example.com"))
 
 
-class SuggestedActionsFactory(DataclassFactory[eligibility.SuggestedActions]):
-    actions = Use(SuggestedActionFactory.batch, size=2)
-
-
 class ConditionFactory(DataclassFactory[eligibility.Condition]):
-    actions = SuggestedActionsFactory.build()
+    actions = Use(SuggestedActionFactory.batch, size=2)
 
 
 class EligibilityStatusFactory(DataclassFactory[eligibility.EligibilityStatus]):

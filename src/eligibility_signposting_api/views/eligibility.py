@@ -117,7 +117,7 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibi
 
 
 def build_actions(condition: Condition) -> list[eligibility.Action] | None:
-    if condition.actions is not None and condition.actions.actions is not None:
+    if condition.actions is not None:
         return [
             eligibility.Action(
                 actionType=eligibility.ActionType(action.action_type),
@@ -128,7 +128,7 @@ def build_actions(condition: Condition) -> list[eligibility.Action] | None:
                 urlLink=eligibility.HttpUrl(action.url_link) if action.url_link is not None else None,
                 urlLabel=eligibility.UrlLabel(action.url_label) if action.url_label is not None else None,
             )
-            for action in condition.actions.actions
+            for action in condition.actions
         ]
 
     return None

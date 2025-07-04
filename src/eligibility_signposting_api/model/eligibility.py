@@ -82,16 +82,11 @@ class SuggestedAction:
 
 
 @dataclass
-class SuggestedActions:
-    actions: list[SuggestedAction]
-
-
-@dataclass
 class Condition:
     condition_name: ConditionName
     status: Status
     cohort_results: list[CohortGroupResult]
-    actions: SuggestedActions | None = None
+    actions: list[SuggestedAction] | None = None
 
 
 @dataclass
@@ -106,7 +101,7 @@ class CohortGroupResult:
 class IterationResult:
     status: Status
     cohort_results: list[CohortGroupResult]
-    actions: SuggestedActions | None
+    actions: list[SuggestedAction] | None
 
 
 @dataclass
