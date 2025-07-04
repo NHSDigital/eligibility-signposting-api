@@ -1,19 +1,23 @@
 import logging
 import os
 from pathlib import Path
-
+import json
 import boto3
 import requests
+import copy
 from behave import given, then, when
 from botocore.exceptions import ClientError
 from helpers.dynamodb_data_generator import DateVariableResolver, JsonTestDataProcessor
 from helpers.dynamodb_data_uploader import DynamoDBDataUploader
+from difflib import unified_diff
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # API endpoints
-API_BASE_URL = os.getenv("API_BASE_URL", "https://" + "test" + ".eligibility-signposting-api.nhs.uk")
+API_BASE_URL = os.getenv(
+    "API_BASE_URL", "https://" + "test" + ".eligibility-signposting-api.nhs.uk"
+)
 
 # SSM Parameter paths
 SSM_BASE_PATH = "/" + "test" + "/mtls"
@@ -24,6 +28,36 @@ CERT_PARAMS = {
 }
 
 
+def remove_ignored_properties(obj):
+    """
+    Recursively remove specified properties from JSON objects before comparison.
+    Creates deep copies to avoid modifying original data.
+
+    Properties to remove:
+    - meta (and all its sub-properties)
+    - responseId
+
+    Args:
+        obj: The JSON object (dict, list, or primitive) to process
+
+    Returns:
+        A deep copy of the object with specified properties removed
+    """
+    if isinstance(obj, dict):
+        # Create a new dict excluding the ignored properties
+        filtered_dict = {}
+        for key, value in obj.items():
+            if key not in ["meta", "responseId"]:
+                filtered_dict[key] = remove_ignored_properties(value)
+        return filtered_dict
+    elif isinstance(obj, list):
+        # Recursively process each item in the list
+        return [remove_ignored_properties(item) for item in obj]
+    else:
+        # Return primitive values as-is
+        return obj
+
+
 @given("AWS credentials are loaded from the environment")
 def step_impl_load_aws_credentials(context):
     """Load AWS credentials from environment variables."""
@@ -31,7 +65,9 @@ def step_impl_load_aws_credentials(context):
     context.aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
     context.aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
     context.aws_session_token = os.getenv("AWS_SESSION_TOKEN")
-    context.dynamodb_table_name = os.getenv("DYNAMODB_TABLE_NAME", "eligibilty_data_store")
+    context.dynamodb_table_name = os.getenv(
+        "DYNAMODB_TABLE_NAME", "eligibilty_data_store"
+    )
 
     missing = []
     if not context.aws_region:
@@ -78,8 +114,15 @@ def step_impl_download_certificates(context):
 
 
 @given("I generate the test data files")
-def step_impl_generate_data(_context):
-    """Generate test data files with resolved <<DATE_...>> placeholders."""
+def step_impl_generate_data(context):
+    """Generate test data files with resolved <<DATE_...>> placeholders - once per feature."""
+    if getattr(context, "feature_data_setup_done", False):
+        logger.info(
+            "Test data already generated for this feature, skipping generation..."
+        )
+        return
+
+    logger.info("Generating test data files for feature...")
     input_dir = Path("data/in/dynamoDB").resolve()
     output_dir = Path("data/out/dynamoDB").resolve()
 
@@ -102,21 +145,34 @@ def step_impl_generate_data(_context):
     if count == 0:
         logger.warning("No .json files found in %s", input_dir)
     else:
-        logger.info("Processed %d test data file(s).", count)
+        logger.info("Processed %d test data file(s) for feature.", count)
 
 
 @given("I upload the test data files to DynamoDB")
 def step_impl_upload_data(context):
-    """Upload generated test data to DynamoDB."""
+    """Upload generated test data to DynamoDB - once per feature."""
+    if getattr(context, "feature_data_setup_done", False):
+        logger.info("Test data already uploaded for this feature, skipping upload...")
+        return
+
+    logger.info("Uploading test data to DynamoDB for feature...")
     uploader = DynamoDBDataUploader(
         aws_region=context.aws_region,
         access_key=context.aws_access_key_id,
         secret_key=context.aws_secret_access_key,
         session_token=context.aws_session_token,
     )
-    inserted = uploader.upload_files_from_path(table_name=context.dynamodb_table_name, path=Path("data/out/dynamoDB"))
+    inserted = uploader.upload_files_from_path(
+        table_name=context.dynamodb_table_name, path=Path("data/out/dynamoDB")
+    )
     assert inserted > 0, "No data uploaded to DynamoDB"
-    logger.info("Uploaded %d items to DynamoDB", inserted)
+
+    # Store for feature-level cleanup
+    context.feature_uploader = uploader
+    context.feature_dynamodb_items_count = inserted
+    context.feature_data_setup_done = True
+
+    logger.info("Uploaded %d items to DynamoDB (feature-level)", inserted)
 
 
 @given('I have the NHS number "{nhs_number}"')
@@ -126,8 +182,11 @@ def step_impl_nhs_number(context, nhs_number):
 
 @then("I clean up DynamoDB test data")
 def step_impl_cleanup_dynamo(context):
-    if hasattr(context, "dynamo_uploader"):
-        context.dynamo_uploader.delete_data()
+    """Clean up DynamoDB test data - handled at feature level now."""
+    logger.info(
+        "DynamoDB cleanup will be handled at feature level - skipping scenario-level cleanup"
+    )
+    # This step becomes a no-op since cleanup is handled in after_feature hook
 
 
 @when("I query the eligibility API")
@@ -148,7 +207,9 @@ def step_impl_call_eligibility_api(context):
 
     logger.info("Querying Eligibility API at %s", api_url)
     try:
-        response = requests.get(api_url, cert=cert, verify=verify, timeout=30, headers=headers)
+        response = requests.get(
+            api_url, cert=cert, verify=verify, timeout=30, headers=headers
+        )
         context.response = response
         logger.info(
             "Querying Eligibility API response %s - %d",
@@ -182,3 +243,41 @@ def step_impl_validate_json(context):
     except ValueError as e:
         msg = f"Response is not valid JSON: {e}"
         raise AssertionError(msg) from e
+
+
+@then('the response should be matching the JSON "{json_response}"')
+def step_impl_match_json_response(context, json_response):
+    """
+    Assert that the API response matches the expected JSON file.
+    """
+    expected_path = os.path.join(
+        Path(__file__).parent.parent.parent, "data", "responses", json_response
+    )
+    if not os.path.isfile(expected_path):
+        raise AssertionError(f"Expected JSON file not found: {expected_path}")
+
+    with open(expected_path, "r", encoding="utf-8") as f:
+        expected = json.load(f)
+
+    try:
+        actual = context.response.json()
+        print(f"📄 Actual JSON structure: ", actual)
+    except Exception as e:
+        raise AssertionError(f"Failed to parse API response as JSON: {e}")
+
+    filtered_expected = remove_ignored_properties(expected)
+    filtered_actual = remove_ignored_properties(actual)
+
+    if filtered_expected != filtered_actual:
+        expected_str = json.dumps(filtered_expected, indent=2, sort_keys=True)
+        actual_str = json.dumps(filtered_actual, indent=2, sort_keys=True)
+        diff = "\n".join(
+            unified_diff(
+                expected_str.splitlines(),
+                actual_str.splitlines(),
+                fromfile="expected",
+                tofile="actual",
+                lineterm="",
+            )
+        )
+        raise AssertionError(f"Response JSON does not match expected.\nDiff:\n{diff}")

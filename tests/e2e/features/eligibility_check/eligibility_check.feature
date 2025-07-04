@@ -10,10 +10,10 @@ Feature: Full mTLS integration with real Eligibility API
     Given I have the NHS number "<nhs_number>"
     When I query the eligibility API
     Then the response status code should be 200
-    And the response should be valid JSON
+    And the response should be matching the JSON "<json_response>"
     Then I clean up DynamoDB test data
 
     Examples:
-      | nhs_number   |
-      | 5000000001   |
-      | 5000000004   |
+      | nhs_number   | json_response        |
+      | 5000000001   | AUTO_RSV_SB_001.json |
+      | 5000000004   | AUTO_RSV_SB_004.json |

@@ -48,3 +48,5 @@ sandbox/specification/*
 /specification/tmp/*
 /tests/e2e/data/out/*
 /tests/e2e/reports/*
+.vscode/launch.json
+.vscode/mcp.json

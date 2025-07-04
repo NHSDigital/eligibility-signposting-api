@@ -31,19 +31,25 @@ class DateVariableResolver:
         if unit == "week":
             return (self.today + timedelta(weeks=offset)).strftime(DATE_FORMAT)
         if unit == "year":
-            return (self.today.replace(year=self.today.year + offset)).strftime(DATE_FORMAT)
+            return (self.today.replace(year=self.today.year + offset)).strftime(
+                DATE_FORMAT
+            )
         if unit == "age":
             try:
                 birth_date = self.today.replace(year=self.today.year - offset)
             except ValueError:
-                birth_date = self.today.replace(month=2, day=28, year=self.today.year - offset)
+                birth_date = self.today.replace(
+                    month=2, day=28, year=self.today.year - offset
+                )
             return birth_date.strftime(DATE_FORMAT)
         msg = f"Unsupported unit: {unit}"
         raise ValueError(msg)
 
 
 class JsonTestDataProcessor:
-    def __init__(self, input_dir: Path, output_dir: Path, resolver: DateVariableResolver):
+    def __init__(
+        self, input_dir: Path, output_dir: Path, resolver: DateVariableResolver
+    ):
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.resolver = resolver
@@ -66,7 +72,7 @@ class JsonTestDataProcessor:
             return match.group(0)
 
     def process_file(self, file_path: Path):
-        logger.info("Processing file: %s", file_path)
+        # logger.info("Processing file: %s", file_path)
         try:
             with file_path.open() as f:
                 content = json.load(f)
@@ -87,6 +93,6 @@ class JsonTestDataProcessor:
         try:
             with output_path.open("w") as f:
                 json.dump(resolved["data"], f, indent=2)
-            logger.info("Written resolved file: %s", output_path)
+            # logger.info("Written resolved file: %s", output_path)
         except Exception:
             logger.exception("Failed to write output to: %s", output_path)

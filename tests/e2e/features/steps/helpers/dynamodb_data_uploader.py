@@ -35,7 +35,7 @@ class DynamoDBDataUploader:
                     for item in items:
                         table.put_item(Item=item)
                         count += 1
-                    logger.info("Inserted %d items from %s", len(items), file_path.name)
+                    # logger.info("Inserted %d items from %s", len(items), file_path.name)
             except Exception:
                 logger.exception("Failed to insert from file: %s", file_path)
         return count
@@ -50,7 +50,11 @@ class DynamoDBDataUploader:
             attribute_type = item.get("ATTRIBUTE_TYPE")
             if nhs_number and attribute_type:
                 try:
-                    self.table.delete_item(Key={"NHS_NUMBER": nhs_number, "ATTRIBUTE_TYPE": attribute_type})
+                    self.table.delete_item(
+                        Key={"NHS_NUMBER": nhs_number, "ATTRIBUTE_TYPE": attribute_type}
+                    )
                     logger.info("Deleted item: %s - %s", nhs_number, attribute_type)
                 except Exception:
-                    logger.exception("Failed to delete item: %s - %s", nhs_number, attribute_type)
+                    logger.exception(
+                        "Failed to delete item: %s - %s", nhs_number, attribute_type
+                    )
