@@ -221,7 +221,9 @@ class EligibilityCalculator:
         final_result = self.build_condition_results(condition_results)
         return eligibility.EligibilityStatus(conditions=final_result)
 
-    def handle_redirect_rules(self, best_active_iteration: Iteration) -> tuple[list[SuggestedAction] | None, RulePriority | None, RuleName | None]:
+    def handle_redirect_rules(
+        self, best_active_iteration: Iteration
+    ) -> tuple[list[SuggestedAction] | None, RulePriority | None, RuleName | None]:
         redirect_rules, action_mapper, default_comms = self.get_redirect_rules(best_active_iteration)
         priority_getter = attrgetter("priority")
         sorted_rules_by_priority = sorted(redirect_rules, key=priority_getter)

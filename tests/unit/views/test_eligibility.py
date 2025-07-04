@@ -616,6 +616,10 @@ def test_excludes_nulls_via_build_response(client: FlaskClient):
             return_value=MagicMock(),  # No effect
         ),
         patch(
+            "eligibility_signposting_api.views.eligibility.AuditService.audit",
+            return_value=MagicMock(),  # No effect
+        ),
+        patch(
             "eligibility_signposting_api.views.eligibility.build_eligibility_response",
             return_value=mocked_response,
         ),
@@ -661,6 +665,10 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
     with (
         patch(
             "eligibility_signposting_api.views.eligibility.EligibilityService.get_eligibility_status",
+            return_value=MagicMock(),  # No effect
+        ),
+        patch(
+            "eligibility_signposting_api.views.eligibility.AuditService.audit",
             return_value=MagicMock(),  # No effect
         ),
         patch(

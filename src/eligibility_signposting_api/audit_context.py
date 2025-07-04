@@ -24,7 +24,7 @@ from eligibility_signposting_api.model.eligibility import (
     ConditionName,
     IterationResult,
     Status,
-    SuggestedActions,
+    SuggestedAction,
 )
 from eligibility_signposting_api.model.rules import CampaignID, CampaignVersion, Iteration, RuleName, RulePriority
 from eligibility_signposting_api.services.audit_service import AuditService
@@ -61,7 +61,7 @@ class AuditContext:
 
     @staticmethod
     def append_audit_condition(
-        suggested_actions: SuggestedActions | None,
+        suggested_actions: list[SuggestedAction] | None,
         condition_name: ConditionName,
         best_results: tuple[Iteration | None, IterationResult | None, dict[str, CohortGroupResult] | None],
         campaign_details: tuple[CampaignID | None, CampaignVersion | None],
@@ -104,14 +104,14 @@ class AuditContext:
 
         if suggested_actions is None:
             audit_actions = None
-        elif len(suggested_actions.actions) > 0:
-            for action in suggested_actions.actions:
+        elif len(suggested_actions) > 0:
+            for action in suggested_actions:
                 audit_actions.append(
                     AuditAction(
                         action_code=action.action_code,
                         action_type=action.action_type,
                         action_description=action.action_description,
-                        action_url=action.url_link,
+                        action_url=str(action.url_link),
                         action_url_label=action.url_label,
                     )
                 )

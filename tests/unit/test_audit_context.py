@@ -5,6 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 from flask import Flask, g, request
+from pydantic import HttpUrl
 
 from eligibility_signposting_api.audit_context import AuditContext
 from eligibility_signposting_api.audit_models import AuditEvent
@@ -21,7 +22,6 @@ from eligibility_signposting_api.model.eligibility import (
     RulePriority,
     Status,
     SuggestedAction,
-    SuggestedActions,
     UrlLabel,
     UrlLink,
 )
@@ -81,23 +81,21 @@ def test_add_request_details_when_headers_are_empty_sets_audit_log_on_g(app):
 
 
 def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
-    suggested_actions: SuggestedActions | None
+    suggested_actions: list[SuggestedAction] | None
     condition_name: ConditionName
     best_results: tuple[Iteration, IterationResult, dict[str, CohortGroupResult]]
     campaign_details: tuple[CampaignID | None, CampaignVersion | None]
     redirect_rule_details: tuple[RulePriority | None, RuleName | None]
 
-    suggested_actions = SuggestedActions(
-        actions=[
-            SuggestedAction(
-                action_code=ActionCode("ActionCode1"),
-                action_type=ActionType("ActionType1"),
-                action_description=ActionDescription("ActionDescription1"),
-                url_link=UrlLink("https://www.example.com"),
-                url_label=UrlLabel("ActionLabel1"),
-            )
-        ]
-    )
+    suggested_actions = [
+        SuggestedAction(
+            action_code=ActionCode("ActionCode1"),
+            action_type=ActionType("ActionType1"),
+            action_description=ActionDescription("ActionDescription1"),
+            url_link=UrlLink(HttpUrl("https://example.com")),
+            url_label=UrlLabel("ActionLabel1"),
+        )
+    ]
 
     condition_name = ConditionName("Condition1")
     iteration = IterationFactory.build()
