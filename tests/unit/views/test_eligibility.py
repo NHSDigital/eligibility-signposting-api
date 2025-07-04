@@ -11,6 +11,7 @@ from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask import Flask, Request
 from flask.testing import FlaskClient
 from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_, none
+from pydantic import HttpUrl
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.model.eligibility import (
@@ -609,3 +610,51 @@ def test_excludes_nulls_via_build_response(client: FlaskClient):
         assert "description" not in action
         assert "urlLink" not in action
         assert "urlLabel" not in action
+
+
+def test_build_response_include_values_that_are_not_null(client: FlaskClient):
+    mocked_response = eligibility.EligibilityResponse(
+        responseId=uuid4(),
+        meta=eligibility.Meta(lastUpdated=eligibility.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
+        processedSuggestions=[
+            eligibility.ProcessedSuggestion(
+                condition=eligibility.ConditionName("ConditionA"),
+                status=eligibility.Status.actionable,
+                statusText=eligibility.StatusText("Go ahead"),
+                eligibilityCohorts=[],
+                suitabilityRules=[],
+                actions=[
+                    eligibility.Action(
+                        actionType=eligibility.ActionType("TYPE_A"),
+                        actionCode=eligibility.ActionCode("CODE123"),
+                        description=eligibility.Description("Contact GP"),
+                        urlLink=eligibility.HttpUrl(HttpUrl("https://example.dummy/")),
+                        urlLabel=eligibility.UrlLabel("GP contact"),
+                    )
+                ],
+            )
+        ],
+    )
+
+    with (
+        patch(
+            "eligibility_signposting_api.views.eligibility.EligibilityService.get_eligibility_status",
+            return_value=MagicMock(),  # No effect
+        ),
+        patch(
+            "eligibility_signposting_api.views.eligibility.build_eligibility_response",
+            return_value=mocked_response,
+        ),
+    ):
+        response = client.get("/patient-check/12345")
+        assert response.status_code == HTTPStatus.OK
+
+        payload = json.loads(response.data)
+        suggestion = payload["processedSuggestions"][0]
+        action = suggestion["actions"][0]
+
+        assert action["actionType"] == "TYPE_A"
+        assert action["actionCode"] == "CODE123"
+        assert action["description"] == "Contact GP"
+        assert action["urlLink"] == "https://example.dummy/"
+        assert action["urlLabel"] == "GP contact"
