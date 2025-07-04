@@ -1,0 +1,98 @@
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from uuid import UUID
+
+
+@dataclass
+class RequestAuditHeader:
+    x_request_id: str | None = None
+    x_correlation_id: str | None = None
+    nhsd_end_user_organisation_ods: str | None = None
+    nhsd_application_id: str | None = None
+
+
+@dataclass
+class RequestAuditQueryParams:
+    category: str | None = None
+    conditions: str | None = None
+    include_actions: str | None = None
+
+
+@dataclass
+class RequestAuditData:
+    request_timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    headers: RequestAuditHeader = field(default_factory=RequestAuditHeader)
+    query_params: RequestAuditQueryParams = field(default_factory=RequestAuditQueryParams)
+    nhs_number: str | None = None
+
+
+@dataclass
+class AuditEligibilityCohorts:
+    cohort_code: str | None = None
+    cohort_status: str | None = None
+
+
+@dataclass
+class AuditEligibilityCohortGroups:
+    cohort_code: str | None = None
+    cohort_text: str | None = None
+    cohort_status: str | None = None
+
+
+@dataclass
+class AuditFilterRule:
+    rule_priority: str | None = None
+    rule_name: str | None = None
+
+
+@dataclass
+class AuditSuitabilityRule:
+    rule_priority: str | None = None
+    rule_name: str | None = None
+    rule_message: str | None = None
+
+
+@dataclass
+class AuditRedirectRule:
+    rule_priority: str | None = None
+    rule_name: str | None = None
+
+
+@dataclass
+class AuditAction:
+    internal_action_code: str | None = None
+    action_type: str | None = None
+    action_code: str | None = None
+    action_description: str | None = None
+    action_url: str | None = None
+    action_url_label: str | None = None
+
+
+@dataclass
+class AuditCondition:
+    campaign_id: str | None = None
+    campaign_version: str | None = None
+    iteration_id: str | None = None
+    iteration_version: str | None = None
+    condition_name: str | None = None
+    status: str | None = None
+    status_text: str | None = None
+    eligibility_cohorts: list[AuditEligibilityCohorts] | None = None
+    eligibility_cohort_groups: list[AuditEligibilityCohortGroups] | None = None
+    filter_rules: AuditFilterRule | None = None
+    suitability_rules: AuditSuitabilityRule | None = None
+    action_rule: AuditRedirectRule | None = None
+    actions: list[AuditAction] | None = field(default_factory=list)
+
+
+@dataclass
+class ResponseAuditData:
+    response_id: UUID | None = None
+    last_updated: str | None = None
+    condition: list[AuditCondition] = field(default_factory=list)
+
+
+@dataclass
+class AuditEvent:
+    request: RequestAuditData = field(default_factory=RequestAuditData)
+    response: ResponseAuditData = field(default_factory=ResponseAuditData)
