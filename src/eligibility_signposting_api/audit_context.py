@@ -89,18 +89,18 @@ class AuditContext:
                 if value.audit_rules and best_candidate:  # Check best_candidate here as well
                     if best_candidate.status and best_candidate.status.name == Status.not_eligible.name:
                         audit_filter_rule = AuditFilterRule(
-                            rule_priority=int(value.audit_rules[0].rule_priority),
+                            rule_priority=value.audit_rules[0].rule_priority,
                             rule_name=value.audit_rules[0].rule_name,
                         )
                     if best_candidate.status and best_candidate.status.name == Status.not_actionable.name:
                         audit_suitability_rule = AuditSuitabilityRule(
-                            rule_priority=int(value.audit_rules[0].rule_priority),
+                            rule_priority=value.audit_rules[0].rule_priority,
                             rule_name=value.audit_rules[0].rule_name,
                             rule_message=value.audit_rules[0].rule_description,
                         )
 
         if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
-            audit_redirect_rule = AuditRedirectRule(redirect_rule_details[0], redirect_rule_details[1])
+            audit_redirect_rule = AuditRedirectRule(str(redirect_rule_details[0]), redirect_rule_details[1])
 
         if suggested_actions is None:
             audit_actions = None

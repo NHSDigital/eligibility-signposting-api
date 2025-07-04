@@ -41,7 +41,7 @@ class AuditEligibilityCohortGroups:
 
 @dataclass
 class AuditFilterRule:
-    rule_priority: int | None = None
+    rule_priority: str | None = None
     rule_name: str | None = None
 
 
