@@ -33,7 +33,6 @@ from eligibility_signposting_api.model.eligibility import (
     IterationResult,
     Status,
     SuggestedAction,
-    SuggestedActions,
     UrlLabel,
     UrlLink,
 )
@@ -140,7 +139,7 @@ class EligibilityCalculator:
     def evaluate_eligibility(self, *, include_actions_flag: bool = True) -> eligibility.EligibilityStatus:
         """Iterates over campaign groups, evaluates eligibility, and returns a consolidated status."""
         condition_results: dict[ConditionName, IterationResult] = {}
-        actions: SuggestedActions | None = SuggestedActions([])
+        actions: list[SuggestedAction] | None = []
         redirect_rule_priority, redirect_rule_name = None, None
 
         for condition_name, campaign_group in self.campaigns_grouped_by_condition_name:
@@ -206,7 +205,7 @@ class EligibilityCalculator:
             # add actions to condition results
             condition_results[condition_name].actions = actions
             # reset actions for the next condition
-            actions: SuggestedActions | None = SuggestedActions([])
+            actions: list[SuggestedAction] | None = []
 
             # add audit data
             # TODO: Do we need to use deduplicated cohort results from build_condition_results instead of here?
@@ -222,14 +221,12 @@ class EligibilityCalculator:
         final_result = self.build_condition_results(condition_results)
         return eligibility.EligibilityStatus(conditions=final_result)
 
-    def handle_redirect_rules(
-        self, best_active_iteration: Iteration
-    ) -> tuple[SuggestedActions | None, RulePriority | None, RuleName | None]:
+    def handle_redirect_rules(self, best_active_iteration: Iteration) -> tuple[list[SuggestedAction] | None, RulePriority | None, RuleName | None]:
         redirect_rules, action_mapper, default_comms = self.get_redirect_rules(best_active_iteration)
         priority_getter = attrgetter("priority")
         sorted_rules_by_priority = sorted(redirect_rules, key=priority_getter)
 
-        actions: SuggestedActions | None = self.get_actions_from_comms(action_mapper, default_comms)
+        actions: list[SuggestedAction] | None = self.get_actions_from_comms(action_mapper, default_comms)
         matched_redirect_rule_priority, matched_redirect_rule_name = None, None
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
             rule_group_list = list(rule_group)
@@ -241,7 +238,7 @@ class EligibilityCalculator:
             comms_routing = rule_group_list[0].comms_routing
             if comms_routing and all(matcher_matched_list):
                 rule_actions = self.get_actions_from_comms(action_mapper, comms_routing)
-                if rule_actions and len(rule_actions.actions) > 0:
+                if rule_actions and len(rule_actions) > 0:
                     actions = rule_actions
                 matched_redirect_rule_priority = rule_group_list[0].priority
                 matched_redirect_rule_name = rule_group_list[0].name
@@ -393,12 +390,12 @@ class EligibilityCalculator:
         return best_status, inclusion_reasons, exclusion_reasons, is_rule_stop
 
     @staticmethod
-    def get_actions_from_comms(action_mapper: ActionsMapper, comms: str) -> SuggestedActions | None:
-        suggested_actions: SuggestedActions = SuggestedActions([])
+    def get_actions_from_comms(action_mapper: ActionsMapper, comms: str) -> list[SuggestedAction] | None:
+        suggested_actions: list[SuggestedAction] = []
         for comm in comms.split("|"):
             action = action_mapper.get(comm)
             if action is not None:
-                suggested_actions.actions.append(
+                suggested_actions.append(
                     SuggestedAction(
                         action_type=ActionType(action.action_type),
                         action_code=ActionCode(action.action_code),

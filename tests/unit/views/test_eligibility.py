@@ -1,16 +1,23 @@
+import json
 import logging
+from datetime import UTC, datetime
 from http import HTTPStatus
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
+from uuid import uuid4
 
 import pytest
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask import Flask, Request
 from flask.testing import FlaskClient
-from hamcrest import assert_that, contains_exactly, has_entries, has_length
+from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_, none
+from pydantic import HttpUrl
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.model.eligibility import (
+    ActionCode,
+    ActionDescription,
+    ActionType,
     CohortGroupResult,
     Condition,
     EligibilityStatus,
@@ -21,15 +28,20 @@ from eligibility_signposting_api.model.eligibility import (
     RulePriority,
     RuleType,
     Status,
+    SuggestedAction,
+    UrlLabel,
+    UrlLink,
 )
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.services.audit_service import AuditService
 from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
 from eligibility_signposting_api.views.eligibility import (
+    build_actions,
     build_eligibility_cohorts,
     build_suitability_results,
     get_include_actions_flag,
 )
+from eligibility_signposting_api.views.response_model import eligibility
 from tests.fixtures.builders.model.eligibility import (
     CohortResultFactory,
     ConditionFactory,
@@ -377,6 +389,67 @@ def test_no_suitability_rules_for_actionable():
     assert_that(results, has_length(0))
 
 
+@pytest.mark.parametrize(
+    ("suggested_actions", "expected"),
+    [
+        (
+            [
+                SuggestedAction(
+                    action_type=ActionType("TYPE_A"),
+                    action_code=ActionCode("CODE123"),
+                    action_description=ActionDescription("Some description"),
+                    url_link=UrlLink(HttpUrl("https://example.com")),
+                    url_label=UrlLabel("Learn more"),
+                )
+            ],
+            [
+                eligibility.Action(
+                    actionType=eligibility.ActionType("TYPE_A"),
+                    actionCode=eligibility.ActionCode("CODE123"),
+                    description=eligibility.Description("Some description"),
+                    urlLink=eligibility.HttpUrl("https://example.com"),
+                    urlLabel=eligibility.UrlLabel("Learn more"),
+                )
+            ],
+        ),
+        (
+            [
+                SuggestedAction(
+                    action_type=ActionType("TYPE_B"),
+                    action_code=ActionCode("CODE123"),
+                    action_description=None,
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
+            [
+                eligibility.Action(
+                    actionType=eligibility.ActionType("TYPE_B"),
+                    actionCode=eligibility.ActionCode("CODE123"),
+                    description=None,
+                    urlLink=None,
+                    urlLabel=None,
+                )
+            ],
+        ),
+        (
+            None,
+            None,
+        ),
+        (
+            [],
+            [],
+        ),
+    ],
+)
+def test_build_actions(suggested_actions, expected):
+    results = build_actions(ConditionFactory.build(actions=suggested_actions))
+    if expected is None:
+        assert_that(results, is_(none()))
+    else:
+        assert_that(results, contains_exactly(*expected))
+
+
 def test_nhs_number_and_include_actions_param_given_and_is_yes(app: Flask, client: FlaskClient):
     # Given
     with (
@@ -511,3 +584,99 @@ def test_query_param_include_actions_flag_with_other_params():
         pytest.raises(InvalidQueryParamError),
     ):
         get_include_actions_flag()
+
+
+def test_excludes_nulls_via_build_response(client: FlaskClient):
+    mocked_response = eligibility.EligibilityResponse(
+        responseId=uuid4(),
+        meta=eligibility.Meta(lastUpdated=eligibility.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
+        processedSuggestions=[
+            eligibility.ProcessedSuggestion(
+                condition=eligibility.ConditionName("ConditionA"),
+                status=eligibility.Status.actionable,
+                statusText=eligibility.StatusText("Go ahead"),
+                eligibilityCohorts=[],
+                suitabilityRules=[],
+                actions=[
+                    eligibility.Action(
+                        actionType=eligibility.ActionType("TYPE_A"),
+                        actionCode=eligibility.ActionCode("CODE123"),
+                        description=None,  # Should be excluded
+                        urlLink=None,  # Should be excluded
+                        urlLabel=None,  # Should be excluded
+                    )
+                ],
+            )
+        ],
+    )
+
+    with (
+        patch(
+            "eligibility_signposting_api.views.eligibility.EligibilityService.get_eligibility_status",
+            return_value=MagicMock(),  # No effect
+        ),
+        patch(
+            "eligibility_signposting_api.views.eligibility.build_eligibility_response",
+            return_value=mocked_response,
+        ),
+    ):
+        response = client.get("/patient-check/12345")
+        assert response.status_code == HTTPStatus.OK
+
+        payload = json.loads(response.data)
+        suggestion = payload["processedSuggestions"][0]
+        action = suggestion["actions"][0]
+
+        assert action["actionType"] == "TYPE_A"
+        assert action["actionCode"] == "CODE123"
+        assert "description" not in action
+        assert "urlLink" not in action
+        assert "urlLabel" not in action
+
+
+def test_build_response_include_values_that_are_not_null(client: FlaskClient):
+    mocked_response = eligibility.EligibilityResponse(
+        responseId=uuid4(),
+        meta=eligibility.Meta(lastUpdated=eligibility.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
+        processedSuggestions=[
+            eligibility.ProcessedSuggestion(
+                condition=eligibility.ConditionName("ConditionA"),
+                status=eligibility.Status.actionable,
+                statusText=eligibility.StatusText("Go ahead"),
+                eligibilityCohorts=[],
+                suitabilityRules=[],
+                actions=[
+                    eligibility.Action(
+                        actionType=eligibility.ActionType("TYPE_A"),
+                        actionCode=eligibility.ActionCode("CODE123"),
+                        description=eligibility.Description("Contact GP"),
+                        urlLink=eligibility.HttpUrl(HttpUrl("https://example.dummy/")),
+                        urlLabel=eligibility.UrlLabel("GP contact"),
+                    )
+                ],
+            )
+        ],
+    )
+
+    with (
+        patch(
+            "eligibility_signposting_api.views.eligibility.EligibilityService.get_eligibility_status",
+            return_value=MagicMock(),  # No effect
+        ),
+        patch(
+            "eligibility_signposting_api.views.eligibility.build_eligibility_response",
+            return_value=mocked_response,
+        ),
+    ):
+        response = client.get("/patient-check/12345")
+        assert response.status_code == HTTPStatus.OK
+
+        payload = json.loads(response.data)
+        suggestion = payload["processedSuggestions"][0]
+        action = suggestion["actions"][0]
+
+        assert action["actionType"] == "TYPE_A"
+        assert action["actionCode"] == "CODE123"
+        assert action["description"] == "Contact GP"
+        assert action["urlLink"] == "https://example.dummy/"
+        assert action["urlLabel"] == "GP contact"

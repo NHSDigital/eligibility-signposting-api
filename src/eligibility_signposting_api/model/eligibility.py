@@ -6,6 +6,8 @@ from enum import Enum, StrEnum, auto
 from functools import total_ordering
 from typing import NewType, Self
 
+from pydantic import HttpUrl
+
 NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
 Postcode = NewType("Postcode", str)
@@ -18,7 +20,7 @@ RulePriority = NewType("RulePriority", str)
 ActionType = NewType("ActionType", str)
 ActionCode = NewType("ActionCode", str)
 ActionDescription = NewType("ActionDescription", str)
-UrlLink = NewType("UrlLink", str)
+UrlLink = NewType("UrlLink", HttpUrl)
 UrlLabel = NewType("UrlLabel", str)
 
 
@@ -82,16 +84,11 @@ class SuggestedAction:
 
 
 @dataclass
-class SuggestedActions:
-    actions: list[SuggestedAction]
-
-
-@dataclass
 class Condition:
     condition_name: ConditionName
     status: Status
     cohort_results: list[CohortGroupResult]
-    actions: SuggestedActions | None = None
+    actions: list[SuggestedAction] | None = None
 
 
 @dataclass
@@ -107,7 +104,7 @@ class CohortGroupResult:
 class IterationResult:
     status: Status
     cohort_results: list[CohortGroupResult]
-    actions: SuggestedActions | None
+    actions: list[SuggestedAction] | None
 
 
 @dataclass

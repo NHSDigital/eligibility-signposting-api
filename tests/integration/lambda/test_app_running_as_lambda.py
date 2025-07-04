@@ -163,7 +163,7 @@ def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
     return [e["message"] for e in log_events["events"]]
 
 
-def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_return_response(  # noqa: PLR0913
+def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_if_audited(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,
@@ -193,6 +193,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_return_
         is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
     )
 
+    # Then - check if audited
     objects = s3_client.list_objects_v2(Bucket=audit_bucket).get("Contents", [])
     object_keys = [obj["Key"] for obj in objects]
     latest_key = sorted(object_keys)[-1]

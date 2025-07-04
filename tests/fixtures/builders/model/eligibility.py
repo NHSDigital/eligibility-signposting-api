@@ -3,18 +3,25 @@ import string
 
 from polyfactory import Use
 from polyfactory.factories import DataclassFactory
+from pydantic import HttpUrl
 
-from eligibility_signposting_api.model.eligibility import CohortGroupResult, Condition, EligibilityStatus
-
-
-class ConditionFactory(DataclassFactory[Condition]): ...
-
-
-class EligibilityStatusFactory(DataclassFactory[EligibilityStatus]):
-    condition = Use(ConditionFactory.batch, size=2)
+from eligibility_signposting_api.model import eligibility
+from eligibility_signposting_api.model.eligibility import UrlLink
 
 
-class CohortResultFactory(DataclassFactory[CohortGroupResult]): ...
+class SuggestedActionFactory(DataclassFactory[eligibility.SuggestedAction]):
+    url_link = UrlLink(HttpUrl("https://test-example.com"))
+
+
+class ConditionFactory(DataclassFactory[eligibility.Condition]):
+    actions = Use(SuggestedActionFactory.batch, size=2)
+
+
+class EligibilityStatusFactory(DataclassFactory[eligibility.EligibilityStatus]):
+    conditions = Use(ConditionFactory.batch, size=2)
+
+
+class CohortResultFactory(DataclassFactory[eligibility.CohortGroupResult]): ...
 
 
 def random_str(length: int) -> str:
