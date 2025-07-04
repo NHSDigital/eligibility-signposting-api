@@ -3,7 +3,7 @@ from typing import Any
 
 import wireup.integration.flask
 from asgiref.wsgi import WsgiToAsgi
-from flask import Flask, request
+from flask import Flask
 from mangum import Mangum
 from mangum.types import LambdaContext, LambdaEvent
 

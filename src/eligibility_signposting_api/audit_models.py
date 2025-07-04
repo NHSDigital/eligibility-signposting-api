@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 
 
@@ -20,7 +20,7 @@ class RequestAuditQueryParams:
 
 @dataclass
 class RequestAuditData:
-    request_timestamp: datetime = field(default_factory=datetime.utcnow) # TODO: fix use of deprecated datetime.now()
+    request_timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     headers: RequestAuditHeader = field(default_factory=RequestAuditHeader)
     query_params: RequestAuditQueryParams = field(default_factory=RequestAuditQueryParams)
     nhs_number: str | None = None

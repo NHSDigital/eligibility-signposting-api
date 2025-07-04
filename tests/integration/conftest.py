@@ -349,6 +349,7 @@ def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibil
     for row in rows:
         person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
 
+
 @pytest.fixture
 def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
     nhs_number = eligibility.NHSNumber(faker.nhs_number())
@@ -360,7 +361,7 @@ def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[e
             date_of_birth=date_of_birth,
             postcode="hp1",
             cohorts=["cohort1", "cohort2", "cohort3"],
-            icb="QE1"
+            icb="QE1",
         )
     ):
         person_table.put_item(Item=row)
@@ -462,6 +463,7 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
     yield campaign
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
+
 @pytest.fixture(scope="class")
 def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[rules.CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
@@ -483,10 +485,10 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
                     iteration_rules=target_rules_map.get(targets[i]),
                     iteration_cohorts=[
                         rule.IterationCohortFactory.build(
-                            cohort_label=f"cohort1",
-                            cohort_group=f"cohort_group{i+1}",
-                            positive_description=f"positive_desc_{i+1}",
-                            negative_description=f"negative_desc_{i+1}",
+                            cohort_label="cohort1",
+                            cohort_group=f"cohort_group{i + 1}",
+                            positive_description=f"positive_desc_{i + 1}",
+                            negative_description=f"negative_desc_{i + 1}",
                         )
                     ],
                 )

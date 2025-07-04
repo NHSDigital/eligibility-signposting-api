@@ -1,18 +1,34 @@
 import uuid
-import pytest
-from datetime import datetime
+from dataclasses import asdict
+from datetime import UTC, datetime
+from unittest.mock import Mock
 
-from flask import g, request, Flask
+import pytest
+from flask import Flask, g, request
 
 from eligibility_signposting_api.audit_context import AuditContext
 from eligibility_signposting_api.audit_models import AuditEvent
-from eligibility_signposting_api.model.eligibility import SuggestedActions, ConditionName, IterationResult, \
-    CohortGroupResult, SuggestedAction, ActionCode, ActionType, ActionDescription, UrlLink, UrlLabel, Reason, RuleName, \
-    RuleDescription, RulePriority, Status
-from eligibility_signposting_api.model.rules import Iteration, CampaignID, CampaignVersion, \
-    RuleType
-from fixtures.builders.model.rule import IterationFactory
-from fixtures.builders.views.response_model.eligibility import EligibilityResponseFactory
+from eligibility_signposting_api.model.eligibility import (
+    ActionCode,
+    ActionDescription,
+    ActionType,
+    CohortGroupResult,
+    ConditionName,
+    IterationResult,
+    Reason,
+    RuleDescription,
+    RuleName,
+    RulePriority,
+    Status,
+    SuggestedAction,
+    SuggestedActions,
+    UrlLabel,
+    UrlLink,
+)
+from eligibility_signposting_api.model.rules import CampaignID, CampaignVersion, Iteration, RuleType
+from eligibility_signposting_api.services.audit_service import AuditService
+from tests.fixtures.builders.model.rule import IterationFactory
+from tests.fixtures.builders.views.response_model.eligibility import EligibilityResponseFactory
 
 
 @pytest.fixture
@@ -33,7 +49,7 @@ def test_add_request_details_sets_audit_log_on_g(app):
     url = "/patient-check?includeActions=Y"
 
     with app.test_request_context(url, headers=headers, method="GET"):
-        request.view_args = {'nhs_number': nhs_number}
+        request.view_args = {"nhs_number": nhs_number}
         AuditContext.add_request_details(request)
 
         assert hasattr(g, "audit_log")
@@ -52,7 +68,7 @@ def test_add_request_details_when_headers_are_empty_sets_audit_log_on_g(app):
     url = "/patient-check?includeActions=Y"
 
     with app.test_request_context(url, method="GET"):
-        request.view_args = {'nhs_number': nhs_number}
+        request.view_args = {"nhs_number": nhs_number}
         AuditContext.add_request_details(request)
 
         assert hasattr(g, "audit_log")
@@ -66,35 +82,46 @@ def test_add_request_details_when_headers_are_empty_sets_audit_log_on_g(app):
         assert isinstance(audit_req.request_timestamp, datetime)
 
 
-def test_append_audit_condition_adds_condition_to_audit_log(app):
+def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
     suggested_actions: SuggestedActions | None
     condition_name: ConditionName
     best_results: tuple[Iteration, IterationResult, dict[str, CohortGroupResult]]
     campaign_details: tuple[CampaignID | None, CampaignVersion | None]
     redirect_rule_details: tuple[RulePriority | None, RuleName | None]
 
-    suggested_actions = SuggestedActions(actions=[SuggestedAction(
-        action_code=ActionCode("ActionCode1"),
-        action_type=ActionType("ActionType1"),
-        action_description=ActionDescription("ActionDescription1"),
-        url_link=UrlLink("https://www.example.com"),
-        url_label=UrlLabel("ActionLabel1")
-    )])
+    suggested_actions = SuggestedActions(
+        actions=[
+            SuggestedAction(
+                action_code=ActionCode("ActionCode1"),
+                action_type=ActionType("ActionType1"),
+                action_description=ActionDescription("ActionDescription1"),
+                url_link=UrlLink("https://www.example.com"),
+                url_label=UrlLabel("ActionLabel1"),
+            )
+        ]
+    )
 
     condition_name = ConditionName("Condition1")
     iteration = IterationFactory.build()
-    audit_rules = [Reason(
-        rule_type=RuleType.filter,
-        rule_name=RuleName("FilterRuleName1"),
-        rule_description=RuleDescription("FilterRuleDescription1"),
-        matcher_matched=True,
-        rule_priority=RulePriority("1")
-    )]
-    cohort_group_result = CohortGroupResult(status=Status.actionable, cohort_code="CohortCode1",
-                                            description="CohortDescription1", audit_rules=audit_rules,
-                                            reasons=audit_rules)
-    iteration_result = IterationResult(status=Status.actionable, cohort_results=[cohort_group_result],
-                                       actions=suggested_actions)
+    audit_rules = [
+        Reason(
+            rule_type=RuleType.filter,
+            rule_name=RuleName("FilterRuleName1"),
+            rule_description=RuleDescription("FilterRuleDescription1"),
+            matcher_matched=True,
+            rule_priority=RulePriority("1"),
+        )
+    ]
+    cohort_group_result = CohortGroupResult(
+        status=Status.actionable,
+        cohort_code="CohortCode1",
+        description="CohortDescription1",
+        audit_rules=audit_rules,
+        reasons=audit_rules,
+    )
+    iteration_result = IterationResult(
+        status=Status.actionable, cohort_results=[cohort_group_result], actions=suggested_actions
+    )
     best_results = (iteration, iteration_result, {"CohortCode1": cohort_group_result})
     campaign_details = (CampaignID("CampaignID1"), CampaignVersion("CampaignVersion1"))
     redirect_rule_details = (RulePriority("1"), RuleName("RedirectRuleName1"))
@@ -102,8 +129,9 @@ def test_append_audit_condition_adds_condition_to_audit_log(app):
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(suggested_actions, condition_name, best_results, campaign_details,
-                                            redirect_rule_details)
+        AuditContext.append_audit_condition(
+            suggested_actions, condition_name, best_results, campaign_details, redirect_rule_details
+        )
 
         assert g.audit_log.response.condition, condition_name
         cond = g.audit_log.response.condition[0]
@@ -112,10 +140,11 @@ def test_append_audit_condition_adds_condition_to_audit_log(app):
         assert cond.status == best_results[1].status.name
         assert cond.status_text == best_results[1].status.name
 
-def test_add_response_details_adds_to_audit_log(app):
-    eligibility_response = EligibilityResponseFactory.build(response_id=uuid.uuid4(),
-                                                            meta={"last_updated": datetime(2023, 1, 1, 0, 0)},
-                                                            processed_suggestions=[])
+
+def test_add_response_details_adds_to_audit_log_on_G(app):
+    eligibility_response = EligibilityResponseFactory.build(
+        response_id=uuid.uuid4(), meta={"last_updated": datetime(2023, 1, 1, 0, 0)}, processed_suggestions=[]
+    )
 
     with app.app_context():
         g.audit_log = AuditEvent()
@@ -126,3 +155,20 @@ def test_add_response_details_adds_to_audit_log(app):
         assert g.audit_log.response.last_updated is eligibility_response.meta.last_updated
 
 
+def test_write_to_firehose_calls_audit_service_with_correct_data_from_g(app):
+    mock_audit_service = Mock(spec=AuditService)
+    eligibility_response = EligibilityResponseFactory.build(
+        response_id=(uuid.uuid4()),
+        meta={"last_updated": (datetime(2023, 1, 1, 0, 0, tzinfo=UTC))},
+        processed_suggestions=[],
+    )
+
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        AuditContext.write_to_firehose(mock_audit_service, eligibility_response)
+
+        assert g.audit_log.response.response_id == eligibility_response.response_id
+        assert g.audit_log.response.last_updated == eligibility_response.meta.last_updated
+
+        mock_audit_service.audit.assert_called_once_with(asdict(g.audit_log))

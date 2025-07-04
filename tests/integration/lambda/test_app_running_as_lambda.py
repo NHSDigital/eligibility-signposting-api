@@ -13,13 +13,13 @@ from faker import Faker
 from hamcrest import (
     assert_that,
     contains_exactly,
+    contains_inanyorder,
     contains_string,
     equal_to,
     has_entries,
     has_item,
     has_key,
     is_not,
-    contains_inanyorder
 )
 from yarl import URL
 
@@ -162,6 +162,7 @@ def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
     )
     return [e["message"] for e in log_events["events"]]
 
+
 def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_return_response(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
@@ -264,6 +265,7 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
         is_response().with_status_code(HTTPStatus.FORBIDDEN).and_body("NHS number mismatch"),
     )
 
+
 def test_given_person_has_unique_status_for_different_conditions_with_audit(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person_all_cohorts: NHSNumber,
@@ -328,10 +330,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
                     "cohort_status": "not_eligible",
                 }
             ],
-            "filter_rules": {
-                "rule_priority": 10,
-                "rule_name": "Exclude too young less than 75"
-            },
+            "filter_rules": {"rule_priority": 10, "rule_name": "Exclude too young less than 75"},
             "suitability_rules": None,
             "action_rule": None,
             "actions": [],
@@ -356,7 +355,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "suitability_rules": {
                 "rule_priority": 10,
                 "rule_name": "Exclude too young less than 75",
-                "rule_message": "Exclude too young less than 75"
+                "rule_message": "Exclude too young less than 75",
             },
             "action_rule": None,
             "actions": [],
@@ -379,19 +378,18 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             ],
             "filter_rules": None,
             "suitability_rules": None,
-            "action_rule": {
-                "rule_priority": 20,
-                "rule_name": "In QE1"
-            },
-            "actions": [{
-                "internal_name": None, # TODO: FIX!
-                "action_type": "defaultcomms",
-                "action_code": "action_code",
-                "action_description": None,
-                "action_url": None,
-                "action_url_label": None
-            }],
-        }
+            "action_rule": {"rule_priority": 20, "rule_name": "In QE1"},
+            "actions": [
+                {
+                    "internal_name": None,  # TODO: FIX!
+                    "action_type": "defaultcomms",
+                    "action_code": "action_code",
+                    "action_description": None,
+                    "action_url": None,
+                    "action_url_label": None,
+                }
+            ],
+        },
     ]
 
     assert_that(audit_data["request"]["request_timestamp"], is_not(equal_to("")))
@@ -401,5 +399,3 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
     assert_that(audit_data["response"]["response_id"], is_not(equal_to("")))
     assert_that(audit_data["response"]["last_updated"], is_not(equal_to("")))
     assert_that(audit_data["response"]["condition"], contains_inanyorder(*expected_conditions))
-
-

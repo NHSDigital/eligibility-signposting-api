@@ -10,12 +10,13 @@ from eligibility_signposting_api.audit_models import (
     AuditCondition,
     AuditEligibilityCohortGroups,
     AuditEligibilityCohorts,
+    AuditEvent,
     AuditFilterRule,
     AuditRedirectRule,
     AuditSuitabilityRule,
     RequestAuditData,
     RequestAuditHeader,
-    RequestAuditQueryParams, AuditEvent,
+    RequestAuditQueryParams,
 )
 from eligibility_signposting_api.model.eligibility import (
     CohortGroupResult,
@@ -57,7 +58,6 @@ class AuditContext:
             ),
         )
 
-
     @staticmethod
     def append_audit_condition(
         suggested_actions: SuggestedActions | None,
@@ -86,8 +86,7 @@ class AuditContext:
             if value.audit_rules:
                 if best_candidate.status.name == Status.not_eligible.name:
                     audit_filter_rule = AuditFilterRule(
-                        rule_priority=int(value.audit_rules[0].rule_priority),
-                        rule_name=value.audit_rules[0].rule_name
+                        rule_priority=int(value.audit_rules[0].rule_priority), rule_name=value.audit_rules[0].rule_name
                     )
                 if best_candidate.status.name == Status.not_actionable.name:
                     audit_suitability_rule = AuditSuitabilityRule(
@@ -105,11 +104,13 @@ class AuditContext:
         elif len(suggested_actions.actions) > 0:
             for action in suggested_actions.actions:
                 audit_actions.append(
-                    AuditAction(action_code=action.action_code,
-                                action_type=action.action_type,
-                                action_description=action.action_description,
-                                action_url=action.url_link,
-                                action_url_label=action.url_label)
+                    AuditAction(
+                        action_code=action.action_code,
+                        action_type=action.action_type,
+                        action_description=action.action_description,
+                        action_url=action.url_link,
+                        action_url_label=action.url_label,
+                    )
                 )
 
         audit_condition = AuditCondition(
