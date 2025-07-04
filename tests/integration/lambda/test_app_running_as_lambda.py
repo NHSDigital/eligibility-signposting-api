@@ -231,7 +231,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
             ],
             "filter_rules": None,
             "suitability_rules": {
-                "rule_priority": 10,
+                "rule_priority": "10",
                 "rule_name": "Exclude too young less than 75",
                 "rule_message": "Exclude too young less than 75",
             },
@@ -331,7 +331,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
                     "cohort_status": "not_eligible",
                 }
             ],
-            "filter_rules": {"rule_priority": 10, "rule_name": "Exclude too young less than 75"},
+            "filter_rules": {"rule_priority": "10", "rule_name": "Exclude too young less than 75"},
             "suitability_rules": None,
             "action_rule": None,
             "actions": [],
@@ -354,7 +354,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             ],
             "filter_rules": None,
             "suitability_rules": {
-                "rule_priority": 10,
+                "rule_priority": "10",
                 "rule_name": "Exclude too young less than 75",
                 "rule_message": "Exclude too young less than 75",
             },
@@ -379,7 +379,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             ],
             "filter_rules": None,
             "suitability_rules": None,
-            "action_rule": {"rule_priority": 20, "rule_name": "In QE1"},
+            "action_rule": {"rule_priority": "20", "rule_name": "In QE1"},
             "actions": [
                 {
                     "internal_action_code": "defaultcomms",
