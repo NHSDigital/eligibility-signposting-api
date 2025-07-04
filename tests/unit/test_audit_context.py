@@ -28,7 +28,6 @@ from eligibility_signposting_api.model.eligibility import (
 from eligibility_signposting_api.model.rules import CampaignID, CampaignVersion, Iteration, RuleType
 from eligibility_signposting_api.services.audit_service import AuditService
 from tests.fixtures.builders.model.rule import IterationFactory
-from tests.fixtures.builders.views.response_model.eligibility import EligibilityResponseFactory
 
 
 @pytest.fixture
@@ -141,35 +140,30 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
 
 
 def test_add_response_details_adds_to_audit_log_on_g(app):
-    eligibility_response = EligibilityResponseFactory.build(
-        response_id=uuid.uuid4(),
-        meta={"last_updated": datetime(2023, 1, 1, 0, 0, tzinfo=UTC)},
-        processed_suggestions=[],
-    )
+    response_id = uuid.uuid4()
+    last_updated = datetime(2023, 1, 1, 0, 0, tzinfo=UTC)
 
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.add_response_details(eligibility_response)
+        AuditContext.add_response_details(response_id, last_updated)
 
-        assert g.audit_log.response.response_id == eligibility_response.response_id
-        assert g.audit_log.response.last_updated is eligibility_response.meta.last_updated
+        assert g.audit_log.response.response_id == response_id
+        assert g.audit_log.response.last_updated is last_updated
 
 
 def test_write_to_firehose_calls_audit_service_with_correct_data_from_g(app):
     mock_audit_service = Mock(spec=AuditService)
-    eligibility_response = EligibilityResponseFactory.build(
-        response_id=(uuid.uuid4()),
-        meta={"last_updated": (datetime(2023, 1, 1, 0, 0, tzinfo=UTC))},
-        processed_suggestions=[],
-    )
+    response_id = uuid.uuid4()
+    last_updated = datetime(2023, 1, 1, 0, 0, tzinfo=UTC)
 
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.write_to_firehose(mock_audit_service, eligibility_response)
+        AuditContext.add_response_details(response_id, last_updated)
+        AuditContext.write_to_firehose(mock_audit_service)
 
-        assert g.audit_log.response.response_id == eligibility_response.response_id
-        assert g.audit_log.response.last_updated == eligibility_response.meta.last_updated
+        assert g.audit_log.response.response_id == response_id
+        assert g.audit_log.response.last_updated == last_updated
 
         mock_audit_service.audit.assert_called_once_with(asdict(g.audit_log))

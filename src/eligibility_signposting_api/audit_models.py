@@ -5,10 +5,10 @@ from uuid import UUID
 
 @dataclass
 class RequestAuditHeader:
-    x_request_id: str = None
-    x_correlation_id: str = None
-    nhsd_end_user_organisation_ods: str = None
-    nhsd_application_id: str = None
+    x_request_id: str | None = None
+    x_correlation_id: str | None = None
+    nhsd_end_user_organisation_ods: str | None = None
+    nhsd_application_id: str | None = None
 
 
 @dataclass
@@ -70,19 +70,19 @@ class AuditAction:
 
 @dataclass
 class AuditCondition:
-    campaign_id: str = None
-    campaign_version: str = None
-    iteration_id: str = None
-    iteration_version: str = None
-    condition_name: str = None
-    status: str = None
-    status_text: str = None
+    campaign_id: str | None = None
+    campaign_version: str | None = None
+    iteration_id: str | None = None
+    iteration_version: str | None = None
+    condition_name: str | None = None
+    status: str | None = None
+    status_text: str | None = None
     eligibility_cohorts: list[AuditEligibilityCohorts] | None = None
     eligibility_cohort_groups: list[AuditEligibilityCohortGroups] | None = None
     filter_rules: AuditFilterRule | None = None
     suitability_rules: AuditSuitabilityRule | None = None
     action_rule: AuditRedirectRule | None = None
-    actions: list[AuditAction] = field(default_factory=list)
+    actions: list[AuditAction] | None = field(default_factory=list)
 
 
 @dataclass

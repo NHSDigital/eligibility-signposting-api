@@ -144,6 +144,12 @@ class EligibilityCalculator:
         redirect_rule_priority, redirect_rule_name = None, None
 
         for condition_name, campaign_group in self.campaigns_grouped_by_condition_name:
+            best_active_iteration: Iteration | None
+            best_candidate: IterationResult
+            best_campaign_id: CampaignID | None
+            best_campaign_version: CampaignVersion | None
+            best_cohort_results: dict[str, CohortGroupResult] | None
+
             iteration_results: dict[
                 str, tuple[Iteration, IterationResult, CampaignID, CampaignVersion, dict[str, CohortGroupResult]]
             ] = {}

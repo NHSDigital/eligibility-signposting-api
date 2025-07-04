@@ -49,7 +49,7 @@ def check_eligibility(
         return handle_unknown_person_error(nhs_number)
     else:
         eligibility_response = build_eligibility_response(eligibility_status)
-        AuditContext.write_to_firehose(audit_service, eligibility_response)
+        AuditContext.write_to_firehose(audit_service)
         return make_response(
             eligibility_response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK
         )
@@ -122,9 +122,14 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibi
 
         processed_suggestions.append(suggestions)
 
+    response_id = uuid.uuid4()
+    updated = eligibility.LastUpdated(datetime.now(tz=UTC))
+
+    AuditContext.add_response_details(response_id, updated)
+
     return eligibility.EligibilityResponse(  # pyright: ignore[reportCallIssue]
-        responseId=uuid.uuid4(),  # pyright: ignore[reportCallIssue]
-        meta=eligibility.Meta(lastUpdated=eligibility.LastUpdated(datetime.now(tz=UTC))),
+        responseId=response_id,  # pyright: ignore[reportCallIssue]
+        meta=eligibility.Meta(lastUpdated=updated),
         # pyright: ignore[reportCallIssue]
         processedSuggestions=processed_suggestions,
     )
