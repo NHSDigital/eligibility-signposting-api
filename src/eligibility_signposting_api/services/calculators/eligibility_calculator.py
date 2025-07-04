@@ -30,6 +30,7 @@ from eligibility_signposting_api.model.eligibility import (
     CohortGroupResult,
     Condition,
     ConditionName,
+    InternalActionCode,
     IterationResult,
     Status,
     SuggestedAction,
@@ -399,6 +400,7 @@ class EligibilityCalculator:
             if action is not None:
                 suggested_actions.append(
                     SuggestedAction(
+                        internal_action_code=InternalActionCode(comm),
                         action_type=ActionType(action.action_type),
                         action_code=ActionCode(action.action_code),
                         action_description=ActionDescription(action.action_description)

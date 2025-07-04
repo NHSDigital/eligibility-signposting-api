@@ -60,7 +60,7 @@ class AuditRedirectRule:
 
 @dataclass
 class AuditAction:
-    internal_name: str | None = None
+    internal_action_code: str | None = None
     action_type: str | None = None
     action_code: str | None = None
     action_description: str | None = None

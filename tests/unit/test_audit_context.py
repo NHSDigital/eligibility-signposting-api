@@ -8,7 +8,7 @@ from flask import Flask, g, request
 from pydantic import HttpUrl
 
 from eligibility_signposting_api.audit_context import AuditContext
-from eligibility_signposting_api.audit_models import AuditEvent
+from eligibility_signposting_api.audit_models import AuditEvent, AuditAction
 from eligibility_signposting_api.model.eligibility import (
     ActionCode,
     ActionDescription,
@@ -23,7 +23,7 @@ from eligibility_signposting_api.model.eligibility import (
     Status,
     SuggestedAction,
     UrlLabel,
-    UrlLink,
+    UrlLink, InternalActionCode,
 )
 from eligibility_signposting_api.model.rules import CampaignID, CampaignVersion, Iteration, RuleType
 from eligibility_signposting_api.services.audit_service import AuditService
@@ -89,10 +89,11 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
 
     suggested_actions = [
         SuggestedAction(
+            internal_action_code=InternalActionCode("InternalActionCode1"),
             action_code=ActionCode("ActionCode1"),
             action_type=ActionType("ActionType1"),
             action_description=ActionDescription("ActionDescription1"),
-            url_link=UrlLink(HttpUrl("https://example.com")),
+            url_link=UrlLink(HttpUrl("https://example.com/")),
             url_label=UrlLabel("ActionLabel1"),
         )
     ]
@@ -129,12 +130,34 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
             suggested_actions, condition_name, best_results, campaign_details, redirect_rule_details
         )
 
+        expected_audit_action = [AuditAction(
+            internal_action_code="InternalActionCode1",
+            action_code="ActionCode1",
+            action_type="ActionType1",
+            action_description="ActionDescription1",
+            action_url="https://example.com/",
+            action_url_label="ActionLabel1",
+        )]
+
         assert g.audit_log.response.condition, condition_name
         cond = g.audit_log.response.condition[0]
         assert cond.condition_name == condition_name
         assert cond.campaign_id == campaign_details[0]
+        assert cond.campaign_version == campaign_details[1]
+        assert cond.iteration_id == iteration.id
+        assert cond.iteration_version == iteration.version
         assert cond.status == best_results[1].status.name
         assert cond.status_text == best_results[1].status.name
+        assert cond.actions == expected_audit_action
+        assert cond.action_rule.rule_priority == 1
+        assert cond.action_rule.rule_name == "RedirectRuleName1"
+        assert cond.suitability_rules is None
+        assert cond.filter_rules is None
+        assert cond.eligibility_cohorts[0].cohort_code is "CohortCode1"
+        assert cond.eligibility_cohorts[0].cohort_status is "actionable"
+        assert cond.eligibility_cohort_groups[0].cohort_code is "CohortCode1"
+        assert cond.eligibility_cohort_groups[0].cohort_status is "actionable"
+        assert cond.eligibility_cohort_groups[0].cohort_text is "CohortDescription1"
 
 
 def test_add_response_details_adds_to_audit_log_on_g(app):
