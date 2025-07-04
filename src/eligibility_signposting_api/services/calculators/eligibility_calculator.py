@@ -97,7 +97,7 @@ class EligibilityCalculator:
                 status=cc.status,
                 reasons=cc.reasons,
                 description=(cc.description or "").strip() if cc.description else "",
-                audit_rules=cc.audit_rules,  # TODO: remove this or fix it!
+                audit_rules=cc.audit_rules,
             )
             for cc in best_cohorts
         ]
@@ -182,7 +182,6 @@ class EligibilityCalculator:
                 ) = max(iteration_results.items(), key=lambda item: item[1][1].status.value)
             else:
                 best_candidate = IterationResult(eligibility.Status.not_eligible, [], actions)
-                # TODO: Refactor?
                 best_campaign_id = None
                 best_campaign_version = None
                 best_active_iteration = None
@@ -209,7 +208,6 @@ class EligibilityCalculator:
             actions: list[SuggestedAction] | None = []
 
             # add audit data
-            # TODO: Do we need to use deduplicated cohort results from build_condition_results instead of here?
             AuditContext.append_audit_condition(
                 condition_results[condition_name].actions,
                 condition_name,
@@ -267,7 +265,7 @@ class EligibilityCalculator:
                     Status.not_eligible,
                     [],
                     cohort.negative_description,
-                    [],  # TODO: remove this or fix it!
+                    [],
                 )
         return cohort_results
 
@@ -291,7 +289,7 @@ class EligibilityCalculator:
                     reasons=[reason for cohort in group for reason in cohort.reasons],
                     # get the first nonempty description
                     description=next((c.description for c in group if c.description), group[0].description),
-                    audit_rules=[],  # TODO: remove this or fix it!
+                    audit_rules=[],
                 )
                 for group_cohort_code, group in grouped_cohort_results.items()
                 if group

@@ -382,7 +382,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "action_rule": {"rule_priority": 20, "rule_name": "In QE1"},
             "actions": [
                 {
-                    "internal_name": None,  # TODO: FIX!
+                    "internal_action_code": "defaultcomms",
                     "action_type": "defaultcomms",
                     "action_code": "action_code",
                     "action_description": None,

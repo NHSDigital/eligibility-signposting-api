@@ -100,7 +100,7 @@ class AuditContext:
                         )
 
         if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
-            audit_redirect_rule = AuditRedirectRule(int(redirect_rule_details[0]), redirect_rule_details[1])
+            audit_redirect_rule = AuditRedirectRule(redirect_rule_details[0], redirect_rule_details[1])
 
         if suggested_actions is None:
             audit_actions = None
@@ -112,7 +112,7 @@ class AuditContext:
                         action_code=action.action_code,
                         action_type=action.action_type,
                         action_description=action.action_description,
-                        action_url=str(action.url_link),
+                        action_url=str(action.url_link) if action.url_link else None,
                         action_url_label=action.url_label,
                     )
                 )

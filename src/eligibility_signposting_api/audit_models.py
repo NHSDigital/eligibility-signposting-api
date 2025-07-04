@@ -47,14 +47,14 @@ class AuditFilterRule:
 
 @dataclass
 class AuditSuitabilityRule:
-    rule_priority: int | None = None
+    rule_priority: str | None = None
     rule_name: str | None = None
     rule_message: str | None = None
 
 
 @dataclass
 class AuditRedirectRule:
-    rule_priority: int | None = None
+    rule_priority: str | None = None
     rule_name: str | None = None
 
 

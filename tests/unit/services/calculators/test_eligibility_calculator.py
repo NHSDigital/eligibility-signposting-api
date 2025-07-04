@@ -15,13 +15,14 @@ from eligibility_signposting_api.model.eligibility import (
     ActionType,
     ConditionName,
     DateOfBirth,
+    InternalActionCode,
     NHSNumber,
     Postcode,
     RuleDescription,
     Status,
     SuggestedAction,
     UrlLabel,
-    UrlLink, InternalActionCode,
+    UrlLink,
 )
 from eligibility_signposting_api.model.rules import ActionsMapper, AvailableAction
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
@@ -614,25 +615,33 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(Status.actionable)
-                .and_actions([SuggestedAction(
-                    internal_action_code=InternalActionCode("defaultcomms"),
-                    action_type=ActionType("CareCardWithText"),
-                    action_code=ActionCode("BookLocal"),
-                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
-                    url_link=None,
-                    url_label=None,
-                )]),
+                .and_actions(
+                    [
+                        SuggestedAction(
+                            internal_action_code=InternalActionCode("defaultcomms"),
+                            action_type=ActionType("CareCardWithText"),
+                            action_code=ActionCode("BookLocal"),
+                            action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                            url_link=None,
+                            url_label=None,
+                        )
+                    ]
+                ),
                 is_condition()
                 .with_condition_name(ConditionName("COVID"))
                 .and_status(Status.actionable)
-                .and_actions([SuggestedAction(
-                    internal_action_code=InternalActionCode("ActionCode1"),
-                    action_type=ActionType("ButtonAuthLink"),
-                    action_code=ActionCode("BookNBS"),
-                    action_description=ActionDescription("Action description"),
-                    url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
-                    url_label=UrlLabel("Continue to booking"),
-                )]),
+                .and_actions(
+                    [
+                        SuggestedAction(
+                            internal_action_code=InternalActionCode("ActionCode1"),
+                            action_type=ActionType("ButtonAuthLink"),
+                            action_code=ActionCode("BookNBS"),
+                            action_description=ActionDescription("Action description"),
+                            url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                            url_label=UrlLabel("Continue to booking"),
+                        )
+                    ]
+                ),
             )
         ),
     )
@@ -1762,6 +1771,7 @@ default_comms_detail = AvailableAction(
     ActionDescription="You can get an RSV vaccination at your GP surgery",
 )
 
+
 @pytest.mark.parametrize(
     ("test_comment", "default_comms_routing", "comms_routing", "actions_mapper", "expected_actions"),
     [
@@ -1771,14 +1781,16 @@ default_comms_detail = AvailableAction(
             "defaultcomms",
             "InternalBookNBS",
             {"InternalBookNBS": book_nbs_comms, "defaultcomms": default_comms_detail},
-            [SuggestedAction(
-                internal_action_code=InternalActionCode("InternalBookNBS"),
-                action_type=ActionType("ButtonAuthLink"),
-                action_code=ActionCode("BookNBS"),
-                action_description=ActionDescription("Action description"),
-                url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
-                url_label=UrlLabel("Continue to booking"),
-            )],
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("InternalBookNBS"),
+                    action_type=ActionType("ButtonAuthLink"),
+                    action_code=ActionCode("BookNBS"),
+                    action_description=ActionDescription("Action description"),
+                    url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                    url_label=UrlLabel("Continue to booking"),
+                )
+            ],
         ),
         (
             """Rule match: default_comms_routing has multiple values,
@@ -1786,21 +1798,24 @@ default_comms_detail = AvailableAction(
             "defaultcomms1|defaultcomms2",
             None,
             {"defaultcomms1": default_comms_detail, "defaultcomms2": default_comms_detail},
-            [SuggestedAction(
-                internal_action_code=InternalActionCode("defaultcomms1"),
-                action_type=ActionType("CareCardWithText"),
-                action_code=ActionCode("BookLocal"),
-                action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
-                url_link=None,
-                url_label=None,
-            ), SuggestedAction(
-                internal_action_code=InternalActionCode("defaultcomms2"),
-                action_type=ActionType("CareCardWithText"),
-                action_code=ActionCode("BookLocal"),
-                action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
-                url_link=None,
-                url_label=None,
-            )],
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms1"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                ),
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms2"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                ),
+            ],
         ),
         (
             """Rule match: default_comms_routing has multiple values,
@@ -1808,14 +1823,16 @@ default_comms_detail = AvailableAction(
             "defaultcomms1",
             "",
             {"defaultcomms1": default_comms_detail},
-            [SuggestedAction(
-                internal_action_code=InternalActionCode("defaultcomms1"),
-                action_type=ActionType("CareCardWithText"),
-                action_code=ActionCode("BookLocal"),
-                action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
-                url_link=None,
-                url_label=None,
-            )],
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms1"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
         ),
         (
             """Rule match: default_comms_routing present,
@@ -1823,14 +1840,16 @@ default_comms_detail = AvailableAction(
             "defaultcomms",
             "InternalBookNBS",
             {"defaultcomms": default_comms_detail},
-            [SuggestedAction(
-                internal_action_code=InternalActionCode("defaultcomms"),
-                action_type=ActionType("CareCardWithText"),
-                action_code=ActionCode("BookLocal"),
-                action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
-                url_link=None,
-                url_label=None,
-            )],
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
         ),
         (
             """Rule match: default_comms_routing present,
@@ -1838,14 +1857,16 @@ default_comms_detail = AvailableAction(
             "defaultcomms",
             "InvalidCode",
             {"defaultcomms": default_comms_detail},
-            [SuggestedAction(
-                internal_action_code=InternalActionCode("defaultcomms"),
-                action_type=ActionType("CareCardWithText"),
-                action_code=ActionCode("BookLocal"),
-                action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
-                url_link=None,
-                url_label=None,
-            )],
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
         ),
         (
             """Rule match: action_mapper present without url,
@@ -1884,14 +1905,16 @@ default_comms_detail = AvailableAction(
             "",
             "InternalBookNBS",
             {"InternalBookNBS": book_nbs_comms},
-            [SuggestedAction(
-                internal_action_code=InternalActionCode("InternalBookNBS"),
-                action_type=ActionType("ButtonAuthLink"),
-                action_code=ActionCode("BookNBS"),
-                action_description=ActionDescription("Action description"),
-                url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
-                url_label=UrlLabel("Continue to booking"),
-            )],
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("InternalBookNBS"),
+                    action_type=ActionType("ButtonAuthLink"),
+                    action_code=ActionCode("BookNBS"),
+                    action_description=ActionDescription("Action description"),
+                    url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                    url_label=UrlLabel("Continue to booking"),
+                )
+            ],
         ),
         (
             """Rule match: default_comms_routing present,
@@ -1907,14 +1930,16 @@ default_comms_detail = AvailableAction(
             "defaultcomms1|invaliddefault",
             None,
             {"defaultcomms1": default_comms_detail},
-            [SuggestedAction(
-                internal_action_code=InternalActionCode("defaultcomms1"),
-                action_type=ActionType("CareCardWithText"),
-                action_code=ActionCode("BookLocal"),
-                action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
-                url_link=None,
-                url_label=None,
-            )],
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms1"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
         ),
     ],
 )
@@ -2017,14 +2042,20 @@ def test_cohort_label_not_supported_used_in_r_rules(test_comment: str, redirect_
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to([SuggestedAction(
-                    internal_action_code=InternalActionCode("ActionCode1"),
-                    action_type=ActionType("ButtonAuthLink"),
-                    action_code=ActionCode("BookNBS"),
-                    action_description=ActionDescription("Action description"),
-                    url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
-                    url_label=UrlLabel("Continue to booking"),
-                )]))
+                .and_actions(
+                    equal_to(
+                        [
+                            SuggestedAction(
+                                internal_action_code=InternalActionCode("ActionCode1"),
+                                action_type=ActionType("ButtonAuthLink"),
+                                action_code=ActionCode("BookNBS"),
+                                action_description=ActionDescription("Action description"),
+                                url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                                url_label=UrlLabel("Continue to booking"),
+                            )
+                        ]
+                    )
+                )
             )
         ),
         test_comment,
@@ -2080,14 +2111,20 @@ def test_multiple_r_rules_match_with_same_priority(faker: Faker):
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to([SuggestedAction(
-                    internal_action_code=InternalActionCode("rule_1_comms_routing"),
-                    action_type=ActionType("ButtonAuthLink"),
-                    action_code=ActionCode("BookNBS"),
-                    action_description=ActionDescription("Action description"),
-                    url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
-                    url_label=UrlLabel("Continue to booking"),
-                )]))
+                .and_actions(
+                    equal_to(
+                        [
+                            SuggestedAction(
+                                internal_action_code=InternalActionCode("rule_1_comms_routing"),
+                                action_type=ActionType("ButtonAuthLink"),
+                                action_code=ActionCode("BookNBS"),
+                                action_description=ActionDescription("Action description"),
+                                url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                                url_label=UrlLabel("Continue to booking"),
+                            )
+                        ]
+                    )
+                )
             )
         ),
     )
@@ -2141,14 +2178,22 @@ def test_multiple_r_rules_with_same_priority_one_rule_mismatch_should_return_def
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to([SuggestedAction(
-                    internal_action_code=InternalActionCode("defaultcomms"),
-                    action_type=ActionType("CareCardWithText"),
-                    action_code=ActionCode("BookLocal"),
-                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
-                    url_link=None,
-                    url_label=None,
-                )]))
+                .and_actions(
+                    equal_to(
+                        [
+                            SuggestedAction(
+                                internal_action_code=InternalActionCode("defaultcomms"),
+                                action_type=ActionType("CareCardWithText"),
+                                action_code=ActionCode("BookLocal"),
+                                action_description=ActionDescription(
+                                    "You can get an RSV vaccination at your GP surgery"
+                                ),
+                                url_link=None,
+                                url_label=None,
+                            )
+                        ]
+                    )
+                )
             )
         ),
     )
@@ -2263,14 +2308,20 @@ def test_should_include_actions_when_include_actions_flag_is_true_when_status_is
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to([SuggestedAction(
-                    internal_action_code=InternalActionCode("book_nbs"),
-                    action_type=ActionType("ButtonAuthLink"),
-                    action_code=ActionCode("BookNBS"),
-                    action_description=ActionDescription("Action description"),
-                    url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
-                    url_label=UrlLabel("Continue to booking"),
-                )]))
+                .and_actions(
+                    equal_to(
+                        [
+                            SuggestedAction(
+                                internal_action_code=InternalActionCode("book_nbs"),
+                                action_type=ActionType("ButtonAuthLink"),
+                                action_code=ActionCode("BookNBS"),
+                                action_description=ActionDescription("Action description"),
+                                url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                                url_label=UrlLabel("Continue to booking"),
+                            )
+                        ]
+                    )
+                )
             )
         ),
     )
