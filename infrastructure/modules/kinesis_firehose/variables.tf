@@ -23,5 +23,11 @@ variable "kinesis_cloud_watch_log_stream" {
   type        = string
 }
 
+variable "eligibility_lambda_role_arn" {
+  description = "iam role of eligibility lambda"
+  type        = any
+}
+
+
 
 
