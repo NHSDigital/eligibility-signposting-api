@@ -215,15 +215,13 @@ def clean_audit_bucket(s3_client: BaseClient, audit_bucket: str):
     pages = paginator.paginate(Bucket=audit_bucket)
     for page in pages:
         if "Contents" in page:
-            for obj in page["Contents"]:
-                objects_to_delete.append({"Key": obj["Key"]})
+            objects_to_delete.extend([{"Key": obj["Key"]} for obj in page["Contents"]])
 
     if objects_to_delete:
         s3_client.delete_objects(
             Bucket=audit_bucket,
             Delete={"Objects": objects_to_delete, "Quiet": True},
         )
-
 
 
 @pytest.fixture(scope="session")
