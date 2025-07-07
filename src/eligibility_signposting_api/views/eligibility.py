@@ -137,9 +137,9 @@ def build_actions(condition: Condition) -> list[eligibility.Action] | None:
             eligibility.Action(
                 actionType=eligibility.ActionType(action.action_type),
                 actionCode=eligibility.ActionCode(action.action_code),
-                description=eligibility.Description(action.action_description),
-                urlLink=eligibility.UrlLink(action.url_link),
-                urlLabel=eligibility.UrlLabel(action.url_label),
+                description=eligibility.Description(action.action_description or ""),
+                urlLabel=eligibility.UrlLabel(action.url_label or ""),
+                urlLink=eligibility.UrlLink(str(action.url_link)) if action.url_link else eligibility.UrlLink(""),
             )
             for action in condition.actions
         ]

@@ -3,7 +3,6 @@ import string
 
 from polyfactory import Use
 from polyfactory.factories import DataclassFactory
-from pydantic import HttpUrl
 
 from eligibility_signposting_api.model import eligibility
 from eligibility_signposting_api.model.eligibility import UrlLink

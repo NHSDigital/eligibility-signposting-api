@@ -11,7 +11,6 @@ from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask import Flask, Request
 from flask.testing import FlaskClient
 from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_, none
-from pydantic import HttpUrl
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.audit.audit_service import AuditService
@@ -601,9 +600,9 @@ def test_excludes_nulls_via_build_response(client: FlaskClient):
                     eligibility.Action(
                         actionType=eligibility.ActionType("TYPE_A"),
                         actionCode=eligibility.ActionCode("CODE123"),
-                        description=None,  # Should be excluded
-                        urlLink=None,  # Should be excluded
-                        urlLabel=None,  # Should be excluded
+                        description=eligibility.Description(""),  # Should be an empty string
+                        urlLink=eligibility.UrlLink(""),  # Should be an empty string
+                        urlLabel=eligibility.UrlLabel(""),  # Should be an empty string
                     )
                 ],
             )
@@ -633,9 +632,9 @@ def test_excludes_nulls_via_build_response(client: FlaskClient):
 
         assert action["actionType"] == "TYPE_A"
         assert action["actionCode"] == "CODE123"
-        assert "description" not in action
-        assert "urlLink" not in action
-        assert "urlLabel" not in action
+        assert action["description"] == ""
+        assert action["urlLink"] == ""
+        assert action["urlLabel"] == ""
 
 
 def test_build_response_include_values_that_are_not_null(client: FlaskClient):
