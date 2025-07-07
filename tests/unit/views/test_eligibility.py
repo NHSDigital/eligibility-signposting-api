@@ -14,6 +14,7 @@ from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_
 from pydantic import HttpUrl
 from wireup.integration.flask import get_app_container
 
+from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.model.eligibility import (
     ActionCode,
     ActionDescription,
@@ -33,7 +34,6 @@ from eligibility_signposting_api.model.eligibility import (
     UrlLink,
 )
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
-from eligibility_signposting_api.services.audit_service import AuditService
 from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
 from eligibility_signposting_api.views.eligibility import (
     build_actions,

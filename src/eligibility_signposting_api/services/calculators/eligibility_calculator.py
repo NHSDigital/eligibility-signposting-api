@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from itertools import groupby
 from typing import TYPE_CHECKING, Any
 
-from eligibility_signposting_api.audit_context import AuditContext
+from eligibility_signposting_api.audit.audit_context import AuditContext
 
 if TYPE_CHECKING:
     from eligibility_signposting_api.model.rules import (

@@ -9,10 +9,10 @@ from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
 from wireup import Injected
 
-from eligibility_signposting_api.audit_context import AuditContext
+from eligibility_signposting_api.audit.audit_context import AuditContext
+from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
-from eligibility_signposting_api.services.audit_service import AuditService
 from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
 from eligibility_signposting_api.views.response_model import eligibility
 from eligibility_signposting_api.views.response_model.eligibility import ProcessedSuggestion

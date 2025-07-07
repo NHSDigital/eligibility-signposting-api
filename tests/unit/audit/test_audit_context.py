@@ -6,8 +6,9 @@ import pytest
 from flask import Flask, g, request
 from pydantic import HttpUrl
 
-from eligibility_signposting_api.audit_context import AuditContext
-from eligibility_signposting_api.audit_models import AuditAction, AuditEvent
+from eligibility_signposting_api.audit.audit_context import AuditContext
+from eligibility_signposting_api.audit.audit_models import AuditAction, AuditEvent
+from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.model.eligibility import (
     ActionCode,
     ActionDescription,
@@ -26,7 +27,6 @@ from eligibility_signposting_api.model.eligibility import (
     UrlLink,
 )
 from eligibility_signposting_api.model.rules import CampaignID, CampaignVersion, Iteration, RuleType
-from eligibility_signposting_api.services.audit_service import AuditService
 from tests.fixtures.builders.model.rule import IterationFactory
 
 

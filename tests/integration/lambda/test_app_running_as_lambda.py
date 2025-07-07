@@ -275,8 +275,6 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
 ):
-    # Given
-    # When
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person_all_cohorts}"
     response = httpx.get(
         invoke_url,
@@ -291,7 +289,6 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
         timeout=10,
     )
 
-    # Then
     assert_that(
         response,
         is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),

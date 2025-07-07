@@ -5,7 +5,7 @@ from uuid import UUID
 
 from flask import Request, g
 
-from eligibility_signposting_api.audit_models import (
+from eligibility_signposting_api.audit.audit_models import (
     AuditAction,
     AuditCondition,
     AuditEligibilityCohortGroups,
@@ -18,6 +18,7 @@ from eligibility_signposting_api.audit_models import (
     RequestAuditHeader,
     RequestAuditQueryParams,
 )
+from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.model.eligibility import (
     CohortGroupResult,
     ConditionName,
@@ -26,7 +27,6 @@ from eligibility_signposting_api.model.eligibility import (
     SuggestedAction,
 )
 from eligibility_signposting_api.model.rules import CampaignID, CampaignVersion, Iteration, RuleName, RulePriority
-from eligibility_signposting_api.services.audit_service import AuditService
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ class AuditContext:
                     )
                 )
 
-                if value.audit_rules and best_candidate:  # Check best_candidate here as well
+                if value.audit_rules and best_candidate:
                     if best_candidate.status and best_candidate.status.name == Status.not_eligible.name:
                         audit_filter_rule = AuditFilterRule(
                             rule_priority=value.audit_rules[0].rule_priority,

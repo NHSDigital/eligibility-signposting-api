@@ -8,7 +8,7 @@ from flask import Flask, g
 from flask.testing import FlaskClient
 
 from eligibility_signposting_api.app import create_app
-from eligibility_signposting_api.audit_models import AuditEvent
+from eligibility_signposting_api.audit.audit_models import AuditEvent
 
 
 @pytest.fixture(scope="session")
