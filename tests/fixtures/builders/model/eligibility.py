@@ -10,7 +10,7 @@ from eligibility_signposting_api.model.eligibility import UrlLink
 
 
 class SuggestedActionFactory(DataclassFactory[eligibility.SuggestedAction]):
-    url_link = UrlLink(HttpUrl("https://test-example.com"))
+    url_link = UrlLink("https://test-example.com")
 
 
 class ConditionFactory(DataclassFactory[eligibility.Condition]):

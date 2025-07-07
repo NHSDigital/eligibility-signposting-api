@@ -398,7 +398,7 @@ def test_no_suitability_rules_for_actionable():
                     action_type=ActionType("TYPE_A"),
                     action_code=ActionCode("CODE123"),
                     action_description=ActionDescription("Some description"),
-                    url_link=UrlLink(HttpUrl("https://example.com")),
+                    url_link=UrlLink("https://example.com"),
                     url_label=UrlLabel("Learn more"),
                 )
             ],
@@ -407,7 +407,7 @@ def test_no_suitability_rules_for_actionable():
                     actionType=eligibility.ActionType("TYPE_A"),
                     actionCode=eligibility.ActionCode("CODE123"),
                     description=eligibility.Description("Some description"),
-                    urlLink=eligibility.HttpUrl("https://example.com"),
+                    urlLink=eligibility.UrlLink("https://example.com"),
                     urlLabel=eligibility.UrlLabel("Learn more"),
                 )
             ],
@@ -426,9 +426,9 @@ def test_no_suitability_rules_for_actionable():
                 eligibility.Action(
                     actionType=eligibility.ActionType("TYPE_B"),
                     actionCode=eligibility.ActionCode("CODE123"),
-                    description=None,
-                    urlLink=None,
-                    urlLabel=None,
+                    description="",
+                    urlLink="",
+                    urlLabel="",
                 )
             ],
         ),
@@ -654,7 +654,7 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
                         actionType=eligibility.ActionType("TYPE_A"),
                         actionCode=eligibility.ActionCode("CODE123"),
                         description=eligibility.Description("Contact GP"),
-                        urlLink=eligibility.HttpUrl(HttpUrl("https://example.dummy/")),
+                        urlLink=eligibility.UrlLink("https://example.dummy/"),
                         urlLabel=eligibility.UrlLabel("GP contact"),
                     )
                 ],

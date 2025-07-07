@@ -140,8 +140,8 @@ def build_actions(condition: Condition) -> list[eligibility.Action] | None:
                 description=eligibility.Description(action.action_description)
                 if action.action_description is not None
                 else None,
-                urlLink=eligibility.HttpUrl(action.url_link) if action.url_link is not None else None,
-                urlLabel=eligibility.UrlLabel(action.url_label) if action.url_label is not None else None,
+                urlLink=eligibility.UrlLink(action.url_link),
+                urlLabel=eligibility.UrlLabel(action.url_label),
             )
             for action in condition.actions
         ]
