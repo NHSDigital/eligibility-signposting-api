@@ -1,65 +1,65 @@
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
-@dataclass
-class RequestAuditHeader:
+
+class CamelCaseBaseModel(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
+
+
+class RequestAuditHeader(CamelCaseBaseModel):
     x_request_id: str | None = None
     x_correlation_id: str | None = None
     nhsd_end_user_organisation_ods: str | None = None
     nhsd_application_id: str | None = None
 
 
-@dataclass
-class RequestAuditQueryParams:
+class RequestAuditQueryParams(CamelCaseBaseModel):
     category: str | None = None
     conditions: str | None = None
     include_actions: str | None = None
 
 
-@dataclass
-class RequestAuditData:
-    request_timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
-    headers: RequestAuditHeader = field(default_factory=RequestAuditHeader)
-    query_params: RequestAuditQueryParams = field(default_factory=RequestAuditQueryParams)
+class RequestAuditData(CamelCaseBaseModel):
+    request_timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    headers: RequestAuditHeader = Field(default_factory=RequestAuditHeader)
+    query_params: RequestAuditQueryParams = Field(default_factory=RequestAuditQueryParams)
     nhs_number: str | None = None
 
 
-@dataclass
-class AuditEligibilityCohorts:
+class AuditEligibilityCohorts(CamelCaseBaseModel):
     cohort_code: str | None = None
     cohort_status: str | None = None
 
 
-@dataclass
-class AuditEligibilityCohortGroups:
+class AuditEligibilityCohortGroups(CamelCaseBaseModel):
     cohort_code: str | None = None
     cohort_text: str | None = None
     cohort_status: str | None = None
 
 
-@dataclass
-class AuditFilterRule:
+class AuditFilterRule(CamelCaseBaseModel):
     rule_priority: str | None = None
     rule_name: str | None = None
 
 
-@dataclass
-class AuditSuitabilityRule:
+class AuditSuitabilityRule(CamelCaseBaseModel):
     rule_priority: str | None = None
     rule_name: str | None = None
     rule_message: str | None = None
 
 
-@dataclass
-class AuditRedirectRule:
+class AuditRedirectRule(CamelCaseBaseModel):
     rule_priority: str | None = None
     rule_name: str | None = None
 
 
-@dataclass
-class AuditAction:
+class AuditAction(CamelCaseBaseModel):
     internal_action_code: str | None = None
     action_type: str | None = None
     action_code: str | None = None
@@ -68,8 +68,7 @@ class AuditAction:
     action_url_label: str | None = None
 
 
-@dataclass
-class AuditCondition:
+class AuditCondition(CamelCaseBaseModel):
     campaign_id: str | None = None
     campaign_version: str | None = None
     iteration_id: str | None = None
@@ -82,17 +81,15 @@ class AuditCondition:
     filter_rules: AuditFilterRule | None = None
     suitability_rules: AuditSuitabilityRule | None = None
     action_rule: AuditRedirectRule | None = None
-    actions: list[AuditAction] | None = field(default_factory=list)
+    actions: list[AuditAction] | None = Field(default_factory=list)
 
 
-@dataclass
-class ResponseAuditData:
+class ResponseAuditData(CamelCaseBaseModel):
     response_id: UUID | None = None
     last_updated: str | None = None
-    condition: list[AuditCondition] = field(default_factory=list)
+    condition: list[AuditCondition] = Field(default_factory=list)
 
 
-@dataclass
-class AuditEvent:
-    request: RequestAuditData = field(default_factory=RequestAuditData)
-    response: ResponseAuditData = field(default_factory=ResponseAuditData)
+class AuditEvent(CamelCaseBaseModel):
+    request: RequestAuditData = Field(default_factory=RequestAuditData)
+    response: ResponseAuditData = Field(default_factory=ResponseAuditData)

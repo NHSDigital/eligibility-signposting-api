@@ -1,5 +1,4 @@
 import logging
-from dataclasses import asdict
 from datetime import UTC, datetime
 from operator import attrgetter
 from uuid import UUID
@@ -100,7 +99,9 @@ class AuditContext:
                         )
 
         if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
-            audit_redirect_rule = AuditRedirectRule(str(redirect_rule_details[0]), redirect_rule_details[1])
+            audit_redirect_rule = AuditRedirectRule(
+                rule_priority=str(redirect_rule_details[0]), rule_name=redirect_rule_details[1]
+            )
 
         if suggested_actions is None:
             audit_actions = None
@@ -142,4 +143,4 @@ class AuditContext:
 
     @staticmethod
     def write_to_firehose(service: AuditService) -> None:
-        service.audit(asdict(g.audit_log))
+        service.audit(g.audit_log.model_dump(by_alias=True))

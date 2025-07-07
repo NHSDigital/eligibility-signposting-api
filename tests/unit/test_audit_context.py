@@ -1,5 +1,4 @@
 import uuid
-from dataclasses import asdict
 from datetime import UTC, datetime
 from unittest.mock import Mock
 
@@ -190,4 +189,4 @@ def test_write_to_firehose_calls_audit_service_with_correct_data_from_g(app):
         assert g.audit_log.response.response_id == response_id
         assert g.audit_log.response.last_updated == last_updated
 
-        mock_audit_service.audit.assert_called_once_with(asdict(g.audit_log))
+        mock_audit_service.audit.assert_called_once_with(g.audit_log.model_dump(by_alias=True))

@@ -200,48 +200,48 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     audit_data = json.loads(s3_client.get_object(Bucket=audit_bucket, Key=latest_key)["Body"].read())
 
     expected_headers = {
-        "x_request_id": "x_request_id",
-        "x_correlation_id": "x_correlation_id",
-        "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
-        "nhsd_application_id": "nhsd_application_id",
+        "xRequestId": "x_request_id",
+        "xCorrelationId": "x_correlation_id",
+        "nhsdEndUserOrganisationOds": "nhsd_end_user_organisation_ods",
+        "nhsdApplicationId": "nhsd_application_id",
     }
-    expected_query_params = {"category": None, "conditions": None, "include_actions": "Y"}
-
-    assert_that(audit_data["request"]["request_timestamp"], is_not(equal_to("")))
-    assert_that(audit_data["request"]["headers"], equal_to(expected_headers))
-    assert_that(audit_data["request"]["nhs_number"], equal_to(persisted_person))
-    assert_that(audit_data["request"]["query_params"], equal_to(expected_query_params))
+    expected_query_params = {"category": None, "conditions": None, "includeActions": "Y"}
 
     expected_conditions = [
         {
-            "campaign_id": campaign_config.id,
-            "campaign_version": campaign_config.version,
-            "iteration_id": campaign_config.iterations[0].id,
-            "iteration_version": campaign_config.iterations[0].version,
-            "condition_name": campaign_config.target,
+            "campaignId": campaign_config.id,
+            "campaignVersion": campaign_config.version,
+            "iterationId": campaign_config.iterations[0].id,
+            "iterationVersion": campaign_config.iterations[0].version,
+            "conditionName": campaign_config.target,
             "status": "not_actionable",
-            "status_text": "not_actionable",
-            "eligibility_cohorts": [{"cohort_code": "cohort_group1", "cohort_status": "not_actionable"}],
-            "eligibility_cohort_groups": [
+            "statusText": "not_actionable",
+            "eligibilityCohorts": [{"cohortCode": "cohort_group1", "cohortStatus": "not_actionable"}],
+            "eligibilityCohortGroups": [
                 {
-                    "cohort_code": "cohort_group1",
-                    "cohort_text": "positive_description",
-                    "cohort_status": "not_actionable",
+                    "cohortCode": "cohort_group1",
+                    "cohortText": "positive_description",
+                    "cohortStatus": "not_actionable",
                 }
             ],
-            "filter_rules": None,
-            "suitability_rules": {
-                "rule_priority": "10",
-                "rule_name": "Exclude too young less than 75",
-                "rule_message": "Exclude too young less than 75",
+            "filterRules": None,
+            "suitabilityRules": {
+                "rulePriority": "10",
+                "ruleName": "Exclude too young less than 75",
+                "ruleMessage": "Exclude too young less than 75",
             },
-            "action_rule": None,
+            "actionRule": None,
             "actions": [],
         }
     ]
 
-    assert_that(audit_data["response"]["response_id"], is_not(equal_to("")))
-    assert_that(audit_data["response"]["last_updated"], is_not(equal_to("")))
+    assert_that(audit_data["request"]["requestTimestamp"], is_not(equal_to("")))
+    assert_that(audit_data["request"]["headers"], equal_to(expected_headers))
+    assert_that(audit_data["request"]["nhsNumber"], equal_to(persisted_person))
+    assert_that(audit_data["request"]["queryParams"], equal_to(expected_query_params))
+
+    assert_that(audit_data["response"]["responseId"], is_not(equal_to("")))
+    assert_that(audit_data["response"]["lastUpdated"], is_not(equal_to("")))
     assert_that(audit_data["response"]["condition"], equal_to(expected_conditions))
 
 
@@ -303,12 +303,12 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
     audit_data = json.loads(s3_client.get_object(Bucket=audit_bucket, Key=latest_key)["Body"].read())
 
     expected_headers = {
-        "x_request_id": "x_request_id",
-        "x_correlation_id": "x_correlation_id",
-        "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
-        "nhsd_application_id": "nhsd_application_id",
+        "xRequestId": "x_request_id",
+        "xCorrelationId": "x_correlation_id",
+        "nhsdEndUserOrganisationOds": "nhsd_end_user_organisation_ods",
+        "nhsdApplicationId": "nhsd_application_id",
     }
-    expected_query_params = {"category": None, "conditions": None, "include_actions": "Y"}
+    expected_query_params = {"category": None, "conditions": None, "includeActions": "Y"}
 
     rsv_campaign = multiple_campaign_configs[0]
     covid_campaign = multiple_campaign_configs[1]
@@ -316,87 +316,87 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
 
     expected_conditions = [
         {
-            "campaign_id": rsv_campaign.id,
-            "campaign_version": rsv_campaign.version,
-            "iteration_id": rsv_campaign.iterations[0].id,
-            "iteration_version": rsv_campaign.iterations[0].version,
-            "condition_name": rsv_campaign.target,
+            "campaignId": rsv_campaign.id,
+            "campaignVersion": rsv_campaign.version,
+            "iterationId": rsv_campaign.iterations[0].id,
+            "iterationVersion": rsv_campaign.iterations[0].version,
+            "conditionName": rsv_campaign.target,
             "status": "not_eligible",
-            "status_text": "not_eligible",
-            "eligibility_cohorts": [{"cohort_code": "cohort_group1", "cohort_status": "not_eligible"}],
-            "eligibility_cohort_groups": [
+            "statusText": "not_eligible",
+            "eligibilityCohorts": [{"cohortCode": "cohort_group1", "cohortStatus": "not_eligible"}],
+            "eligibilityCohortGroups": [
                 {
-                    "cohort_code": "cohort_group1",
-                    "cohort_text": "negative_desc_1",
-                    "cohort_status": "not_eligible",
+                    "cohortCode": "cohort_group1",
+                    "cohortText": "negative_desc_1",
+                    "cohortStatus": "not_eligible",
                 }
             ],
-            "filter_rules": {"rule_priority": "10", "rule_name": "Exclude too young less than 75"},
-            "suitability_rules": None,
-            "action_rule": None,
+            "filterRules": {"rulePriority": "10", "ruleName": "Exclude too young less than 75"},
+            "suitabilityRules": None,
+            "actionRule": None,
             "actions": [],
         },
         {
-            "campaign_id": covid_campaign.id,
-            "campaign_version": covid_campaign.version,
-            "iteration_id": covid_campaign.iterations[0].id,
-            "iteration_version": covid_campaign.iterations[0].version,
-            "condition_name": covid_campaign.target,
+            "campaignId": covid_campaign.id,
+            "campaignVersion": covid_campaign.version,
+            "iterationId": covid_campaign.iterations[0].id,
+            "iterationVersion": covid_campaign.iterations[0].version,
+            "conditionName": covid_campaign.target,
             "status": "not_actionable",
-            "status_text": "not_actionable",
-            "eligibility_cohorts": [{"cohort_code": "cohort_group2", "cohort_status": "not_actionable"}],
-            "eligibility_cohort_groups": [
+            "statusText": "not_actionable",
+            "eligibilityCohorts": [{"cohortCode": "cohort_group2", "cohortStatus": "not_actionable"}],
+            "eligibilityCohortGroups": [
                 {
-                    "cohort_code": "cohort_group2",
-                    "cohort_text": "positive_desc_2",
-                    "cohort_status": "not_actionable",
+                    "cohortCode": "cohort_group2",
+                    "cohortText": "positive_desc_2",
+                    "cohortStatus": "not_actionable",
                 }
             ],
-            "filter_rules": None,
-            "suitability_rules": {
-                "rule_priority": "10",
-                "rule_name": "Exclude too young less than 75",
-                "rule_message": "Exclude too young less than 75",
+            "filterRules": None,
+            "suitabilityRules": {
+                "rulePriority": "10",
+                "ruleName": "Exclude too young less than 75",
+                "ruleMessage": "Exclude too young less than 75",
             },
-            "action_rule": None,
+            "actionRule": None,
             "actions": [],
         },
         {
-            "campaign_id": flu_campaign.id,
-            "campaign_version": flu_campaign.version,
-            "iteration_id": flu_campaign.iterations[0].id,
-            "iteration_version": flu_campaign.iterations[0].version,
-            "condition_name": flu_campaign.target,
+            "campaignId": flu_campaign.id,
+            "campaignVersion": flu_campaign.version,
+            "iterationId": flu_campaign.iterations[0].id,
+            "iterationVersion": flu_campaign.iterations[0].version,
+            "conditionName": flu_campaign.target,
             "status": "actionable",
-            "status_text": "actionable",
-            "eligibility_cohorts": [{"cohort_code": "cohort_group3", "cohort_status": "actionable"}],
-            "eligibility_cohort_groups": [
+            "statusText": "actionable",
+            "eligibilityCohorts": [{"cohortCode": "cohort_group3", "cohortStatus": "actionable"}],
+            "eligibilityCohortGroups": [
                 {
-                    "cohort_code": "cohort_group3",
-                    "cohort_text": "positive_desc_3",
-                    "cohort_status": "actionable",
+                    "cohortCode": "cohort_group3",
+                    "cohortText": "positive_desc_3",
+                    "cohortStatus": "actionable",
                 }
             ],
-            "filter_rules": None,
-            "suitability_rules": None,
-            "action_rule": {"rule_priority": "20", "rule_name": "In QE1"},
+            "filterRules": None,
+            "suitabilityRules": None,
+            "actionRule": {"rulePriority": "20", "ruleName": "In QE1"},
             "actions": [
                 {
-                    "internal_action_code": "defaultcomms",
-                    "action_type": "defaultcomms",
-                    "action_code": "action_code",
-                    "action_description": None,
-                    "action_url": None,
-                    "action_url_label": None,
+                    "internalActionCode": "defaultcomms",
+                    "actionType": "defaultcomms",
+                    "actionCode": "action_code",
+                    "actionDescription": None,
+                    "actionUrl": None,
+                    "actionUrlLabel": None,
                 }
             ],
         },
     ]
 
-    assert_that(audit_data["request"]["request_timestamp"], is_not(equal_to("")))
+    assert_that(audit_data["request"]["requestTimestamp"], is_not(equal_to("")))
     assert_that(audit_data["request"]["headers"], equal_to(expected_headers))
-    assert_that(audit_data["request"]["nhs_number"], equal_to(persisted_person_all_cohorts))
-    assert_that(audit_data["request"]["query_params"], equal_to(expected_query_params))
-    assert_that(audit_data["response"]["response_id"], is_not(equal_to("")))
-    assert_that(audit_data["response"]["last_updated"], is_not(equal_to("")))
+    assert_that(audit_data["request"]["nhsNumber"], equal_to(persisted_person_all_cohorts))
+    assert_that(audit_data["request"]["queryParams"], equal_to(expected_query_params))
+    assert_that(audit_data["response"]["responseId"], is_not(equal_to("")))
+    assert_that(audit_data["response"]["lastUpdated"], is_not(equal_to("")))
     assert_that(audit_data["response"]["condition"], contains_inanyorder(*expected_conditions))
