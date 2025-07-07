@@ -6,7 +6,7 @@ import boto3
 import botocore
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(dotenv_path=".env")
 logger = logging.getLogger(__name__)
 
 
@@ -15,6 +15,9 @@ class S3ConfigManager:
         self.bucket_name: str = bucket_name
         self.s3_prefix: str = s3_prefix
         self.s3_client = boto3.client("s3")
+
+    def _s3_client(self):
+        return self.session.client("s3")
 
     def _s3_key(self, filename: str) -> str:
         return str(Path(self.s3_prefix) / filename)
@@ -50,6 +53,13 @@ class S3ConfigManager:
         logger.info("📄 Uploaded to s3://%s/%s", self.bucket_name, s3_key)
 
     def config_exists_and_matches(self, local_path: Path, s3_key: str) -> bool:
+
+        session = boto3.Session()
+        credentials = session.get_credentials()
+        logger.info("AWS_ACCESS_KEY_ID = %s", credentials.access_key)
+        logger.info("AWS_SECRET_ACCESS_KEY = %s", credentials.secret_key)
+        logger.info("AWS_SESSION_TOKEN = %s", credentials.token)
+
         try:
             s3_obj = self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key)
             s3_data = s3_obj["Body"].read()

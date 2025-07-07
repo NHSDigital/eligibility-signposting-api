@@ -14,7 +14,7 @@ VALID_NHS_NUMBER = os.getenv("VALID_NHS_NUMBER", "50000000004")
 HTTP_STATUS_SERVER_ERROR = 500
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session", autouse=False)
 def check_api_accessibility():
     """Check if the API is accessible before running tests."""
     try:

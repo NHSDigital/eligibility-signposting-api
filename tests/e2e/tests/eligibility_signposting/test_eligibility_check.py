@@ -3,7 +3,8 @@
 import jsonschema
 import pytest
 import requests
-from utils.config import BASE_URL, ELIGIBILITY_CHECK_SCHEMA
+
+from tests.e2e.utils.config import BASE_URL, ELIGIBILITY_CHECK_SCHEMA
 
 # HTTP Status Code Constants
 HTTP_STATUS_OK = 200

@@ -1,7 +1,8 @@
 """API client module for making HTTP requests to the Eligibility Signposting API."""
 
 import requests
-from utils.config import API_KEY, BASE_URL
+
+from tests.e2e.utils.config import API_KEY, BASE_URL
 
 # Default timeout for API requests in seconds
 DEFAULT_TIMEOUT = 10

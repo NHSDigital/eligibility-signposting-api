@@ -30,6 +30,7 @@ def resolve_placeholders(value, context=None, file_name=None):
 
 def _resolve_placeholder_value(placeholder: str) -> str:
     placeholder_parts_length = 3
+    #RDATE
     valid_placeholder_types = ["DATE", "RDATE", "IGNORE"]
     result = f"<<{placeholder}>>"  # Default fallback
 

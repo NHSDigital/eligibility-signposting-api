@@ -1,8 +1,9 @@
 """Pytest fixtures for the Eligibility Signposting API tests."""
 
 import pytest
-from utils.api_client import ApiClient
-from utils.config import INVALID_NHS_NUMBER, VALID_NHS_NUMBER
+
+from tests.e2e.utils.api_client import ApiClient
+from tests.e2e.utils.config import INVALID_NHS_NUMBER, VALID_NHS_NUMBER
 
 
 @pytest.fixture

@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from tests.e2e.utils.eligibility_api_client import EligibilityApiClient
 
 # Load environment variables from .env.local
-load_dotenv(dotenv_path=".env.local")
+load_dotenv(dotenv_path=".env")
 
 # Constants
 BASE_URL = os.getenv("BASE_URL", "https://test.eligibility-signposting-api.nhs.uk/patient-check")
