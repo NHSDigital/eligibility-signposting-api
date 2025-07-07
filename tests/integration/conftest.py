@@ -211,7 +211,7 @@ def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -
 @pytest.fixture(autouse=True)
 def clean_audit_bucket(s3_client: BaseClient, audit_bucket: str):
     objects_to_delete = []
-    paginator = s3_client.get_paginator('list_objects_v2')
+    paginator = s3_client.get_paginator("list_objects_v2")
     pages = paginator.paginate(Bucket=audit_bucket)
     for page in pages:
         if "Contents" in page:
@@ -224,7 +224,6 @@ def clean_audit_bucket(s3_client: BaseClient, audit_bucket: str):
             Delete={"Objects": objects_to_delete, "Quiet": True},
         )
 
-    yield
 
 
 @pytest.fixture(scope="session")
