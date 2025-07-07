@@ -15,7 +15,9 @@ ConditionName = NewType("ConditionName", str)
 
 RuleName = NewType("RuleName", str)
 RuleDescription = NewType("RuleDescription", str)
+RulePriority = NewType("RulePriority", str)
 
+InternalActionCode = NewType("InternalActionCode", str)
 ActionType = NewType("ActionType", str)
 ActionCode = NewType("ActionCode", str)
 ActionDescription = NewType("ActionDescription", str)
@@ -68,6 +70,7 @@ class Status(Enum):
 class Reason:
     rule_type: RuleType
     rule_name: RuleName
+    rule_priority: RulePriority
     rule_description: RuleDescription | None
     matcher_matched: bool
 
@@ -79,6 +82,7 @@ class SuggestedAction:
     action_description: ActionDescription | None
     url_link: UrlLink | None
     url_label: UrlLabel | None
+    internal_action_code: InternalActionCode | None = None
 
 
 @dataclass
@@ -95,6 +99,7 @@ class CohortGroupResult:
     status: Status
     reasons: list[Reason]
     description: str | None
+    audit_rules: list[Reason]
 
 
 @dataclass
