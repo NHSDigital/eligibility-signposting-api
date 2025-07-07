@@ -91,10 +91,23 @@ data "aws_iam_policy_document" "firehose_kms_key_policy" {
     condition {
       test     = "StringEquals"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = [
+      values = [
         "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/${var.project_name}-${var.environment}-audit"
       ]
     }
+  }
+
+  statement {
+    sid    = "AllowLambdaUsage"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = [var.eligibility_lambda_role_arn]
+    }
+    actions = [
+      "kms:*"
+    ]
+    resources = [aws_kms_key.firehose_cmk.arn]
   }
 }
 
