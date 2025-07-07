@@ -377,7 +377,7 @@ def test_no_suitability_rules_for_actionable():
                     action_type=ActionType("TYPE_A"),
                     action_code=ActionCode("CODE123"),
                     action_description=ActionDescription("Some description"),
-                    url_link=UrlLink(HttpUrl("https://example.com")),
+                    url_link=UrlLink("https://example.com"),
                     url_label=UrlLabel("Learn more"),
                 )
             ],
