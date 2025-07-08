@@ -16,6 +16,8 @@
       {
         "ID": "id_100",
         "DefaultCommsRouting": "INTERNALCONTACTGP1",
+        "DefaultNotActionableRouting": "INTERNALCONTACTGP1",
+        "DefaultNotEligibleRouting": "INTERNALCONTACTGP1",
         "ActionsMapper": {
           "INTERNALCONTACTGP1": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Text1 description", "ActionType":"text1"},
           "INTERNALCONTACTGP2": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Link description", "ActionType":"link", "UrlLink": "link123", "UrlLabel": "link label"},
@@ -85,6 +87,28 @@
             "Type": "R",
             "Name": "Test Redirect Rule",
             "Description": "Test Redirect Rule Desc",
+            "Priority": 20,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": ">",
+            "Comparator": "19000101",
+            "CommsRouting": "INTERNALCONTACTGP1|INTERNALTESCO"
+          },
+          {
+            "Type": "X",
+            "Name": "Test X Rule for not actionable",
+            "Description": "Test X Rule Desc",
+            "Priority": 20,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": ">",
+            "Comparator": "19000101",
+            "CommsRouting": "INTERNALCONTACTGP1|INTERNALTESCO"
+          },
+          {
+            "Type": "Y",
+            "Name": "Test Y Rule for not eligible",
+            "Description": "Test Y Rule Desc",
             "Priority": 20,
             "AttributeLevel": "PERSON",
             "AttributeName": "DATE_OF_BIRTH",
