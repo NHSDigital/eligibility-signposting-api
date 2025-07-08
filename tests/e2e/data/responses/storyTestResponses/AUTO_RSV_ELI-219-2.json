@@ -18,11 +18,11 @@
       "suitabilityRules": [],
       "actions": [
         {
-          "action_type": "ActionTwoActionType",
-          "action_code": "ActionTwoRoutingCode",
-          "action_description": "ActionTwoDescription",
-          "url_link": "http://www.actiontwourl.com",
-          "url_label": "ActionTwoUrlLabel"
+          "actionType": "ActionTwoActionType",
+          "actionCode": "ActionTwoRoutingCode",
+          "description": "ActionTwoDescription",
+          "urlLink": "http://www.actiontwourl.com/",
+          "urlLabel": "ActionTwoUrlLabel"
         }
       ]
     }

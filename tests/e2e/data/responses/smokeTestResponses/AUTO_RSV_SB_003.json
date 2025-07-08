@@ -11,16 +11,18 @@
       "eligibilityCohorts": [
         {
           "cohortCode": "rsv_age_catchup",
-          "cohortText": "You turned 80 between 2nd September 2024 and 31st August 2025",
+          "cohortText": "turned 80 between 2nd September 2024 and 31st August 2025",
           "cohortStatus": "Actionable"
         }
       ],
       "suitabilityRules": [],
       "actions": [
         {
-          "action_type": "InfoText",
-          "action_code": "BookLocal",
-          "action_description": "##Getting the vaccine\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination."
+          "actionType": "InfoText",
+          "actionCode": "BookLocal",
+          "description": "##Getting the vaccine\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
+          "urlLink": "",
+          "urlLabel": ""
         }
       ]
     }

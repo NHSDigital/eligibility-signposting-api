@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import os
 from pathlib import Path
 
 import boto3
@@ -15,9 +16,6 @@ class S3ConfigManager:
         self.bucket_name: str = bucket_name
         self.s3_prefix: str = s3_prefix
         self.s3_client = boto3.client("s3")
-
-    def _s3_client(self):
-        return self.session.client("s3")
 
     def _s3_key(self, filename: str) -> str:
         return str(Path(self.s3_prefix) / filename)
@@ -53,7 +51,6 @@ class S3ConfigManager:
         logger.info("📄 Uploaded to s3://%s/%s", self.bucket_name, s3_key)
 
     def config_exists_and_matches(self, local_path: Path, s3_key: str) -> bool:
-
         session = boto3.Session()
         credentials = session.get_credentials()
         logger.info("AWS_ACCESS_KEY_ID = %s", credentials.access_key)
@@ -84,3 +81,8 @@ class S3ConfigManager:
             logger.info("🗑️ Deleted %d file(s) under prefix '%s/'.", len(to_delete), self.s3_prefix)
         else:
             logger.info("📭 Nothing to delete under prefix '%s/'.", self.s3_prefix)
+
+
+def upload_config_to_s3(local_path: Path) -> None:
+    s3_connection = S3ConfigManager(os.getenv("S3_BUCKET_NAME"), os.getenv("S3_PREFIX"))
+    s3_connection.upload_if_missing_or_changed(local_path)

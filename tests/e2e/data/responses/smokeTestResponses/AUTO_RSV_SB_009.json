@@ -7,11 +7,11 @@
     {
       "condition": "RSV",
       "status": "NotActionable",
-      "statusText": "You should have the RSV vaccine",
+      "statusText": "Status.not_actionable",
       "eligibilityCohorts": [
         {
           "cohortCode": "rsv_age_rolling",
-          "cohortText": "You are aged 75 to 79 years old.",
+          "cohortText": "are aged 75 to 79 years old.",
           "cohortStatus": "NotActionable"
         }
       ],
@@ -19,7 +19,7 @@
         {
           "ruleType": "S",
           "ruleCode": "NotYetDue",
-          "ruleText": "Your next dose is not yet due."
+          "ruleText": "NotYetDue|Your next dose is not yet due."
         }
       ],
       "actions": []

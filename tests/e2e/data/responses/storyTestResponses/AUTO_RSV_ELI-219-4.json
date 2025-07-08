@@ -18,11 +18,11 @@
       "suitabilityRules": [],
       "actions": [
         {
-          "action_code": "",
-          "action_description": "",
-          "action_type": "",
-          "url_label": "",
-          "url_link": ""
+          "actionCode": "",
+          "description": "",
+          "actionType": "",
+          "urlLabel": "",
+          "urlLink": ""
         }
       ]
     }

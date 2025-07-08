@@ -27,20 +27,20 @@
         "CommsType": "I",
         "ApprovalMinimum": 0,
         "ApprovalMaximum": 0,
-        "Type": "M",
+        "Type": "O",
         "IterationCohorts": [
           {
             "CohortLabel": "rsv_75_rolling",
             "CohortGroup": "rsv_age_rolling",
-            "PositiveDescription": "You are aged 75 to 79 years old.",
-            "NegativeDescription": "You are not aged 75 to 79 years old.",
+            "PositiveDescription": "are aged 75 to 79 years old.",
+            "NegativeDescription": "are not aged 75 to 79 years old.",
             "Priority": 0
           },
           {
             "CohortLabel": "rsv_75to79_2024",
             "CohortGroup": "rsv_age_catchup",
-            "PositiveDescription": "You turned 80 between 2nd September 2024 and 31st August 2025",
-            "NegativeDescription": "You did not turn 80 after 1 September 2024 and get vaccinated by 31 August 2025",
+            "PositiveDescription": "turned 80 between 2nd September 2024 and 31st August 2025",
+            "NegativeDescription": "did not turn 80 between 2nd September 2024 and 31st August 2025",
             "Priority": 10
           },
           {
@@ -79,7 +79,19 @@
             "AttributeLevel": "PERSON",
             "AttributeName": "DATE_OF_BIRTH",
             "Operator": "Y>",
-            "Comparator": "-75"
+            "Comparator": "-75",
+            "CohortLabel": "rsv_75to79_2024"
+          },
+          {
+            "Type": "F",
+            "Name": "Under Age - Under 75 Years on day of execution",
+            "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 75 years is filtered out.",
+            "Priority": 125,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "Y>",
+            "Comparator": "-75",
+            "CohortLabel": "rsv_75_rolling"
           },
           {
             "Type": "F",
@@ -95,7 +107,7 @@
             "Type": "S",
             "Name": "AlreadyVaccinated",
             "Description": "##You've had your RSV vaccination\nWe believe you had your vaccination on <<LAST_SUCCESSFUL_DATE>>.",
-            "Priority": 500,
+            "Priority": 550,
             "AttributeLevel": "TARGET",
             "AttributeTarget": "RSV",
             "AttributeName": "LAST_SUCCESSFUL_DATE",
@@ -112,6 +124,40 @@
             "AttributeName": "ICB",
             "Operator": "=",
             "Comparator": "SUPPRESSED_ICB"
+          },
+          {
+            "Type": "S",
+            "Name": "NotYetDue",
+            "Description": "NotYetDue|Your next dose is not yet due.",
+            "Priority": 520,
+            "AttributeTarget": "RSV",
+            "AttributeLevel": "TARGET",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "Operator": "=",
+            "Comparator": "20250326",
+            "RuleStop": "Y"
+          },
+          {
+            "Type": "S",
+            "Name": "TooClose",
+            "Description": "TooClose|Your previous vaccination was less than 91 days ago.",
+            "Priority": 530,
+            "AttributeTarget": "RSV",
+            "AttributeLevel": "TARGET",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "Operator": "=",
+            "Comparator": "20250327",
+            "RuleStop": "Y"
+          },
+          {
+            "Type": "S",
+            "Name": "OtherSetting",
+            "Description": "OtherSetting|## Getting the vaccine\n\nOur record show you're living in a setting where care is provided.\n\nIf you think you should have the RSV vaccine, speak to a member of staff where you live.",
+            "Priority": 540,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "CARE_HOME_FLAG",
+            "Operator": "=",
+            "Comparator": "Y"
           },
           {
             "Type": "R",
@@ -203,30 +249,24 @@
           "CONTACT_GP": {
             "ExternalRoutingCode": "ContactGP",
             "ActionDescription": "Contact your GP",
-            "ActionType": "InfoText",
-            "UrlLink": "",
-            "UrlLabel": ""
+            "ActionType": "InfoText"
           },
-            "BOOK_LOCAL": {
+          "BOOK_LOCAL": {
             "ExternalRoutingCode": "BookLocal",
             "ActionDescription": "##Getting the vaccine\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
-            "ActionType": "InfoText",
-            "UrlLink": "",
-            "UrlLabel": ""
+            "ActionType": "InfoText"
           },
-            "MANAGE_LOCAL": {
+          "MANAGE_LOCAL": {
             "ExternalRoutingCode": "ManageLocal",
             "ActionDescription": "##You have an RSV vaccination appointment\nContact your healthcare provider to change or cancel your appointment.",
-            "ActionType": "CardWithText",
-            "UrlLink": "",
-            "UrlLabel": ""
+            "ActionType": "CardWithText"
+
           },
-            "CHECK_CORRECT": {
+          "CHECK_CORRECT": {
             "ExternalRoutingCode": "CheckCorrect",
             "ActionDescription": "##If you think this is incorrect\\nIf you have not had this vaccination and you think you should, speak to your healthcare professional.",
-            "ActionType": "InfoText",
-            "UrlLink": "",
-            "UrlLabel": ""
+            "ActionType": "InfoText"
+
           }
         }
       }

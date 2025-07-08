@@ -7,13 +7,15 @@
     {
       "condition": "RSV",
       "status": "NotActionable",
-      "statusText": "You should have the RSV vaccine",
+      "statusText": "Status.not_actionable",
       "eligibilityCohorts": [],
       "suitabilityRules": [
         {
           "ruleType": "S",
           "ruleCode": "AlreadyVaccinated",
-          "ruleText": "##You've had your RSV vaccination\nWe believe you had your vaccination on <<RDATE_DAY_-7>>."
+          "ruleText": "##You've had your RSV vaccination\nWe believe you had your vaccination on <<RDATE_DAY_-7>>.",
+          "urlLink": "",
+          "urlLabel": ""
         }
       ],
       "actions": []

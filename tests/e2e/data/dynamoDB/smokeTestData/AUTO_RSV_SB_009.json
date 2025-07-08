@@ -1,5 +1,8 @@
 {
-  "scenario_name": "RSV - Not Actionable, membership of Age Cohort, dose not yet due",
+  "scenario_name": "RSV - Not Actionable despite to membership of an Age Cohort with reasoning of dose not yet due",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000009"
+  },
   "config_filename": "AUTO_RSV_SB_001.json",
   "data": [
     {
@@ -40,7 +43,7 @@
     {
       "NHS_NUMBER": "5000000009",
       "ATTRIBUTE_TYPE": "RSV",
-      "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_-6>>"
+      "LAST_SUCCESSFUL_DATE": "20250326"
     }
   ]
 }

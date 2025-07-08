@@ -7,14 +7,16 @@
     {
       "condition": "RSV",
       "status": "Actionable",
-      "statusText": "You should have the RSV vaccine",
+      "statusText": "Status.actionable",
       "eligibilityCohorts": [],
       "suitabilityRules": [],
       "actions": [
         {
           "actionType": "CardWithText",
           "actionCode": "ManageLocal",
-          "description": "##You have an RSV vaccination appointment\nContact your healthcare provider to change or cancel your appointment."
+          "description": "##You have an RSV vaccination appointment\nContact your healthcare provider to change or cancel your appointment.",
+          "urlLink": "",
+          "urlLabel": ""
         }
       ]
     }

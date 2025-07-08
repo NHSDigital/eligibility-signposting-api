@@ -1,6 +1,10 @@
 {
   "scenario_name": "RSV - Not Actionable despite membership of an Age Cohort, already vaccinated",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000006"
+  },
   "config_filename": "AUTO_RSV_SB_001.json",
+  "notes": "actions need updating in the response when the functionality is delivered to provide actions for not_actionable responses",
   "data": [
     {
       "NHS_NUMBER": "5000000006",
@@ -8,7 +12,7 @@
       "COHORT_MAP": {
         "cohorts": {
           "M": {
-            "rsv_75_rolling": {
+            "no_group_description": {
               "M": {
                 "dateJoined": {
                   "S": "20230515"

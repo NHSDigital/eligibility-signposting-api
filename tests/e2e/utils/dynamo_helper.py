@@ -1,4 +1,5 @@
 import logging
+import os
 
 import boto3
 from botocore.exceptions import ClientError
@@ -56,7 +57,7 @@ class DynamoDBHelper:
 
 def insert_into_dynamo(data):
     logger.info("Inserting into Dynamo: %s", data)
-    table = DynamoDBHelper("eligibility-signposting-api-test-eligibility_datastore")
+    table = DynamoDBHelper(os.getenv("DYNAMODB_TABLE_NAME"))
     for item in data:
         try:
             table.insert_item(item)

@@ -68,21 +68,21 @@
             "ExternalRoutingCode": "ActionOneRoutingCode",
             "ActionDescription": "ActionOneDescription",
             "ActionType": "ActionOneActionType",
-            "UrlLink": "http://www.actiononeurl.com",
+            "UrlLink": "http://www.actiononeurl.com/",
             "UrlLabel": "ActionOneUrlLabel"
           },
           "ACTION_TWO": {
             "ExternalRoutingCode": "ActionTwoRoutingCode",
             "ActionDescription": "ActionTwoDescription",
             "ActionType": "ActionTwoActionType",
-            "UrlLink": "http://www.actiontwourl.com",
+            "UrlLink": "http://www.actiontwourl.com/",
             "UrlLabel": "ActionTwoUrlLabel"
           },
           "DEFAULT_ACTION": {
             "ExternalRoutingCode": "DefaultAction",
             "ActionDescription": "DefaultActionDescription",
             "ActionType": "DefaultActionType",
-            "UrlLink": "DefaultActionUrl",
+            "UrlLink": "http://www.defaultActionUrl.com/",
             "UrlLabel": "DefaultLabel"
           }
         }

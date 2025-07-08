@@ -84,4 +84,4 @@ def setup_dynamodb_data(request):
 
 @pytest.fixture(scope="session")
 def eligibility_client():
-    return EligibilityApiClient(BASE_URL)
+    return EligibilityApiClient(BASE_URL, cert_dir="certs")

@@ -1,6 +1,9 @@
 {
   "scenario_name": "RSV - No RSV response as no active campaign (not available type 2)",
-  "config_filename": "AUTO_RSV_SB_001.json",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000008"
+  },
+  "config_filename": "AUTO_RSV_SB_008.json",
   "data": [
     {
       "NHS_NUMBER": "5000000008",

@@ -92,8 +92,8 @@
             "ExternalRoutingCode": "DefaultAction",
             "ActionDescription": "DefaultActionDescription",
             "ActionType": "DefaultActionType",
-            "UrlLink": "DefaultActionUrl",
-            "UrlLabel": "DefaultLabel"
+            "UrlLink": "https://www.defaultactionurl.com/",
+            "UrlLabel": "DefaultActionLabel"
           }
         }
       }

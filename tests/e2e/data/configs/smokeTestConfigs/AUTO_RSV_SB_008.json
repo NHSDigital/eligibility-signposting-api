@@ -2,7 +2,7 @@
   "CampaignConfig": {
     "ID": "<<RANDOM_GUID>>",
     "Version": "1",
-    "Name": "Automation RSV - Regression Test Config",
+    "Name": "Automation RSV - Smoke Test Config",
     "Type": "V",
     "Target": "RSV",
     "Manager": "person1@nhs.net",
@@ -11,58 +11,51 @@
     "IterationFrequency": "X",
     "IterationType": "O",
     "IterationTime": "07:00:00",
-    "DefaultCommsRouting": "DEFAULT_ACTION",
-    "StartDate": "20250601",
-    "EndDate": "20260601",
+    "DefaultCommsRouting": "BOOK_LOCAL",
+    "StartDate": "20260601",
+    "EndDate": "20270601",
     "ApprovalMinimum": 0,
     "ApprovalMaximum": 0,
     "Iterations": [
       {
         "ID": ",<<RANDOM_GUID>>",
-        "DefaultCommsRouting": "DEFAULT_ACTION",
+        "DefaultCommsRouting": "BOOK_LOCAL",
         "Version": "1",
-        "Name": "Automation RSV - Regression Test Config Iteration",
+        "Name": "Automation RSV - Smoke Test Config Iteration",
         "IterationDate": "20250601",
         "IterationNumber": 1,
         "CommsType": "I",
         "ApprovalMinimum": 0,
         "ApprovalMaximum": 0,
-        "Type": "M",
+        "Type": "O",
         "IterationCohorts": [
           {
-            "CohortLabel": "rsv_cohort_1",
-            "CohortGroup": "rsv_age_group",
-            "PositiveDescription": "You are in an age group 1.",
-            "NegativeDescription": "You are not in an age group 1.",
-            "Priority": 10
-          },
-          {
-            "CohortLabel": "rsv_cohort_2",
-            "CohortGroup": "rsv_age_group",
-            "PositiveDescription": "You are in an age group 2.",
-            "NegativeDescription": "You are not in an age group 2.",
+            "CohortLabel": "rsv_75_rolling",
+            "CohortGroup": "rsv_age_rolling",
+            "PositiveDescription": "are aged 75 to 79 years old.",
+            "NegativeDescription": "are not aged 75 to 79 years old.",
             "Priority": 0
           },
           {
-            "CohortLabel": "rsv_cohort_3",
-            "CohortGroup": "rsv_other_group",
-            "PositiveDescription": "You are in an another group.",
-            "NegativeDescription": "You are not in an other group.",
-            "Priority": 20
+            "CohortLabel": "rsv_75to79_2024",
+            "CohortGroup": "rsv_age_catchup",
+            "PositiveDescription": "turned 80 between 2nd September 2024 and 31st August 2025",
+            "NegativeDescription": "did not turn 80 after 1 September 2024 and get vaccinated by 31 August 2025",
+            "Priority": 10
           },
           {
             "CohortLabel": "elid_all_people",
             "CohortGroup": "elid_all_people",
             "PositiveDescription": "",
             "NegativeDescription": "",
-            "Priority": 30
+            "Priority": 20
           },
           {
             "CohortLabel": "no_group_description",
             "CohortGroup": "",
             "PositiveDescription": "",
             "NegativeDescription": "",
-            "Priority": 40
+            "Priority": 30
           }
         ],
         "IterationRules": [
@@ -193,12 +186,47 @@
           }
         ],
         "ActionsMapper": {
-          "DEFAULT_ACTION": {
-            "ExternalRoutingCode": "DefaultAction",
-            "ActionDescription": "DefaultActionDescription",
-            "ActionType": "DefaultActionType",
-            "UrlLink": "https://www.defaultaction.com",
-            "UrlLabel": "DefaultLabel"
+          "BOOK_NBS": {
+            "ExternalRoutingCode": "BookNBS",
+            "ActionDescription": "",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Continue to booking"
+          },
+          "AMEND_NBS": {
+            "ExternalRoutingCode": "AmendNBS",
+            "ActionDescription": "##You have an RSV vaccination appointment\nYou can view, change or cancel your appointment below.",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Manage your appointment"
+          },
+          "CONTACT_GP": {
+            "ExternalRoutingCode": "ContactGP",
+            "ActionDescription": "Contact your GP",
+            "ActionType": "InfoText",
+            "UrlLink": null,
+            "UrlLabel": ""
+          },
+            "BOOK_LOCAL": {
+            "ExternalRoutingCode": "BookLocal",
+            "ActionDescription": "##Getting the vaccine\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
+            "ActionType": "InfoText",
+            "UrlLink": null,
+            "UrlLabel": ""
+          },
+            "MANAGE_LOCAL": {
+            "ExternalRoutingCode": "ManageLocal",
+            "ActionDescription": "##You have an RSV vaccination appointment\nContact your healthcare provider to change or cancel your appointment.",
+            "ActionType": "CardWithText",
+            "UrlLink": null,
+            "UrlLabel": ""
+          },
+            "CHECK_CORRECT": {
+            "ExternalRoutingCode": "CheckCorrect",
+            "ActionDescription": "##If you think this is incorrect\\nIf you have not had this vaccination and you think you should, speak to your healthcare professional.",
+            "ActionType": "InfoText",
+            "UrlLink": null,
+            "UrlLabel": ""
           }
         }
       }

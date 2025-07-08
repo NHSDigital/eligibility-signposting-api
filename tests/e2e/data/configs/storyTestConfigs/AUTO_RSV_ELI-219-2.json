@@ -99,7 +99,7 @@
             "ExternalRoutingCode": "DefaultAction",
             "ActionDescription": "DefaultActionDescription",
             "ActionType": "DefaultActionType",
-            "UrlLink": "DefaultActionUrl",
+            "UrlLink": "https://www.defaultactionurl.com",
             "UrlLabel": "DefaultLabel"
           }
         }

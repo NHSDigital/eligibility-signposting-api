@@ -1,5 +1,8 @@
 {
   "scenario_name": "RSV - Actionable due to membership of an Age Cohort incl. suggested actions (with local booking)",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000005"
+  },
   "config_filename": "AUTO_RSV_SB_001.json",
   "data": [
     {
