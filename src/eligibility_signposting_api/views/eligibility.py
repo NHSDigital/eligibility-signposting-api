@@ -9,6 +9,8 @@ from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
 from wireup import Injected
 
+from eligibility_signposting_api.audit.audit_context import AuditContext
+from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
@@ -26,9 +28,16 @@ logger = logging.getLogger(__name__)
 eligibility_blueprint = Blueprint("eligibility", __name__)
 
 
+@eligibility_blueprint.before_request
+def before_request() -> None:
+    AuditContext.add_request_details(request)
+
+
 @eligibility_blueprint.get("/", defaults={"nhs_number": ""})
 @eligibility_blueprint.get("/<nhs_number>")
-def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[EligibilityService]) -> ResponseReturnValue:
+def check_eligibility(
+    nhs_number: NHSNumber, eligibility_service: Injected[EligibilityService], audit_service: Injected[AuditService]
+) -> ResponseReturnValue:
     logger.info("checking nhs_number %r in %r", nhs_number, eligibility_service, extra={"nhs_number": nhs_number})
     try:
         eligibility_status = eligibility_service.get_eligibility_status(
@@ -39,7 +48,8 @@ def check_eligibility(nhs_number: NHSNumber, eligibility_service: Injected[Eligi
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
     else:
-        eligibility_response = build_eligibility_response(eligibility_status)
+        eligibility_response: eligibility.EligibilityResponse = build_eligibility_response(eligibility_status)
+        AuditContext.write_to_firehose(audit_service)
         return make_response(
             eligibility_response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK
         )
@@ -103,21 +113,38 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibi
             statusText=eligibility.StatusText(f"{condition.status}"),  # pyright: ignore[reportCallIssue]
             eligibilityCohorts=build_eligibility_cohorts(condition),  # pyright: ignore[reportCallIssue]
             suitabilityRules=build_suitability_results(condition),  # pyright: ignore[reportCallIssue]
-            actions=(
-                condition.actions.actions
-                if condition.actions is not None and condition.actions.actions is not None
-                else None
-            ),
+            actions=build_actions(condition),
         )
 
         processed_suggestions.append(suggestions)
 
+    response_id = uuid.uuid4()
+    updated = eligibility.LastUpdated(datetime.now(tz=UTC))
+
+    AuditContext.add_response_details(response_id, updated)
+
     return eligibility.EligibilityResponse(  # pyright: ignore[reportCallIssue]
-        responseId=uuid.uuid4(),  # pyright: ignore[reportCallIssue]
-        meta=eligibility.Meta(lastUpdated=eligibility.LastUpdated(datetime.now(tz=UTC))),
+        responseId=response_id,  # pyright: ignore[reportCallIssue]
+        meta=eligibility.Meta(lastUpdated=updated),
         # pyright: ignore[reportCallIssue]
         processedSuggestions=processed_suggestions,
     )
+
+
+def build_actions(condition: Condition) -> list[eligibility.Action] | None:
+    if condition.actions is not None:
+        return [
+            eligibility.Action(
+                actionType=eligibility.ActionType(action.action_type),
+                actionCode=eligibility.ActionCode(action.action_code),
+                description=eligibility.Description(action.action_description or ""),
+                urlLabel=eligibility.UrlLabel(action.url_label or ""),
+                urlLink=eligibility.UrlLink(str(action.url_link)) if action.url_link else eligibility.UrlLink(""),
+            )
+            for action in condition.actions
+        ]
+
+    return None
 
 
 def build_eligibility_cohorts(condition: Condition) -> list[eligibility.EligibilityCohort]:

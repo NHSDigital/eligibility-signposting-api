@@ -4,17 +4,23 @@ import string
 from polyfactory import Use
 from polyfactory.factories import DataclassFactory
 
-from eligibility_signposting_api.model.eligibility import CohortGroupResult, Condition, EligibilityStatus
+from eligibility_signposting_api.model import eligibility
+from eligibility_signposting_api.model.eligibility import UrlLink
 
 
-class ConditionFactory(DataclassFactory[Condition]): ...
+class SuggestedActionFactory(DataclassFactory[eligibility.SuggestedAction]):
+    url_link = UrlLink("https://test-example.com")
 
 
-class EligibilityStatusFactory(DataclassFactory[EligibilityStatus]):
-    condition = Use(ConditionFactory.batch, size=2)
+class ConditionFactory(DataclassFactory[eligibility.Condition]):
+    actions = Use(SuggestedActionFactory.batch, size=2)
 
 
-class CohortResultFactory(DataclassFactory[CohortGroupResult]): ...
+class EligibilityStatusFactory(DataclassFactory[eligibility.EligibilityStatus]):
+    conditions = Use(ConditionFactory.batch, size=2)
+
+
+class CohortResultFactory(DataclassFactory[eligibility.CohortGroupResult]): ...
 
 
 def random_str(length: int) -> str:

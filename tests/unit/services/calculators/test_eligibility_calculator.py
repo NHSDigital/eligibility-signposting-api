@@ -5,7 +5,7 @@ import pytest
 from faker import Faker
 from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_to, has_item, has_items, is_in
-from pydantic import ValidationError
+from pydantic import HttpUrl, ValidationError
 
 from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
@@ -15,12 +15,12 @@ from eligibility_signposting_api.model.eligibility import (
     ActionType,
     ConditionName,
     DateOfBirth,
+    InternalActionCode,
     NHSNumber,
     Postcode,
     RuleDescription,
     Status,
     SuggestedAction,
-    SuggestedActions,
     UrlLabel,
     UrlLink,
 )
@@ -51,14 +51,14 @@ class TestEligibilityCalculator:
                         ActionType="ActionType1",
                         ExternalRoutingCode="ActionCode1",
                         ActionDescription="ActionDescription1",
-                        UrlLink="ActionUrl1",
+                        UrlLink=HttpUrl("https://www.ActionUrl1.com"),
                         UrlLabel="ActionLabel1",
                     ),
                     "defaultcomms": AvailableAction(
                         ActionType="ActionType2",
                         ExternalRoutingCode="defaultcomms",
                         ActionDescription="ActionDescription2",
-                        UrlLink="ActionUrl2",
+                        UrlLink=HttpUrl("https://www.ActionUrl2.com"),
                         UrlLabel="ActionLabel2",
                     ),
                 }
@@ -426,10 +426,7 @@ def test_rule_types_cause_correct_statuses(rule_type: rules_model.RuleType, expe
         actual,
         is_eligibility_status().with_conditions(
             has_item(
-                is_condition()
-                .with_condition_name(ConditionName("RSV"))
-                .and_status(expected_status)
-                .and_actions(SuggestedActions([]))
+                is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status).and_actions([])
             )
         ),
     )
@@ -618,11 +615,33 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(Status.actionable)
-                .and_actions(SuggestedActions([suggested_action_for_default_comms])),
+                .and_actions(
+                    [
+                        SuggestedAction(
+                            internal_action_code=InternalActionCode("defaultcomms"),
+                            action_type=ActionType("CareCardWithText"),
+                            action_code=ActionCode("BookLocal"),
+                            action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                            url_link=None,
+                            url_label=None,
+                        )
+                    ]
+                ),
                 is_condition()
                 .with_condition_name(ConditionName("COVID"))
                 .and_status(Status.actionable)
-                .and_actions(SuggestedActions([suggested_action_for_book_nbs])),
+                .and_actions(
+                    [
+                        SuggestedAction(
+                            internal_action_code=InternalActionCode("ActionCode1"),
+                            action_type=ActionType("ButtonAuthLink"),
+                            action_code=ActionCode("BookNBS"),
+                            action_description=ActionDescription("Action description"),
+                            url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                            url_label=UrlLabel("Continue to booking"),
+                        )
+                    ]
+                ),
             )
         ),
     )
@@ -1742,7 +1761,7 @@ book_nbs_comms = AvailableAction(
     ActionType="ButtonAuthLink",
     ExternalRoutingCode="BookNBS",
     ActionDescription="Action description",
-    UrlLink="http://www.nhs.uk/book-rsv",
+    UrlLink=HttpUrl("https://www.nhs.uk/book-rsv"),
     UrlLabel="Continue to booking",
 )
 
@@ -1750,22 +1769,6 @@ default_comms_detail = AvailableAction(
     ActionType="CareCardWithText",
     ExternalRoutingCode="BookLocal",
     ActionDescription="You can get an RSV vaccination at your GP surgery",
-)
-
-suggested_action_for_book_nbs = SuggestedAction(
-    action_type=ActionType(book_nbs_comms.action_type),
-    action_code=ActionCode(book_nbs_comms.action_code),
-    action_description=ActionDescription(book_nbs_comms.action_description),
-    url_link=UrlLink(book_nbs_comms.url_link),
-    url_label=UrlLabel(book_nbs_comms.url_label),
-)
-
-suggested_action_for_default_comms = SuggestedAction(
-    action_type=ActionType(default_comms_detail.action_type),
-    action_code=ActionCode(default_comms_detail.action_code),
-    action_description=ActionDescription(default_comms_detail.action_description),
-    url_link=None,
-    url_label=None,
 )
 
 
@@ -1778,7 +1781,16 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms",
             "InternalBookNBS",
             {"InternalBookNBS": book_nbs_comms, "defaultcomms": default_comms_detail},
-            SuggestedActions([suggested_action_for_book_nbs]),
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("InternalBookNBS"),
+                    action_type=ActionType("ButtonAuthLink"),
+                    action_code=ActionCode("BookNBS"),
+                    action_description=ActionDescription("Action description"),
+                    url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                    url_label=UrlLabel("Continue to booking"),
+                )
+            ],
         ),
         (
             """Rule match: default_comms_routing has multiple values,
@@ -1786,7 +1798,24 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms1|defaultcomms2",
             None,
             {"defaultcomms1": default_comms_detail, "defaultcomms2": default_comms_detail},
-            SuggestedActions([suggested_action_for_default_comms, suggested_action_for_default_comms]),
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms1"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                ),
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms2"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                ),
+            ],
         ),
         (
             """Rule match: default_comms_routing has multiple values,
@@ -1794,7 +1823,16 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms1",
             "",
             {"defaultcomms1": default_comms_detail},
-            SuggestedActions([suggested_action_for_default_comms]),
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms1"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
         ),
         (
             """Rule match: default_comms_routing present,
@@ -1802,7 +1840,16 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms",
             "InternalBookNBS",
             {"defaultcomms": default_comms_detail},
-            SuggestedActions([suggested_action_for_default_comms]),
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
         ),
         (
             """Rule match: default_comms_routing present,
@@ -1810,7 +1857,16 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms",
             "InvalidCode",
             {"defaultcomms": default_comms_detail},
-            SuggestedActions([suggested_action_for_default_comms]),
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
         ),
         (
             """Rule match: action_mapper present without url,
@@ -1824,17 +1880,16 @@ suggested_action_for_default_comms = SuggestedAction(
                     ActionDescription=book_nbs_comms.action_description,
                 )
             },
-            SuggestedActions(
-                [
-                    SuggestedAction(
-                        action_type=ActionType(book_nbs_comms.action_type),
-                        action_code=ActionCode(book_nbs_comms.action_code),
-                        action_description=ActionDescription(book_nbs_comms.action_description),
-                        url_link=None,
-                        url_label=None,
-                    )
-                ]
-            ),
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("InternalBookNBS"),
+                    action_type=ActionType(book_nbs_comms.action_type),
+                    action_code=ActionCode(book_nbs_comms.action_code),
+                    action_description=ActionDescription(book_nbs_comms.action_description),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
         ),
         (
             """Rule match: default_comms_routing missing,
@@ -1842,7 +1897,7 @@ suggested_action_for_default_comms = SuggestedAction(
             "",
             "InternalBookNBS",
             {},
-            SuggestedActions([]),
+            [],
         ),
         (
             """Rule match: default_comms_routing missing, but action_mapper present,
@@ -1850,7 +1905,16 @@ suggested_action_for_default_comms = SuggestedAction(
             "",
             "InternalBookNBS",
             {"InternalBookNBS": book_nbs_comms},
-            SuggestedActions([suggested_action_for_book_nbs]),
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("InternalBookNBS"),
+                    action_type=ActionType("ButtonAuthLink"),
+                    action_code=ActionCode("BookNBS"),
+                    action_description=ActionDescription("Action description"),
+                    url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                    url_label=UrlLabel("Continue to booking"),
+                )
+            ],
         ),
         (
             """Rule match: default_comms_routing present,
@@ -1858,7 +1922,7 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcommskeywithoutactionmapper",
             "InternalBookNBS",
             {},
-            SuggestedActions([]),
+            [],
         ),
         (
             """Rule match: default_comms_routing has multiple values,
@@ -1866,7 +1930,16 @@ suggested_action_for_default_comms = SuggestedAction(
             "defaultcomms1|invaliddefault",
             None,
             {"defaultcomms1": default_comms_detail},
-            SuggestedActions([suggested_action_for_default_comms]),
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultcomms1"),
+                    action_type=ActionType("CareCardWithText"),
+                    action_code=ActionCode("BookLocal"),
+                    action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
         ),
     ],
 )
@@ -1875,7 +1948,7 @@ def test_correct_actions_determined_from_redirect_r_rules(  # noqa: PLR0913
     default_comms_routing: str,
     comms_routing: str,
     actions_mapper: ActionsMapper,
-    expected_actions: SuggestedActions,
+    expected_actions: list[SuggestedAction],
     faker: Faker,
 ):
     # Given
@@ -1969,7 +2042,20 @@ def test_cohort_label_not_supported_used_in_r_rules(test_comment: str, redirect_
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to(SuggestedActions([suggested_action_for_book_nbs])))
+                .and_actions(
+                    equal_to(
+                        [
+                            SuggestedAction(
+                                internal_action_code=InternalActionCode("ActionCode1"),
+                                action_type=ActionType("ButtonAuthLink"),
+                                action_code=ActionCode("BookNBS"),
+                                action_description=ActionDescription("Action description"),
+                                url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                                url_label=UrlLabel("Continue to booking"),
+                            )
+                        ]
+                    )
+                )
             )
         ),
         test_comment,
@@ -2025,7 +2111,20 @@ def test_multiple_r_rules_match_with_same_priority(faker: Faker):
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to(SuggestedActions([suggested_action_for_book_nbs])))
+                .and_actions(
+                    equal_to(
+                        [
+                            SuggestedAction(
+                                internal_action_code=InternalActionCode("rule_1_comms_routing"),
+                                action_type=ActionType("ButtonAuthLink"),
+                                action_code=ActionCode("BookNBS"),
+                                action_description=ActionDescription("Action description"),
+                                url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                                url_label=UrlLabel("Continue to booking"),
+                            )
+                        ]
+                    )
+                )
             )
         ),
     )
@@ -2079,7 +2178,22 @@ def test_multiple_r_rules_with_same_priority_one_rule_mismatch_should_return_def
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to(SuggestedActions([suggested_action_for_default_comms])))
+                .and_actions(
+                    equal_to(
+                        [
+                            SuggestedAction(
+                                internal_action_code=InternalActionCode("defaultcomms"),
+                                action_type=ActionType("CareCardWithText"),
+                                action_code=ActionCode("BookLocal"),
+                                action_description=ActionDescription(
+                                    "You can get an RSV vaccination at your GP surgery"
+                                ),
+                                url_link=None,
+                                url_label=None,
+                            )
+                        ]
+                    )
+                )
             )
         ),
     )
@@ -2109,7 +2223,7 @@ def test_only_highest_priority_rule_is_applied_and_return_actions_only_for_that_
                                     ActionType="AuthLink",
                                     ExternalRoutingCode="BookNBS",
                                     ActionDescription="Action description",
-                                    UrlLink="http://www.nhs.uk/book-rsv",
+                                    UrlLink=HttpUrl("https://www.nhs.uk/book-rsv"),
                                     UrlLabel="Continue to booking",
                                 ),
                                 "defaultcomms": default_comms_detail,
@@ -2131,6 +2245,7 @@ def test_only_highest_priority_rule_is_applied_and_return_actions_only_for_that_
     actual = calculator.evaluate_eligibility()
 
     expected_actions = SuggestedAction(
+        internal_action_code=InternalActionCode("rule_1_comms_routing"),
         action_type=ActionType("ButtonAuthLink"),
         action_code=ActionCode("BookNBS"),
         action_description=ActionDescription("Action description"),
@@ -2146,7 +2261,7 @@ def test_only_highest_priority_rule_is_applied_and_return_actions_only_for_that_
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to(SuggestedActions([expected_actions])))
+                .and_actions(equal_to([expected_actions]))
             )
         ),
     )
@@ -2193,7 +2308,20 @@ def test_should_include_actions_when_include_actions_flag_is_true_when_status_is
                 is_condition()
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(equal_to(Status.actionable))
-                .and_actions(equal_to(SuggestedActions([suggested_action_for_book_nbs])))
+                .and_actions(
+                    equal_to(
+                        [
+                            SuggestedAction(
+                                internal_action_code=InternalActionCode("book_nbs"),
+                                action_type=ActionType("ButtonAuthLink"),
+                                action_code=ActionCode("BookNBS"),
+                                action_description=ActionDescription("Action description"),
+                                url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
+                                url_label=UrlLabel("Continue to booking"),
+                            )
+                        ]
+                    )
+                )
             )
         ),
     )

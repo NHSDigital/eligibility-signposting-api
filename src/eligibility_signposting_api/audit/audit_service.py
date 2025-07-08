@@ -31,8 +31,9 @@ class AuditService:  # pragma: no cover
         Returns:
             str: The Firehose record ID.
         """
+        data = json.dumps(audit_record, default=str)
         response = self.firehose.put_record(
             DeliveryStreamName=self.audit_delivery_stream,
-            Record={"Data": (json.dumps(audit_record) + "\n").encode("utf-8")},
+            Record={"Data": (data + "\n").encode("utf-8")},
         )
         logger.info("Successfully sent to the Firehose", extra={"firehose_record_id": response["RecordId"]})

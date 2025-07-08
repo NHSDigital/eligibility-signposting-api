@@ -6,6 +6,8 @@ from enum import Enum, StrEnum, auto
 from functools import total_ordering
 from typing import NewType, Self
 
+from pydantic import HttpUrl
+
 NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
 Postcode = NewType("Postcode", str)
@@ -13,11 +15,13 @@ ConditionName = NewType("ConditionName", str)
 
 RuleName = NewType("RuleName", str)
 RuleDescription = NewType("RuleDescription", str)
+RulePriority = NewType("RulePriority", str)
 
+InternalActionCode = NewType("InternalActionCode", str)
 ActionType = NewType("ActionType", str)
 ActionCode = NewType("ActionCode", str)
 ActionDescription = NewType("ActionDescription", str)
-UrlLink = NewType("UrlLink", str)
+UrlLink = NewType("UrlLink", HttpUrl)
 UrlLabel = NewType("UrlLabel", str)
 
 
@@ -66,6 +70,7 @@ class Status(Enum):
 class Reason:
     rule_type: RuleType
     rule_name: RuleName
+    rule_priority: RulePriority
     rule_description: RuleDescription | None
     matcher_matched: bool
 
@@ -77,11 +82,7 @@ class SuggestedAction:
     action_description: ActionDescription | None
     url_link: UrlLink | None
     url_label: UrlLabel | None
-
-
-@dataclass
-class SuggestedActions:
-    actions: list[SuggestedAction]
+    internal_action_code: InternalActionCode | None = None
 
 
 @dataclass
@@ -89,7 +90,7 @@ class Condition:
     condition_name: ConditionName
     status: Status
     cohort_results: list[CohortGroupResult]
-    actions: SuggestedActions | None = None
+    actions: list[SuggestedAction] | None = None
 
 
 @dataclass
@@ -98,13 +99,14 @@ class CohortGroupResult:
     status: Status
     reasons: list[Reason]
     description: str | None
+    audit_rules: list[Reason]
 
 
 @dataclass
 class IterationResult:
     status: Status
     cohort_results: list[CohortGroupResult]
-    actions: SuggestedActions | None
+    actions: list[SuggestedAction] | None
 
 
 @dataclass

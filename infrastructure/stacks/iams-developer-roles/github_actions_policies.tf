@@ -13,7 +13,8 @@ resource "aws_iam_policy" "terraform_state" {
           "s3:ListBucket",
           "s3:GetObject",
           "s3:PutObject",
-          "s3:DeleteObject"
+          "s3:DeleteObject",
+          "s3:GetObject"
         ],
         Resource = [
           "${local.terraform_state_bucket_arn}",
@@ -147,6 +148,7 @@ resource "aws_iam_policy" "s3_management" {
           "s3:PutBucketLogging",
           "s3:GetObjectTagging",
           "s3:PutObjectTagging",
+          "s3:GetObjectVersion"
         ],
         Resource = [
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules",
@@ -296,9 +298,13 @@ resource "aws_iam_policy" "kms_creation" {
         Effect = "Allow",
         Action = [
           "kms:CreateKey",
+          "kms:DescribeKey",
           "kms:CreateAlias",
           "kms:List*",
           "kms:ListAliases",
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:ReEncrypt*",
         ],
         Resource = "*"
       },
