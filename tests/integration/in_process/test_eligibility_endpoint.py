@@ -218,7 +218,15 @@ class TestStandardResponse:
                                             "cohortText": "positive_description",
                                         }
                                     ],
-                                    "actions": [{"actionType": "defaultcomms", "actionCode": "action_code"}],
+                                    "actions": [
+                                        {
+                                            "actionCode": "action_code",
+                                            "actionType": "defaultcomms",
+                                            "description": "",
+                                            "urlLabel": "",
+                                            "urlLink": "",
+                                        }
+                                    ],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }
@@ -355,7 +363,15 @@ class TestMagicCohortResponse:
                                             "cohortText": "magic positive description",
                                         }
                                     ],
-                                    "actions": [{"actionType": "defaultcomms", "actionCode": "action_code"}],
+                                    "actions": [
+                                        {
+                                            "actionCode": "action_code",
+                                            "actionType": "defaultcomms",
+                                            "description": "",
+                                            "urlLabel": "",
+                                            "urlLink": "",
+                                        }
+                                    ],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }
@@ -511,7 +527,15 @@ class TestResponseOnMissingAttributes:
                                     "condition": "FLU",
                                     "status": "Actionable",
                                     "eligibilityCohorts": [],
-                                    "actions": [{"actionCode": "action_code", "actionType": "defaultcomms"}],
+                                    "actions": [
+                                        {
+                                            "actionCode": "action_code",
+                                            "actionType": "defaultcomms",
+                                            "description": "",
+                                            "urlLabel": "",
+                                            "urlLink": "",
+                                        }
+                                    ],
                                     "suitabilityRules": [],
                                     "statusText": "Status.actionable",
                                 }

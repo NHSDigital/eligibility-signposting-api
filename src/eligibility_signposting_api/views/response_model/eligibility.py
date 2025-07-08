@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import NewType
 
-from pydantic import UUID4, BaseModel, Field, HttpUrl, field_serializer
+from pydantic import UUID4, BaseModel, Field, field_serializer
 from pydantic_core.core_schema import SerializationInfo
 
 LastUpdated = NewType("LastUpdated", datetime)
@@ -16,6 +16,7 @@ RuleText = NewType("RuleText", str)
 CohortCode = NewType("CohortCode", str)
 CohortText = NewType("CohortText", str)
 UrlLabel = NewType("UrlLabel", str)
+UrlLink = NewType("UrlLink", str)
 
 
 class Status(StrEnum):
@@ -49,9 +50,9 @@ class SuitabilityRule(BaseModel):
 class Action(BaseModel):
     action_type: ActionType = Field(..., alias="actionType")
     action_code: ActionCode = Field(..., alias="actionCode")
-    description: Description | None
-    url_link: HttpUrl | None = Field(..., alias="urlLink")
-    url_label: UrlLabel | None = Field(..., alias="urlLabel")
+    description: Description = Field(default=Description(""))
+    url_link: UrlLink = Field(default=UrlLink(""), alias="urlLink")
+    url_label: UrlLabel = Field(default=UrlLabel(""), alias="urlLabel")
 
     model_config = {"populate_by_name": True}
 
