@@ -22,7 +22,11 @@
           "INTERNALCONTACTGP1": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Text1 description", "ActionType":"text1"},
           "INTERNALCONTACTGP2": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Link description", "ActionType":"link", "UrlLink": "link123", "UrlLabel": "link label"},
           "INTERNALTESCO": {"ExternalRoutingCode": "TESCO","ActionDescription":"Tesco description", "ActionType":"link", "UrlLink": "tesco link", "UrlLabel": "link label"},
-          "INTERNALFINDWALKIN": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"}
+          "INTERNALFINDWALKIN": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"},
+
+          "XRULEID1": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"},
+          "YRULEID1": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"}
+
         },
         "IterationCohorts": [
           {
@@ -96,25 +100,25 @@
           },
           {
             "Type": "X",
-            "Name": "Test X Rule for not actionable",
+            "Name": "Test X Rule for not eligible",
             "Description": "Test X Rule Desc",
             "Priority": 20,
             "AttributeLevel": "PERSON",
             "AttributeName": "DATE_OF_BIRTH",
             "Operator": ">",
             "Comparator": "19000101",
-            "CommsRouting": "INTERNALCONTACTGP1|INTERNALTESCO"
+            "CommsRouting": "XRULEID1|INTERNALTESCO"
           },
           {
             "Type": "Y",
-            "Name": "Test Y Rule for not eligible",
+            "Name": "Test Y Rule for not actionable",
             "Description": "Test Y Rule Desc",
             "Priority": 20,
             "AttributeLevel": "PERSON",
             "AttributeName": "DATE_OF_BIRTH",
             "Operator": ">",
             "Comparator": "19000101",
-            "CommsRouting": "INTERNALCONTACTGP1|INTERNALTESCO"
+            "CommsRouting": "YRULEID1|INTERNALTESCO"
           }
         ],
         "Version": "1",
