@@ -9,7 +9,7 @@ from functools import cached_property
 from operator import attrgetter
 from typing import Literal, NewType
 
-from pydantic import BaseModel, Field, HttpUrl, RootModel, field_serializer, field_validator, model_validator
+from pydantic import BaseModel, Field, RootModel, field_serializer, field_validator, model_validator
 
 from eligibility_signposting_api.config.contants import MAGIC_COHORT_LABEL, RULE_STOP_DEFAULT
 
@@ -132,7 +132,7 @@ class AvailableAction(BaseModel):
     action_type: str = Field(..., alias="ActionType")
     action_code: str = Field(..., alias="ExternalRoutingCode")
     action_description: str | None = Field(None, alias="ActionDescription")
-    url_link: HttpUrl | None = Field(None, alias="UrlLink")
+    url_link: str | None = Field(None, alias="UrlLink")
     url_label: str | None = Field(None, alias="UrlLabel")
 
     model_config = {"populate_by_name": True}
