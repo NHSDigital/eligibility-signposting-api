@@ -199,20 +199,30 @@ class EligibilityCalculator:
                 else:
                     actions = None
 
-            if best_candidate.status in (Status.not_eligible, Status.not_actionable) and not include_actions_flag:
-                actions = None
+            # todo naming decisions
+            # handle_redirect_rules NEW NAME!!
+            # x rules = ?
+            # y rules = ?
 
-            # if best_candidate.status == Status.not_eligible
+            # elif best_candidate.status == Status.not_eligible and best_active_iteration is not None:
             #     if include_actions_flag:
             #         ... = self.handle_X_rules(best_active_iteration)
             #     else:
             #         actions = None
 
-            # if best_candidate.status == Status.not_actionable
+            # elif best_candidate.status == Status.not_actionable and best_active_iteration is not None:
             #     if include_actions_flag:
             #         ... = self.handle_Y_rules(best_active_iteration)
             #     else:
             #         actions = None
+
+            # else:
+            #   actions = None
+
+            if best_candidate.status in (Status.not_eligible, Status.not_actionable) and not include_actions_flag:
+                actions = None
+
+
 
 
             # add actions to condition results
@@ -228,6 +238,9 @@ class EligibilityCalculator:
                 (best_campaign_id, best_campaign_version),
                 (redirect_rule_priority, redirect_rule_name),
             )
+
+            #todo check if need reset
+            #redirect_rule_priority, redirect_rule_name = None, None
 
         # Consolidate all the results and return
         final_result = self.build_condition_results(condition_results)
