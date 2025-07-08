@@ -42,7 +42,8 @@ class RuleType(StrEnum):
     filter = "F"
     suppression = "S"
     redirect = "R"
-
+    not_eligible = "X"
+    not_actionable = "Y"
 
 class RuleOperator(StrEnum):
     equals = "="
@@ -153,6 +154,8 @@ class Iteration(BaseModel):
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
     type: Literal["A", "M", "S", "O"] = Field(..., alias="Type")
     default_comms_routing: str = Field(..., alias="DefaultCommsRouting")
+    default_not_eligible_routing: str = Field(..., alias="DefaultNotEligibleRouting")
+    default_not_actionable_routing: str = Field(..., alias="DefaultNotActionableRouting")
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
     actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")

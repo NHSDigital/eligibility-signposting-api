@@ -202,6 +202,19 @@ class EligibilityCalculator:
             if best_candidate.status in (Status.not_eligible, Status.not_actionable) and not include_actions_flag:
                 actions = None
 
+            # if best_candidate.status == Status.not_eligible
+            #     if include_actions_flag:
+            #         ... = self.handle_X_rules(best_active_iteration)
+            #     else:
+            #         actions = None
+
+            # if best_candidate.status == Status.not_actionable
+            #     if include_actions_flag:
+            #         ... = self.handle_Y_rules(best_active_iteration)
+            #     else:
+            #         actions = None
+
+
             # add actions to condition results
             condition_results[condition_name].actions = actions
             # reset actions for the next condition
