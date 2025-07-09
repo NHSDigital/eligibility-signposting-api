@@ -53,28 +53,28 @@ def test_validate_nhs_number(path_nhs, header_nhs, expected_result, expected_log
         ("condition@#$", False, "Invalid condition query param: 'condition@#$'"),
     ],
 )
-def test_validate_query_params_conditions(conditions_input, expected_result, expected_log_msg, captured_log):
+def test_validate_query_params_conditions(conditions_input, expected_result, expected_log_msg, caplog):
     params = {"conditions": conditions_input}
 
-    with captured_log.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):
         result = wrapper.validate_query_params(params)
 
     assert result == expected_result
 
     if not expected_result:
         assert any(
-            (record.levelname == "ERROR" and expected_log_msg in record.message) for record in captured_log.records
+            (record.levelname == "ERROR" and expected_log_msg in record.message) for record in caplog.records
         )
     else:
-        assert not captured_log.records
+        assert not caplog.records
 
 
-def test_validate_query_params_conditions_default(captured_log):
+def test_validate_query_params_conditions_default(caplog):
     params = {"category": "ALL", "includeActions": "Y"}
-    with captured_log.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):
         result = wrapper.validate_query_params(params)
     assert result is True
-    assert not captured_log.records
+    assert not caplog.records
 
 
 @pytest.mark.parametrize(
@@ -92,26 +92,26 @@ def test_validate_query_params_conditions_default(captured_log):
         ("VACCINATION", False, "Invalid category query param: 'VACCINATION'"),
     ],
 )
-def test_validate_query_params_category(category_input, expected_result, expected_log_msg, captured_log):
+def test_validate_query_params_category(category_input, expected_result, expected_log_msg, caplog):
     params = {"category": category_input}
-    with captured_log.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):
         result = wrapper.validate_query_params(params)
     assert result == expected_result
 
     if not expected_result:
         assert any(
-            (record.levelname == "ERROR" and expected_log_msg in record.message) for record in captured_log.records
+            (record.levelname == "ERROR" and expected_log_msg in record.message) for record in caplog.records
         )
     else:
-        assert not captured_log.records
+        assert not caplog.records
 
 
-def test_validate_query_params_category_default(captured_log):
+def test_validate_query_params_category_default(caplog):
     params = {"conditions": "ALL", "includeActions": "Y"}
-    with captured_log.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):
         result = wrapper.validate_query_params(params)
     assert result is True
-    assert not captured_log.records
+    assert not caplog.records
 
 
 @pytest.mark.parametrize(
@@ -130,71 +130,71 @@ def test_validate_query_params_category_default(captured_log):
         (" ", False, "Invalid include actions query param: ' '"),
     ],
 )
-def test_validate_query_params_include_actions(include_actions_input, expected_result, expected_log_msg, captured_log):
+def test_validate_query_params_include_actions(include_actions_input, expected_result, expected_log_msg, caplog):
     params = {"includeActions": include_actions_input}
-    with captured_log.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):
         result = wrapper.validate_query_params(params)
     assert result == expected_result
 
     if not expected_result:
         assert any(
-            (record.levelname == "ERROR" and expected_log_msg in record.message) for record in captured_log.records
+            (record.levelname == "ERROR" and expected_log_msg in record.message) for record in caplog.records
         )
     else:
-        assert not captured_log.records
+        assert not caplog.records
 
 
-def test_validate_query_params_include_actions_default(captured_log):
+def test_validate_query_params_include_actions_default(caplog):
     params = {"conditions": "ALL", "category": "ALL"}
-    with captured_log.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):
         result = wrapper.validate_query_params(params)
     assert result is True
-    assert not captured_log.records
+    assert not caplog.records
 
 
-def test_validate_query_params_all_valid_params(captured_log):
+def test_validate_query_params_all_valid_params(caplog):
     params = {"conditions": "COND1,COND2", "category": "SCREENING", "includeActions": "N"}
-    with captured_log.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):
         result = wrapper.validate_query_params(params)
     assert result is True
-    assert not captured_log.records
+    assert not caplog.records
 
 
-def test_validate_query_params_mixed_valid_invalid_conditions_fail_first(captured_log):
+def test_validate_query_params_mixed_valid_invalid_conditions_fail_first(caplog):
     params = {"conditions": "VALID_COND,INVALID!,ANOTHER_VALID", "category": "SCREENING", "includeActions": "N"}
-    with captured_log.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):
         result = wrapper.validate_query_params(params)
     assert result is False
     assert any(
         (record.levelname == "ERROR" and "Invalid condition query param: " in record.message)
-        for record in captured_log.records
+        for record in caplog.records
     )
 
-    error_logs = [r for r in captured_log.records if r.levelname == "ERROR"]
+    error_logs = [r for r in caplog.records if r.levelname == "ERROR"]
     assert len(error_logs) == 1
 
 
-def test_validate_query_params_valid_conditions_invalid_category_fail_second(captured_log):
+def test_validate_query_params_valid_conditions_invalid_category_fail_second(caplog):
     params = {"conditions": "CONDITION", "category": "BAD_CAT", "includeActions": "N"}
-    with captured_log.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):
         result = wrapper.validate_query_params(params)
     assert result is False
     assert any(
         (record.levelname == "ERROR" and "Invalid category query param: " in record.message)
-        for record in captured_log.records
+        for record in caplog.records
     )
-    error_logs = [r for r in captured_log.records if r.levelname == "ERROR"]
+    error_logs = [r for r in caplog.records if r.levelname == "ERROR"]
     assert len(error_logs) == 1
 
 
-def test_validate_query_params_valid_conditions_category_invalid_actions_fail_third(captured_log):
+def test_validate_query_params_valid_conditions_category_invalid_actions_fail_third(caplog):
     params = {"conditions": "CONDITION", "category": "VACCINATIONS", "includeActions": "Nope"}
-    with captured_log.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):
         result = wrapper.validate_query_params(params)
     assert result is False
     assert any(
         (record.levelname == "ERROR" and "Invalid include actions query param: " in record.message)
-        for record in captured_log.records
+        for record in caplog.records
     )
-    error_logs = [r for r in captured_log.records if r.levelname == "ERROR"]
+    error_logs = [r for r in caplog.records if r.levelname == "ERROR"]
     assert len(error_logs) == 1
