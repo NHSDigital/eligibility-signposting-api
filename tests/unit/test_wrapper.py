@@ -12,8 +12,9 @@ def setup_logging_for_tests():
     logger.setLevel(logging.INFO)
     logger.addHandler(logging.NullHandler())
 
+
 @pytest.mark.parametrize(
-    "path_nhs, header_nhs, expected_result, expected_log_msg",
+    ("path_nhs", "header_nhs", "expected_result", "expected_log_msg"),
     [
         (None, None, False, "NHS number is not present"),
         ("1234567890", None, False, "NHS number is not present"),
@@ -62,9 +63,7 @@ def test_validate_query_params_conditions(conditions_input, expected_result, exp
     assert result == expected_result
 
     if not expected_result:
-        assert any(
-            (record.levelname == "ERROR" and expected_log_msg in record.message) for record in caplog.records
-        )
+        assert any((record.levelname == "ERROR" and expected_log_msg in record.message) for record in caplog.records)
     else:
         assert not caplog.records
 
@@ -99,9 +98,7 @@ def test_validate_query_params_category(category_input, expected_result, expecte
     assert result == expected_result
 
     if not expected_result:
-        assert any(
-            (record.levelname == "ERROR" and expected_log_msg in record.message) for record in caplog.records
-        )
+        assert any((record.levelname == "ERROR" and expected_log_msg in record.message) for record in caplog.records)
     else:
         assert not caplog.records
 
@@ -137,9 +134,7 @@ def test_validate_query_params_include_actions(include_actions_input, expected_r
     assert result == expected_result
 
     if not expected_result:
-        assert any(
-            (record.levelname == "ERROR" and expected_log_msg in record.message) for record in caplog.records
-        )
+        assert any((record.levelname == "ERROR" and expected_log_msg in record.message) for record in caplog.records)
     else:
         assert not caplog.records
 

@@ -3,12 +3,11 @@ import logging
 import re
 import uuid
 from collections.abc import Callable
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from functools import wraps
 from http import HTTPStatus
 from typing import Any
 
-from fhir.resources.R4B.operationoutcome import OperationOutcome, OperationOutcomeIssue
 from mangum.types import LambdaContext, LambdaEvent
 
 from eligibility_signposting_api.config.contants import NHS_NUMBER_HEADER
@@ -45,7 +44,7 @@ def validate_query_params(query_params: dict[str, str]) -> tuple[bool, dict[str,
     return True, None
 
 
-def get_error_response(query_type: str, query_value: str):
+def get_error_response(query_type: str, query_value: str) -> dict[str, Any]:
     operation_outcome = {
         "id": uuid.uuid4(),
         "meta": {
@@ -53,29 +52,27 @@ def get_error_response(query_type: str, query_value: str):
         },
         "issue": [
             {
-                "severity":"error",
-                "code":"value",
-                "diagnostics":f"{query_value} is not a {query_type} that is supported by the API",
-                "location":[f"parameters/{query_type}"],
-                "details":{
+                "severity": "error",
+                "code": "value",
+                "diagnostics": f"{query_value} is not a {query_type} that is supported by the API",
+                "location": [f"parameters/{query_type}"],
+                "details": {
                     "coding": [
                         {
                             "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
                             "code": "VALIDATION_ERROR",
-                            "display": f"The supplied {query_type} was not recognised by the API."
+                            "display": f"The supplied {query_type} was not recognised by the API.",
                         }
                     ]
-                }
+                },
             }
         ],
-        "resourceType": "OperationOutcome", # TODO: use real class?
+        "resourceType": "OperationOutcome",  # TODO: use real class?
     }
     return {
         "statusCode": HTTPStatus.UNPROCESSABLE_ENTITY,
-        "headers": {
-            "Content-Type": "application/fhir+json"
-        },
-        "body": json.dumps(operation_outcome, default=str)
+        "headers": {"Content-Type": "application/fhir+json"},
+        "body": json.dumps(operation_outcome, default=str),
     }
 
 
@@ -95,7 +92,7 @@ def validate_nhs_number(path_nhs: int, header_nhs: int) -> bool:
 def validate_request_params() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]:
+        def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any] | None:
             path_param_nhs_number = event.get("pathParameters", {}).get("id")
             header_nhs_number = event.get("headers", {}).get(NHS_NUMBER_HEADER)
 
@@ -105,8 +102,9 @@ def validate_request_params() -> Callable:
             # TODO: check if this is needed?
             query_params_raw = event.get("queryStringParameters")
             if query_params_raw is None:
-                event.setdefault("queryStringParameters",
-                                 {"category": "ALL", "conditions": "ALL", "includeActions": "Y"})
+                event.setdefault(
+                    "queryStringParameters", {"category": "ALL", "conditions": "ALL", "includeActions": "Y"}
+                )
             else:
                 is_valid, problem = validate_query_params(query_params_raw)
                 if not is_valid:
