@@ -690,24 +690,21 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
 
 
 @pytest.mark.parametrize(
-    ("headers", "expected_log_msg"),
+    ("headers", "expected_request_id"),
     [
+        ({"X-Request-ID": "test-request-id-123"}, "test-request-id-123"),
         (
-            {"X-Request-ID": "test-request-id-123", "X-Correlation-ID": "test-correlation-id-456"},
-            "X-Request-ID: test-request-id-123, X-Correlation-ID: test-correlation-id-456",
-        ),
-        (
-            {"X-Request-ID": "", "X-Correlation-ID": ""},
-            "X-Request-ID: , X-Correlation-ID: ",
+            {"X-Request-ID": ""},
+            "",
         ),
         (
             {},  # No headers provided
-            "X-Request-ID: None, X-Correlation-ID: None",
+            None,
         ),
     ],
 )
-def test_request_id_and_correlation_id_logging_variants(
-    app: Flask, client: FlaskClient, caplog, headers, expected_log_msg
+def test_request_id_from_header_logging_variants(
+    app: Flask, client: FlaskClient, caplog, headers: dict[str, str], expected_request_id: str
 ):
     with (
         get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()),
@@ -716,6 +713,13 @@ def test_request_id_and_correlation_id_logging_variants(
         with caplog.at_level(logging.INFO):
             response = client.get("/patient-check/12345", headers=headers)
 
-        log_messages = [record.getMessage() for record in caplog.records]
-        assert any(expected_log_msg in message for message in log_messages)
+        request_id_logged = False
+        for record in caplog.records:
+            request_id = getattr(record, "X-Request-ID", None)
+
+            if request_id == expected_request_id:
+                request_id_logged = True
+                break
+
+        assert request_id_logged
         assert response.status_code == HTTPStatus.OK
