@@ -196,6 +196,7 @@ class EligibilityCalculator:
 
             condition_results[condition_name] = best_candidate
 
+            # Redirect action rules
             if best_candidate.status == Status.actionable and best_active_iteration is not None:
                 if include_actions_flag:
                     actions, matched_action_rule_priority, matched_action_rule_name = self.handle_action_rules(
@@ -206,28 +207,35 @@ class EligibilityCalculator:
                 else:
                     actions = None
 
-            # TODO naming decisions
-            # handle_redirect_rules NEW NAME!!
-            # x rules = ?
-            # y rules = ?
+            # Not Eligible action rules (Xrules)
+            elif best_candidate.status == Status.not_eligible and best_active_iteration is not None:
+                if include_actions_flag:
+                    actions, matched_action_rule_priority, matched_action_rule_name = self.handle_action_rules(
+                        best_active_iteration, rules.RuleType.not_eligible_actions
+                    )
+                    action_rule_name = matched_action_rule_name
+                    action_rule_priority = matched_action_rule_priority
+                else:
+                    actions = None
 
-            # elif best_candidate.status == Status.not_eligible and best_active_iteration is not None:
-            #     if include_actions_flag:
-            #         ... = self.handle_X_rules(best_active_iteration)
-            #     else:
-            #         actions = None
+            # Not Actionable action rules (Yrules)
+            elif best_candidate.status == Status.not_actionable and best_active_iteration is not None:
+                if include_actions_flag:
+                    actions, matched_action_rule_priority, matched_action_rule_name = self.handle_action_rules(
+                        best_active_iteration, rules.RuleType.not_actionable_actions
+                    )
+                    action_rule_name = matched_action_rule_name
+                    action_rule_priority = matched_action_rule_priority
+                else:
+                    actions = None
 
-            # elif best_candidate.status == Status.not_actionable and best_active_iteration is not None:
-            #     if include_actions_flag:
-            #         ... = self.handle_Y_rules(best_active_iteration)
-            #     else:
-            #         actions = None
+            else:
+                actions = None
 
-            # else:
-            #   actions = None
 
             if best_candidate.status in (Status.not_eligible, Status.not_actionable) and not include_actions_flag:
                 actions = None
+
 
             # add actions to condition results
             condition_results[condition_name].actions = actions
