@@ -13,6 +13,28 @@ def setup_logging_for_tests():
     logger.addHandler(logging.NullHandler())
     yield
 
+@pytest.mark.parametrize(
+    "path_nhs, header_nhs, expected_result, expected_log_msg",
+    [
+        (None, None, False, "NHS number is not present"),
+        ("1234567890", None, False, "NHS number is not present"),
+        (None, "1234567890", False, "NHS number is not present"),
+        ("1234567890", "0987654321", False, "NHS number mismatch"),
+        ("1234567890", "1234567890", True, None),
+    ],
+)
+def test_validate_nhs_number(path_nhs, header_nhs, expected_result, expected_log_msg, caplog):
+    with caplog.at_level(logging.ERROR):
+        result = wrapper.validate_nhs_number(path_nhs, header_nhs)
+
+    assert result == expected_result
+
+    if expected_log_msg:
+        assert any(expected_log_msg in record.message for record in caplog.records)
+    else:
+        # No error logs expected if validation passes
+        assert not caplog.records
+
 
 @pytest.mark.parametrize("conditions_input, expected_result, expected_log_msg", [
     ("ALL", True, None),

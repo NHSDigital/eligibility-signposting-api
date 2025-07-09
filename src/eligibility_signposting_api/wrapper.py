@@ -45,6 +45,11 @@ def validate_query_params(params: dict[str, str]) -> bool:
 
 def validate_nhs_number(path_nhs, header_nhs):
     logger.info("NHS numbers from the request", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
+
+    if not header_nhs or not path_nhs:
+        logger.error("NHS number is not present", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
+        return False
+
     if header_nhs != path_nhs:
         logger.error("NHS number mismatch", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
         return False

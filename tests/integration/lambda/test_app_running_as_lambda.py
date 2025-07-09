@@ -267,6 +267,27 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
     )
 
 
+def test_given_nhs_number_not_present_in_headers_results_in_error_response(
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person: NHSNumber,
+    campaign_config: CampaignConfig,  # noqa:ARG001
+    api_gateway_endpoint: URL,
+):
+    # Given
+    # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
+    response = httpx.get(
+        invoke_url,
+        timeout=10,
+    )
+
+    # Then
+    assert_that(
+        response,
+        is_response().with_status_code(HTTPStatus.FORBIDDEN).and_body("NHS number mismatch"),
+    )
+
+
 def test_given_person_has_unique_status_for_different_conditions_with_audit(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person_all_cohorts: NHSNumber,
