@@ -687,3 +687,35 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
         assert action["description"] == "Contact GP"
         assert action["urlLink"] == "https://example.dummy/"
         assert action["urlLabel"] == "GP contact"
+
+
+@pytest.mark.parametrize(
+    ("headers", "expected_log_msg"),
+    [
+        (
+            {"X-Request-ID": "test-request-id-123", "X-Correlation-ID": "test-correlation-id-456"},
+            "X-Request-ID: test-request-id-123, X-Correlation-ID: test-correlation-id-456",
+        ),
+        (
+            {"X-Request-ID": "", "X-Correlation-ID": ""},
+            "X-Request-ID: , X-Correlation-ID: ",
+        ),
+        (
+            {},  # No headers provided
+            "X-Request-ID: None, X-Correlation-ID: None",
+        ),
+    ],
+)
+def test_request_id_and_correlation_id_logging_variants(
+    app: Flask, client: FlaskClient, caplog, headers, expected_log_msg
+):
+    with (
+        get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()),
+        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
+    ):
+        with caplog.at_level(logging.INFO):
+            response = client.get("/patient-check/12345", headers=headers)
+
+        log_messages = [record.getMessage() for record in caplog.records]
+        assert any(expected_log_msg in message for message in log_messages)
+        assert response.status_code == HTTPStatus.OK
