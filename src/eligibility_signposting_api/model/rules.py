@@ -42,8 +42,9 @@ class RuleType(StrEnum):
     filter = "F"
     suppression = "S"
     redirect = "R"
-    not_eligible = "X"
-    not_actionable = "Y"
+    not_eligible_actions = "X"
+    not_actionable_actions = "Y"
+
 
 class RuleOperator(StrEnum):
     equals = "="

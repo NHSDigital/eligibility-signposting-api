@@ -98,14 +98,13 @@ class AuditContext:
                             rule_message=value.audit_rules[0].rule_description,
                         )
 
-        # todo
+        # TODO
         # if actionflag
         # if best_candidate and best_candidate.status and actionflag
         if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
             audit_redirect_rule = AuditRedirectRule(
                 rule_priority=str(redirect_rule_details[0]), rule_name=redirect_rule_details[1]
             )
-
 
         if suggested_actions is None:
             audit_actions = None

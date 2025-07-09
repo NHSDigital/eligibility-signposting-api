@@ -39,7 +39,7 @@ from tests.fixtures.matchers.rules import is_iteration_rule
 
 class TestEligibilityCalculator:
     @staticmethod
-    def test_get_redirect_rules():
+    def test_get_action_rules_components():
         # Given
 
         iteration = rule_builder.IterationFactory.build(
@@ -67,7 +67,9 @@ class TestEligibilityCalculator:
         )
 
         # when
-        actual_rules, actual_action_mapper, actual_default_comms = EligibilityCalculator.get_redirect_rules(iteration)
+        actual_rules, actual_action_mapper, actual_default_comms = EligibilityCalculator.get_action_rules_components(
+            iteration, rules.RuleType.redirect
+        )
 
         # then
         assert_that(actual_rules, has_item(is_iteration_rule().with_name(iteration.iteration_rules[0].name)))
