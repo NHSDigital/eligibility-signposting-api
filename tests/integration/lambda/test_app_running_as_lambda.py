@@ -288,6 +288,46 @@ def test_given_nhs_number_not_present_in_headers_results_in_error_response(
     )
 
 
+def test_validation_of_query_params_when_all_are_valid(
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person: NHSNumber,
+    campaign_config: CampaignConfig,  # noqa:ARG001
+    api_gateway_endpoint: URL,
+):
+    # Given
+    # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
+    response = httpx.get(
+        invoke_url,
+        headers={"nhs-login-nhs-number": persisted_person},
+        params={"category": "VACCINATIONS", "conditions": "COVID19", "includeActions": "N"},
+        timeout=10,
+    )
+
+    # Then
+    assert_that(response, is_response().with_status_code(HTTPStatus.OK))
+
+
+def test_validation_of_query_params_when_invalid_conditions_is_specified(
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person: NHSNumber,
+    campaign_config: CampaignConfig,  # noqa:ARG001
+    api_gateway_endpoint: URL,
+):
+    # Given
+    # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
+    response = httpx.get(
+        invoke_url,
+        headers={"nhs-login-nhs-number": persisted_person},
+        params={"category": "ALL", "conditions": "23-097"},
+        timeout=10,
+    )
+
+    # Then
+    assert_that(response, is_response().with_status_code(HTTPStatus.UNPROCESSABLE_ENTITY))
+
+
 def test_given_person_has_unique_status_for_different_conditions_with_audit(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person_all_cohorts: NHSNumber,

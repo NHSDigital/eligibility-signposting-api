@@ -60,7 +60,7 @@ class TestStandardResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_no_cohorts}")
+        response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y")
 
         # Then
         assert_that(
@@ -103,7 +103,7 @@ class TestStandardResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_pc_sw19}")
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y")
 
         # Then
         assert_that(
@@ -146,7 +146,7 @@ class TestStandardResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}")
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y")
 
         # Then
         assert_that(
@@ -195,7 +195,7 @@ class TestStandardResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_77yo_person}")
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y")
 
         # Then
         assert_that(
@@ -248,7 +248,7 @@ class TestMagicCohortResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_pc_sw19}")
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y")
 
         # Then
         assert_that(
@@ -291,7 +291,7 @@ class TestMagicCohortResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}")
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y")
 
         # Then
         assert_that(
@@ -340,7 +340,7 @@ class TestMagicCohortResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_77yo_person}")
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y")
 
         # Then
         assert_that(
@@ -393,7 +393,7 @@ class TestResponseOnMissingAttributes:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_no_cohorts}")
+        response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y")
 
         # Then
         assert_that(
@@ -430,7 +430,7 @@ class TestResponseOnMissingAttributes:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_pc_sw19}")
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y")
 
         # Then
         assert_that(
@@ -467,7 +467,7 @@ class TestResponseOnMissingAttributes:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}")
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y")
 
         # Then
         assert_that(
@@ -510,7 +510,7 @@ class TestResponseOnMissingAttributes:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_77yo_person}")
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y")
 
         # Then
         assert_that(
