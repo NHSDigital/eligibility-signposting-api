@@ -16,7 +16,7 @@ resource "aws_s3_bucket_versioning" "storage_bucket_versioning_config" {
 
 # ensure only secure transport is allowed
 
-resource "aws_s3_bucket_policy" "tfstate_bucket" {
+resource "aws_s3_bucket_policy" "storage_bucket" {
   bucket = aws_s3_bucket.storage_bucket.id
   policy = data.aws_iam_policy_document.storage_s3_bucket_policy.json
 }
