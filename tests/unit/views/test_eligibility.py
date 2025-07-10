@@ -706,6 +706,10 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
 def test_request_id_from_header_logging_variants(
     app: Flask, client: FlaskClient, caplog, headers: dict[str, str], expected_request_id: str
 ):
+    """
+    This test checks that the x-request-ID is logged so that it can be used to correlate logs
+    with that of the logs from api-gateway
+    """
     with (
         get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()),
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
