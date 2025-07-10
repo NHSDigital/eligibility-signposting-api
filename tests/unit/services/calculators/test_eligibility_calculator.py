@@ -2494,6 +2494,51 @@ test_comment, person_icb, default_comms_routing, comms_routing, actions_mapper, 
         ),
     )
 
+def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_given(  # noqa: PLR0913
+    faker: Faker,
+):
+    # ELI-295 Campaign config without NonEligibleActions (X rules) should not return any actions/default actions for NonEligible status
+
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["NotEligibleCohort"])
+
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        actions_mapper=[],
+                        iteration_rules=[]
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    expected_actions=[]
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.not_eligible))
+                .and_actions(equal_to(expected_actions))
+            )
+        ),
+    )
+
+
 @pytest.mark.parametrize(
     ("test_comment", "person_icb", "default_comms_routing", "comms_routing", "actions_mapper", "expected_actions"),
     [
@@ -2616,5 +2661,47 @@ test_comment, person_icb, default_comms_routing, comms_routing, actions_mapper, 
         ),
     )
 
+def test_no_actions_returned_when_non_actionable_actions_and_defaultcomms_not_given(  # noqa: PLR0913
+    faker: Faker,
+):
+    # ELI-295 Campaign config without NonActionableActions (Y rules) should not return any actions/default actions for NonActionable status
 
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
 
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"])
+
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        iteration_rules=[
+                            rule_builder.DetainedEstateSuppressionRuleFactory.build()
+                            ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.evaluate_eligibility()
+
+    # Then
+    expected_actions=[]
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(equal_to(Status.not_actionable))
+                .and_actions(equal_to(expected_actions))
+            )
+        ),
+    )
