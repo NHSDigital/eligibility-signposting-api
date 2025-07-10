@@ -21,12 +21,34 @@ data "aws_iam_policy_document" "dynamodb_write_policy_doc" {
   }
 }
 
+# Specific Dynamo resource KMS access policy
+data "aws_iam_policy_document" "dynamo_kms_access_policy_doc" {
+  statement {
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:GenerateDataKey"
+    ]
+    resources = [
+      module.eligibility_status_table.dynamodb_kms_key_arn
+    ]
+  }
+}
+
 # Attach dynamoDB write policy to external write role
 resource "aws_iam_role_policy" "external_dynamodb_write_policy" {
   count  = length(aws_iam_role.write_access_role)
   name   = "DynamoDBWriteAccess"
   role   = aws_iam_role.write_access_role[count.index].id
   policy = data.aws_iam_policy_document.dynamodb_write_policy_doc.json
+}
+
+# Attach dynamo KMS policy to external write role
+resource "aws_iam_role_policy" "external_kms_access_policy" {
+  count  = length(aws_iam_role.write_access_role)
+  name   = "KMSAccessForDynamoDB"
+  role   = aws_iam_role.write_access_role[count.index].id
+  policy = data.aws_iam_policy_document.dynamo_kms_access_policy_doc.json
 }
 
 # Policy doc for S3 Rules bucket
