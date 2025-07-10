@@ -123,7 +123,20 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
                     resourceType="OperationOutcome",
                     issue=contains_exactly(
                         has_entries(
-                            severity="information", code="nhs-number-not-found", diagnostics='NHS Number "" not found.'
+                            severity="error",
+                            code="processing",
+                            diagnostics="NHS Number '' was not recognised by the Eligibility Signposting API",
+                            details={
+                                "coding": [
+                                    {
+                                        "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+                                        "code": "RESOURCE_NOT_FOUND",
+                                        "display": "The given NHS number was not found in our datasets. "
+                                        "This could be because the number is incorrect or "
+                                        "some other reason we cannot process that number.",
+                                    }
+                                ]
+                            },
                         )
                     ),
                 )
@@ -136,6 +149,36 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
     # Given
     with get_app_container(app).override.service(EligibilityService, new=FakeUnexpectedErrorEligibilityService()):
         response = client.get("/patient-check/12345")
+
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.INTERNAL_SERVER_ERROR)
+            .and_text(
+                is_json_that(
+                    has_entries(
+                        resourceType="OperationOutcome",
+                        issue=contains_exactly(
+                            has_entries(
+                                severity="severe",
+                                code="unexpected",
+                                diagnostics="An unexpected error occurred.",
+                                details={
+                                    "coding": [
+                                        {
+                                            "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+                                            "code": "UNEXPECTED_ERROR",
+                                            "display": "An unexpected internal server error occurred.",
+                                        }
+                                    ]
+                                },
+                            )
+                        ),
+                    )
+                )
+            ),
+        )
+
         assert_that(
             response,
             is_response()

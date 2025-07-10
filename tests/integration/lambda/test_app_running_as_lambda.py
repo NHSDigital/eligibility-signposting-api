@@ -135,9 +135,21 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
                     resourceType="OperationOutcome",
                     issue=contains_exactly(
                         has_entries(
-                            severity="information",
-                            code="nhs-number-not-found",
-                            diagnostics=f'NHS Number "{nhs_number}" not found.',
+                            severity="error",
+                            code="processing",
+                            diagnostics=f"NHS Number '{nhs_number!s}' was not "
+                            f"recognised by the Eligibility Signposting API",
+                            details={
+                                "coding": [
+                                    {
+                                        "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+                                        "code": "RESOURCE_NOT_FOUND",
+                                        "display": "The given NHS number was not found in our datasets. "
+                                        "This could be because the number is incorrect or "
+                                        "some other reason we cannot process that number.",
+                                    }
+                                ]
+                            },
                         )
                     ),
                 )
@@ -146,7 +158,10 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
     )
 
     messages = get_log_messages(flask_function, logs_client)
-    assert_that(messages, has_item(contains_string(f"nhs_number '{nhs_number}' not found")))
+    assert_that(
+        messages,
+        has_item(contains_string(f"NHS Number '{nhs_number}' was not recognised by the Eligibility Signposting API")),
+    )
 
 
 def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
@@ -263,7 +278,32 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
     # Then
     assert_that(
         response,
-        is_response().with_status_code(HTTPStatus.FORBIDDEN).and_body("NHS number mismatch"),
+        is_response()
+        .with_status_code(HTTPStatus.FORBIDDEN)
+        .and_body(
+            is_json_that(
+                has_entries(
+                    resourceType="OperationOutcome",
+                    issue=contains_exactly(
+                        has_entries(
+                            severity="error",
+                            code="forbidden",
+                            diagnostics=f"NHS Number {persisted_person} does "
+                            f"not match the header NHS Number 123{persisted_person!s}",
+                            details={
+                                "coding": [
+                                    {
+                                        "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+                                        "code": "NHS_NUMBER_MISMATCH",
+                                        "display": "The provided NHS number does not match the record.",
+                                    }
+                                ]
+                            },
+                        )
+                    ),
+                )
+            )
+        ),
     )
 
 
@@ -284,7 +324,31 @@ def test_given_nhs_number_not_present_in_headers_results_in_error_response(
     # Then
     assert_that(
         response,
-        is_response().with_status_code(HTTPStatus.FORBIDDEN).and_body("NHS number mismatch"),
+        is_response()
+        .with_status_code(HTTPStatus.FORBIDDEN)
+        .and_body(
+            is_json_that(
+                has_entries(
+                    resourceType="OperationOutcome",
+                    issue=contains_exactly(
+                        has_entries(
+                            severity="error",
+                            code="forbidden",
+                            diagnostics=f"NHS Number {persisted_person} does not match the header NHS Number ",
+                            details={
+                                "coding": [
+                                    {
+                                        "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+                                        "code": "NHS_NUMBER_MISMATCH",
+                                        "display": "The provided NHS number does not match the record.",
+                                    }
+                                ]
+                            },
+                        )
+                    ),
+                )
+            )
+        ),
     )
 
 

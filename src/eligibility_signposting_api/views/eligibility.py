@@ -3,11 +3,11 @@ import uuid
 from datetime import UTC, datetime
 from http import HTTPStatus
 
-from fhir.resources.R4B.operationoutcome import OperationOutcome, OperationOutcomeIssue
 from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
 from wireup import Injected
 
+from eligibility_signposting_api.api_error_response import NHS_NUMBER_NOT_FOUND_ERROR
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
@@ -59,17 +59,11 @@ def check_eligibility(
 
 
 def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:
-    logger.debug("nhs_number %r not found", nhs_number, extra={"nhs_number": nhs_number})
-    problem = OperationOutcome(
-        issue=[
-            OperationOutcomeIssue(
-                severity="information",
-                code="nhs-number-not-found",
-                diagnostics=f'NHS Number "{nhs_number}" not found.',
-            )  # pyright: ignore[reportCallIssue]
-        ]
+    diagnostics = f"NHS Number '{nhs_number}' was not recognised by the Eligibility Signposting API"
+    response = NHS_NUMBER_NOT_FOUND_ERROR.log_and_generate_response(
+        log_message=diagnostics, diagnostics=diagnostics, location_param="id"
     )
-    return make_response(problem.model_dump(by_alias=True, mode="json"), HTTPStatus.NOT_FOUND)
+    return make_response(response.get("body"), response.get("statusCode"))
 
 
 def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibility.EligibilityResponse:

@@ -1,16 +1,17 @@
-import json
 import logging
 import re
-import uuid
 from collections.abc import Callable
-from datetime import UTC, datetime
 from functools import wraps
-from http import HTTPStatus
 from typing import Any
 
-from fhir.resources.operationoutcome import OperationOutcome, OperationOutcomeIssue
 from mangum.types import LambdaContext, LambdaEvent
 
+from eligibility_signposting_api.api_error_response import (
+    INVALID_CATEGORY_ERROR,
+    INVALID_CONDITION_FORMAT_ERROR,
+    INVALID_INCLUDE_ACTIONS_ERROR,
+    NHS_NUMBER_MISMATCH_ERROR,
+)
 from eligibility_signposting_api.config.contants import NHS_NUMBER_HEADER
 
 logger = logging.getLogger(__name__)
@@ -25,15 +26,15 @@ def validate_query_params(query_params: dict[str, str]) -> tuple[bool, dict[str,
     for condition in conditions:
         search = re.search(condition_pattern, condition)
         if not search:
-            return form_condition_error_response(condition)
+            return False, get_condition_error_response(condition)
 
     category = query_params.get("category", "ALL")
     if not re.search(category_pattern, category):
-        return form_category_error_response(category)
+        return False, get_category_error_response(category)
 
     include_actions = query_params.get("includeActions", "Y")
     if not re.search(include_actions_pattern, include_actions):
-        return form_include_actions_error_response(include_actions)
+        return False, get_include_actions_error_response(include_actions)
 
     return True, None
 
@@ -55,13 +56,17 @@ def validate_request_params() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any] | None:
-            path_param_nhs_number = event.get("pathParameters", {}).get("id")
+            path_nhs_number = event.get("pathParameters", {}).get("id")
             header_nhs_number = event.get("headers", {}).get(NHS_NUMBER_HEADER)
 
-            if not validate_nhs_number(path_param_nhs_number, header_nhs_number):
-                return {"statusCode": 403, "body": "NHS number mismatch"}
+            if not validate_nhs_number(path_nhs_number, header_nhs_number):
+                message = (
+                    f"NHS Number {path_nhs_number or ''} does not match the header NHS Number {header_nhs_number or ''}"
+                )
+                return NHS_NUMBER_MISMATCH_ERROR.log_and_generate_response(
+                    log_message=message, diagnostics=message, location_param="id"
+                )
 
-            # TODO: check if this is needed?
             query_params_raw = event.get("queryStringParameters")
             if query_params_raw is None:
                 event.setdefault(
@@ -79,69 +84,29 @@ def validate_request_params() -> Callable:
     return decorator
 
 
-def form_include_actions_error_response(include_actions: str) -> tuple[bool, dict[str, Any]]:
-    logger.error("Invalid include actions query param: '%s'", include_actions)
+def get_include_actions_error_response(include_actions: str) -> dict[str, Any]:
     diagnostics = f"{include_actions} is not a value that is supported by the API"
-    coding_display_message = "The supplied value was not recognised by the API."
-    error_response = get_formatted_error_response(
-        diagnostics, coding_display_message, "includeActions", HTTPStatus.UNPROCESSABLE_ENTITY
+    return INVALID_INCLUDE_ACTIONS_ERROR.log_and_generate_response(
+        log_message=f"Invalid include actions query param: '{include_actions}'",
+        diagnostics=diagnostics,
+        location_param="includeActions",
     )
-    return False, error_response
 
 
-def form_category_error_response(category: str) -> tuple[bool, dict[str, Any]]:
-    logger.error("Invalid category query param: '%s'", category)
+def get_category_error_response(category: str) -> dict[str, Any]:
     diagnostics = f"{category} is not a category that is supported by the API"
-    coding_display_message = "The supplied category was not recognised by the API."
-    error_response = get_formatted_error_response(
-        diagnostics, coding_display_message, "category", HTTPStatus.UNPROCESSABLE_ENTITY
+    return INVALID_CATEGORY_ERROR.log_and_generate_response(
+        log_message=f"Invalid category query param: '{category}'", diagnostics=diagnostics, location_param="category"
     )
-    return False, error_response
 
 
-def form_condition_error_response(condition: str) -> tuple[bool, dict[str, Any]]:
-    logger.error("Invalid condition query param: '%s'", condition)
+def get_condition_error_response(condition: str) -> dict[str, Any]:
     diagnostics = (
         f"{condition} should be a single or comma separated list of condition "
         f"strings with no other punctuation or special characters"
     )
-    coding_display_message = "The given conditions were not in the expected format."
-    error_response = get_formatted_error_response(
-        diagnostics, coding_display_message, "conditions", HTTPStatus.BAD_REQUEST
+    return INVALID_CONDITION_FORMAT_ERROR.log_and_generate_response(
+        log_message=f"Invalid condition query param: '{condition}'",
+        diagnostics=diagnostics,
+        location_param="conditions",
     )
-    logger.error("Error response: %s", error_response)
-    return False, error_response
-
-
-def get_formatted_error_response(
-    diagnostics: str, coding_display_message: str, query_type: str, status_code: HTTPStatus
-) -> dict[str, Any]:
-    problem = OperationOutcome(
-        id=str(uuid.uuid4()),
-        meta={"lastUpdated": datetime.now(UTC)},
-        issue=[
-            (
-                OperationOutcomeIssue(
-                    severity="error",
-                    code="value",
-                    diagnostics=diagnostics,
-                    location=[f"parameters/{query_type}"],
-                    details={
-                        "coding": [
-                            {
-                                "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-                                "code": "VALIDATION_ERROR",
-                                "display": coding_display_message,
-                            }
-                        ]
-                    },
-                )  # pyright: ignore[reportCallIssue]
-            )
-        ],
-    )  # pyright: ignore[reportCallIssue]
-
-    return {
-        "statusCode": status_code,
-        "headers": {"Content-Type": "application/fhir+json"},
-        "body": json.dumps(problem.model_dump(by_alias=True, mode="json")),
-    }
