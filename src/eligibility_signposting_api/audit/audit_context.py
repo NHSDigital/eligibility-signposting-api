@@ -65,7 +65,7 @@ class AuditContext:
         campaign_details: tuple[CampaignID | None, CampaignVersion | None],
         redirect_rule_details: tuple[RulePriority | None, RuleName | None],
     ) -> None:
-        audit_eligibility_cohorts, audit_eligibility_cohort_groups, audit_actions = [], [], []
+        audit_eligibility_cohorts, audit_eligibility_cohort_groups = [], []
         audit_filter_rule, audit_suitability_rule, audit_redirect_rule = None, None, None
         best_active_iteration = best_results[0]
         best_candidate = best_results[1]
@@ -85,37 +85,15 @@ class AuditContext:
                 )
 
                 if result.audit_rules and best_candidate:
-                    if best_candidate.status and best_candidate.status.name == Status.not_eligible.name:
-                        audit_filter_rule = AuditFilterRule(
-                            rule_priority=result.audit_rules[0].rule_priority,
-                            rule_name=result.audit_rules[0].rule_name,
-                        )
-                    if best_candidate.status and best_candidate.status.name == Status.not_actionable.name:
-                        audit_suitability_rule = AuditSuitabilityRule(
-                            rule_priority=result.audit_rules[0].rule_priority,
-                            rule_name=result.audit_rules[0].rule_name,
-                            rule_message=result.audit_rules[0].rule_description,
-                        )
+                    audit_filter_rule = AuditContext.create_audit_filter_rule(best_candidate, result)
+                    audit_suitability_rule = AuditContext.create_audit_suitability_rule(best_candidate, result)
 
         if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
             audit_redirect_rule = AuditRedirectRule(
                 rule_priority=str(redirect_rule_details[0]), rule_name=redirect_rule_details[1]
             )
 
-        if suggested_actions is None:
-            audit_actions = None
-        elif len(suggested_actions) > 0:
-            for action in suggested_actions:
-                audit_actions.append(
-                    AuditAction(
-                        internal_action_code=action.internal_action_code,
-                        action_code=action.action_code,
-                        action_type=action.action_type,
-                        action_description=action.action_description,
-                        action_url=str(action.url_link) if action.url_link else None,
-                        action_url_label=action.url_label,
-                    )
-                )
+        audit_actions = AuditContext.create_audit_actions(suggested_actions)
 
         audit_condition = AuditCondition(
             campaign_id=campaign_details[0],
@@ -143,3 +121,45 @@ class AuditContext:
     @staticmethod
     def write_to_firehose(service: AuditService) -> None:
         service.audit(g.audit_log.model_dump(by_alias=True))
+
+    @staticmethod
+    def create_audit_actions(suggested_actions: list[SuggestedAction] | None) -> list[AuditAction] | None:
+        audit_actions = []
+        if suggested_actions is None:
+            audit_actions = None
+        elif len(suggested_actions) > 0:
+            for action in suggested_actions:
+                audit_actions.append(
+                    AuditAction(
+                        internal_action_code=action.internal_action_code,
+                        action_code=action.action_code,
+                        action_type=action.action_type,
+                        action_description=action.action_description,
+                        action_url=str(action.url_link) if action.url_link else None,
+                        action_url_label=action.url_label,
+                    )
+                )
+        return audit_actions
+
+    @staticmethod
+    def create_audit_suitability_rule(
+        best_candidate: IterationResult, result: CohortGroupResult
+    ) -> AuditSuitabilityRule | None:
+        audit_suitability_rule = None
+        if best_candidate.status and best_candidate.status.name == Status.not_actionable.name:
+            audit_suitability_rule = AuditSuitabilityRule(
+                rule_priority=result.audit_rules[0].rule_priority,
+                rule_name=result.audit_rules[0].rule_name,
+                rule_message=result.audit_rules[0].rule_description,
+            )
+        return audit_suitability_rule
+
+    @staticmethod
+    def create_audit_filter_rule(best_candidate: IterationResult, result: CohortGroupResult) -> AuditFilterRule | None:
+        audit_filter_rule = None
+        if best_candidate.status and best_candidate.status.name == Status.not_eligible.name:
+            audit_filter_rule = AuditFilterRule(
+                rule_priority=result.audit_rules[0].rule_priority,
+                rule_name=result.audit_rules[0].rule_name,
+            )
+        return audit_filter_rule
