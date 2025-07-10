@@ -1,6 +1,5 @@
 import logging
 from datetime import UTC, datetime
-from operator import attrgetter
 from uuid import UUID
 
 from flask import Request, g
@@ -73,29 +72,29 @@ class AuditContext:
         best_cohort_results = best_results[2]
 
         if best_cohort_results:
-            for value in sorted(best_cohort_results.values(), key=attrgetter("cohort_code")):
-                cohort_status_name = value.status.name if value.status else None
+            for cohort_label, result in sorted(best_cohort_results.items(), key=lambda item: item[1].cohort_code):
+                cohort_status_name = result.status.name if result.status else None
                 audit_eligibility_cohorts.append(
-                    AuditEligibilityCohorts(cohort_code=value.cohort_code, cohort_status=cohort_status_name)
+                    AuditEligibilityCohorts(cohort_code=cohort_label, cohort_status=cohort_status_name)
                 )
 
                 audit_eligibility_cohort_groups.append(
                     AuditEligibilityCohortGroups(
-                        cohort_code=value.cohort_code, cohort_status=cohort_status_name, cohort_text=value.description
+                        cohort_code=result.cohort_code, cohort_status=cohort_status_name, cohort_text=result.description
                     )
                 )
 
-                if value.audit_rules and best_candidate:
+                if result.audit_rules and best_candidate:
                     if best_candidate.status and best_candidate.status.name == Status.not_eligible.name:
                         audit_filter_rule = AuditFilterRule(
-                            rule_priority=value.audit_rules[0].rule_priority,
-                            rule_name=value.audit_rules[0].rule_name,
+                            rule_priority=result.audit_rules[0].rule_priority,
+                            rule_name=result.audit_rules[0].rule_name,
                         )
                     if best_candidate.status and best_candidate.status.name == Status.not_actionable.name:
                         audit_suitability_rule = AuditSuitabilityRule(
-                            rule_priority=value.audit_rules[0].rule_priority,
-                            rule_name=value.audit_rules[0].rule_name,
-                            rule_message=value.audit_rules[0].rule_description,
+                            rule_priority=result.audit_rules[0].rule_priority,
+                            rule_name=result.audit_rules[0].rule_name,
+                            rule_message=result.audit_rules[0].rule_description,
                         )
 
         if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
