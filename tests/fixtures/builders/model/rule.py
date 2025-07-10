@@ -184,3 +184,14 @@ class ICBNonEligibleActionRuleFactory(IterationRuleFactory):
     attribute_name = rules.RuleAttributeName("ICB")
     comparator = rules.RuleComparator("QE1")
     comms_routing = rules.CommsRouting("ActionCode1")
+
+class ICBNonActionableActionRuleFactory(IterationRuleFactory):
+    type = rules.RuleType.not_actionable_actions
+    name = rules.RuleName("In QE1")
+    description = rules.RuleDescription("In QE1")
+    priority = rules.RulePriority(20)
+    operator = rules.RuleOperator.equals
+    attribute_level = rules.RuleAttributeLevel.PERSON
+    attribute_name = rules.RuleAttributeName("ICB")
+    comparator = rules.RuleComparator("QE1")
+    comms_routing = rules.CommsRouting("ActionCode1")

@@ -26,7 +26,6 @@
 
           "XRULEID1": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"},
           "YRULEID1": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"}
-
         },
         "IterationCohorts": [
           {
