@@ -28,6 +28,13 @@ eligibility_blueprint = Blueprint("eligibility", __name__)
 
 @eligibility_blueprint.before_request
 def before_request() -> None:
+    logger.info(
+        "request details",
+        extra={
+            "X-Request-ID": request.headers.get("X-Request-ID"),
+            "X-Correlation-ID": request.headers.get("X-Correlation-ID"),
+        },
+    )
     AuditContext.add_request_details(request)
 
 
