@@ -1,6 +1,6 @@
 {
   "CampaignConfig": {
-    "ID": "<<RANDOM_GUID>>",
+    "ID": "Automation RSV - Regression Test Config - Camp ID",
     "Version": "1",
     "Name": "Automation RSV - Regression Test Config",
     "Type": "V",
@@ -18,7 +18,7 @@
     "ApprovalMaximum": 0,
     "Iterations": [
       {
-        "ID": ",<<RANDOM_GUID>>",
+        "ID": "Automation RSV - Regression Test Config - It ID",
         "DefaultCommsRouting": "DEFAULT_ACTION",
         "Version": "1",
         "Name": "Automation RSV - Regression Test Config Iteration",
@@ -82,21 +82,89 @@
             "Type": "F",
             "Name": "Under Age - Under 75 Years on day of execution",
             "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 75 years is filtered out.",
-            "Priority": 120,
+            "Priority": 110,
             "AttributeLevel": "PERSON",
             "AttributeName": "DATE_OF_BIRTH",
             "Operator": "Y>",
-            "Comparator": "-75"
+            "Comparator": "-75",
+            "CohortLabel": "rsv_cohort_1"
           },
           {
             "Type": "F",
             "Name": "Exclude Too OLD",
             "Description": "Exclude anyone over 80",
-            "Priority": 130,
+            "Priority": 111,
             "AttributeLevel": "PERSON",
             "AttributeName": "DATE_OF_BIRTH",
             "Operator": "<",
-            "Comparator": "-80"
+            "Comparator": "-80",
+            "CohortLabel": "rsv_cohort_1"
+          },
+          {
+            "Type": "F",
+            "Name": "Under Age - Under 75 Years on day of execution",
+            "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 75 years is filtered out.",
+            "Priority": 112,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "Y>",
+            "Comparator": "-75",
+            "CohortLabel": "rsv_cohort_2"
+          },
+          {
+            "Type": "F",
+            "Name": "Exclude Too OLD",
+            "Description": "Exclude anyone over 80",
+            "Priority": 113,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "<",
+            "Comparator": "-80",
+            "CohortLabel": "rsv_cohort_2"
+          },
+          {
+            "Type": "F",
+            "Name": "Under Age - Under 75 Years on day of execution",
+            "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 75 years is filtered out.",
+            "Priority": 114,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "Y>",
+            "Comparator": "-75",
+            "CohortLabel": "rsv_cohort_3"
+          },
+          {
+            "Type": "F",
+            "Name": "Exclude Too OLD",
+            "Description": "Exclude anyone over 80",
+            "Priority": 115,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "<",
+            "Comparator": "-80",
+            "CohortLabel": "rsv_cohort_3"
+          },
+          {
+            "Type": "F",
+            "Name": "Under Age - Under 75 Years on day of execution",
+            "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 75 years is filtered out.",
+            "Priority": 116,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "Y>",
+            "Comparator": "-75",
+            "CohortLabel": "no_group_description"
+          },
+          {
+            "Type": "F",
+            "Name": "Exclude Too OLD",
+            "Description": "Exclude anyone over 80",
+            "Priority": 117,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "<",
+            "Comparator": "-80",
+            "CohortLabel": "no_group_description"
           },
           {
             "Type": "S",

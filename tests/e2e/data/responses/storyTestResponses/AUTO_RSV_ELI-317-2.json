@@ -10,9 +10,9 @@
       "statusText": "Status.actionable",
       "eligibilityCohorts": [
         {
-          "cohortCode": "eli_291_cohort_4_group",
+          "cohortCode": "eli_317_cohort_2_group",
           "cohortStatus": "Actionable",
-          "cohortText": "You are currently in eli_291_cohort_4"
+          "cohortText": "You are currently in eli_317_cohort_2"
         }
       ],
       "suitabilityRules": [],

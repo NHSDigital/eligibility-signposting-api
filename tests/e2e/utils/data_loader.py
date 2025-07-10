@@ -97,6 +97,7 @@ def load_all_test_scenarios(folder_path):
         scenario_name = raw_json.get("scenario_name")
         request_headers = raw_json.get("request_headers")
         expected_response_code = raw_json.get("expected_response_code")
+        query_params = raw_json.get("query_params")
 
         # Resolve placeholders with shared DTO
         resolved_data = resolve_placeholders_in_data(raw_data, dto, path.name)
@@ -111,6 +112,7 @@ def load_all_test_scenarios(folder_path):
             "config_filename": config_filename,
             "expected_response_code": expected_response_code,
             "request_headers": request_headers,
+            "query_params": query_params,
             "scenario_name": scenario_name,
         }
 

@@ -2,7 +2,7 @@
   "CampaignConfig": {
     "ID": "<<RANDOM_GUID>>",
     "Version": "1",
-    "Name": "ELI-219 - Empty Actions - 9000000005",
+    "Name": "ELI-317 - Empty Actions - 9000000006",
     "Type": "V",
     "Target": "RSV",
     "Manager": "person1@nhs.net",
@@ -21,7 +21,7 @@
         "ID": ",<<RANDOM_GUID>>",
         "DefaultCommsRouting": "DEFAULT_ACTION",
         "Version": "1",
-        "Name": "ELI-219 - Support Actions R Rules - 9000000004",
+        "Name": "ELI-317 - Empty Actions - 9000000006",
         "IterationDate": "20250601",
         "IterationNumber": 1,
         "CommsType": "I",
@@ -30,10 +30,10 @@
         "Type": "M",
         "IterationCohorts": [
           {
-            "CohortLabel": "eli_291_cohort_4",
-            "CohortGroup": "eli_291_cohort_4_group",
-            "PositiveDescription": "You are currently in eli_291_cohort_4",
-            "NegativeDescription": "You are not in eli_291_cohort_4",
+            "CohortLabel": "eli_317_cohort_2",
+            "CohortGroup": "eli_317_cohort_2_group",
+            "PositiveDescription": "You are currently in eli_317_cohort_2",
+            "NegativeDescription": "You are not in eli_317_cohort_2",
             "Priority": 1
           }
         ],

@@ -69,6 +69,7 @@ class EligibilityApiClient:
         method: str = "GET",
         payload: dict[str, Any] | list | None = None,
         headers: dict[str, str] | None = None,
+        query_params: dict[str, Any] | None = None,
         **options,
     ) -> dict[str, Any]:
         strict_ssl = options.get("strict_ssl", False)
@@ -88,6 +89,7 @@ class EligibilityApiClient:
                 verify=verify,
                 json=payload,
                 headers=headers,
+                params=query_params,
                 timeout=10,
             )
 

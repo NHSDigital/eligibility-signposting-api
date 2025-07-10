@@ -22,9 +22,10 @@ def test_run_smoke_case(filename, scenario, eligibility_client):
     nhs_number = scenario["nhs_number"]
     config_filename = scenario.get("config_filename", "")
     request_headers = scenario.get("request_headers", {})
+    query_params = scenario.get("query_params", {})
     upload_config_to_s3((Path(config_path) / config_filename).resolve())
 
-    actual_response = eligibility_client.make_request(nhs_number, headers=request_headers, strict_ssl=False)
+    actual_response = eligibility_client.make_request(nhs_number, headers=request_headers, query_params= query_params, strict_ssl=False)
     expected_response = all_expected_responses.get(filename).get("response_items", {})
 
     # Assert and show details on failure

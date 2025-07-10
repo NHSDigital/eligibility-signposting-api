@@ -1,10 +1,10 @@
 {
   "scenario_name": "ELI-219 - Returns the highest Priority Action",
   "config_filename": "AUTO_RSV_ELI-219-2.json",
-  "request_headers": {"nhs-login-nhs-number": "9000000003"},
+  "request_headers": {"nhs-login-nhs-number": "9000000004"},
   "data": [
     {
-      "NHS_NUMBER": "9000000003",
+      "NHS_NUMBER": "9000000004",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MAP": {
         "cohorts": {
@@ -21,7 +21,7 @@
       }
     },
     {
-      "NHS_NUMBER": "9000000003",
+      "NHS_NUMBER": "9000000004",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
