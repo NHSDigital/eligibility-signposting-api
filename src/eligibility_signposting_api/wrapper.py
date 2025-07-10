@@ -8,6 +8,7 @@ from functools import wraps
 from http import HTTPStatus
 from typing import Any
 
+from fhir.resources.operationoutcome import OperationOutcome, OperationOutcomeIssue
 from mangum.types import LambdaContext, LambdaEvent
 
 from eligibility_signposting_api.config.contants import NHS_NUMBER_HEADER
@@ -24,59 +25,20 @@ def validate_query_params(query_params: dict[str, str]) -> tuple[bool, dict[str,
     for condition in conditions:
         search = re.search(condition_pattern, condition)
         if not search:
-            logger.error("Invalid condition query param: '%s'", condition)
-            error_response = get_error_response("conditions", condition)
-            logger.error("Error response: %s", error_response)
-            return False, error_response
+            return form_condition_error_response(condition)
 
     category = query_params.get("category", "ALL")
     if not re.search(category_pattern, category):
-        logger.error("Invalid category query param: '%s'", category)
-        error_response = get_error_response("category", category)
-        return False, error_response
+        return form_category_error_response(category)
 
     include_actions = query_params.get("includeActions", "Y")
     if not re.search(include_actions_pattern, include_actions):
-        logger.error("Invalid include actions query param: '%s'", include_actions)
-        error_response = get_error_response("value", include_actions)
-        return False, error_response
+        return form_include_actions_error_response(include_actions)
 
     return True, None
 
 
-def get_error_response(query_type: str, query_value: str) -> dict[str, Any]:
-    operation_outcome = {
-        "id": uuid.uuid4(),
-        "meta": {
-            "lastUpdated": datetime.now(UTC),
-        },
-        "issue": [
-            {
-                "severity": "error",
-                "code": "value",
-                "diagnostics": f"{query_value} is not a {query_type} that is supported by the API",
-                "location": [f"parameters/{query_type}"],
-                "details": {
-                    "coding": [
-                        {
-                            "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-                            "code": "VALIDATION_ERROR",
-                            "display": f"The supplied {query_type} was not recognised by the API.",
-                        }
-                    ]
-                },
-            }
-        ],
-        "resourceType": "OperationOutcome",  # TODO: use real class?
-    }
-    return {
-        "statusCode": HTTPStatus.UNPROCESSABLE_ENTITY,
-        "headers": {"Content-Type": "application/fhir+json"},
-        "body": json.dumps(operation_outcome, default=str),
-    }
-
-
-def validate_nhs_number(path_nhs: int, header_nhs: int) -> bool:
+def validate_nhs_number(path_nhs: str, header_nhs: str) -> bool:
     logger.info("NHS numbers from the request", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
 
     if not header_nhs or not path_nhs:
@@ -115,3 +77,71 @@ def validate_request_params() -> Callable:
         return wrapper
 
     return decorator
+
+
+def form_include_actions_error_response(include_actions: str) -> tuple[bool, dict[str, Any]]:
+    logger.error("Invalid include actions query param: '%s'", include_actions)
+    diagnostics = f"{include_actions} is not a value that is supported by the API"
+    coding_display_message = "The supplied value was not recognised by the API."
+    error_response = get_formatted_error_response(
+        diagnostics, coding_display_message, "includeActions", HTTPStatus.UNPROCESSABLE_ENTITY
+    )
+    return False, error_response
+
+
+def form_category_error_response(category: str) -> tuple[bool, dict[str, Any]]:
+    logger.error("Invalid category query param: '%s'", category)
+    diagnostics = f"{category} is not a category that is supported by the API"
+    coding_display_message = "The supplied category was not recognised by the API."
+    error_response = get_formatted_error_response(
+        diagnostics, coding_display_message, "category", HTTPStatus.UNPROCESSABLE_ENTITY
+    )
+    return False, error_response
+
+
+def form_condition_error_response(condition: str) -> tuple[bool, dict[str, Any]]:
+    logger.error("Invalid condition query param: '%s'", condition)
+    diagnostics = (
+        f"{condition} should be a single or comma separated list of condition "
+        f"strings with no other punctuation or special characters"
+    )
+    coding_display_message = "The given conditions were not in the expected format."
+    error_response = get_formatted_error_response(
+        diagnostics, coding_display_message, "conditions", HTTPStatus.BAD_REQUEST
+    )
+    logger.error("Error response: %s", error_response)
+    return False, error_response
+
+
+def get_formatted_error_response(
+    diagnostics: str, coding_display_message: str, query_type: str, status_code: HTTPStatus
+) -> dict[str, Any]:
+    problem = OperationOutcome(
+        id=str(uuid.uuid4()),
+        meta={"lastUpdated": datetime.now(UTC)},
+        issue=[
+            (
+                OperationOutcomeIssue(
+                    severity="error",
+                    code="value",
+                    diagnostics=diagnostics,
+                    location=[f"parameters/{query_type}"],
+                    details={
+                        "coding": [
+                            {
+                                "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+                                "code": "VALIDATION_ERROR",
+                                "display": coding_display_message,
+                            }
+                        ]
+                    },
+                )  # pyright: ignore[reportCallIssue]
+            )
+        ],
+    )  # pyright: ignore[reportCallIssue]
+
+    return {
+        "statusCode": status_code,
+        "headers": {"Content-Type": "application/fhir+json"},
+        "body": json.dumps(problem.model_dump(by_alias=True, mode="json")),
+    }

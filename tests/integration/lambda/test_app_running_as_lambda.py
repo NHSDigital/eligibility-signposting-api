@@ -325,7 +325,7 @@ def test_validation_of_query_params_when_invalid_conditions_is_specified(
     )
 
     # Then
-    assert_that(response, is_response().with_status_code(HTTPStatus.UNPROCESSABLE_ENTITY))
+    assert_that(response, is_response().with_status_code(HTTPStatus.BAD_REQUEST))
 
 
 def test_given_person_has_unique_status_for_different_conditions_with_audit(  # noqa: PLR0913
