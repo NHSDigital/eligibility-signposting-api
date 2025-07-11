@@ -13,7 +13,7 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
 
   runtime     = "python3.13"
   timeout     = 30
-  memory_size = 128 # Default
+  memory_size = 2048
 
   environment {
     variables = {
