@@ -135,9 +135,21 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
                     resourceType="OperationOutcome",
                     issue=contains_exactly(
                         has_entries(
-                            severity="information",
-                            code="nhs-number-not-found",
-                            diagnostics=f'NHS Number "{nhs_number}" not found.',
+                            severity="error",
+                            code="processing",
+                            diagnostics=f"NHS Number '{nhs_number!s}' was not "
+                            f"recognised by the Eligibility Signposting API",
+                            details={
+                                "coding": [
+                                    {
+                                        "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                        "code": "REFERENCE_NOT_FOUND",
+                                        "display": "The given NHS number was not found in our datasets. "
+                                        "This could be because the number is incorrect or "
+                                        "some other reason we cannot process that number.",
+                                    }
+                                ]
+                            },
                         )
                     ),
                 )
@@ -146,7 +158,10 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
     )
 
     messages = get_log_messages(flask_function, logs_client)
-    assert_that(messages, has_item(contains_string(f"nhs_number '{nhs_number}' not found")))
+    assert_that(
+        messages,
+        has_item(contains_string(f"NHS Number '{nhs_number}' was not recognised by the Eligibility Signposting API")),
+    )
 
 
 def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
@@ -170,6 +185,8 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
+    flask_function: str,
+    logs_client: BaseClient,
 ):
     # Given
     # When
@@ -244,6 +261,12 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     assert_that(audit_data["response"]["lastUpdated"], is_not(equal_to("")))
     assert_that(audit_data["response"]["condition"], equal_to(expected_conditions))
 
+    messages = get_log_messages(flask_function, logs_client)
+    assert_that(
+        messages,
+        has_item(contains_string("Defaulting includeActions query param to Y as no value was provided")),
+    )
+
 
 def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_results_in_error_response(
     lambda_client: BaseClient,  # noqa:ARG001
@@ -263,8 +286,118 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
     # Then
     assert_that(
         response,
-        is_response().with_status_code(HTTPStatus.FORBIDDEN).and_body("NHS number mismatch"),
+        is_response()
+        .with_status_code(HTTPStatus.FORBIDDEN)
+        .and_body(
+            is_json_that(
+                has_entries(
+                    resourceType="OperationOutcome",
+                    issue=contains_exactly(
+                        has_entries(
+                            severity="error",
+                            code="forbidden",
+                            diagnostics=f"NHS Number {persisted_person} does "
+                            f"not match the header NHS Number 123{persisted_person!s}",
+                            details={
+                                "coding": [
+                                    {
+                                        "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                        "code": "INVALID_NHS_NUMBER",
+                                        "display": "The provided NHS number does not match the record.",
+                                    }
+                                ]
+                            },
+                        )
+                    ),
+                )
+            )
+        ),
     )
+
+
+def test_given_nhs_number_not_present_in_headers_results_in_error_response(
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person: NHSNumber,
+    campaign_config: CampaignConfig,  # noqa:ARG001
+    api_gateway_endpoint: URL,
+):
+    # Given
+    # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
+    response = httpx.get(
+        invoke_url,
+        timeout=10,
+    )
+
+    # Then
+    assert_that(
+        response,
+        is_response()
+        .with_status_code(HTTPStatus.FORBIDDEN)
+        .and_body(
+            is_json_that(
+                has_entries(
+                    resourceType="OperationOutcome",
+                    issue=contains_exactly(
+                        has_entries(
+                            severity="error",
+                            code="forbidden",
+                            diagnostics=f"NHS Number {persisted_person} does not match the header NHS Number ",
+                            details={
+                                "coding": [
+                                    {
+                                        "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                        "code": "INVALID_NHS_NUMBER",
+                                        "display": "The provided NHS number does not match the record.",
+                                    }
+                                ]
+                            },
+                        )
+                    ),
+                )
+            )
+        ),
+    )
+
+
+def test_validation_of_query_params_when_all_are_valid(
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person: NHSNumber,
+    campaign_config: CampaignConfig,  # noqa:ARG001
+    api_gateway_endpoint: URL,
+):
+    # Given
+    # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
+    response = httpx.get(
+        invoke_url,
+        headers={"nhs-login-nhs-number": persisted_person},
+        params={"category": "VACCINATIONS", "conditions": "COVID19", "includeActions": "N"},
+        timeout=10,
+    )
+
+    # Then
+    assert_that(response, is_response().with_status_code(HTTPStatus.OK))
+
+
+def test_validation_of_query_params_when_invalid_conditions_is_specified(
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person: NHSNumber,
+    campaign_config: CampaignConfig,  # noqa:ARG001
+    api_gateway_endpoint: URL,
+):
+    # Given
+    # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
+    response = httpx.get(
+        invoke_url,
+        headers={"nhs-login-nhs-number": persisted_person},
+        params={"category": "ALL", "conditions": "23-097"},
+        timeout=10,
+    )
+
+    # Then
+    assert_that(response, is_response().with_status_code(HTTPStatus.BAD_REQUEST))
 
 
 def test_given_person_has_unique_status_for_different_conditions_with_audit(  # noqa: PLR0913

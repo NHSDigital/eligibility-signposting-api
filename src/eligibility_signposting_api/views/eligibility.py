@@ -2,18 +2,16 @@ import logging
 import uuid
 from datetime import UTC, datetime
 from http import HTTPStatus
-from typing import Never
 
-from fhir.resources.R4B.operationoutcome import OperationOutcome, OperationOutcomeIssue
 from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
 from wireup import Injected
 
+from eligibility_signposting_api.api_error_response import NHS_NUMBER_NOT_FOUND_ERROR
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
-from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
 from eligibility_signposting_api.views.response_model import eligibility
 from eligibility_signposting_api.views.response_model.eligibility import ProcessedSuggestion
 
@@ -50,8 +48,6 @@ def check_eligibility(
         eligibility_status = eligibility_service.get_eligibility_status(
             nhs_number, include_actions_flag=get_include_actions_flag()
         )
-    except InvalidQueryParamError:
-        return handle_invalid_query_param_error()
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
     else:
@@ -62,49 +58,21 @@ def check_eligibility(
         )
 
 
-def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:
-    logger.debug("nhs_number %r not found", nhs_number, extra={"nhs_number": nhs_number})
-    problem = OperationOutcome(
-        issue=[
-            OperationOutcomeIssue(
-                severity="information",
-                code="nhs-number-not-found",
-                diagnostics=f'NHS Number "{nhs_number}" not found.',
-            )  # pyright: ignore[reportCallIssue]
-        ]
-    )
-    return make_response(problem.model_dump(by_alias=True, mode="json"), HTTPStatus.NOT_FOUND)
-
-
-def handle_invalid_query_param_error() -> ResponseReturnValue:
-    logger.debug(
-        "Invalid query param",
-    )
-    problem = OperationOutcome(
-        issue=[
-            OperationOutcomeIssue(
-                severity="error",
-                code="invalid",
-                diagnostics="Invalid query param key or value.",
-            )  # pyright: ignore[reportCallIssue]
-        ]
-    )
-    return make_response(problem.model_dump(by_alias=True, mode="json"), HTTPStatus.BAD_REQUEST)
-
-
 def get_include_actions_flag() -> bool:
-    include_actions = request.args.get("includeActions")
-    if "includeActions" in request.args:
-        normalized = include_actions.upper() if include_actions is not None else None
-        if normalized not in ("Y", "N", None):
-            raise_invalid_query_param_error()
-    elif len(request.args) != 0 and "includeActions" not in request.args:
-        raise_invalid_query_param_error()
-    return include_actions is None or include_actions.upper() == "Y"
+    if not request.args.get("includeActions"):
+        logger.info("Defaulting includeActions query param to Y as no value was provided")
+        include_actions_flag = True
+    else:
+        include_actions_flag = request.args.get("includeActions") == "Y"
+    return include_actions_flag
 
 
-def raise_invalid_query_param_error() -> Never:
-    raise InvalidQueryParamError
+def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:
+    diagnostics = f"NHS Number '{nhs_number}' was not recognised by the Eligibility Signposting API"
+    response = NHS_NUMBER_NOT_FOUND_ERROR.log_and_generate_response(
+        log_message=diagnostics, diagnostics=diagnostics, location_param="id"
+    )
+    return make_response(response.get("body"), response.get("statusCode"))
 
 
 def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibility.EligibilityResponse:
