@@ -1,35 +1,106 @@
 import logging
+import re
 from collections.abc import Callable
 from functools import wraps
+from typing import Any
 
 from mangum.types import LambdaContext, LambdaEvent
 
+from eligibility_signposting_api.api_error_response import (
+    INVALID_CATEGORY_ERROR,
+    INVALID_CONDITION_FORMAT_ERROR,
+    INVALID_INCLUDE_ACTIONS_ERROR,
+    NHS_NUMBER_MISMATCH_ERROR,
+)
 from eligibility_signposting_api.config.contants import NHS_NUMBER_HEADER
 
 logger = logging.getLogger(__name__)
 
+condition_pattern = re.compile(r"^\s*[a-zA-Z0-9]+\s*$", re.IGNORECASE)
+category_pattern = re.compile(r"^\s*(VACCINATIONS|SCREENING|ALL)\s*$", re.IGNORECASE)
+include_actions_pattern = re.compile(r"^\s*([YN])\s*$", re.IGNORECASE)
 
-class MismatchedNHSNumberError(ValueError):
-    pass
+
+def validate_query_params(query_params: dict[str, str]) -> tuple[bool, dict[str, Any] | None]:
+    conditions = query_params.get("conditions", "ALL").split(",")
+    for condition in conditions:
+        search = re.search(condition_pattern, condition)
+        if not search:
+            return False, get_condition_error_response(condition)
+
+    category = query_params.get("category", "ALL")
+    if not re.search(category_pattern, category):
+        return False, get_category_error_response(category)
+
+    include_actions = query_params.get("includeActions", "Y")
+    if not re.search(include_actions_pattern, include_actions):
+        return False, get_include_actions_error_response(include_actions)
+
+    return True, None
 
 
-def validate_matching_nhs_number() -> Callable:
-    def decorator(func: Callable) -> Callable:  # pragma: no cover
+def validate_nhs_number(path_nhs: str, header_nhs: str) -> bool:
+    logger.info("NHS numbers from the request", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
+
+    if not header_nhs or not path_nhs:
+        logger.error("NHS number is not present", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
+        return False
+
+    if header_nhs != path_nhs:
+        logger.error("NHS number mismatch", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
+        return False
+    return True
+
+
+def validate_request_params() -> Callable:
+    def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, int | str]:
-            headers = event.get("headers", {})
-            path_params = event.get("pathParameters", {})
+        def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any] | None:
+            path_nhs_no = event.get("pathParameters", {}).get("id")
+            header_nhs_no = event.get("headers", {}).get(NHS_NUMBER_HEADER)
 
-            header_nhs = headers.get(NHS_NUMBER_HEADER)
-            path_nhs = path_params.get("id")
+            if not validate_nhs_number(path_nhs_no, header_nhs_no):
+                message = f"NHS Number {path_nhs_no or ''} does not match the header NHS Number {header_nhs_no or ''}"
+                return NHS_NUMBER_MISMATCH_ERROR.log_and_generate_response(
+                    log_message=message, diagnostics=message, location_param="id"
+                )
 
-            logger.info("nhs numbers from the request", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
+            query_params = event.get("queryStringParameters")
+            if query_params:
+                is_valid, problem = validate_query_params(query_params)
+                if not is_valid:
+                    return problem
 
-            if header_nhs != path_nhs:
-                logger.error("NHS number mismatch", extra={"header_nhs_no": header_nhs, "path_nhs_no": path_nhs})
-                return {"statusCode": 403, "body": "NHS number mismatch"}
             return func(event, context)
 
         return wrapper
 
     return decorator
+
+
+def get_include_actions_error_response(include_actions: str) -> dict[str, Any]:
+    diagnostics = f"{include_actions} is not a value that is supported by the API"
+    return INVALID_INCLUDE_ACTIONS_ERROR.log_and_generate_response(
+        log_message=f"Invalid include actions query param: '{include_actions}'",
+        diagnostics=diagnostics,
+        location_param="includeActions",
+    )
+
+
+def get_category_error_response(category: str) -> dict[str, Any]:
+    diagnostics = f"{category} is not a category that is supported by the API"
+    return INVALID_CATEGORY_ERROR.log_and_generate_response(
+        log_message=f"Invalid category query param: '{category}'", diagnostics=diagnostics, location_param="category"
+    )
+
+
+def get_condition_error_response(condition: str) -> dict[str, Any]:
+    diagnostics = (
+        f"{condition} should be a single or comma separated list of condition "
+        f"strings with no other punctuation or special characters"
+    )
+    return INVALID_CONDITION_FORMAT_ERROR.log_and_generate_response(
+        log_message=f"Invalid condition query param: '{condition}'",
+        diagnostics=diagnostics,
+        location_param="conditions",
+    )

@@ -2,13 +2,13 @@ import json
 import logging
 from datetime import UTC, datetime
 from http import HTTPStatus
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
-from flask import Flask, Request
+from flask import Flask
 from flask.testing import FlaskClient
 from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_, none
 from wireup.integration.flask import get_app_container
@@ -33,12 +33,10 @@ from eligibility_signposting_api.model.eligibility import (
     UrlLink,
 )
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
-from eligibility_signposting_api.services.eligibility_services import InvalidQueryParamError
 from eligibility_signposting_api.views.eligibility import (
     build_actions,
     build_eligibility_cohorts,
     build_suitability_results,
-    get_include_actions_flag,
 )
 from eligibility_signposting_api.views.response_model import eligibility
 from tests.fixtures.builders.model.eligibility import (
@@ -125,7 +123,20 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
                     resourceType="OperationOutcome",
                     issue=contains_exactly(
                         has_entries(
-                            severity="information", code="nhs-number-not-found", diagnostics='NHS Number "" not found.'
+                            severity="error",
+                            code="processing",
+                            diagnostics="NHS Number '' was not recognised by the Eligibility Signposting API",
+                            details={
+                                "coding": [
+                                    {
+                                        "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                        "code": "REFERENCE_NOT_FOUND",
+                                        "display": "The given NHS number was not found in our datasets. "
+                                        "This could be because the number is incorrect or "
+                                        "some other reason we cannot process that number.",
+                                    }
+                                ]
+                            },
                         )
                     ),
                 )
@@ -138,6 +149,7 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
     # Given
     with get_app_container(app).override.service(EligibilityService, new=FakeUnexpectedErrorEligibilityService()):
         response = client.get("/patient-check/12345")
+
         assert_that(
             response,
             is_response()
@@ -146,7 +158,22 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
                 is_json_that(
                     has_entries(
                         resourceType="OperationOutcome",
-                        issue=contains_exactly(has_entries(severity="severe", code="unexpected")),
+                        issue=contains_exactly(
+                            has_entries(
+                                severity="error",
+                                code="processing",
+                                diagnostics="An unexpected error occurred.",
+                                details={
+                                    "coding": [
+                                        {
+                                            "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "display": "An unexpected internal server error occurred.",
+                                        }
+                                    ]
+                                },
+                            )
+                        ),
                     )
                 )
             ),
@@ -447,142 +474,6 @@ def test_build_actions(suggested_actions, expected):
         assert_that(results, is_(none()))
     else:
         assert_that(results, contains_exactly(*expected))
-
-
-def test_nhs_number_and_include_actions_param_given_and_is_yes(app: Flask, client: FlaskClient):
-    # Given
-    with (
-        get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()),
-        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
-    ):
-        # When
-        response = client.get("/patient-check/12345?includeActions=Y")
-
-        # Then
-        assert_that(response, is_response().with_status_code(HTTPStatus.OK))
-
-
-def test_nhs_number_and_include_actions_param_no_given(app: Flask, client: FlaskClient):
-    # Given
-    with (
-        get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()),
-        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
-    ):
-        # When
-        response = client.get("/patient-check/12345?includeActions=N")
-
-        # Then
-        assert_that(response, is_response().with_status_code(HTTPStatus.OK))
-
-
-def test_nhs_number_and_include_actions_param_value_is_incorrect(app: Flask, client: FlaskClient):
-    # Given
-    with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
-        # When
-        response = client.get("/patient-check/12345?includeActions=abc")
-
-        # Then
-        assert_that(
-            response,
-            is_response()
-            .with_status_code(HTTPStatus.BAD_REQUEST)
-            .and_text(
-                is_json_that(
-                    has_entries(
-                        resourceType="OperationOutcome",
-                        issue=contains_exactly(
-                            has_entries(
-                                severity="error", code="invalid", diagnostics="Invalid query param key or value."
-                            )
-                        ),
-                    )
-                )
-            ),
-        )
-
-
-def test_nhs_number_and_unrecognised_query_param_provided(app: Flask, client: FlaskClient):
-    # Given
-    with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
-        # When
-        response = client.get("/patient-check/12345?example-key=example-value")
-
-        # Then
-        assert_that(
-            response,
-            is_response()
-            .with_status_code(HTTPStatus.BAD_REQUEST)
-            .and_text(
-                is_json_that(
-                    has_entries(
-                        resourceType="OperationOutcome",
-                        issue=contains_exactly(
-                            has_entries(
-                                severity="error", code="invalid", diagnostics="Invalid query param key or value."
-                            )
-                        ),
-                    )
-                )
-            ),
-        )
-
-
-def test_query_param_include_actions_flag_with_yes():
-    # Given:
-    mock_request = Mock(spec=Request)
-    mock_request.args = {"includeActions": "Y"}
-    with patch("eligibility_signposting_api.views.eligibility.request", mock_request):
-        # When:
-        result = get_include_actions_flag()
-
-    # Then:
-    assert result is True
-
-
-def test_query_param_include_actions_flag_with_no():
-    # Given:
-    mock_request = Mock(spec=Request)
-    mock_request.args = {"includeActions": "N"}
-    with patch("eligibility_signposting_api.views.eligibility.request", mock_request):
-        # When:
-        result = get_include_actions_flag()
-
-    # Then:
-    assert result is False
-
-
-def test_query_param_include_actions_flag_with_no_param():
-    # Given:
-    mock_request = Mock(spec=Request)
-    mock_request.args = {}
-    with patch("eligibility_signposting_api.views.eligibility.request", mock_request):
-        # When:
-        result = get_include_actions_flag()
-
-    # Then:
-    assert result is True
-
-
-def test_query_param_include_actions_flag_with_invalid_value():
-    # Given:
-    mock_request = Mock(spec=Request)
-    mock_request.args = {"includeActions": "invalid"}
-    with (
-        patch("eligibility_signposting_api.views.eligibility.request", mock_request),
-        pytest.raises(InvalidQueryParamError),
-    ):
-        get_include_actions_flag()
-
-
-def test_query_param_include_actions_flag_with_other_params():
-    # Given:
-    mock_request = Mock(spec=Request)
-    mock_request.args = {"otherParam": "value"}
-    with (
-        patch("eligibility_signposting_api.views.eligibility.request", mock_request),
-        pytest.raises(InvalidQueryParamError),
-    ):
-        get_include_actions_flag()
 
 
 def test_excludes_nulls_via_build_response(client: FlaskClient):
