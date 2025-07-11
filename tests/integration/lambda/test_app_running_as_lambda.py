@@ -231,7 +231,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
             "conditionName": campaign_config.target,
             "status": "not_actionable",
             "statusText": "not_actionable",
-            "eligibilityCohorts": [{"cohortCode": "cohort_group1", "cohortStatus": "not_actionable"}],
+            "eligibilityCohorts": [{"cohortCode": "cohort1", "cohortStatus": "not_actionable"}],
             "eligibilityCohortGroups": [
                 {
                     "cohortCode": "cohort_group1",
@@ -445,7 +445,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "conditionName": rsv_campaign.target,
             "status": "not_eligible",
             "statusText": "not_eligible",
-            "eligibilityCohorts": [{"cohortCode": "cohort_group1", "cohortStatus": "not_eligible"}],
+            "eligibilityCohorts": [{"cohortCode": "cohort_label1", "cohortStatus": "not_eligible"}],
             "eligibilityCohortGroups": [
                 {
                     "cohortCode": "cohort_group1",
@@ -466,7 +466,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "conditionName": covid_campaign.target,
             "status": "not_actionable",
             "statusText": "not_actionable",
-            "eligibilityCohorts": [{"cohortCode": "cohort_group2", "cohortStatus": "not_actionable"}],
+            "eligibilityCohorts": [{"cohortCode": "cohort_label2", "cohortStatus": "not_actionable"}],
             "eligibilityCohortGroups": [
                 {
                     "cohortCode": "cohort_group2",
@@ -491,7 +491,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "conditionName": flu_campaign.target,
             "status": "actionable",
             "statusText": "actionable",
-            "eligibilityCohorts": [{"cohortCode": "cohort_group3", "cohortStatus": "actionable"}],
+            "eligibilityCohorts": [{"cohortCode": "cohort_label3", "cohortStatus": "actionable"}],
             "eligibilityCohortGroups": [
                 {
                     "cohortCode": "cohort_group3",
