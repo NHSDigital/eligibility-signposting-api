@@ -32,6 +32,7 @@ class RuleType(StrEnum):
     not_eligible_actions = "X"
     not_actionable_actions = "Y"
 
+
 @total_ordering
 class Status(Enum):
     not_eligible = auto()

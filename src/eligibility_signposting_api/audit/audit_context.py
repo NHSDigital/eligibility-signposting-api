@@ -106,6 +106,7 @@ class AuditContext:
                 rule_priority=str(redirect_rule_details[0]), rule_name=redirect_rule_details[1]
             )
 
+
         if suggested_actions is None:
             audit_actions = None
         elif len(suggested_actions) > 0:
