@@ -1,4 +1,5 @@
 resource "aws_kms_key" "storage_bucket_cmk" {
+  #checkov:skip=CKV2_AWS_64: KMS key policy is defined in api-layer iam_policies.tf
   description             = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.bucket_name} Master Key"
   deletion_window_in_days = 14
   is_enabled              = true
