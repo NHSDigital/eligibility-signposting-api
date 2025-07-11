@@ -143,7 +143,7 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-                                        "code": "RESOURCE_NOT_FOUND",
+                                        "code": "REFERENCE_NOT_FOUND",
                                         "display": "The given NHS number was not found in our datasets. "
                                         "This could be because the number is incorrect or "
                                         "some other reason we cannot process that number.",
@@ -294,7 +294,7 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-                                        "code": "NHS_NUMBER_MISMATCH",
+                                        "code": "INVALID_NHS_NUMBER",
                                         "display": "The provided NHS number does not match the record.",
                                     }
                                 ]
@@ -339,7 +339,7 @@ def test_given_nhs_number_not_present_in_headers_results_in_error_response(
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-                                        "code": "NHS_NUMBER_MISMATCH",
+                                        "code": "INVALID_NHS_NUMBER",
                                         "display": "The provided NHS number does not match the record.",
                                     }
                                 ]

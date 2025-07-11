@@ -130,7 +130,7 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-                                        "code": "RESOURCE_NOT_FOUND",
+                                        "code": "REFERENCE_NOT_FOUND",
                                         "display": "The given NHS number was not found in our datasets. "
                                         "This could be because the number is incorrect or "
                                         "some other reason we cannot process that number.",
@@ -160,34 +160,20 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
                         resourceType="OperationOutcome",
                         issue=contains_exactly(
                             has_entries(
-                                severity="severe",
-                                code="unexpected",
+                                severity="error",
+                                code="processing",
                                 diagnostics="An unexpected error occurred.",
                                 details={
                                     "coding": [
                                         {
                                             "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-                                            "code": "UNEXPECTED_ERROR",
+                                            "code": "INTERNAL_SERVER_ERROR",
                                             "display": "An unexpected internal server error occurred.",
                                         }
                                     ]
                                 },
                             )
                         ),
-                    )
-                )
-            ),
-        )
-
-        assert_that(
-            response,
-            is_response()
-            .with_status_code(HTTPStatus.INTERNAL_SERVER_ERROR)
-            .and_text(
-                is_json_that(
-                    has_entries(
-                        resourceType="OperationOutcome",
-                        issue=contains_exactly(has_entries(severity="severe", code="unexpected")),
                     )
                 )
             ),

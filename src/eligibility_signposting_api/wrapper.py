@@ -72,6 +72,7 @@ def validate_request_params() -> Callable:
                 event.setdefault(
                     "queryStringParameters", {"category": "ALL", "conditions": "ALL", "includeActions": "Y"}
                 )
+                logger.info("No query params provided, using default: %s", event["queryStringParameters"])
             else:
                 is_valid, problem = validate_query_params(query_params_raw)
                 if not is_valid:

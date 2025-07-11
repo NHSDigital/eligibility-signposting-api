@@ -2,6 +2,7 @@ import json
 import logging
 import uuid
 from datetime import UTC, datetime
+from enum import Enum
 from http import HTTPStatus
 from typing import Any
 
@@ -10,12 +11,32 @@ from fhir.resources.operationoutcome import OperationOutcome, OperationOutcomeIs
 logger = logging.getLogger(__name__)
 
 
+class FHIRIssueSeverity(str, Enum):
+    FATAL = "fatal"
+    ERROR = "error"
+    WARNING = "warning"
+    INFORMATION = "information"
+
+
+class FHIRIssueCode(str, Enum):
+    FORBIDDEN = "forbidden"
+    PROCESSING = "processing"
+    VALUE = "value"
+
+
+class FHIRSpineErrorCode(str, Enum):
+    INVALID_NHS_NUMBER = "INVALID_NHS_NUMBER"
+    INVALID_PARAMETER = "INVALID_PARAMETER"
+    INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
+    REFERENCE_NOT_FOUND = "REFERENCE_NOT_FOUND"
+
+
 class APIErrorResponse:
     def __init__(  # noqa: PLR0913
         self,
         status_code: HTTPStatus,
-        fhir_issue_code: str,
-        fhir_issue_severity: str,
+        fhir_issue_code: FHIRIssueCode,
+        fhir_issue_severity: FHIRIssueSeverity,
         fhir_coding_system: str,
         fhir_error_code: str,
         fhir_display_message: str,
@@ -71,37 +92,37 @@ class APIErrorResponse:
 
 INVALID_INCLUDE_ACTIONS_ERROR = APIErrorResponse(
     status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-    fhir_issue_code="value",
-    fhir_issue_severity="error",
+    fhir_issue_code=FHIRIssueCode.VALUE,
+    fhir_issue_severity=FHIRIssueSeverity.ERROR,
     fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-    fhir_error_code="VALIDATION_ERROR",
+    fhir_error_code=FHIRSpineErrorCode.INVALID_PARAMETER,
     fhir_display_message="The supplied value was not recognised by the API.",
 )
 
 INVALID_CATEGORY_ERROR = APIErrorResponse(
     status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-    fhir_issue_code="value",
-    fhir_issue_severity="error",
+    fhir_issue_code=FHIRIssueCode.VALUE,
+    fhir_issue_severity=FHIRIssueSeverity.ERROR,
     fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-    fhir_error_code="VALIDATION_ERROR",
+    fhir_error_code=FHIRSpineErrorCode.INVALID_PARAMETER,
     fhir_display_message="The supplied category was not recognised by the API.",
 )
 
 INVALID_CONDITION_FORMAT_ERROR = APIErrorResponse(
     status_code=HTTPStatus.BAD_REQUEST,
-    fhir_issue_code="value",
-    fhir_issue_severity="error",
+    fhir_issue_code=FHIRIssueCode.VALUE,
+    fhir_issue_severity=FHIRIssueSeverity.ERROR,
     fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-    fhir_error_code="VALIDATION_ERROR",
+    fhir_error_code=FHIRSpineErrorCode.INVALID_PARAMETER,
     fhir_display_message="The given conditions were not in the expected format.",
 )
 
 NHS_NUMBER_NOT_FOUND_ERROR = APIErrorResponse(
     status_code=HTTPStatus.NOT_FOUND,
-    fhir_issue_code="processing",
-    fhir_issue_severity="error",
+    fhir_issue_code=FHIRIssueCode.PROCESSING,
+    fhir_issue_severity=FHIRIssueSeverity.ERROR,
     fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-    fhir_error_code="RESOURCE_NOT_FOUND",
+    fhir_error_code=FHIRSpineErrorCode.REFERENCE_NOT_FOUND,
     fhir_display_message="The given NHS number was not found in our datasets. "
     "This could be because the number is incorrect or "
     "some other reason we cannot process that number.",
@@ -109,18 +130,18 @@ NHS_NUMBER_NOT_FOUND_ERROR = APIErrorResponse(
 
 INTERNAL_SERVER_ERROR = APIErrorResponse(
     status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-    fhir_issue_code="unexpected",
-    fhir_issue_severity="severe",
+    fhir_issue_code=FHIRIssueCode.PROCESSING,
+    fhir_issue_severity=FHIRIssueSeverity.ERROR,
     fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-    fhir_error_code="UNEXPECTED_ERROR",
+    fhir_error_code=FHIRSpineErrorCode.INTERNAL_SERVER_ERROR,
     fhir_display_message="An unexpected internal server error occurred.",
 )
 
 NHS_NUMBER_MISMATCH_ERROR = APIErrorResponse(
     status_code=HTTPStatus.FORBIDDEN,
-    fhir_issue_code="forbidden",
-    fhir_issue_severity="error",
+    fhir_issue_code=FHIRIssueCode.FORBIDDEN,
+    fhir_issue_severity=FHIRIssueSeverity.ERROR,
     fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
-    fhir_error_code="NHS_NUMBER_MISMATCH",
+    fhir_error_code=FHIRSpineErrorCode.INVALID_NHS_NUMBER,
     fhir_display_message="The provided NHS number does not match the record.",
 )

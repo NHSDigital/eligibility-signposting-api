@@ -239,7 +239,7 @@ def test_validate_query_params_returns_correct_problem_details_for_conditions_er
     coding = issue["details"]["coding"][0]
 
     assert coding["system"] == "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode"
-    assert coding["code"] == "VALIDATION_ERROR"
+    assert coding["code"] == "INVALID_PARAMETER"
     assert coding["display"] == "The given conditions were not in the expected format."
 
 
@@ -274,7 +274,7 @@ def test_validate_query_params_returns_correct_problem_details_for_category_erro
     coding = issue["details"]["coding"][0]
 
     assert coding["system"] == "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode"
-    assert coding["code"] == "VALIDATION_ERROR"
+    assert coding["code"] == "INVALID_PARAMETER"
     assert coding["display"] == "The supplied category was not recognised by the API."
 
 
@@ -309,5 +309,5 @@ def test_validate_query_params_returns_correct_problem_details_for_include_actio
     coding = issue["details"]["coding"][0]
 
     assert coding["system"] == "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode"
-    assert coding["code"] == "VALIDATION_ERROR"
+    assert coding["code"] == "INVALID_PARAMETER"
     assert coding["display"] == "The supplied value was not recognised by the API."
