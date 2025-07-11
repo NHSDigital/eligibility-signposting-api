@@ -235,7 +235,6 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
     actions   = ["kms:*"]
     resources = ["*"]
   }
-
   statement {
     sid    = "AllowLambdaFullWrite"
     effect = "Allow"
@@ -277,9 +276,3 @@ resource "aws_iam_role_policy" "lambda_firehose_policy" {
   role   = aws_iam_role.eligibility_lambda_role.id
   policy = data.aws_iam_policy_document.lambda_firehose_write_policy.json
 }
-
-
-
-
-
-

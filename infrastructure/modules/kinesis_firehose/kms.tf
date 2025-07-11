@@ -45,7 +45,6 @@ data "aws_iam_policy_document" "firehose_kms_key_policy" {
     resources = ["*"]
   }
 
-  # Your existing statements below...
   statement {
     sid    = "AllowFirehoseAccess"
     effect = "Allow"
@@ -110,5 +109,3 @@ data "aws_iam_policy_document" "firehose_kms_key_policy" {
     resources = [aws_kms_key.firehose_cmk.arn]
   }
 }
-
-
