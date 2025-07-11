@@ -31,7 +31,11 @@ class EligibilityService:
         self.calculator_factory = calculator_factory
 
     def get_eligibility_status(
-        self, nhs_number: eligibility.NHSNumber | None = None, *, include_actions_flag: bool = True
+        self,
+        nhs_number: eligibility.NHSNumber,
+        include_actions: str,
+        conditions: list[str],
+        category: str,
     ) -> eligibility.EligibilityStatus:
         """Calculate a person's eligibility for vaccination given an NHS number."""
         if nhs_number:
@@ -51,6 +55,6 @@ class EligibilityService:
                 raise UnknownPersonError from e
             else:
                 calc: calculator.EligibilityCalculator = self.calculator_factory.get(person_data, campaign_configs)
-                return calc.evaluate_eligibility(include_actions_flag=include_actions_flag)
+                return calc.evaluate_eligibility(include_actions, conditions, category)
 
         raise UnknownPersonError  # pragma: no cover

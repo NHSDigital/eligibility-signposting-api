@@ -62,16 +62,23 @@ class EligibilityCalculator:
     def active_campaigns(self) -> list[rules.CampaignConfig]:
         return [cc for cc in self.campaign_configs if cc.campaign_live]
 
-    @property
     def campaigns_grouped_by_condition_name(
-        self,
+        self, conditions: list[str], category: str
     ) -> Iterator[tuple[eligibility.ConditionName, list[rules.CampaignConfig]]]:
-        """Generator function to iterate over campaign groups by condition name."""
+        """Generator that yields campaign groups filtered by condition names and campaign category."""
+
+        allowed_types = (
+            {"V", "S"} if category == "ALL" else {category[0]} if category in {"VACCINATIONS", "SCREENING"} else set()
+        )
+        filter_all_conditions = "ALL" in conditions
+
         for condition_name, campaign_group in groupby(
             sorted(self.active_campaigns, key=attrgetter("target")),
             key=attrgetter("target"),
         ):
-            yield condition_name, list(campaign_group)
+            campaigns = list(campaign_group)
+            if campaigns[0].type in allowed_types and (filter_all_conditions or str(condition_name) in conditions):
+                yield condition_name, campaigns
 
     @property
     def person_cohorts(self) -> set[str]:
@@ -137,13 +144,15 @@ class EligibilityCalculator:
         action_mapper = active_iteration.actions_mapper
         return redirect_rules, action_mapper, default_comms
 
-    def evaluate_eligibility(self, *, include_actions_flag: bool = True) -> eligibility.EligibilityStatus:
-        """Iterates over campaign groups, evaluates eligibility, and returns a consolidated status."""
+    def evaluate_eligibility(
+        self, include_actions: str, conditions: list[str], category: str
+    ) -> eligibility.EligibilityStatus:
+        include_actions_flag = include_actions.upper() == "Y"
         condition_results: dict[ConditionName, IterationResult] = {}
         actions: list[SuggestedAction] | None = []
         redirect_rule_priority, redirect_rule_name = None, None
 
-        for condition_name, campaign_group in self.campaigns_grouped_by_condition_name:
+        for condition_name, campaign_group in self.campaigns_grouped_by_condition_name(conditions, category):
             best_active_iteration: Iteration | None
             best_candidate: IterationResult
             best_campaign_id: CampaignID | None

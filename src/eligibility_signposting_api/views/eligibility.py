@@ -2,6 +2,7 @@ import logging
 import uuid
 from datetime import UTC, datetime
 from http import HTTPStatus
+from typing import Any
 
 from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
@@ -45,8 +46,12 @@ def check_eligibility(
 ) -> ResponseReturnValue:
     logger.info("checking nhs_number %r in %r", nhs_number, eligibility_service, extra={"nhs_number": nhs_number})
     try:
+        query_params = get_or_default_query_params()
         eligibility_status = eligibility_service.get_eligibility_status(
-            nhs_number, include_actions_flag=get_include_actions_flag()
+            nhs_number,
+            query_params["includeActions"],
+            query_params["conditions"],
+            query_params["category"],
         )
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
@@ -58,13 +63,36 @@ def check_eligibility(
         )
 
 
-def get_include_actions_flag() -> bool:
-    if not request.args.get("includeActions"):
-        logger.info("Defaulting includeActions query param to Y as no value was provided")
-        include_actions_flag = True
+def get_or_default_query_params() -> dict[str, Any]:
+    default_query_params = {"category": "ALL", "conditions": ["ALL"], "includeActions": "Y"}
+
+    if not request.args:
+        logger.info("Defaulting all query params as no value was provided, using values %s", default_query_params)
+        return default_query_params
+
+    raw_args = request.args.to_dict()
+    query_params: dict[str, Any] = {}
+
+    include_actions = raw_args.get("includeActions")
+    query_params["includeActions"] = (
+        include_actions.upper() if include_actions else default_query_params["includeActions"]
+    )
+    if include_actions is None:
+        logger.info("Defaulting includeActions query param to 'Y' as no value was provided")
+
+    category = raw_args.get("category")
+    query_params["category"] = category.upper() if category else default_query_params["category"]
+    if category is None:
+        logger.info("Defaulting category query param to 'ALL' as no value was provided")
+
+    conditions_str = raw_args.get("conditions")
+    if conditions_str:
+        query_params["conditions"] = conditions_str.upper().split(",")
     else:
-        include_actions_flag = request.args.get("includeActions") == "Y"
-    return include_actions_flag
+        query_params["conditions"] = default_query_params["conditions"]
+        logger.info("Defaulting conditions query param to 'ALL' as no value was provided")
+
+    return query_params
 
 
 def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:

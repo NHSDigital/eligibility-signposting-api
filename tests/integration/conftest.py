@@ -496,6 +496,7 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
         campaign = rule.CampaignConfigFactory.build(
             name=f"campaign_{i}",
             target=targets[i],
+            type="V",
             iterations=[
                 rule.IterationFactory.build(
                     iteration_rules=target_rules_map.get(targets[i]),

@@ -37,6 +37,7 @@ from eligibility_signposting_api.views.eligibility import (
     build_actions,
     build_eligibility_cohorts,
     build_suitability_results,
+    get_or_default_query_params,
 )
 from eligibility_signposting_api.views.response_model import eligibility
 from tests.fixtures.builders.model.eligibility import (
@@ -60,9 +61,10 @@ class FakeEligibilityService(EligibilityService):
 
     def get_eligibility_status(
         self,
-        _: NHSNumber | None = None,
-        *,
-        include_actions_flag: bool = False,  # noqa: ARG002
+        _nhs_number: NHSNumber,
+        _include_actions: str,
+        _conditions: list[str],
+        _category: str,
     ) -> EligibilityStatus:
         return EligibilityStatusFactory.build()
 
@@ -73,9 +75,10 @@ class FakeUnknownPersonEligibilityService(EligibilityService):
 
     def get_eligibility_status(
         self,
-        _: NHSNumber | None = None,
-        *,
-        include_actions_flag: bool = False,  # noqa: ARG002
+        _nhs_number: NHSNumber,
+        _include_actions: str,
+        _conditions: list[str],
+        _category: str,
     ) -> EligibilityStatus:
         raise UnknownPersonError
 
@@ -86,9 +89,10 @@ class FakeUnexpectedErrorEligibilityService(EligibilityService):
 
     def get_eligibility_status(
         self,
-        _: NHSNumber | None = None,
-        *,
-        include_actions_flag: bool = False,  # noqa: ARG002
+        _nhs_number: NHSNumber,
+        _include_actions: str,
+        _conditions: list[str],
+        _category: str,
     ) -> EligibilityStatus:
         raise ValueError
 
@@ -618,3 +622,45 @@ def test_request_id_from_header_logging_variants(
 
         assert request_id_logged
         assert response.status_code == HTTPStatus.OK
+
+
+def test_get_or_default_query_params_with_no_args(app: Flask):
+    with app.test_request_context("/patient-check"):
+        result = get_or_default_query_params()
+
+        expected = {"category": "ALL", "conditions": ["ALL"], "includeActions": "Y"}
+
+        assert_that(result, is_(expected))
+
+
+def test_get_or_default_query_params_with_all_args(app: Flask):
+    with app.test_request_context("/patient-check?includeActions=Y&category=VACCINATIONS&conditions=FLU"):
+        result = get_or_default_query_params()
+
+        expected = {"includeActions": "Y", "category": "VACCINATIONS", "conditions": ["FLU"]}
+
+        assert_that(result, is_(expected))
+
+
+def test_get_or_default_query_params_with_partial_args(app: Flask):
+    with app.test_request_context("/patient-check?includeActions=N"):
+        result = get_or_default_query_params()
+
+        expected = {"includeActions": "N", "category": "ALL", "conditions": ["ALL"]}
+
+        assert_that(result, is_(expected))
+
+
+def test_get_or_default_query_params_with_lowercase_y(app: Flask):
+    with app.test_request_context("/patient-check?includeActions=y"):
+        result = get_or_default_query_params()
+        assert_that(result["includeActions"], is_("Y"))
+
+
+def test_get_or_default_query_params_missing_include_actions(app: Flask):
+    with app.test_request_context("/patient-check?category=SCREENING&conditions=COVID19,FLU"):
+        result = get_or_default_query_params()
+
+        expected = {"includeActions": "Y", "category": "SCREENING", "conditions": ["COVID19", "FLU"]}
+
+        assert_that(result, is_(expected))
