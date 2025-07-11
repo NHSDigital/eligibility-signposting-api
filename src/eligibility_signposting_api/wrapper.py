@@ -56,25 +56,18 @@ def validate_request_params() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any] | None:
-            path_nhs_number = event.get("pathParameters", {}).get("id")
-            header_nhs_number = event.get("headers", {}).get(NHS_NUMBER_HEADER)
+            path_nhs_no = event.get("pathParameters", {}).get("id")
+            header_nhs_no = event.get("headers", {}).get(NHS_NUMBER_HEADER)
 
-            if not validate_nhs_number(path_nhs_number, header_nhs_number):
-                message = (
-                    f"NHS Number {path_nhs_number or ''} does not match the header NHS Number {header_nhs_number or ''}"
-                )
+            if not validate_nhs_number(path_nhs_no, header_nhs_no):
+                message = f"NHS Number {path_nhs_no or ''} does not match the header NHS Number {header_nhs_no or ''}"
                 return NHS_NUMBER_MISMATCH_ERROR.log_and_generate_response(
                     log_message=message, diagnostics=message, location_param="id"
                 )
 
-            query_params_raw = event.get("queryStringParameters")
-            if query_params_raw is None:
-                event.setdefault(
-                    "queryStringParameters", {"category": "ALL", "conditions": "ALL", "includeActions": "Y"}
-                )
-                logger.info("No query params provided, using default: %s", event["queryStringParameters"])
-            else:
-                is_valid, problem = validate_query_params(query_params_raw)
+            query_params = event.get("queryStringParameters")
+            if query_params:
+                is_valid, problem = validate_query_params(query_params)
                 if not is_valid:
                     return problem
 

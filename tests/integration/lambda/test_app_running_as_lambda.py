@@ -185,6 +185,8 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
+    flask_function: str,
+    logs_client: BaseClient,
 ):
     # Given
     # When
@@ -258,6 +260,12 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     assert_that(audit_data["response"]["responseId"], is_not(equal_to("")))
     assert_that(audit_data["response"]["lastUpdated"], is_not(equal_to("")))
     assert_that(audit_data["response"]["condition"], equal_to(expected_conditions))
+
+    messages = get_log_messages(flask_function, logs_client)
+    assert_that(
+        messages,
+        has_item(contains_string("Defaulting includeActions query param to Y as no value was provided")),
+    )
 
 
 def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_results_in_error_response(

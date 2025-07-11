@@ -46,7 +46,7 @@ def check_eligibility(
     logger.info("checking nhs_number %r in %r", nhs_number, eligibility_service, extra={"nhs_number": nhs_number})
     try:
         eligibility_status = eligibility_service.get_eligibility_status(
-            nhs_number, include_actions_flag=request.args.get("includeActions") == "Y"
+            nhs_number, include_actions_flag=get_include_actions_flag()
         )
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
@@ -56,6 +56,15 @@ def check_eligibility(
         return make_response(
             eligibility_response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK
         )
+
+
+def get_include_actions_flag() -> bool:
+    if not request.args.get("includeActions"):
+        logger.info("Defaulting includeActions query param to Y as no value was provided")
+        include_actions_flag = True
+    else:
+        include_actions_flag = request.args.get("includeActions") == "Y"
+    return include_actions_flag
 
 
 def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:
