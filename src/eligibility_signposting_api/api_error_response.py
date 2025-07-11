@@ -94,7 +94,7 @@ INVALID_INCLUDE_ACTIONS_ERROR = APIErrorResponse(
     status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
     fhir_issue_code=FHIRIssueCode.VALUE,
     fhir_issue_severity=FHIRIssueSeverity.ERROR,
-    fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+    fhir_coding_system="https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
     fhir_error_code=FHIRSpineErrorCode.INVALID_PARAMETER,
     fhir_display_message="The supplied value was not recognised by the API.",
 )
@@ -103,7 +103,7 @@ INVALID_CATEGORY_ERROR = APIErrorResponse(
     status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
     fhir_issue_code=FHIRIssueCode.VALUE,
     fhir_issue_severity=FHIRIssueSeverity.ERROR,
-    fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+    fhir_coding_system="https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
     fhir_error_code=FHIRSpineErrorCode.INVALID_PARAMETER,
     fhir_display_message="The supplied category was not recognised by the API.",
 )
@@ -112,7 +112,7 @@ INVALID_CONDITION_FORMAT_ERROR = APIErrorResponse(
     status_code=HTTPStatus.BAD_REQUEST,
     fhir_issue_code=FHIRIssueCode.VALUE,
     fhir_issue_severity=FHIRIssueSeverity.ERROR,
-    fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+    fhir_coding_system="https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
     fhir_error_code=FHIRSpineErrorCode.INVALID_PARAMETER,
     fhir_display_message="The given conditions were not in the expected format.",
 )
@@ -121,7 +121,7 @@ NHS_NUMBER_NOT_FOUND_ERROR = APIErrorResponse(
     status_code=HTTPStatus.NOT_FOUND,
     fhir_issue_code=FHIRIssueCode.PROCESSING,
     fhir_issue_severity=FHIRIssueSeverity.ERROR,
-    fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+    fhir_coding_system="https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
     fhir_error_code=FHIRSpineErrorCode.REFERENCE_NOT_FOUND,
     fhir_display_message="The given NHS number was not found in our datasets. "
     "This could be because the number is incorrect or "
@@ -132,7 +132,7 @@ INTERNAL_SERVER_ERROR = APIErrorResponse(
     status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
     fhir_issue_code=FHIRIssueCode.PROCESSING,
     fhir_issue_severity=FHIRIssueSeverity.ERROR,
-    fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+    fhir_coding_system="https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
     fhir_error_code=FHIRSpineErrorCode.INTERNAL_SERVER_ERROR,
     fhir_display_message="An unexpected internal server error occurred.",
 )
@@ -141,7 +141,7 @@ NHS_NUMBER_MISMATCH_ERROR = APIErrorResponse(
     status_code=HTTPStatus.FORBIDDEN,
     fhir_issue_code=FHIRIssueCode.FORBIDDEN,
     fhir_issue_severity=FHIRIssueSeverity.ERROR,
-    fhir_coding_system="https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+    fhir_coding_system="https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
     fhir_error_code=FHIRSpineErrorCode.INVALID_NHS_NUMBER,
     fhir_display_message="The provided NHS number does not match the record.",
 )

@@ -129,7 +129,7 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
                             details={
                                 "coding": [
                                     {
-                                        "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+                                        "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
                                         "code": "REFERENCE_NOT_FOUND",
                                         "display": "The given NHS number was not found in our datasets. "
                                         "This could be because the number is incorrect or "
@@ -166,7 +166,7 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
                                 details={
                                     "coding": [
                                         {
-                                            "system": "https://fhir.nhs.uk/CodeSystem/Spine-ErrorOrWarningCode",
+                                            "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
                                             "code": "INTERNAL_SERVER_ERROR",
                                             "display": "An unexpected internal server error occurred.",
                                         }
