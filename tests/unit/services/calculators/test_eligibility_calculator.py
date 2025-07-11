@@ -7,6 +7,7 @@ from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_to, has_item, has_items, is_in
 from pydantic import HttpUrl, ValidationError
 
+from eligibility_signposting_api.audit.audit_models import AuditEvent, AuditAction
 from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
 from eligibility_signposting_api.model.eligibility import (
@@ -35,7 +36,11 @@ from tests.fixtures.matchers.eligibility import (
     is_reason,
 )
 from tests.fixtures.matchers.rules import is_iteration_rule
+from flask import g, Flask
 
+@pytest.fixture
+def app():
+    return Flask(__name__)
 
 class TestEligibilityCalculator:
     @staticmethod
@@ -2376,7 +2381,7 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
     )
 
 @pytest.mark.parametrize(
-    ("test_comment", "person_icb", "default_comms_routing", "comms_routing", "actions_mapper", "expected_actions"),
+    ("test_comment", "person_icb", "default_comms_routing", "comms_routing", "actions_mapper", "expected_actions", "expected_audit_actions"),
     [
         (
             """Not eligible person with matching NonEligibleActionRule""",
@@ -2400,6 +2405,16 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     url_label=None,
                 )
             ],
+            [
+                AuditAction(
+                    internal_action_code="ActionCode1",
+                    action_code="HealthcareProInfo",
+                    action_type="InfoText",
+                    action_description="Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ]
         ),
         (
             """Not eligible person with NON matching NonEligibleActionRule""",
@@ -2423,6 +2438,16 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     url_label=None,
                 )
             ],
+            [
+                AuditAction(
+                    internal_action_code="defaultCommsCode",
+                    action_code="DefaultHealthcareProInfo",
+                    action_type="DefaultInfoText",
+                    action_description="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ]
         ),
         (
             """Not eligible person with matching but missing NonEligibleActionRule, fall back to default comms""",
@@ -2447,11 +2472,21 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     url_label=None,
                 )
             ],
+            [
+                AuditAction(
+                    internal_action_code="defaultCommsCode",
+                    action_code="DefaultHealthcareProInfo",
+                    action_type="DefaultInfoText",
+                    action_description="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ]
         )
     ]
 )
 def test_correct_actions_determined_from_not_eligible_action_rules(  # noqa: PLR0913
-test_comment, person_icb, default_comms_routing, comms_routing, actions_mapper, expected_actions,
+app, test_comment, person_icb, default_comms_routing, comms_routing, actions_mapper, expected_actions, expected_audit_actions,
     faker: Faker,
 ):
     # Given
@@ -2479,24 +2514,29 @@ test_comment, person_icb, default_comms_routing, comms_routing, actions_mapper, 
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility()
+    with app.app_context():
+        g.audit_log = AuditEvent()
 
-    # Then
-    assert_that(
-        actual,
-        is_eligibility_status().with_conditions(
-            has_items(
-                is_condition()
-                .with_condition_name(ConditionName("RSV"))
-                .and_status(equal_to(Status.not_eligible))
-                .and_actions(equal_to(expected_actions))
-            )
-        ),
-    )
+        actual = calculator.evaluate_eligibility()
+
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_eligible))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_actions
 
 
 def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_given(  # noqa: PLR0913
-    faker: Faker,
+    app, faker: Faker,
 ):
     # ELI-295 Campaign config without NonEligibleActions (X rules) should not return any actions/default actions for NonEligible status
 
@@ -2523,25 +2563,33 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility()
+    with app.app_context():
+        g.audit_log = AuditEvent()
 
-    # Then
-    expected_actions=[]
-    assert_that(
-        actual,
-        is_eligibility_status().with_conditions(
-            has_items(
-                is_condition()
-                .with_condition_name(ConditionName("RSV"))
-                .and_status(equal_to(Status.not_eligible))
-                .and_actions(equal_to(expected_actions))
-            )
-        ),
-    )
+        actual = calculator.evaluate_eligibility()
+
+        # Then
+        expected_actions=[]
+        expected_audit_action=[]
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_eligible))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_action
+
 
 
 @pytest.mark.parametrize(
-    ("test_comment", "person_icb", "default_comms_routing", "comms_routing", "actions_mapper", "expected_actions"),
+    ("test_comment", "person_icb", "default_comms_routing", "comms_routing", "actions_mapper", "expected_actions", "expected_audit_actions"),
     [
         (
             """Not actionable person with matching NonActionableActionRule""",
@@ -2565,6 +2613,16 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                     url_label=None,
                 )
             ],
+            [
+                AuditAction(
+                    internal_action_code="ActionCode1",
+                    action_code="HealthcareProInfo",
+                    action_type="InfoText",
+                    action_description="Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ]
         ),
         (
             """Not actionable person with NON matching NonActionableActionRule""",
@@ -2588,6 +2646,16 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                     url_label=None,
                 )
             ],
+            [
+                AuditAction(
+                    internal_action_code="defaultCommsCode",
+                    action_code="DefaultHealthcareProInfo",
+                    action_type="DefaultInfoText",
+                    action_description="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ]
         ),
         (
             """Not actionable person with matching but missing NonActionableActionRule, fall back to default comms""",
@@ -2612,11 +2680,21 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                     url_label=None,
                 )
             ],
+            [
+                AuditAction(
+                    internal_action_code="defaultCommsCode",
+                    action_code="DefaultHealthcareProInfo",
+                    action_type="DefaultInfoText",
+                    action_description="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ]
         )
     ]
 )
 def test_correct_actions_determined_from_not_actionable_action_rules(  # noqa: PLR0913
-test_comment, person_icb, default_comms_routing, comms_routing, actions_mapper, expected_actions,
+app, test_comment, person_icb, default_comms_routing, comms_routing, actions_mapper, expected_actions, expected_audit_actions,
     faker: Faker,
 ):
     # Given
@@ -2647,24 +2725,31 @@ test_comment, person_icb, default_comms_routing, comms_routing, actions_mapper, 
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility()
+    with app.app_context():
+        g.audit_log = AuditEvent()
 
-    # Then
-    assert_that(
-        actual,
-        is_eligibility_status().with_conditions(
-            has_items(
-                is_condition()
-                .with_condition_name(ConditionName("RSV"))
-                .and_status(equal_to(Status.not_actionable))
-                .and_actions(equal_to(expected_actions))
-            )
-        ),
-    )
+        actual = calculator.evaluate_eligibility()
+
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_actionable))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_actions
+
+
 
 
 def test_no_actions_returned_when_non_actionable_actions_and_defaultcomms_not_given(  # noqa: PLR0913
-    faker: Faker,
+    app, faker: Faker,
 ):
     # ELI-295 Campaign config without NonActionableActions (Y rules) should not return any actions/default actions for NonActionable status
 
@@ -2693,18 +2778,28 @@ def test_no_actions_returned_when_non_actionable_actions_and_defaultcomms_not_gi
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility()
+    with app.app_context():
+        g.audit_log = AuditEvent()
 
-    # Then
-    expected_actions=[]
-    assert_that(
-        actual,
-        is_eligibility_status().with_conditions(
-            has_items(
-                is_condition()
-                .with_condition_name(ConditionName("RSV"))
-                .and_status(equal_to(Status.not_actionable))
-                .and_actions(equal_to(expected_actions))
-            )
-        ),
-    )
+        actual = calculator.evaluate_eligibility()
+
+        # Then
+        expected_actions=[]
+        expected_audit_action=[]
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_actionable))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_action
+
+
+
