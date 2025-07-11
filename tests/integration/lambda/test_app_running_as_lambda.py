@@ -451,7 +451,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "iterationId": rsv_campaign.iterations[0].id,
             "iterationVersion": rsv_campaign.iterations[0].version,
             "conditionName": rsv_campaign.target,
-            "status": "not_eligible",
+            "status": "not_eligible", #TODO is not_eligible status with no actions valid (ELI-295)
             "statusText": "not_eligible",
             "eligibilityCohorts": [{"cohortCode": "cohort_label1", "cohortStatus": "not_eligible"}],
             "eligibilityCohortGroups": [
@@ -472,7 +472,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "iterationId": covid_campaign.iterations[0].id,
             "iterationVersion": covid_campaign.iterations[0].version,
             "conditionName": covid_campaign.target,
-            "status": "not_actionable",
+            "status": "not_actionable", #TODO is not_actionable status with no actions valid (ELI-295)
             "statusText": "not_actionable",
             "eligibilityCohorts": [{"cohortCode": "cohort_label2", "cohortStatus": "not_actionable"}],
             "eligibilityCohortGroups": [

@@ -88,6 +88,9 @@ class AuditContext:
                     audit_filter_rule = AuditContext.create_audit_filter_rule(best_candidate, result)
                     audit_suitability_rule = AuditContext.create_audit_suitability_rule(best_candidate, result)
 
+        # TODO
+        # if actionflag
+        # if best_candidate and best_candidate.status and actionflag
         if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
             audit_redirect_rule = AuditRedirectRule(
                 rule_priority=str(redirect_rule_details[0]), rule_name=redirect_rule_details[1]
