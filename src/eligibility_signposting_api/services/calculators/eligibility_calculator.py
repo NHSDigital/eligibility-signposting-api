@@ -311,6 +311,7 @@ class EligibilityCalculator:
                     status=active_iteration_result.status,
                     cohort_results=list(deduplicated_cohort_results),
                     actions=condition_results[condition_name].actions,
+                    status_text=active_iteration_result.status.get_status_text(condition_name),
                 )
             )
         return conditions

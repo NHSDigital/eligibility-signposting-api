@@ -102,7 +102,7 @@ class AuditContext:
             iteration_version=best_active_iteration.version if best_active_iteration else None,
             condition_name=condition_name,
             status=best_candidate.status.name if best_candidate and best_candidate.status else None,
-            status_text=best_candidate.status.name if best_candidate and best_candidate.status else None,
+            status_text=best_candidate.status.get_status_text(condition_name) if best_candidate else None,
             eligibility_cohorts=audit_eligibility_cohorts,
             eligibility_cohort_groups=audit_eligibility_cohort_groups,
             filter_rules=audit_filter_rule,
