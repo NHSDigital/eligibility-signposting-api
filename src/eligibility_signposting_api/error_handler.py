@@ -21,4 +21,4 @@ def handle_exception(e: Exception) -> ResponseReturnValue | HTTPException:
     response = INTERNAL_SERVER_ERROR.log_and_generate_response(
         log_message=f"An unexpected error occurred: {full_traceback}", diagnostics="An unexpected error occurred."
     )
-    return make_response(response.get("body"), response.get("statusCode"))
+    return make_response(response.get("body"), response.get("statusCode"), response.get("headers"))
