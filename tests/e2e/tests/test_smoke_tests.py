@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from tests.e2e.tests import test_config
-from tests.e2e.utils.data_loader import initialise_tests, load_all_expected_responses
+from tests.e2e.utils.data_helper import initialise_tests, load_all_expected_responses
 from tests.e2e.utils.s3_config_manager import upload_config_to_s3
 
 # Update the below with the configuration values specified in test_config.py
@@ -25,7 +25,9 @@ def test_run_smoke_case(filename, scenario, eligibility_client):
     query_params = scenario.get("query_params", {})
     upload_config_to_s3((Path(config_path) / config_filename).resolve())
 
-    actual_response = eligibility_client.make_request(nhs_number, headers=request_headers, query_params= query_params, strict_ssl=False)
+    actual_response = eligibility_client.make_request(
+        nhs_number, headers=request_headers, query_params=query_params, strict_ssl=False
+    )
     expected_response = all_expected_responses.get(filename).get("response_items", {})
 
     # Assert and show details on failure

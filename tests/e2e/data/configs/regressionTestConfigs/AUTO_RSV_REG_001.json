@@ -251,7 +251,7 @@
             "Type": "R",
             "Name": "Actionable Future Booked Appointment",
             "Description": "Actionable Future Booked Appointment",
-            "Priority": 1030,
+            "Priority": 1050,
             "Operator": "!=",
             "Comparator": "NBS",
             "AttributeTarget": "RSV",
@@ -267,6 +267,13 @@
             "ActionType": "DefaultActionType",
             "UrlLink": "https://www.defaultaction.com",
             "UrlLabel": "DefaultLabel"
+          },
+          "ANOTHER_ACTION": {
+            "ExternalRoutingCode": "AnotherAction",
+            "ActionDescription": "AnotherActionDescription",
+            "ActionType": "AnotherActionType",
+            "UrlLink": "https://www.anoteraction.com",
+            "UrlLabel": "AnotherLabel"
           }
         }
       }

@@ -9,6 +9,10 @@ from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from requests import Response
 
+from tests.e2e.utils.data_helper import clean_responses
+
+ignore_keys = ["lastUpdated", "responseId", "id"]
+
 
 class EligibilityApiClient:
     def __init__(self, api_url: str, cert_dir: str = "tests/e2e/certs") -> None:
@@ -111,7 +115,7 @@ class EligibilityApiClient:
     def _parse_response(self, response: Response) -> dict[str, Any]:
         try:
             data = response.json()
-            cleaned = self._clean_response(data)
+            cleaned = clean_responses(data=data, ignore_keys=ignore_keys)
         except json.JSONDecodeError:
             cleaned = response.text
 
@@ -121,18 +125,3 @@ class EligibilityApiClient:
             "body": cleaned,
             "ok": response.ok,
         }
-
-    def _clean_response(self, data: Any) -> Any:
-        keys_to_ignore = ["responseId", "lastUpdated"]
-        return self._remove_volatile_fields(data, keys_to_ignore)
-
-    def _remove_volatile_fields(self, data: dict[str, Any] | list | Any, keys_to_remove: list) -> Any:
-        if isinstance(data, dict):
-            return {
-                key: self._remove_volatile_fields(value, keys_to_remove)
-                for key, value in data.items()
-                if key not in keys_to_remove
-            }
-        if isinstance(data, list):
-            return [self._remove_volatile_fields(item, keys_to_remove) for item in data]
-        return data

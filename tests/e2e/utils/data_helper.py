@@ -5,6 +5,8 @@ from .dynamo_helper import insert_into_dynamo
 from .placeholder_context import PlaceholderDTO, ResolvedPlaceholderContext
 from .placeholder_utils import resolve_placeholders
 
+keys_to_ignore = ["responseId", "lastUpdated", "id"]
+
 
 def initialise_tests(folder):
     folder_path = Path(folder).resolve()
@@ -73,7 +75,7 @@ def load_all_expected_responses(folder_path):
             raw_json = json.load(f)
 
         resolved_data = resolve_placeholders_in_data(raw_json, dto, path.name)
-        cleaned_data = clean_expected_response(resolved_data)
+        cleaned_data = clean_responses(data=resolved_data, ignore_keys=keys_to_ignore)
 
         all_data[path.name] = {"response_items": cleaned_data}
 
@@ -119,18 +121,22 @@ def load_all_test_scenarios(folder_path):
     return all_data, dto
 
 
-def clean_expected_response(data: dict) -> dict:
-    keys_to_ignore = ["responseId", "lastUpdated"]
-    return _remove_volatile_fields(data, keys_to_ignore)
+def clean_responses(data: dict, ignore_keys: list) -> dict:
+    return _mask_volatile_fields(data, ignore_keys)
 
 
-def _remove_volatile_fields(data, keys_to_remove):
+def _mask_volatile_fields(data, keys_to_mask, placeholder="<ignored>"):
     if isinstance(data, dict):
-        return {
-            key: _remove_volatile_fields(value, keys_to_remove)
-            for key, value in data.items()
-            if key not in keys_to_remove
-        }
+        result = {}
+        for key, value in data.items():
+            # Always recurse first
+            if isinstance(value, (dict, list)):
+                masked_value = _mask_volatile_fields(value, keys_to_mask, placeholder)
+            else:
+                masked_value = value
+            # Then decide if this key should be masked
+            result[key] = placeholder if key in keys_to_mask else masked_value
+        return result
     if isinstance(data, list):
-        return [_remove_volatile_fields(item, keys_to_remove) for item in data]
+        return [_mask_volatile_fields(item, keys_to_mask, placeholder) for item in data]
     return data

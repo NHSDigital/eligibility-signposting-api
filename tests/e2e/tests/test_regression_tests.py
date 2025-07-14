@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from tests.e2e.tests import test_config
-from tests.e2e.utils.data_loader import initialise_tests, load_all_expected_responses
+from tests.e2e.utils.data_helper import initialise_tests, load_all_expected_responses
 from tests.e2e.utils.s3_config_manager import upload_config_to_s3
 
 # Update the below with the configuration values specified in test_config.py
