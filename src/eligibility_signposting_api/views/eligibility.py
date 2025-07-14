@@ -100,7 +100,7 @@ def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:
     response = NHS_NUMBER_NOT_FOUND_ERROR.log_and_generate_response(
         log_message=diagnostics, diagnostics=diagnostics, location_param="id"
     )
-    return make_response(response.get("body"), response.get("statusCode"))
+    return make_response(response.get("body"), response.get("statusCode"), response.get("headers"))
 
 
 def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibility.EligibilityResponse:

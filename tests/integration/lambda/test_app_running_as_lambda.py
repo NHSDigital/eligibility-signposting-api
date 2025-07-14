@@ -124,36 +124,39 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
         timeout=10,
     )
 
-    # Then
+    decoded_body_bytes = base64.b64decode(response.text)
+    decoded_body_json = json.loads(decoded_body_bytes.decode("utf-8"))
+
     assert_that(
         response,
         is_response()
         .with_status_code(HTTPStatus.NOT_FOUND)
-        .and_body(
-            is_json_that(
+        .with_headers(has_entries({"Content-Type": "application/fhir+json"})),
+    )
+
+    # Then
+    assert_that(
+        decoded_body_json,
+        has_entries(
+            resourceType=equal_to("OperationOutcome"),
+            issue=contains_exactly(
                 has_entries(
-                    resourceType="OperationOutcome",
-                    issue=contains_exactly(
-                        has_entries(
-                            severity="error",
-                            code="processing",
-                            diagnostics=f"NHS Number '{nhs_number!s}' was not "
-                            f"recognised by the Eligibility Signposting API",
-                            details={
-                                "coding": [
-                                    {
-                                        "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
-                                        "code": "REFERENCE_NOT_FOUND",
-                                        "display": "The given NHS number was not found in our datasets. "
-                                        "This could be because the number is incorrect or "
-                                        "some other reason we cannot process that number.",
-                                    }
-                                ]
-                            },
-                        )
-                    ),
+                    severity="error",
+                    code="processing",
+                    diagnostics=f"NHS Number '{nhs_number!s}' was not recognised by the Eligibility Signposting API",
+                    details={
+                        "coding": [
+                            {
+                                "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                "code": "REFERENCE_NOT_FOUND",
+                                "display": "The given NHS number was not found in our datasets. "
+                                "This could be because the number is incorrect or "
+                                "some other reason we cannot process that number.",
+                            }
+                        ]
+                    },
                 )
-            )
+            ),
         ),
     )
 
@@ -292,6 +295,7 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
         response,
         is_response()
         .with_status_code(HTTPStatus.FORBIDDEN)
+        .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
         .and_body(
             is_json_that(
                 has_entries(
@@ -338,6 +342,7 @@ def test_given_nhs_number_not_present_in_headers_results_in_error_response(
         response,
         is_response()
         .with_status_code(HTTPStatus.FORBIDDEN)
+        .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
         .and_body(
             is_json_that(
                 has_entries(

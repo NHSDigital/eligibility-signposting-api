@@ -121,6 +121,7 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
         response,
         is_response()
         .with_status_code(HTTPStatus.NOT_FOUND)
+        .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
         .and_text(
             is_json_that(
                 has_entries(
@@ -158,6 +159,7 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
             response,
             is_response()
             .with_status_code(HTTPStatus.INTERNAL_SERVER_ERROR)
+            .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
             .and_text(
                 is_json_that(
                     has_entries(
