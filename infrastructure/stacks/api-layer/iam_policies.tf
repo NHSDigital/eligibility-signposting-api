@@ -21,12 +21,34 @@ data "aws_iam_policy_document" "dynamodb_write_policy_doc" {
   }
 }
 
+# Specific Dynamo resource KMS access policy
+data "aws_iam_policy_document" "dynamo_kms_access_policy_doc" {
+  statement {
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:GenerateDataKey"
+    ]
+    resources = [
+      module.eligibility_status_table.dynamodb_kms_key_arn
+    ]
+  }
+}
+
 # Attach dynamoDB write policy to external write role
 resource "aws_iam_role_policy" "external_dynamodb_write_policy" {
   count  = length(aws_iam_role.write_access_role)
   name   = "DynamoDBWriteAccess"
   role   = aws_iam_role.write_access_role[count.index].id
   policy = data.aws_iam_policy_document.dynamodb_write_policy_doc.json
+}
+
+# Attach dynamo KMS policy to external write role
+resource "aws_iam_role_policy" "external_kms_access_policy" {
+  count  = length(aws_iam_role.write_access_role)
+  name   = "KMSAccessForDynamoDB"
+  role   = aws_iam_role.write_access_role[count.index].id
+  policy = data.aws_iam_policy_document.dynamo_kms_access_policy_doc.json
 }
 
 # Policy doc for S3 Rules bucket
@@ -44,6 +66,70 @@ data "aws_iam_policy_document" "s3_rules_bucket_policy" {
     condition {
       test     = "Bool"
       values   = ["true"]
+      variable = "aws:SecureTransport"
+    }
+  }
+}
+
+# ensure only secure transport is allowed
+
+resource "aws_s3_bucket_policy" "rules_s3_bucket" {
+  bucket = module.s3_rules_bucket.storage_bucket_id
+  policy = data.aws_iam_policy_document.rules_s3_bucket_policy.json
+}
+
+data "aws_iam_policy_document" "rules_s3_bucket_policy" {
+  statement {
+    sid = "AllowSslRequestsOnly"
+    actions = [
+      "s3:*",
+    ]
+    effect = "Deny"
+    resources = [
+      module.s3_rules_bucket.storage_bucket_arn,
+      "${module.s3_rules_bucket.storage_bucket_arn}/*",
+    ]
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    condition {
+      test = "Bool"
+      values = [
+        "false",
+      ]
+
+      variable = "aws:SecureTransport"
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "audit_s3_bucket" {
+  bucket = module.s3_audit_bucket.storage_bucket_id
+  policy = data.aws_iam_policy_document.audit_s3_bucket_policy.json
+}
+
+data "aws_iam_policy_document" "audit_s3_bucket_policy" {
+  statement {
+    sid = "AllowSslRequestsOnly"
+    actions = [
+      "s3:*",
+    ]
+    effect = "Deny"
+    resources = [
+      module.s3_audit_bucket.storage_bucket_arn,
+      "${module.s3_audit_bucket.storage_bucket_arn}/*",
+    ]
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    condition {
+      test = "Bool"
+      values = [
+        "false",
+      ]
+
       variable = "aws:SecureTransport"
     }
   }
@@ -194,7 +280,7 @@ data "aws_iam_policy_document" "s3_rules_kms_key_policy" {
 }
 
 resource "aws_kms_key_policy" "s3_rules_kms_key" {
-  key_id = module.s3_rules_bucket.storage_bucket_kms_key_arn
+  key_id = module.s3_rules_bucket.storage_bucket_kms_key_id
   policy = data.aws_iam_policy_document.s3_rules_kms_key_policy.json
 }
 
@@ -213,7 +299,6 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
     actions   = ["kms:*"]
     resources = ["*"]
   }
-
   statement {
     sid    = "AllowLambdaFullWrite"
     effect = "Allow"
@@ -232,7 +317,7 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
 }
 
 resource "aws_kms_key_policy" "s3_audit_kms_key" {
-  key_id = module.s3_audit_bucket.storage_bucket_kms_key_arn
+  key_id = module.s3_audit_bucket.storage_bucket_kms_key_id
   policy = data.aws_iam_policy_document.s3_audit_kms_key_policy.json
 }
 
@@ -255,9 +340,3 @@ resource "aws_iam_role_policy" "lambda_firehose_policy" {
   role   = aws_iam_role.eligibility_lambda_role.id
   policy = data.aws_iam_policy_document.lambda_firehose_write_policy.json
 }
-
-
-
-
-
-

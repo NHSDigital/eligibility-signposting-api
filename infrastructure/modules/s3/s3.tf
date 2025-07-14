@@ -14,39 +14,6 @@ resource "aws_s3_bucket_versioning" "storage_bucket_versioning_config" {
   }
 }
 
-# ensure only secure transport is allowed
-
-resource "aws_s3_bucket_policy" "tfstate_bucket" {
-  bucket = aws_s3_bucket.storage_bucket.id
-  policy = data.aws_iam_policy_document.storage_s3_bucket_policy.json
-}
-
-data "aws_iam_policy_document" "storage_s3_bucket_policy" {
-  statement {
-    sid = "AllowSslRequestsOnly"
-    actions = [
-      "s3:*",
-    ]
-    effect = "Deny"
-    resources = [
-      aws_s3_bucket.storage_bucket.arn,
-      "${aws_s3_bucket.storage_bucket.arn}/*",
-    ]
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-    condition {
-      test = "Bool"
-      values = [
-        "false",
-      ]
-
-      variable = "aws:SecureTransport"
-    }
-  }
-}
-
 # Block public access to the bucket
 resource "aws_s3_bucket_public_access_block" "storage_bucket_block_public_access" {
   bucket = aws_s3_bucket.storage_bucket.id
