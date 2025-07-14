@@ -18,7 +18,9 @@ def test_eligibility_service_returns_from_repo():
     service = EligibilityService(person_repo, campaign_repo, EligibilityCalculatorFactory())
 
     # When
-    actual = service.get_eligibility_status(NHSNumber("1234567890"))
+    actual = service.get_eligibility_status(
+        NHSNumber("1234567890"), include_actions="Y", conditions=["ALL"], category="ALL"
+    )
 
     # Then
     assert_that(actual, is_eligibility_status().with_conditions(empty()))
@@ -33,4 +35,4 @@ def test_eligibility_service_for_nonexistent_nhs_number():
 
     # When
     with pytest.raises(UnknownPersonError):
-        service.get_eligibility_status(NHSNumber("1234567890"))
+        service.get_eligibility_status(NHSNumber("1234567890"), include_actions="Y", conditions=["ALL"], category="ALL")
