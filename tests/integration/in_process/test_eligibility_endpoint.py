@@ -85,7 +85,7 @@ class TestStandardResponse:
                                     ],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -128,7 +128,7 @@ class TestStandardResponse:
                                     ],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -177,7 +177,7 @@ class TestStandardResponse:
                                             "ruleType": "S",
                                         }
                                     ],
-                                    "statusText": "Status.not_actionable",
+                                    "statusText": "You should have the RSV vaccine",
                                 }
                             ]
                         ),
@@ -228,7 +228,7 @@ class TestStandardResponse:
                                         }
                                     ],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the RSV vaccine",
                                 }
                             ]
                         ),
@@ -273,7 +273,7 @@ class TestMagicCohortResponse:
                                     ],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -322,7 +322,7 @@ class TestMagicCohortResponse:
                                             "ruleType": "S",
                                         }
                                     ],
-                                    "statusText": "Status.not_actionable",
+                                    "statusText": "You should have the COVID vaccine",
                                 }
                             ]
                         ),
@@ -373,7 +373,7 @@ class TestMagicCohortResponse:
                                         }
                                     ],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the COVID vaccine",
                                 }
                             ]
                         ),
@@ -412,7 +412,7 @@ class TestResponseOnMissingAttributes:
                                     "eligibilityCohorts": [],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -449,7 +449,7 @@ class TestResponseOnMissingAttributes:
                                     "eligibilityCohorts": [],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -492,7 +492,7 @@ class TestResponseOnMissingAttributes:
                                             "ruleType": "S",
                                         }
                                     ],
-                                    "statusText": "Status.not_actionable",
+                                    "statusText": "You should have the FLU vaccine",
                                 }
                             ]
                         ),
@@ -537,7 +537,7 @@ class TestResponseOnMissingAttributes:
                                         }
                                     ],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the FLU vaccine",
                                 }
                             ]
                         ),
@@ -573,7 +573,7 @@ class TestResponseOnMissingAttributes:
                                     "status": "Actionable",
                                     "eligibilityCohorts": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the FLU vaccine",
                                 }
                             ]
                         ),
