@@ -196,33 +196,17 @@ class EligibilityCalculator:
 
             condition_results[condition_name] = best_candidate
 
-            # Redirect action rules
-            if best_candidate.status == Status.actionable and best_active_iteration is not None:
-                if include_actions_flag:
-                    actions, matched_action_rule_priority, matched_action_rule_name = self.handle_action_rules(
-                        best_active_iteration, rules.RuleType.redirect
-                    )
-                    action_rule_name = matched_action_rule_name
-                    action_rule_priority = matched_action_rule_priority
-                else:
-                    actions = None
+            status_to_rule_type = {
+                Status.actionable: rules.RuleType.redirect,
+                Status.not_eligible: rules.RuleType.not_eligible_actions,
+                Status.not_actionable: rules.RuleType.not_actionable_actions,
+            }
 
-            # Not Eligible action rules (Xrules)
-            elif best_candidate.status == Status.not_eligible and best_active_iteration is not None:
+            if best_candidate.status in status_to_rule_type and best_active_iteration is not None:
                 if include_actions_flag:
+                    rule_type = status_to_rule_type[best_candidate.status]
                     actions, matched_action_rule_priority, matched_action_rule_name = self.handle_action_rules(
-                        best_active_iteration, rules.RuleType.not_eligible_actions
-                    )
-                    action_rule_name = matched_action_rule_name
-                    action_rule_priority = matched_action_rule_priority
-                else:
-                    actions = None
-
-            # Not Actionable action rules (Yrules)
-            elif best_candidate.status == Status.not_actionable and best_active_iteration is not None:
-                if include_actions_flag:
-                    actions, matched_action_rule_priority, matched_action_rule_name = self.handle_action_rules(
-                        best_active_iteration, rules.RuleType.not_actionable_actions
+                        best_active_iteration, rule_type
                     )
                     action_rule_name = matched_action_rule_name
                     action_rule_priority = matched_action_rule_priority

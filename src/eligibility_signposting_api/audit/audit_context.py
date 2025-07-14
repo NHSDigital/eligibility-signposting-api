@@ -99,22 +99,21 @@ class AuditContext:
                         )
 
         # TODO
-        #if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
-        #if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
-            # audit_action_rule = AuditRedirectRule(
-            #     rule_priority=str(action_rule_details[0]),
-            #     #rule_priority=str(action_rule_details[0]) if action_rule_details[0] is not None else None,
-            #     rule_name=action_rule_details[1]
-            # )
-            # # if action_rule_details is not None else None
+        # if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
+        # if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
+        # audit_action_rule = AuditRedirectRule(
+        #     rule_priority=str(action_rule_details[0]),
+        #     #rule_priority=str(action_rule_details[0]) if action_rule_details[0] is not None else None,
+        #     rule_name=action_rule_details[1]
+        # )
+        # # if action_rule_details is not None else None
 
         if best_candidate and best_candidate.status:
             if action_rule_details[0] is None and action_rule_details[0] is None:
                 audit_action_rule = None
             else:
                 audit_action_rule = AuditRedirectRule(
-                    rule_priority=str(action_rule_details[0]),
-                    rule_name=action_rule_details[1]
+                    rule_priority=str(action_rule_details[0]), rule_name=action_rule_details[1]
                 )
 
         # elif best_candidate and best_candidate.status and best_candidate.status.name == Status.not_actionable.name:
@@ -132,7 +131,6 @@ class AuditContext:
         #     )
         # else:
         #     audit_action_rule = None
-
 
         if suggested_actions is None:
             audit_actions = None

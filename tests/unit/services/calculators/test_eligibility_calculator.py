@@ -2393,7 +2393,7 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
         "expected_actions",
         "expected_audit_actions",
         "expected_rule_priority",
-        "expected_rule_name"
+        "expected_rule_name",
     ),
     [
         (
@@ -2430,7 +2430,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     action_url_label=None,
                 )
             ],
-            '20', "In QE1"
+            "20",
+            "In QE1",
         ),
         (
             """Not eligible person with NON matching NonEligibleActionRule""",
@@ -2467,7 +2468,7 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                 )
             ],
             None,
-            None
+            None,
         ),
         (
             """Not eligible person with matching but missing NonEligibleActionRule, fall back to default comms""",
@@ -2503,7 +2504,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     action_url_label=None,
                 )
             ],
-            '20', "In QE1"
+            "20",
+            "In QE1",
         ),
     ],
 )
@@ -2561,7 +2563,7 @@ def test_correct_actions_determined_from_not_eligible_action_rules(  # noqa: PLR
                     .and_actions(equal_to(expected_actions))
                 )
             ),
-            test_comment
+            test_comment,
         )
 
         cond = g.audit_log.response.condition[0]
@@ -2569,8 +2571,6 @@ def test_correct_actions_determined_from_not_eligible_action_rules(  # noqa: PLR
 
         assert getattr(cond.action_rule, "rule_priority", None) == expected_rule_priority
         assert getattr(cond.action_rule, "rule_name", None) == expected_rule_name
-
-
 
 
 def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_given(
