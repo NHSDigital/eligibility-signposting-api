@@ -12,6 +12,7 @@ from eligibility_signposting_api.audit.audit_context import AuditContext
 if TYPE_CHECKING:
     from eligibility_signposting_api.model.rules import (
         ActionsMapper,
+        CampaignConfig,
         CampaignID,
         CampaignVersion,
         Iteration,
@@ -67,9 +68,14 @@ class EligibilityCalculator:
     ) -> Iterator[tuple[eligibility.ConditionName, list[rules.CampaignConfig]]]:
         """Generator that yields campaign groups filtered by condition names and campaign category."""
 
-        allowed_types = (
-            {"V", "S"} if category == "ALL" else {category[0]} if category in {"VACCINATIONS", "SCREENING"} else set()
-        )
+        mapping = {
+            "ALL": {"V", "S"},
+            "VACCINATIONS": {"V"},
+            "SCREENING": {"S"},
+        }
+
+        allowed_types = mapping.get(category, set())
+
         filter_all_conditions = "ALL" in conditions
 
         for condition_name, campaign_group in groupby(
@@ -159,23 +165,7 @@ class EligibilityCalculator:
             best_campaign_version: CampaignVersion | None
             best_cohort_results: dict[str, CohortGroupResult] | None
 
-            iteration_results: dict[
-                str, tuple[Iteration, IterationResult, CampaignID, CampaignVersion, dict[str, CohortGroupResult]]
-            ] = {}
-
-            for cc in campaign_group:
-                active_iteration = cc.current_iteration
-                cohort_results: dict[str, CohortGroupResult] = self.get_cohort_results(active_iteration)
-
-                # Determine Result between cohorts - get the best
-                status, best_cohorts = self.get_the_best_cohort_memberships(cohort_results)
-                iteration_results[active_iteration.name] = (
-                    active_iteration,
-                    IterationResult(status, best_cohorts, actions),
-                    cc.id,
-                    cc.version,
-                    cohort_results,
-                )
+            iteration_results = self.get_iteration_results(actions, campaign_group)
 
             # Determine results between iterations - get the best
             if iteration_results:
@@ -228,6 +218,27 @@ class EligibilityCalculator:
         # Consolidate all the results and return
         final_result = self.build_condition_results(condition_results)
         return eligibility.EligibilityStatus(conditions=final_result)
+
+    def get_iteration_results(
+        self, actions: list[SuggestedAction] | None, campaign_group: list[CampaignConfig]
+    ) -> dict[str, tuple[Iteration, IterationResult, CampaignID, CampaignVersion, dict[str, CohortGroupResult]]]:
+        iteration_results: dict[
+            str, tuple[Iteration, IterationResult, CampaignID, CampaignVersion, dict[str, CohortGroupResult]]
+        ] = {}
+        for cc in campaign_group:
+            active_iteration = cc.current_iteration
+            cohort_results: dict[str, CohortGroupResult] = self.get_cohort_results(active_iteration)
+
+            # Determine Result between cohorts - get the best
+            status, best_cohorts = self.get_the_best_cohort_memberships(cohort_results)
+            iteration_results[active_iteration.name] = (
+                active_iteration,
+                IterationResult(status, best_cohorts, actions),
+                cc.id,
+                cc.version,
+                cohort_results,
+            )
+        return iteration_results
 
     def handle_redirect_rules(
         self, best_active_iteration: Iteration
@@ -327,9 +338,7 @@ class EligibilityCalculator:
         sorted_rules_by_priority = sorted(self.get_exclusion_rules(cohort, filter_rules), key=priority_getter)
 
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
-            status, group_inclusion_reasons, group_exclusion_reasons, rule_stop = self.evaluate_rules_priority_group(
-                rule_group
-            )
+            status, group_exclusion_reasons, _ = self.evaluate_rules_priority_group(rule_group)
             if status.is_exclusion:
                 if cohort.cohort_label is not None:
                     cohort_results[cohort.cohort_label] = CohortGroupResult(
@@ -356,9 +365,7 @@ class EligibilityCalculator:
         sorted_rules_by_priority = sorted(self.get_exclusion_rules(cohort, suppression_rules), key=priority_getter)
 
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
-            status, group_inclusion_reasons, group_exclusion_reasons, rule_stop = self.evaluate_rules_priority_group(
-                rule_group
-            )
+            status, group_exclusion_reasons, rule_stop = self.evaluate_rules_priority_group(rule_group)
             if status.is_exclusion:
                 is_actionable = False
                 suppression_reasons.extend(group_exclusion_reasons)
@@ -382,9 +389,9 @@ class EligibilityCalculator:
 
     def evaluate_rules_priority_group(
         self, rules_group: Iterator[rules.IterationRule]
-    ) -> tuple[eligibility.Status, list[eligibility.Reason], list[eligibility.Reason], bool]:
+    ) -> tuple[eligibility.Status, list[eligibility.Reason], bool]:
         is_rule_stop = False
-        inclusion_reasons, exclusion_reasons = [], []
+        exclusion_reasons = []
         best_status = eligibility.Status.not_eligible
 
         for rule in rules_group:
@@ -396,9 +403,8 @@ class EligibilityCalculator:
                 exclusion_reasons.append(reason)
             else:
                 best_status = eligibility.Status.actionable
-                inclusion_reasons.append(reason)
 
-        return best_status, inclusion_reasons, exclusion_reasons, is_rule_stop
+        return best_status, exclusion_reasons, is_rule_stop
 
     @staticmethod
     def get_actions_from_comms(action_mapper: ActionsMapper, comms: str) -> list[SuggestedAction] | None:
