@@ -2392,6 +2392,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
         "actions_mapper",
         "expected_actions",
         "expected_audit_actions",
+        "expected_rule_priority",
+        "expected_rule_name"
     ),
     [
         (
@@ -2428,6 +2430,7 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     action_url_label=None,
                 )
             ],
+            '20', "In QE1"
         ),
         (
             """Not eligible person with NON matching NonEligibleActionRule""",
@@ -2463,6 +2466,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     action_url_label=None,
                 )
             ],
+            None,
+            None
         ),
         (
             """Not eligible person with matching but missing NonEligibleActionRule, fall back to default comms""",
@@ -2498,6 +2503,7 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     action_url_label=None,
                 )
             ],
+            '20', "In QE1"
         ),
     ],
 )
@@ -2510,6 +2516,8 @@ def test_correct_actions_determined_from_not_eligible_action_rules(  # noqa: PLR
     actions_mapper,
     expected_actions,
     expected_audit_actions,
+    expected_rule_priority,
+    expected_rule_name,
     faker: Faker,
 ):
     # Given
@@ -2559,8 +2567,9 @@ def test_correct_actions_determined_from_not_eligible_action_rules(  # noqa: PLR
         cond = g.audit_log.response.condition[0]
         assert cond.actions == expected_audit_actions
 
-        assert cond.action_rule.rule_priority == str(campaign_configs[0].iterations[0].iteration_rules[0].priority)
-        assert cond.action_rule.rule_name == str(campaign_configs[0].iterations[0].iteration_rules[0].name)
+        assert getattr(cond.action_rule, "rule_priority", None) == expected_rule_priority
+        assert getattr(cond.action_rule, "rule_name", None) == expected_rule_name
+
 
 
 
