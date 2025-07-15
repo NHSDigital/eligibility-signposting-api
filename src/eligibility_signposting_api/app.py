@@ -29,6 +29,7 @@ def lambda_handler(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]
     app = create_app()
     app.debug = config()["log_level"] == logging.DEBUG
     handler = Mangum(WsgiToAsgi(app), lifespan="off")
+    handler.config["text_mime_types"].append("application/fhir+json")
     return handler(event, context)
 
 
