@@ -232,7 +232,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
             "iterationVersion": campaign_config.iterations[0].version,
             "conditionName": campaign_config.target,
             "status": "not_actionable",
-            "statusText": "not_actionable",
+            "statusText": f"You should have the {campaign_config.target} vaccine",
             "eligibilityCohorts": [{"cohortCode": "cohort1", "cohortStatus": "not_actionable"}],
             "eligibilityCohortGroups": [
                 {
@@ -458,7 +458,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "iterationVersion": rsv_campaign.iterations[0].version,
             "conditionName": rsv_campaign.target,
             "status": "not_eligible",
-            "statusText": "not_eligible",
+            "statusText": "We do not believe you can have it",
             "eligibilityCohorts": [{"cohortCode": "cohort_label1", "cohortStatus": "not_eligible"}],
             "eligibilityCohortGroups": [
                 {
@@ -479,7 +479,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "iterationVersion": covid_campaign.iterations[0].version,
             "conditionName": covid_campaign.target,
             "status": "not_actionable",
-            "statusText": "not_actionable",
+            "statusText": f"You should have the {covid_campaign.target} vaccine",
             "eligibilityCohorts": [{"cohortCode": "cohort_label2", "cohortStatus": "not_actionable"}],
             "eligibilityCohortGroups": [
                 {
@@ -504,7 +504,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "iterationVersion": flu_campaign.iterations[0].version,
             "conditionName": flu_campaign.target,
             "status": "actionable",
-            "statusText": "actionable",
+            "statusText": f"You should have the {flu_campaign.target} vaccine",
             "eligibilityCohorts": [{"cohortCode": "cohort_label3", "cohortStatus": "actionable"}],
             "eligibilityCohortGroups": [
                 {
