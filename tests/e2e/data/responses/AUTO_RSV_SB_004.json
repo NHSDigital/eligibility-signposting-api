@@ -1,14 +1,44 @@
 {
-  "meta": { "lastUpdated": "2025-07-04T10:24:57.489704+00:00" },
+  "meta": {
+    "lastUpdated": "2025-07-15T09:44:50.667999+00:00"
+  },
   "processedSuggestions": [
+    {
+      "actions": [],
+      "condition": "COVID",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "covid_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in a covid cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "Status.not_eligible",
+      "suitabilityRules": []
+    },
+    {
+      "actions": [],
+      "condition": "MMR",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "mmr_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an mmr cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "Status.not_eligible",
+      "suitabilityRules": []
+    },
     {
       "actions": [],
       "condition": "RSV",
       "eligibilityCohorts": [
         {
-          "cohortCode": "eli_291_cohort_3_group",
+          "cohortCode": "rsv_cohort_group",
           "cohortStatus": "NotEligible",
-          "cohortText": "You are not in eli_291_cohort_3"
+          "cohortText": "You are not currently in an RSV cohort"
         }
       ],
       "status": "NotEligible",
@@ -16,5 +46,5 @@
       "suitabilityRules": []
     }
   ],
-  "responseId": "a0337485-f8ae-4bd4-a359-f6632743c788"
+  "responseId": "317d721a-1ffd-4621-b660-562d8143501d"
 }

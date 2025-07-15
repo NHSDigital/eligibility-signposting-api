@@ -1,22 +1,50 @@
 {
-  "responseId": "<<IGNORE_RESPONSE_ID>>",
   "meta": {
-    "lastUpdated": "<<IGNORE_DATE>>"
+    "lastUpdated": "2025-07-15T09:44:53.772820+00:00"
   },
   "processedSuggestions": [
     {
-      "condition": "RSV",
-      "status": "Actionable",
-      "statusText": "You should have the RSV vaccine",
-      "eligibilityCohorts": [],
-      "suitabilityRules": [],
-      "actions": [
+      "actions": [],
+      "condition": "COVID",
+      "eligibilityCohorts": [
         {
-          "actionType": "CardWithText",
-          "actionCode": "ManageLocal",
-          "description": "##You have an RSV vaccination appointment\nContact your healthcare provider to change or cancel your appointment."
+          "cohortCode": "covid_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in a covid cohort"
         }
-      ]
+      ],
+      "status": "NotEligible",
+      "statusText": "Status.not_eligible",
+      "suitabilityRules": []
+    },
+    {
+      "actions": [],
+      "condition": "MMR",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "mmr_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an mmr cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "Status.not_eligible",
+      "suitabilityRules": []
+    },
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an RSV cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "Status.not_eligible",
+      "suitabilityRules": []
     }
-  ]
+  ],
+  "responseId": "ac77be57-2406-401d-b195-9728507f7559"
 }

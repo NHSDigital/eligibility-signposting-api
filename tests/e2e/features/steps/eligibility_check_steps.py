@@ -1,23 +1,21 @@
+import json
 import logging
 import os
+from difflib import unified_diff
 from pathlib import Path
-import json
+
 import boto3
 import requests
-import copy
 from behave import given, then, when
 from botocore.exceptions import ClientError
 from helpers.dynamodb_data_generator import DateVariableResolver, JsonTestDataProcessor
 from helpers.dynamodb_data_uploader import DynamoDBDataUploader
-from difflib import unified_diff
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # API endpoints
-API_BASE_URL = os.getenv(
-    "API_BASE_URL", "https://" + "test" + ".eligibility-signposting-api.nhs.uk"
-)
+API_BASE_URL = os.getenv("API_BASE_URL", "https://" + "test" + ".eligibility-signposting-api.nhs.uk")
 
 # SSM Parameter paths
 SSM_BASE_PATH = "/" + "test" + "/mtls"
@@ -50,12 +48,11 @@ def remove_ignored_properties(obj):
             if key not in ["meta", "responseId"]:
                 filtered_dict[key] = remove_ignored_properties(value)
         return filtered_dict
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         # Recursively process each item in the list
         return [remove_ignored_properties(item) for item in obj]
-    else:
-        # Return primitive values as-is
-        return obj
+    # Return primitive values as-is
+    return obj
 
 
 @given("AWS credentials are loaded from the environment")
@@ -65,9 +62,7 @@ def step_impl_load_aws_credentials(context):
     context.aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
     context.aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
     context.aws_session_token = os.getenv("AWS_SESSION_TOKEN")
-    context.dynamodb_table_name = os.getenv(
-        "DYNAMODB_TABLE_NAME", "eligibilty_data_store"
-    )
+    context.dynamodb_table_name = os.getenv("DYNAMODB_TABLE_NAME", "eligibilty_data_store")
 
     missing = []
     if not context.aws_region:
@@ -117,9 +112,7 @@ def step_impl_download_certificates(context):
 def step_impl_generate_data(context):
     """Generate test data files with resolved <<DATE_...>> placeholders - once per feature."""
     if getattr(context, "feature_data_setup_done", False):
-        logger.info(
-            "Test data already generated for this feature, skipping generation..."
-        )
+        logger.info("Test data already generated for this feature, skipping generation...")
         return
 
     logger.info("Generating test data files for feature...")
@@ -162,9 +155,7 @@ def step_impl_upload_data(context):
         secret_key=context.aws_secret_access_key,
         session_token=context.aws_session_token,
     )
-    inserted = uploader.upload_files_from_path(
-        table_name=context.dynamodb_table_name, path=Path("data/out/dynamoDB")
-    )
+    inserted = uploader.upload_files_from_path(table_name=context.dynamodb_table_name, path=Path("data/out/dynamoDB"))
     assert inserted > 0, "No data uploaded to DynamoDB"
 
     # Store for feature-level cleanup
@@ -183,15 +174,38 @@ def step_impl_nhs_number(context, nhs_number):
 @then("I clean up DynamoDB test data")
 def step_impl_cleanup_dynamo(context):
     """Clean up DynamoDB test data - handled at feature level now."""
-    logger.info(
-        "DynamoDB cleanup will be handled at feature level - skipping scenario-level cleanup"
-    )
+    logger.info("DynamoDB cleanup will be handled at feature level - skipping scenario-level cleanup")
     # This step becomes a no-op since cleanup is handled in after_feature hook
 
 
-@when("I query the eligibility API")
-def step_impl_call_eligibility_api(context):
-    """Make mTLS call to Eligibility API using local certs and context NHS number."""
+def parse_headers_table(table):
+    """Parse behave table into headers dictionary."""
+    headers = {}
+    if not table:
+        return headers
+
+    for row in table:
+        if len(row.cells) != 2:
+            raise ValueError(f"Expected 2 columns in headers table, got {len(row.cells)}")
+        key, value = row.cells[0], row.cells[1]
+        headers[key] = value
+    return headers
+
+
+def build_request_headers(context, dynamic_headers=None):
+    """Build complete headers for API request."""
+    # Start with required default header
+    headers = {"nhs-login-nhs-number": context.nhs_number}
+
+    # Add dynamic headers if provided
+    if dynamic_headers:
+        headers.update(dynamic_headers)
+
+    return headers
+
+
+def make_eligibility_api_call(context, headers):
+    """Make mTLS call to Eligibility API with provided headers."""
     if not hasattr(context, "nhs_number"):
         msg = "NHS number not set in context."
         raise AssertionError(msg)
@@ -203,13 +217,13 @@ def step_impl_call_eligibility_api(context):
     api_url = f"{API_BASE_URL}/patient-check/{context.nhs_number}"
     cert = (context.cert_paths["client_cert"], context.cert_paths["private_key"])
     verify = False
-    headers = {"nhs-login-nhs-number": context.nhs_number}
 
-    logger.info("Querying Eligibility API at %s", api_url)
+    # Log headers for debugging (excluding sensitive values)
+    safe_headers = {k: ("***" if "token" in k.lower() or "key" in k.lower() else v) for k, v in headers.items()}
+    logger.info("Querying Eligibility API at %s with headers: %s", api_url, safe_headers)
+
     try:
-        response = requests.get(
-            api_url, cert=cert, verify=verify, timeout=30, headers=headers
-        )
+        response = requests.get(api_url, cert=cert, verify=verify, timeout=30, headers=headers)
         context.response = response
         logger.info(
             "Querying Eligibility API response %s - %d",
@@ -218,6 +232,35 @@ def step_impl_call_eligibility_api(context):
         )
     except requests.exceptions.RequestException as e:
         msg = f"API request failed: {e}"
+        raise RuntimeError(msg) from e
+
+
+@when("I query the eligibility API")
+def step_impl_call_eligibility_api(context):
+    """Make mTLS call to Eligibility API using local certs and context NHS number."""
+    headers = build_request_headers(context)
+    make_eligibility_api_call(context, headers)
+
+
+@when("I query the eligibility API using the headers:")
+def step_impl_call_eligibility_api_with_headers(context):
+    """Make mTLS call to Eligibility API with dynamic headers from table."""
+    try:
+        # Parse headers table
+        dynamic_headers = parse_headers_table(context.table)
+        logger.info("Parsed %d dynamic headers from table", len(dynamic_headers))
+
+        # Build complete headers
+        headers = build_request_headers(context, dynamic_headers)
+
+        # Make API call
+        make_eligibility_api_call(context, headers)
+
+    except ValueError as e:
+        msg = f"Invalid headers table format: {e}"
+        raise AssertionError(msg) from e
+    except Exception as e:
+        msg = f"Failed to process headers table: {e}"
         raise RuntimeError(msg) from e
 
 
@@ -250,18 +293,31 @@ def step_impl_match_json_response(context, json_response):
     """
     Assert that the API response matches the expected JSON file.
     """
-    expected_path = os.path.join(
-        Path(__file__).parent.parent.parent, "data", "responses", json_response
-    )
+    expected_path = os.path.join(Path(__file__).parent.parent.parent, "data", "responses", json_response)
     if not os.path.isfile(expected_path):
         raise AssertionError(f"Expected JSON file not found: {expected_path}")
 
-    with open(expected_path, "r", encoding="utf-8") as f:
+    with open(expected_path, encoding="utf-8") as f:
         expected = json.load(f)
 
     try:
         actual = context.response.json()
-        print(f"📄 Actual JSON structure: ", actual)
+        print("> Actual JSON structure: ", actual)
+
+        name, ext = os.path.splitext(json_response)
+        actual_filename = f"{name}{ext}"
+        actual_path = os.path.join(
+            Path(__file__).parent.parent.parent,
+            "data",
+            "responses",
+            actual_filename,
+        )
+
+        os.makedirs(os.path.dirname(actual_path), exist_ok=True)
+
+        with open(actual_path, "w", encoding="utf-8") as f:
+            json.dump(actual, f, indent=2, sort_keys=True)
+
     except Exception as e:
         raise AssertionError(f"Failed to parse API response as JSON: {e}")
 

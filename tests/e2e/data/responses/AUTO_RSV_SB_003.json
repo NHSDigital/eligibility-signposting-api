@@ -1,28 +1,50 @@
 {
-  "responseId": "<<IGNORE_RESPONSE_ID>>",
   "meta": {
-    "lastUpdated": "<<IGNORE_DATE>>"
+    "lastUpdated": "2025-07-15T09:44:47.658192+00:00"
   },
   "processedSuggestions": [
     {
-      "condition": "RSV",
-      "status": "Actionable",
-      "statusText": "You should have the RSV vaccine",
+      "actions": [],
+      "condition": "COVID",
       "eligibilityCohorts": [
         {
-          "cohortCode": "rsv_age_catchup",
-          "cohortText": "You turned 80 between 2nd September 2024 and 31st August 2025",
-          "cohortStatus": "Actionable"
+          "cohortCode": "covid_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in a covid cohort"
         }
       ],
-      "suitabilityRules": [],
-      "actions": [
+      "status": "NotEligible",
+      "statusText": "Status.not_eligible",
+      "suitabilityRules": []
+    },
+    {
+      "actions": [],
+      "condition": "MMR",
+      "eligibilityCohorts": [
         {
-          "actionType": "CareCardWithText",
-          "actionCode": "BookLocal",
-          "description": "##Getting the vaccine\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination."
+          "cohortCode": "mmr_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an mmr cohort"
         }
-      ]
+      ],
+      "status": "NotEligible",
+      "statusText": "Status.not_eligible",
+      "suitabilityRules": []
+    },
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an RSV cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "Status.not_eligible",
+      "suitabilityRules": []
     }
-  ]
+  ],
+  "responseId": "98b7c6ec-13a5-48bc-af50-94ceaaa10893"
 }

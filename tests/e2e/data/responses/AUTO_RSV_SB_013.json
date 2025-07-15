@@ -1,22 +1,50 @@
 {
-  "responseId": "<<IGNORE_RESPONSE_ID>>",
   "meta": {
-    "lastUpdated": "<<IGNORE_DATE>>"
+    "lastUpdated": "2025-07-15T09:45:18.471060+00:00"
   },
   "processedSuggestions": [
     {
-      "condition": "RSV",
-      "status": "NotActionable",
-      "statusText": "You should have the RSV vaccine",
-      "eligibilityCohorts": [],
-      "suitabilityRules": [
+      "actions": [],
+      "condition": "COVID",
+      "eligibilityCohorts": [
         {
-          "ruleType": "S",
-          "ruleCode": "AlreadyVaccinated",
-          "ruleText": "##You've had your RSV vaccination\nBased on our records, you recently had this vaccination. You do not need to do anything."
+          "cohortCode": "covid_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in a covid cohort"
         }
       ],
-      "actions": []
+      "status": "NotEligible",
+      "statusText": "Status.not_eligible",
+      "suitabilityRules": []
+    },
+    {
+      "actions": [],
+      "condition": "MMR",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "mmr_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an mmr cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "Status.not_eligible",
+      "suitabilityRules": []
+    },
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an RSV cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "Status.not_eligible",
+      "suitabilityRules": []
     }
-  ]
+  ],
+  "responseId": "aa6774cb-2a42-4969-bd6d-fe6959236fea"
 }
