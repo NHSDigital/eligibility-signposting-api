@@ -66,7 +66,7 @@ class AuditContext:
         redirect_rule_details: tuple[RulePriority | None, RuleName | None],
     ) -> None:
         audit_eligibility_cohorts, audit_eligibility_cohort_groups = [], []
-        audit_filter_rule, audit_suitability_rule, audit_redirect_rule = None, None, None
+        audit_filter_rule, audit_suitability_rule = None, None
         best_active_iteration = best_results[0]
         best_candidate = best_results[1]
         best_cohort_results = best_results[2]
@@ -88,10 +88,7 @@ class AuditContext:
                     audit_filter_rule = AuditContext.create_audit_filter_rule(best_candidate, result)
                     audit_suitability_rule = AuditContext.create_audit_suitability_rule(best_candidate, result)
 
-        if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
-            audit_redirect_rule = AuditRedirectRule(
-                rule_priority=str(redirect_rule_details[0]), rule_name=redirect_rule_details[1]
-            )
+        audit_redirect_rule = AuditContext.get_audit_redirect_rule(best_candidate, redirect_rule_details)
 
         audit_actions = AuditContext.create_audit_actions(suggested_actions)
 
@@ -102,7 +99,7 @@ class AuditContext:
             iteration_version=best_active_iteration.version if best_active_iteration else None,
             condition_name=condition_name,
             status=best_candidate.status.name if best_candidate and best_candidate.status else None,
-            status_text=best_candidate.status.name if best_candidate and best_candidate.status else None,
+            status_text=best_candidate.status.get_status_text(condition_name) if best_candidate else None,
             eligibility_cohorts=audit_eligibility_cohorts,
             eligibility_cohort_groups=audit_eligibility_cohort_groups,
             filter_rules=audit_filter_rule,
@@ -112,6 +109,17 @@ class AuditContext:
         )
 
         g.audit_log.response.condition.append(audit_condition)
+
+    @staticmethod
+    def get_audit_redirect_rule(
+        best_candidate: IterationResult | None, redirect_rule_details: tuple[RulePriority | None, RuleName | None]
+    ) -> AuditRedirectRule | None:
+        audit_redirect_rule = None
+        if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
+            audit_redirect_rule = AuditRedirectRule(
+                rule_priority=str(redirect_rule_details[0]), rule_name=redirect_rule_details[1]
+            )
+        return audit_redirect_rule
 
     @staticmethod
     def add_response_details(response_id: UUID, last_updated: datetime) -> None:

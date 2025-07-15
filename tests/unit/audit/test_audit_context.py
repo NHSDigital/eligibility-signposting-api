@@ -149,7 +149,7 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
         assert cond.iteration_id == iteration.id
         assert cond.iteration_version == iteration.version
         assert cond.status == best_results[1].status.name
-        assert cond.status_text == best_results[1].status.name
+        assert cond.status_text == "You should have the Condition1 vaccine"
         assert cond.actions == expected_audit_action
         assert cond.action_rule.rule_priority == "1"
         assert cond.action_rule.rule_name == "RedirectRuleName1"
