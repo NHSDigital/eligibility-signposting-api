@@ -2,9 +2,7 @@ import http
 
 import pytest
 
-from tests.e2e.utils.data_helper import clean_responses
-
-volatile_fields = ["lastUpdated", "id"]
+from tests.e2e.utils.s3_config_manager import delete_all_configs_from_s3
 
 
 @pytest.mark.smoketest
@@ -16,7 +14,7 @@ def test_check_for_missing_person(eligibility_client):
     expected_body = {
         "resourceType": "OperationOutcome",
         "id": "<ignored>",
-        'meta': {'lastUpdated': '<ignored>'},
+        "meta": {"lastUpdated": "<ignored>"},
         "issue": [
             {
                 "severity": "error",
@@ -147,4 +145,116 @@ def test_nhs_login_header_handling(eligibility_client, test_case):
 
     assert response["status_code"] == test_case["expected_status"], f"{test_case['scenario']} failed on status code"
     assert response["body"] == test_case["expected_body"], f"{test_case['scenario']} failed on response body"
+    assert response["headers"].get("Content-Type".lower()) == "application/fhir+json"
+
+
+@pytest.mark.parametrize(
+    "test_case",
+    [
+        {
+            "scenario": "invalid conditions - use special character in conditions",
+            "nhs_number": "9990032010",
+            "request_headers": {"nhs-login-nhs-number": "9990032010"},
+            "query_params": {"conditions": "covid-rsv"},
+            "expected_status": http.HTTPStatus.BAD_REQUEST,
+            "expected_body": {
+                "id": "<ignored>",
+                "issue": [
+                    {
+                        "code": "value",
+                        "details": {
+                            "coding": [
+                                {
+                                    "code": "INVALID_PARAMETER",
+                                    "display": "The given conditions were not in the expected format.",
+                                    "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                }
+                            ]
+                        },
+                        "diagnostics": "covid-rsv should be a single or comma separated list of condition strings "
+                        "with no other punctuation or special characters",
+                        "location": ["parameters/conditions"],
+                        "severity": "error",
+                    }
+                ],
+                "meta": {"lastUpdated": "<ignored>"},
+                "resourceType": "OperationOutcome",
+            },
+        },
+        {
+            "scenario": "unknown-category - misspelt category",
+            "nhs_number": "9990032010",
+            "request_headers": {"nhs-login-nhs-number": "9990032010"},
+            "query_params": {"category": "VACCINATIONSS"},
+            "expected_status": http.HTTPStatus.UNPROCESSABLE_ENTITY,
+            "expected_body": {
+                "id": "<ignored>",
+                "issue": [
+                    {
+                        "code": "value",
+                        "details": {
+                            "coding": [
+                                {
+                                    "code": "INVALID_PARAMETER",
+                                    "display": "The supplied category was not recognised by the API.",
+                                    "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                }
+                            ]
+                        },
+                        "diagnostics": "VACCINATIONSS is not a category that is supported by the API",
+                        "location": ["parameters/category"],
+                        "severity": "error",
+                    }
+                ],
+                "meta": {"lastUpdated": "<ignored>"},
+                "resourceType": "OperationOutcome",
+            },
+        },
+    ],
+    ids=["invalid-conditions", "unknown-category"],
+)
+def test_query_param_errors(eligibility_client, test_case):
+    response = eligibility_client.make_request(
+        test_case["nhs_number"],
+        headers=test_case["request_headers"],
+        query_params=test_case["query_params"],
+        raise_on_error=False,
+    )
+
+    assert response["status_code"] == test_case["expected_status"], f"{test_case['scenario']} failed on status code"
+    assert response["body"] == test_case["expected_body"], f"{test_case['scenario']} failed on response body"
+    assert response["headers"].get("Content-Type".lower()) == "application/fhir+json"
+
+
+def test_no_config_error(eligibility_client):
+    expected_response = {
+        "id": "<ignored>",
+        "issue": [
+            {
+                "code": "processing",
+                "details": {
+                    "coding": [
+                        {
+                            "code": "INTERNAL_SERVER_ERROR",
+                            "display": "An unexpected internal server error occurred.",
+                            "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                        }
+                    ]
+                },
+                "diagnostics": "An unexpected error occurred.",
+                "severity": "error",
+            }
+        ],
+        "meta": {"lastUpdated": "<ignored>"},
+        "resourceType": "OperationOutcome",
+    }
+
+    delete_all_configs_from_s3()
+
+    response = eligibility_client.make_request(
+        nhs_number="9990032010", headers={"nhs-login-nhs-number": "9990032010"}, raise_on_error=False
+    )
+
+    assert response["status_code"] == http.HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response["body"] == expected_response
     assert response["headers"].get("Content-Type".lower()) == "application/fhir+json"

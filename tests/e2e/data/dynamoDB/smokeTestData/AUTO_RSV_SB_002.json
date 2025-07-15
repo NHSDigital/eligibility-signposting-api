@@ -3,7 +3,9 @@
   "request_headers": {
     "nhs-login-nhs-number": "5000000002"
   },
-  "config_filename": "AUTO_RSV_SB_001.json",
+  "config_filenames": [
+    "AUTO_RSV_SB_001.json"
+  ],
   "data": [
     {
       "NHS_NUMBER": "5000000002",

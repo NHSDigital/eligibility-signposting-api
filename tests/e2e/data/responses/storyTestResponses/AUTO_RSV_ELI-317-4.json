@@ -7,7 +7,7 @@
     {
       "condition": "RSV",
       "status": "Actionable",
-      "statusText": "Status.actionable",
+      "statusText": "You should have the RSV vaccine",
       "eligibilityCohorts": [
         {
           "cohortCode": "eli_317_cohort_4_group",

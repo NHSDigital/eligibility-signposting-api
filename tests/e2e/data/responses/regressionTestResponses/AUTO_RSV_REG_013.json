@@ -8,7 +8,7 @@
       "condition": "RSV",
       "eligibilityCohorts": [],
       "status": "NotActionable",
-      "statusText": "Status.not_actionable",
+      "statusText": "You should have the RSV vaccine",
       "suitabilityRules": [
         {
           "ruleCode": "AlreadyVaccinated",

@@ -3,7 +3,9 @@
   "request_headers": {
     "nhs-login-nhs-number": "5000000006"
   },
-  "config_filename": "AUTO_RSV_SB_001.json",
+  "config_filenames": [
+    "AUTO_RSV_SB_001.json"
+  ],
   "notes": "actions need updating in the response when the functionality is delivered to provide actions for not_actionable responses",
   "data": [
     {

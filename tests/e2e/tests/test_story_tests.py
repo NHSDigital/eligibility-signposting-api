@@ -1,11 +1,9 @@
 import http
-from pathlib import Path
 
 import pytest
 
 from tests.e2e.tests import test_config
 from tests.e2e.utils.data_helper import initialise_tests, load_all_expected_responses
-from tests.e2e.utils.s3_config_manager import upload_config_to_s3
 
 # Update the below with the configuration values specified in test_config.py
 all_data, dto = initialise_tests(test_config.STORY_TEST_DATA)
@@ -18,15 +16,11 @@ id_list = [f"{filename} - {scenario.get('scenario_name', 'No Scenario')}" for fi
 
 @pytest.mark.functionale2eregression
 @pytest.mark.parametrize(("filename", "scenario"), param_list, ids=id_list)
-def test_run_story_test_cases(filename, scenario, eligibility_client):
-    nhs_number = scenario["nhs_number"]
-    config_filename = scenario.get("config_filename", "")
-    request_headers = scenario.get("request_headers", {})
-    query_params = scenario.get("query_params", {})
-    upload_config_to_s3((Path(config_path) / config_filename).resolve())
+def test_run_story_test_cases(filename, scenario, eligibility_client, get_scenario_params):
+    nhs_number, config_filenames, request_headers, query_params = get_scenario_params(scenario, config_path)
 
     actual_response = eligibility_client.make_request(
-        nhs_number, headers=request_headers, query_params=query_params, strict_ssl=False
+        nhs_number=nhs_number, headers=request_headers, query_params=query_params, strict_ssl=False
     )
     expected_response = all_expected_responses.get(filename).get("response_items", {})
 

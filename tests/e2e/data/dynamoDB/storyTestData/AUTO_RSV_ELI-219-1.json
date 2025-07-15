@@ -1,7 +1,11 @@
 {
   "scenario_name": "ELI-219 - 1 - Fails and Rules and Returns Default",
-  "config_filename": "AUTO_RSV_ELI-219-1.json",
-  "request_headers": {"nhs-login-nhs-number": "9000000003"},
+  "config_filenames": [
+    "AUTO_RSV_ELI-219-1.json"
+  ],
+  "request_headers": {
+    "nhs-login-nhs-number": "9000000003"
+  },
   "data": [
     {
       "NHS_NUMBER": "9000000003",

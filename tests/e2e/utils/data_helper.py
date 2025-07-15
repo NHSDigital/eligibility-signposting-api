@@ -95,7 +95,7 @@ def load_all_test_scenarios(folder_path):
 
         raw_data = raw_json["data"]
 
-        config_filename = raw_json.get("config_filename")
+        config_filenames = raw_json.get("config_filenames")
         scenario_name = raw_json.get("scenario_name")
         request_headers = raw_json.get("request_headers")
         expected_response_code = raw_json.get("expected_response_code")
@@ -111,7 +111,7 @@ def load_all_test_scenarios(folder_path):
         all_data[path.name] = {
             "dynamo_items": resolved_data,
             "nhs_number": nhs_number,
-            "config_filename": config_filename,
+            "config_filenames": config_filenames,
             "expected_response_code": expected_response_code,
             "request_headers": request_headers,
             "query_params": query_params,

@@ -7,7 +7,7 @@
     {
       "condition": "RSV",
       "status": "NotEligible",
-      "statusText": "Status.not_eligible",
+      "statusText": "We do not believe you can have it",
       "eligibilityCohorts": [
         {
           "cohortCode": "rsv_age_rolling",

@@ -1,7 +1,7 @@
 {
   "scenario_name": "RSV - Regression - Not Eligible, Not in Cohort",
   "request_headers": {"nhs-login-nhs-number": "1000000010"},
-  "config_filename": "AUTO_RSV_REG_001.json",
+  "config_filenames": ["AUTO_RSV_REG_001.json"],
   "data": [
     {
       "NHS_NUMBER": "1000000010",

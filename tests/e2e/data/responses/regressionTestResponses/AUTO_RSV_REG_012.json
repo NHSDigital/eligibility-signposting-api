@@ -19,7 +19,7 @@
         }
       ],
       "status": "NotEligible",
-      "statusText": "Status.not_eligible",
+      "statusText": "We do not believe you can have it",
       "suitabilityRules": []
     }
   ],

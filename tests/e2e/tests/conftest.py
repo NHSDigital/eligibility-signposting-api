@@ -8,6 +8,7 @@ import pytest
 from dotenv import load_dotenv
 
 from tests.e2e.utils.eligibility_api_client import EligibilityApiClient
+from tests.e2e.utils.s3_config_manager import upload_configs_to_s3
 
 # Load environment variables from .env.local
 load_dotenv(dotenv_path=".env")
@@ -85,3 +86,20 @@ def setup_dynamodb_data(request):
 @pytest.fixture(scope="session")
 def eligibility_client():
     return EligibilityApiClient(BASE_URL, cert_dir="certs")
+
+
+@pytest.fixture
+def get_scenario_params(request):
+    _ = request
+
+    def _setup(scenario, config_path):
+        nhs_number = scenario["nhs_number"]
+        config_filenames = scenario.get("config_filenames", [])
+        request_headers = scenario.get("request_headers", {})
+        query_params = scenario.get("query_params", {})
+
+        upload_configs_to_s3(config_filenames, config_path)
+
+        return nhs_number, config_filenames, request_headers, query_params
+
+    return _setup

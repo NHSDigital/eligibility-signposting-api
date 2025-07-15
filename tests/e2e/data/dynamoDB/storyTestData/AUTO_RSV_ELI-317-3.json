@@ -1,8 +1,14 @@
 {
   "scenario_name": "ELI-317 - includeActions=N ",
-  "config_filename": "AUTO_RSV_ELI-317-3.json",
-  "request_headers": {"nhs-login-nhs-number": "9000000008"},
-  "query_params": {"includeActions": "N"},
+  "config_filenames": [
+    "AUTO_RSV_ELI-317-3.json"
+  ],
+  "request_headers": {
+    "nhs-login-nhs-number": "9000000008"
+  },
+  "query_params": {
+    "includeActions": "N"
+  },
   "data": [
     {
       "NHS_NUMBER": "9000000008",
