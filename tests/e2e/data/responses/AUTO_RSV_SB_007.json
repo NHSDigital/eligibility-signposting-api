@@ -1,50 +1,33 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-15T09:44:59.937916+00:00"
+    "lastUpdated": "2025-07-15T10:11:55.007429+00:00"
   },
   "processedSuggestions": [
-    {
-      "actions": [],
-      "condition": "COVID",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "covid_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in a covid cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
-      "condition": "MMR",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "mmr_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an mmr cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
     {
       "actions": [],
       "condition": "RSV",
       "eligibilityCohorts": [
         {
-          "cohortCode": "rsv_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an RSV cohort"
+          "cohortCode": "rsv_age_rolling",
+          "cohortStatus": "NotActionable",
+          "cohortText": "are aged 75 to 79 years old."
         }
       ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
+      "status": "NotActionable",
+      "statusText": "Status.not_actionable",
+      "suitabilityRules": [
+        {
+          "ruleCode": "NotAvailable",
+          "ruleText": "NotAvailable|Vaccinations are not currently available.",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "AlreadyVaccinated",
+          "ruleText": "##You've had your RSV vaccination\nWe believe you had your vaccination on <<LAST_SUCCESSFUL_DATE>>.",
+          "ruleType": "S"
+        }
+      ]
     }
   ],
-  "responseId": "68f50ad9-6bcf-423e-b6af-57c7c0e3b91d"
+  "responseId": "7b302c89-d3c8-4194-91e8-a9717330e91b"
 }

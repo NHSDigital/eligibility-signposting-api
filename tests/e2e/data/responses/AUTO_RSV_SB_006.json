@@ -1,50 +1,22 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-15T09:44:56.893166+00:00"
+    "lastUpdated": "2025-07-15T10:11:52.192023+00:00"
   },
   "processedSuggestions": [
     {
       "actions": [],
-      "condition": "COVID",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "covid_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in a covid cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
-      "condition": "MMR",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "mmr_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an mmr cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
       "condition": "RSV",
-      "eligibilityCohorts": [
+      "eligibilityCohorts": [],
+      "status": "NotActionable",
+      "statusText": "Status.not_actionable",
+      "suitabilityRules": [
         {
-          "cohortCode": "rsv_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an RSV cohort"
+          "ruleCode": "AlreadyVaccinated",
+          "ruleText": "##You've had your RSV vaccination\nWe believe you had your vaccination on <<LAST_SUCCESSFUL_DATE>>.",
+          "ruleType": "S"
         }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
+      ]
     }
   ],
-  "responseId": "aef6e6ca-de67-4af5-b439-76381d0d9871"
+  "responseId": "0d64cba6-96af-49e5-8250-d3471a57da97"
 }

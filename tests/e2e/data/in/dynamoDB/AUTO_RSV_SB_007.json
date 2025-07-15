@@ -1,5 +1,9 @@
 {
-  "scenario_name": "RSV - Not Actionable, membership of Age Cohort, no available vaccinations (not available type 1)",
+  "scenario_name": "RSV - Not Actionable despite to membership of an Age Cohort with reasoning of no available vaccinations (not available type 1)",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000007"
+  },
+  "config_filename": "AUTO_RSV_SB_001.json",
   "data": [
     {
       "NHS_NUMBER": "5000000007",
@@ -30,16 +34,11 @@
       "LSOA": "E01005348",
       "GP_PRACTICE_CODE": "B87008",
       "PCN": "U43084",
-      "ICB": "<<SUPPRESSED_ICB>>",
+      "ICB": "SUPPRESSED_ICB",
       "COMMISSIONING_REGION": "Y63",
       "13Q_FLAG": "N",
       "CARE_HOME_FLAG": "N",
       "DE_FLAG": "N"
-    },
-    {
-      "NHS_NUMBER": "5000000007",
-      "ATTRIBUTE_TYPE": "RSV",
-      "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_-7>>"
     }
   ]
 }

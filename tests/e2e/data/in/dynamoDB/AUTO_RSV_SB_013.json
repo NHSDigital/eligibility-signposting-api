@@ -1,5 +1,9 @@
 {
   "scenario_name": "RSV - Not Actionable despite no cohort membership with reasoning of already vaccinated (type 2 includes no cohorts)",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000013"
+  },
+  "config_filename": "AUTO_RSV_SB_001.json",
   "data": [
     {
       "NHS_NUMBER": "5000000013",
@@ -37,7 +41,7 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "50000000014",
+      "NHS_NUMBER": "5000000013",
       "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_-7>>"
     }

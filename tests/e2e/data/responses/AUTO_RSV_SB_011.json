@@ -1,50 +1,28 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-15T09:45:12.371500+00:00"
+    "lastUpdated": "2025-07-15T10:12:07.347052+00:00"
   },
   "processedSuggestions": [
-    {
-      "actions": [],
-      "condition": "COVID",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "covid_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in a covid cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
-      "condition": "MMR",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "mmr_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an mmr cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
     {
       "actions": [],
       "condition": "RSV",
       "eligibilityCohorts": [
         {
-          "cohortCode": "rsv_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an RSV cohort"
+          "cohortCode": "rsv_age_rolling",
+          "cohortStatus": "NotActionable",
+          "cohortText": "are aged 75 to 79 years old."
         }
       ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
+      "status": "NotActionable",
+      "statusText": "Status.not_actionable",
+      "suitabilityRules": [
+        {
+          "ruleCode": "OtherSetting",
+          "ruleText": "OtherSetting|## Getting the vaccine\n\nOur record show you're living in a setting where care is provided.\n\nIf you think you should have the RSV vaccine, speak to a member of staff where you live.",
+          "ruleType": "S"
+        }
+      ]
     }
   ],
-  "responseId": "facc346b-8b1b-444c-aabf-b1904fc89eee"
+  "responseId": "156cf0b8-e493-4b0d-99cf-805d01930c2e"
 }

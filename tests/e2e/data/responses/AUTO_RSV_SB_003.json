@@ -1,50 +1,30 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-15T09:44:47.658192+00:00"
+    "lastUpdated": "2025-07-15T10:11:39.467491+00:00"
   },
   "processedSuggestions": [
     {
-      "actions": [],
-      "condition": "COVID",
-      "eligibilityCohorts": [
+      "actions": [
         {
-          "cohortCode": "covid_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in a covid cohort"
+          "actionCode": "BookLocal",
+          "actionType": "InfoText",
+          "description": "##Getting the vaccine\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
+          "urlLabel": "",
+          "urlLink": ""
         }
       ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
-      "condition": "MMR",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "mmr_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an mmr cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
       "condition": "RSV",
       "eligibilityCohorts": [
         {
-          "cohortCode": "rsv_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an RSV cohort"
+          "cohortCode": "rsv_age_catchup",
+          "cohortStatus": "Actionable",
+          "cohortText": "turned 80 between 2nd September 2024 and 31st August 2025"
         }
       ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
+      "status": "Actionable",
+      "statusText": "Status.actionable",
       "suitabilityRules": []
     }
   ],
-  "responseId": "98b7c6ec-13a5-48bc-af50-94ceaaa10893"
+  "responseId": "30de7114-1ff9-410f-be9b-7ff8327e78b3"
 }

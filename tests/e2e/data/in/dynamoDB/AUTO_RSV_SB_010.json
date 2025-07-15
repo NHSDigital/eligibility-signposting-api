@@ -1,5 +1,9 @@
 {
-  "scenario_name": "RSV - Not Actionable, membership of Age Cohort, dose not far enough apart",
+  "scenario_name": "RSV - Not Actionable despite to membership of an Age Cohort with reasoning of dose not far enough apart",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000010"
+  },
+  "config_filename": "AUTO_RSV_SB_001.json",
   "data": [
     {
       "NHS_NUMBER": "5000000010",
@@ -39,7 +43,7 @@
     {
       "NHS_NUMBER": "5000000010",
       "ATTRIBUTE_TYPE": "RSV",
-      "LAST_SUCCESSFUL_DATE": "2023-07-01"
+      "LAST_SUCCESSFUL_DATE": "20250327"
     }
   ]
 }

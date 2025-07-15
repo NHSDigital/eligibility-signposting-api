@@ -1,50 +1,24 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-15T09:44:53.772820+00:00"
+    "lastUpdated": "2025-07-15T10:11:49.021445+00:00"
   },
   "processedSuggestions": [
     {
-      "actions": [],
-      "condition": "COVID",
-      "eligibilityCohorts": [
+      "actions": [
         {
-          "cohortCode": "covid_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in a covid cohort"
+          "actionCode": "ManageLocal",
+          "actionType": "CardWithText",
+          "description": "##You have an RSV vaccination appointment\nContact your healthcare provider to change or cancel your appointment.",
+          "urlLabel": "",
+          "urlLink": ""
         }
       ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
-      "condition": "MMR",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "mmr_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an mmr cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
       "condition": "RSV",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "rsv_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an RSV cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
+      "eligibilityCohorts": [],
+      "status": "Actionable",
+      "statusText": "Status.actionable",
       "suitabilityRules": []
     }
   ],
-  "responseId": "ac77be57-2406-401d-b195-9728507f7559"
+  "responseId": "d340ebbd-de36-40d9-8da2-54b2c019225b"
 }

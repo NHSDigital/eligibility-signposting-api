@@ -1,5 +1,9 @@
 {
   "scenario_name": "RSV - Actionable due to membership of an Age Cohort incl. suggested actions (with booking)",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000001"
+  },
+  "config_filename": "AUTO_RSV_SB_001.json",
   "data": [
     {
       "NHS_NUMBER": "5000000001",
@@ -24,7 +28,7 @@
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
       "POSTCODE": "LS1 1AB",
-      "POSTCODE_SECTOR": "LS1",
+      "POSTCODE_SECTOR": "LS2",
       "POSTCODE_OUTCODE": "1AB",
       "MSOA": "E02001111",
       "LSOA": "E01005348",

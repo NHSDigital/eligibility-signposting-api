@@ -1,50 +1,28 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-15T09:45:06.346173+00:00"
+    "lastUpdated": "2025-07-15T10:12:01.690297+00:00"
   },
   "processedSuggestions": [
-    {
-      "actions": [],
-      "condition": "COVID",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "covid_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in a covid cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
-      "condition": "MMR",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "mmr_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an mmr cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
     {
       "actions": [],
       "condition": "RSV",
       "eligibilityCohorts": [
         {
-          "cohortCode": "rsv_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an RSV cohort"
+          "cohortCode": "rsv_age_rolling",
+          "cohortStatus": "NotActionable",
+          "cohortText": "are aged 75 to 79 years old."
         }
       ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
+      "status": "NotActionable",
+      "statusText": "Status.not_actionable",
+      "suitabilityRules": [
+        {
+          "ruleCode": "NotYetDue",
+          "ruleText": "NotYetDue|Your next dose is not yet due.",
+          "ruleType": "S"
+        }
+      ]
     }
   ],
-  "responseId": "99760fc3-0345-4276-aa3d-7e7b6b9171b3"
+  "responseId": "f70b8f89-42f2-4451-8ef5-cabd542618a7"
 }

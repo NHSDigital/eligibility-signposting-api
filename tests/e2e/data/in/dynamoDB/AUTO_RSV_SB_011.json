@@ -1,5 +1,9 @@
 {
   "scenario_name": "RSV - Not Actionable despite to membership of an Age Cohort with reasoning of vaccination given in other setting (e.g. care home)",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000011"
+  },
+  "config_filename": "AUTO_RSV_SB_001.json",
   "data": [
     {
       "NHS_NUMBER": "5000000011",

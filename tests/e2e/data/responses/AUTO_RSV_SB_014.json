@@ -1,44 +1,21 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-15T09:45:21.380241+00:00"
+    "lastUpdated": "2025-07-15T10:12:15.890666+00:00"
   },
   "processedSuggestions": [
-    {
-      "actions": [],
-      "condition": "COVID",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "covid_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in a covid cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
-      "condition": "MMR",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "mmr_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an mmr cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
     {
       "actions": [],
       "condition": "RSV",
       "eligibilityCohorts": [
         {
-          "cohortCode": "rsv_cohort_group",
+          "cohortCode": "rsv_age_rolling",
           "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an RSV cohort"
+          "cohortText": "are not aged 75 to 79 years old."
+        },
+        {
+          "cohortCode": "rsv_age_catchup",
+          "cohortStatus": "NotEligible",
+          "cohortText": "did not turn 80 between 2nd September 2024 and 31st August 2025"
         }
       ],
       "status": "NotEligible",
@@ -46,5 +23,5 @@
       "suitabilityRules": []
     }
   ],
-  "responseId": "fbf62ad8-3160-40a4-a813-9108e5f8bea0"
+  "responseId": "c321bd59-df13-4e06-a61f-b08a82865cca"
 }

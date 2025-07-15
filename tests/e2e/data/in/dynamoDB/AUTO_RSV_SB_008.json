@@ -1,5 +1,9 @@
 {
   "scenario_name": "RSV - No RSV response as no active campaign (not available type 2)",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000008"
+  },
+  "config_filename": "AUTO_RSV_SB_008.json",
   "data": [
     {
       "NHS_NUMBER": "5000000008",
@@ -39,7 +43,7 @@
     {
       "NHS_NUMBER": "5000000008",
       "ATTRIBUTE_TYPE": "RSV",
-      "BOOKED_APPOINTMENT_DATE": "2024-07-01"
+      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+5>>"
     }
   ]
 }

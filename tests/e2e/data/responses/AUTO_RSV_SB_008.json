@@ -1,50 +1,30 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-15T09:45:02.985622+00:00"
+    "lastUpdated": "2025-07-15T10:11:58.006524+00:00"
   },
   "processedSuggestions": [
     {
-      "actions": [],
-      "condition": "COVID",
-      "eligibilityCohorts": [
+      "actions": [
         {
-          "cohortCode": "covid_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in a covid cohort"
+          "actionCode": "ManageLocal",
+          "actionType": "CardWithText",
+          "description": "##You have an RSV vaccination appointment\nContact your healthcare provider to change or cancel your appointment.",
+          "urlLabel": "",
+          "urlLink": ""
         }
       ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
-      "condition": "MMR",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "mmr_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an mmr cohort"
-        }
-      ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
-      "suitabilityRules": []
-    },
-    {
-      "actions": [],
       "condition": "RSV",
       "eligibilityCohorts": [
         {
-          "cohortCode": "rsv_cohort_group",
-          "cohortStatus": "NotEligible",
-          "cohortText": "You are not currently in an RSV cohort"
+          "cohortCode": "rsv_age_rolling",
+          "cohortStatus": "Actionable",
+          "cohortText": "are aged 75 to 79 years old."
         }
       ],
-      "status": "NotEligible",
-      "statusText": "Status.not_eligible",
+      "status": "Actionable",
+      "statusText": "Status.actionable",
       "suitabilityRules": []
     }
   ],
-  "responseId": "01ef2722-aea5-44c5-ace5-cc9e47d58bb4"
+  "responseId": "8090f190-cd7c-4f43-aa77-d0e6f074ac3f"
 }
