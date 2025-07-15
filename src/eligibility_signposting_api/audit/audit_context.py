@@ -67,7 +67,7 @@ class AuditContext:
         action_rule_details: tuple[RulePriority | None, RuleName | None],
     ) -> None:
         audit_eligibility_cohorts, audit_eligibility_cohort_groups, audit_actions = [], [], []
-        audit_filter_rule, audit_suitability_rule, audit_redirect_rule = None, None, None
+        audit_filter_rule, audit_suitability_rule, audit_action_rule = None, None, None
         best_active_iteration = best_results[0]
         best_candidate = best_results[1]
         best_cohort_results = best_results[2]
@@ -98,39 +98,8 @@ class AuditContext:
                             rule_message=value.audit_rules[0].rule_description,
                         )
 
-        # TODO
-        # if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
-        # if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
-        # audit_action_rule = AuditRedirectRule(
-        #     rule_priority=str(action_rule_details[0]),
-        #     #rule_priority=str(action_rule_details[0]) if action_rule_details[0] is not None else None,
-        #     rule_name=action_rule_details[1]
-        # )
-        # # if action_rule_details is not None else None
-
         if best_candidate and best_candidate.status:
-            if action_rule_details[0] is None and action_rule_details[0] is None:
-                audit_action_rule = None
-            else:
-                audit_action_rule = AuditRedirectRule(
-                    rule_priority=str(action_rule_details[0]), rule_name=action_rule_details[1]
-                )
-
-        # elif best_candidate and best_candidate.status and best_candidate.status.name == Status.not_actionable.name:
-        #     if action_rule_details[0] is None and action_rule_details[0] is None:
-        #         audit_action_rule = None
-        #     else:
-        #         audit_action_rule = AuditRedirectRule(
-        #             rule_priority=str(action_rule_details[0]),
-        #             rule_name=action_rule_details[1]
-        #         )
-        # elif best_candidate and best_candidate.status and best_candidate.status.name == Status.not_eligible.name:
-        #     audit_action_rule = AuditRedirectRule(
-        #         rule_priority=str(action_rule_details[0]),
-        #         rule_name=action_rule_details[1]
-        #     )
-        # else:
-        #     audit_action_rule = None
+            audit_action_rule = AuditContext.add_rule_name_and_priority_to_audit(action_rule_details)
 
         if suggested_actions is None:
             audit_actions = None
@@ -164,6 +133,14 @@ class AuditContext:
         )
 
         g.audit_log.response.condition.append(audit_condition)
+
+    @staticmethod
+    def add_rule_name_and_priority_to_audit(
+        action_rule_details: tuple[RulePriority | None, RuleName | None] | None,
+    ) -> AuditRedirectRule | None:
+        if action_rule_details is None or (action_rule_details[0] is None and action_rule_details[1] is None):
+            return None
+        return AuditRedirectRule(rule_priority=str(action_rule_details[0]), rule_name=action_rule_details[1])
 
     @staticmethod
     def add_response_details(response_id: UUID, last_updated: datetime) -> None:

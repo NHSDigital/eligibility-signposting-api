@@ -2405,7 +2405,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                 "ActionCode1": AvailableAction(
                     ActionType="InfoText",
                     ExternalRoutingCode="HealthcareProInfo",
-                    ActionDescription="Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    ActionDescription="""Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                 )
             },
             [
@@ -2414,7 +2415,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     action_type=ActionType("InfoText"),
                     action_code=ActionCode("HealthcareProInfo"),
                     action_description=ActionDescription(
-                        "Speak to your healthcare professional if you think you should be offered this vaccination."
+                        """Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
                     ),
                     url_link=None,
                     url_label=None,
@@ -2425,7 +2427,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     internal_action_code="ActionCode1",
                     action_code="HealthcareProInfo",
                     action_type="InfoText",
-                    action_description="Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_description="""Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                     action_url=None,
                     action_url_label=None,
                 )
@@ -2442,7 +2445,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                 "defaultCommsCode": AvailableAction(
                     ActionType="DefaultInfoText",
                     ExternalRoutingCode="DefaultHealthcareProInfo",
-                    ActionDescription="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    ActionDescription="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                 )
             },
             [
@@ -2451,7 +2455,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     action_type=ActionType("DefaultInfoText"),
                     action_code=ActionCode("DefaultHealthcareProInfo"),
                     action_description=ActionDescription(
-                        "Default Speak to your healthcare professional if you think you should be offered this vaccination."
+                        """Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
                     ),
                     url_link=None,
                     url_label=None,
@@ -2462,7 +2467,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     internal_action_code="defaultCommsCode",
                     action_code="DefaultHealthcareProInfo",
                     action_type="DefaultInfoText",
-                    action_description="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_description="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                     action_url=None,
                     action_url_label=None,
                 )
@@ -2479,7 +2485,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                 "defaultCommsCode": AvailableAction(
                     ActionType="DefaultInfoText",
                     ExternalRoutingCode="DefaultHealthcareProInfo",
-                    ActionDescription="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    ActionDescription="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                 )
             },
             [
@@ -2488,7 +2495,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     action_type=ActionType("DefaultInfoText"),
                     action_code=ActionCode("DefaultHealthcareProInfo"),
                     action_description=ActionDescription(
-                        "Default Speak to your healthcare professional if you think you should be offered this vaccination."
+                        """Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
                     ),
                     url_link=None,
                     url_label=None,
@@ -2499,7 +2507,8 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
                     internal_action_code="defaultCommsCode",
                     action_code="DefaultHealthcareProInfo",
                     action_type="DefaultInfoText",
-                    action_description="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_description="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                     action_url=None,
                     action_url_label=None,
                 )
@@ -2577,7 +2586,10 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
     app,
     faker: Faker,
 ):
-    # ELI-295 Campaign config without NonEligibleActions (X rules) should not return any actions/default actions for NonEligible status
+    """
+    ELI-295 - Campaign config without NonEligibleActions (X rules) should not return
+    any actions/default actions for NonEligible status
+    """
 
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
@@ -2646,7 +2658,8 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                 "ActionCode1": AvailableAction(
                     ActionType="InfoText",
                     ExternalRoutingCode="HealthcareProInfo",
-                    ActionDescription="Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    ActionDescription="""Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                 )
             },
             [
@@ -2655,7 +2668,8 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                     action_type=ActionType("InfoText"),
                     action_code=ActionCode("HealthcareProInfo"),
                     action_description=ActionDescription(
-                        "Speak to your healthcare professional if you think you should be offered this vaccination."
+                        """Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
                     ),
                     url_link=None,
                     url_label=None,
@@ -2666,7 +2680,8 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                     internal_action_code="ActionCode1",
                     action_code="HealthcareProInfo",
                     action_type="InfoText",
-                    action_description="Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_description="""Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                     action_url=None,
                     action_url_label=None,
                 )
@@ -2681,7 +2696,8 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                 "defaultCommsCode": AvailableAction(
                     ActionType="DefaultInfoText",
                     ExternalRoutingCode="DefaultHealthcareProInfo",
-                    ActionDescription="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    ActionDescription="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                 )
             },
             [
@@ -2690,7 +2706,8 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                     action_type=ActionType("DefaultInfoText"),
                     action_code=ActionCode("DefaultHealthcareProInfo"),
                     action_description=ActionDescription(
-                        "Default Speak to your healthcare professional if you think you should be offered this vaccination."
+                        """Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
                     ),
                     url_link=None,
                     url_label=None,
@@ -2701,7 +2718,8 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                     internal_action_code="defaultCommsCode",
                     action_code="DefaultHealthcareProInfo",
                     action_type="DefaultInfoText",
-                    action_description="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_description="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                     action_url=None,
                     action_url_label=None,
                 )
@@ -2716,7 +2734,8 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                 "defaultCommsCode": AvailableAction(
                     ActionType="DefaultInfoText",
                     ExternalRoutingCode="DefaultHealthcareProInfo",
-                    ActionDescription="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    ActionDescription="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                 )
             },
             [
@@ -2725,7 +2744,8 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                     action_type=ActionType("DefaultInfoText"),
                     action_code=ActionCode("DefaultHealthcareProInfo"),
                     action_description=ActionDescription(
-                        "Default Speak to your healthcare professional if you think you should be offered this vaccination."
+                        """Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
                     ),
                     url_link=None,
                     url_label=None,
@@ -2736,7 +2756,8 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
                     internal_action_code="defaultCommsCode",
                     action_code="DefaultHealthcareProInfo",
                     action_type="DefaultInfoText",
-                    action_description="Default Speak to your healthcare professional if you think you should be offered this vaccination.",
+                    action_description="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
                     action_url=None,
                     action_url_label=None,
                 )
@@ -2797,6 +2818,7 @@ def test_correct_actions_determined_from_not_actionable_action_rules(  # noqa: P
                     .and_actions(equal_to(expected_actions))
                 )
             ),
+            test_comment,
         )
 
         cond = g.audit_log.response.condition[0]
@@ -2807,7 +2829,10 @@ def test_no_actions_returned_when_non_actionable_actions_and_defaultcomms_not_gi
     app,
     faker: Faker,
 ):
-    # ELI-295 Campaign config without NonActionableActions (Y rules) should not return any actions/default actions for NonActionable status
+    """
+    ELI-295 - Campaign config without NonActionableActions (Y rules) should not return
+    any actions/default actions for NonActionable status
+    """
 
     # Given
     nhs_number = NHSNumber(faker.nhs_number())

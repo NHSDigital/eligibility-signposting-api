@@ -127,11 +127,10 @@ class EligibilityCalculator:
         )
         return filter_rules, suppression_rules
 
-    # TODO rename function get_action_rules_action_mapper(active_iteration, rules.RuleType)
     @staticmethod
     def get_action_rules_components(
         active_iteration: Iteration, rule_type: RuleType
-    ) -> tuple[tuple[rules.IterationRule, ...], ActionsMapper, str]:
+    ) -> tuple[tuple[rules.IterationRule, ...], ActionsMapper, str | None]:
         action_rules = tuple(rule for rule in active_iteration.iteration_rules if rule.type in rule_type)
 
         routing_map = {
@@ -233,9 +232,6 @@ class EligibilityCalculator:
                 (action_rule_priority, action_rule_name),
             )
 
-            # TODO check if need reset
-            # action_rule_priority, action_rule_name = None, None
-
         # Consolidate all the results and return
         final_result = self.build_condition_results(condition_results)
         return eligibility.EligibilityStatus(conditions=final_result)
@@ -247,7 +243,8 @@ class EligibilityCalculator:
         priority_getter = attrgetter("priority")
         sorted_rules_by_priority = sorted(action_rules, key=priority_getter)
 
-        actions: list[SuggestedAction] | None = self.get_actions_from_comms(action_mapper, default_comms)
+        actions: list[SuggestedAction] | None = self.get_actions_from_comms(action_mapper, default_comms)  # pyright: ignore[reportArgumentType]
+
         matched_action_rule_priority, matched_action_rule_name = None, None
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
             rule_group_list = list(rule_group)
