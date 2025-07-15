@@ -376,7 +376,7 @@ def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[e
             nhs_number,
             date_of_birth=date_of_birth,
             postcode="hp1",
-            cohorts=["cohort1", "cohort2", "cohort3"],
+            cohorts=["cohort_label1", "cohort_label2", "cohort_label3"],
             icb="QE1",
         )
     ):
@@ -496,12 +496,13 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
         campaign = rule.CampaignConfigFactory.build(
             name=f"campaign_{i}",
             target=targets[i],
+            type="V",
             iterations=[
                 rule.IterationFactory.build(
                     iteration_rules=target_rules_map.get(targets[i]),
                     iteration_cohorts=[
                         rule.IterationCohortFactory.build(
-                            cohort_label="cohort1",
+                            cohort_label=f"cohort_label{i + 1}",
                             cohort_group=f"cohort_group{i + 1}",
                             positive_description=f"positive_desc_{i + 1}",
                             negative_description=f"negative_desc_{i + 1}",

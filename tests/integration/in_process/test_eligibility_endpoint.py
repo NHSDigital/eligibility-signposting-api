@@ -60,7 +60,7 @@ class TestStandardResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_no_cohorts}")
+        response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y")
 
         # Then
         assert_that(
@@ -85,7 +85,7 @@ class TestStandardResponse:
                                     ],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -103,7 +103,7 @@ class TestStandardResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_pc_sw19}")
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y")
 
         # Then
         assert_that(
@@ -128,7 +128,7 @@ class TestStandardResponse:
                                     ],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -146,7 +146,7 @@ class TestStandardResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}")
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y")
 
         # Then
         assert_that(
@@ -177,7 +177,7 @@ class TestStandardResponse:
                                             "ruleType": "S",
                                         }
                                     ],
-                                    "statusText": "Status.not_actionable",
+                                    "statusText": "You should have the RSV vaccine",
                                 }
                             ]
                         ),
@@ -195,7 +195,7 @@ class TestStandardResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_77yo_person}")
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y")
 
         # Then
         assert_that(
@@ -228,7 +228,7 @@ class TestStandardResponse:
                                         }
                                     ],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the RSV vaccine",
                                 }
                             ]
                         ),
@@ -248,7 +248,7 @@ class TestMagicCohortResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_pc_sw19}")
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y")
 
         # Then
         assert_that(
@@ -273,7 +273,7 @@ class TestMagicCohortResponse:
                                     ],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -291,7 +291,7 @@ class TestMagicCohortResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}")
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y")
 
         # Then
         assert_that(
@@ -322,7 +322,7 @@ class TestMagicCohortResponse:
                                             "ruleType": "S",
                                         }
                                     ],
-                                    "statusText": "Status.not_actionable",
+                                    "statusText": "You should have the COVID vaccine",
                                 }
                             ]
                         ),
@@ -340,7 +340,7 @@ class TestMagicCohortResponse:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_77yo_person}")
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y")
 
         # Then
         assert_that(
@@ -373,7 +373,7 @@ class TestMagicCohortResponse:
                                         }
                                     ],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the COVID vaccine",
                                 }
                             ]
                         ),
@@ -393,7 +393,7 @@ class TestResponseOnMissingAttributes:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_no_cohorts}")
+        response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y")
 
         # Then
         assert_that(
@@ -412,7 +412,7 @@ class TestResponseOnMissingAttributes:
                                     "eligibilityCohorts": [],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -430,7 +430,7 @@ class TestResponseOnMissingAttributes:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_pc_sw19}")
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y")
 
         # Then
         assert_that(
@@ -449,7 +449,7 @@ class TestResponseOnMissingAttributes:
                                     "eligibilityCohorts": [],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -467,7 +467,7 @@ class TestResponseOnMissingAttributes:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}")
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y")
 
         # Then
         assert_that(
@@ -492,7 +492,7 @@ class TestResponseOnMissingAttributes:
                                             "ruleType": "S",
                                         }
                                     ],
-                                    "statusText": "Status.not_actionable",
+                                    "statusText": "You should have the FLU vaccine",
                                 }
                             ]
                         ),
@@ -510,7 +510,7 @@ class TestResponseOnMissingAttributes:
         # Given
 
         # When
-        response = client.get(f"/patient-check/{persisted_77yo_person}")
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y")
 
         # Then
         assert_that(
@@ -537,7 +537,7 @@ class TestResponseOnMissingAttributes:
                                         }
                                     ],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the FLU vaccine",
                                 }
                             ]
                         ),
@@ -573,7 +573,7 @@ class TestResponseOnMissingAttributes:
                                     "status": "Actionable",
                                     "eligibilityCohorts": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the FLU vaccine",
                                 }
                             ]
                         ),

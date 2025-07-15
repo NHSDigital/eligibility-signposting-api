@@ -13,6 +13,25 @@ resource "aws_s3_bucket_policy" "truststore" {
 }
 
 data "aws_iam_policy_document" "truststore_api_gateway" {
+    # Deny non-SSL
+    statement {
+      sid = "AllowSslRequestsOnly"
+      actions = ["s3:*"]
+      effect  = "Deny"
+      resources = [
+        module.s3_truststore_bucket.storage_bucket_arn,
+        "${module.s3_truststore_bucket.storage_bucket_arn}/*"
+    ]
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
   statement {
     sid    = "Enable S3 access permissions for API Gateway"
     effect = "Allow"

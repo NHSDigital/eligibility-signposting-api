@@ -24,6 +24,8 @@ ActionDescription = NewType("ActionDescription", str)
 UrlLink = NewType("UrlLink", HttpUrl)
 UrlLabel = NewType("UrlLabel", str)
 
+StatusText = NewType("StatusText", str)
+
 
 class RuleType(StrEnum):
     filter = "F"
@@ -67,6 +69,14 @@ class Status(Enum):
         """
         return max(statuses)
 
+    def get_status_text(self, condition_name: ConditionName) -> StatusText:
+        status_to_text_mapping = {
+            self.not_eligible: lambda: StatusText("We do not believe you can have it"),
+            self.not_actionable: lambda: StatusText(f"You should have the {condition_name} vaccine"),
+            self.actionable: lambda: StatusText(f"You should have the {condition_name} vaccine"),
+        }
+        return status_to_text_mapping.get(self, lambda: StatusText("Unknown status provided"))()
+
 
 @dataclass
 class Reason:
@@ -92,6 +102,7 @@ class Condition:
     condition_name: ConditionName
     status: Status
     cohort_results: list[CohortGroupResult]
+    status_text: StatusText
     actions: list[SuggestedAction] | None = None
 
 
