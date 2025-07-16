@@ -2591,7 +2591,7 @@ def test_correct_actions_determined_from_not_eligible_action_rules(  # noqa: PLR
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        actual = calculator.evaluate_eligibility()
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
 
         assert_that(
             actual,
@@ -2648,7 +2648,7 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        actual = calculator.evaluate_eligibility()
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
 
         # Then
         expected_actions = []
@@ -2837,7 +2837,7 @@ def test_correct_actions_determined_from_not_actionable_action_rules(  # noqa: P
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        actual = calculator.evaluate_eligibility()
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
 
         assert_that(
             actual,
@@ -2891,7 +2891,7 @@ def test_no_actions_returned_when_non_actionable_actions_and_defaultcomms_not_gi
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        actual = calculator.evaluate_eligibility()
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
 
         # Then
         expected_actions = []

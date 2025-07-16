@@ -119,7 +119,8 @@ class AuditContext:
         if best_candidate and best_candidate.status:
             if action_rule_details is None or (action_rule_details[0] is None and action_rule_details[1] is None):
                 audit_action_rule =  None
-            audit_action_rule =  AuditRedirectRule(rule_priority=str(action_rule_details[0]), rule_name=action_rule_details[1])
+            else:
+                audit_action_rule =  AuditRedirectRule(rule_priority=str(action_rule_details[0]), rule_name=action_rule_details[1])
         return audit_action_rule
 
     @staticmethod
