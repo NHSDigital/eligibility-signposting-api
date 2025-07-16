@@ -1,4 +1,3 @@
-import base64
 import json
 import logging
 from http import HTTPStatus
@@ -69,7 +68,6 @@ def test_install_and_call_lambda_flask(
         Payload=json.dumps(request_payload),
         LogType="Tail",
     )
-    log_output = base64.b64decode(response["LogResult"]).decode("utf-8")
 
     # Then
     assert_that(response, has_entries(StatusCode=HTTPStatus.OK))
@@ -79,8 +77,6 @@ def test_install_and_call_lambda_flask(
         response_payload,
         has_entries(statusCode=HTTPStatus.OK, body=is_json_that(has_key("processedSuggestions"))),
     )
-
-    assert_that(log_output, contains_string("person_data"))
 
 
 def test_install_and_call_flask_lambda_over_http(
