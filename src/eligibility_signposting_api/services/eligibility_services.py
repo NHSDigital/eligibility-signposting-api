@@ -51,13 +51,6 @@ class EligibilityService:
                         "nhs_number": nhs_number,
                     },
                 )
-
-                if person_data and person_data[0] and campaign_configs and campaign_configs[0]:
-                    logger.info("Test data masking person data: %r", person_data[0])
-                    logger.info(
-                        "Test data masking campaign config data: %r", campaign_configs[0].model_dump(by_alias=True)
-                    )
-
             except NotFoundError as e:
                 raise UnknownPersonError from e
             else:
