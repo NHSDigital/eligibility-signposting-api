@@ -2670,6 +2670,89 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
         assert cond.actions == expected_audit_action
 
 
+def test_actions_returned_when_non_eligible_actions_not_given_and_defaultcomms_given(
+    app,
+    faker: Faker,
+):
+    """
+    ELI-295 - Campaign config without NonEligibleActions (X rules) but with default comms routing
+    should return the default comms actions
+    """
+
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["NotEligibleCohort"])
+
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_not_eligible_routing="defaultCommsCode",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(root={
+                            "defaultCommsCode": AvailableAction(
+                                ActionType="DefaultInfoText",
+                                ExternalRoutingCode="DefaultHealthcareProInfo",
+                                ActionDescription="Default Speak to your healthcare professional.",
+                            )
+                        }),
+                        iteration_rules=[],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+
+        # Then
+        expected_actions = [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultCommsCode"),
+                    action_type=ActionType("DefaultInfoText"),
+                    action_code=ActionCode("DefaultHealthcareProInfo"),
+                    action_description=ActionDescription(
+                        "Default Speak to your healthcare professional."
+                    ),
+                    url_link=None,
+                    url_label=None,
+                )
+            ]
+        expected_audit_action = [
+                AuditAction(
+                    internal_action_code="defaultCommsCode",
+                    action_code="DefaultHealthcareProInfo",
+                    action_type="DefaultInfoText",
+                    action_description="Default Speak to your healthcare professional.",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ]
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_eligible))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_action
+
+
 @pytest.mark.parametrize(
     (
         "test_comment",
@@ -2897,6 +2980,89 @@ def test_no_actions_returned_when_non_actionable_actions_and_defaultcomms_not_gi
         # Then
         expected_actions = []
         expected_audit_action = []
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_actionable))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_action
+
+
+def test_actions_returned_when_non_actionable_actions_not_given_and_defaultcomms_given(
+    app,
+    faker: Faker,
+):
+    """
+    ELI-295 - Campaign config without NonActionableActions (Y rules) with default comms routing
+    should return default comms actions
+    """
+
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], de=True)
+
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_not_actionable_routing="defaultCommsCode",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(root={
+                            "defaultCommsCode": AvailableAction(
+                                ActionType="DefaultInfoText",
+                                ExternalRoutingCode="DefaultHealthcareProInfo",
+                                ActionDescription="Default Speak to your healthcare professional.",
+                            )
+                        }),
+                        iteration_rules=[rule_builder.DetainedEstateSuppressionRuleFactory.build()],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+
+        # Then
+        expected_actions = [
+            SuggestedAction(
+                internal_action_code=InternalActionCode("defaultCommsCode"),
+                action_type=ActionType("DefaultInfoText"),
+                action_code=ActionCode("DefaultHealthcareProInfo"),
+                action_description=ActionDescription(
+                    "Default Speak to your healthcare professional."
+                ),
+                url_link=None,
+                url_label=None,
+            )
+        ]
+        expected_audit_action = [
+            AuditAction(
+                internal_action_code="defaultCommsCode",
+                action_code="DefaultHealthcareProInfo",
+                action_type="DefaultInfoText",
+                action_description="Default Speak to your healthcare professional.",
+                action_url=None,
+                action_url_label=None,
+            )
+        ]
         assert_that(
             actual,
             is_eligibility_status().with_conditions(
