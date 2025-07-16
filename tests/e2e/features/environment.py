@@ -6,9 +6,7 @@ import boto3
 from botocore.exceptions import BotoCoreError
 from dotenv import load_dotenv
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("behave.environment")
 
 
@@ -26,19 +24,13 @@ def _load_environment_variables(context):
     context.aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
     context.aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
     context.aws_session_token = os.getenv("AWS_SESSION_TOKEN")
-    context.abort_on_aws_error = (
-        os.getenv("ABORT_ON_AWS_FAILURE", "false").lower() == "true"
-    )
+    context.abort_on_aws_error = os.getenv("ABORT_ON_AWS_FAILURE", "false").lower() == "true"
     context.keep_seed = os.getenv("KEEP_SEED", "false").lower() == "true"
-    context.dynamodb_table_name = os.getenv(
-        "DYNAMODB_TABLE_NAME", "eligibilty_data_store"
-    )
+    context.dynamodb_table_name = os.getenv("DYNAMODB_TABLE_NAME", "eligibilty_data_store")
     context.s3_bucket = os.getenv("S3_BUCKET_NAME")
     context.s3_upload_dir = os.getenv("S3_UPLOAD_DIR", "")
     context.s3_data_path = Path(os.getenv("S3_JSON_SOURCE_DIR", "./data/s3")).resolve()
-    context.api_gateway_url = os.getenv(
-        "API_GATEWAY_URL", "https://test.eligibility-signposting-api.nhs.uk"
-    )
+    context.api_gateway_url = os.getenv("API_GATEWAY_URL", "https://test.eligibility-signposting-api.nhs.uk")
 
     logger.info("ABORT_ON_AWS_FAILURE=%s", context.abort_on_aws_error)
     logger.info("KEEP_SEED=%s", context.keep_seed)
@@ -67,16 +59,10 @@ def _setup_s3(context):
 
         json_files = list(context.s3_data_path.glob("*.json"))
         for file_path in json_files:
-            key = (
-                f"{context.s3_upload_dir}/{file_path.name}"
-                if context.s3_upload_dir
-                else file_path.name
-            )
+            key = f"{context.s3_upload_dir}/{file_path.name}" if context.s3_upload_dir else file_path.name
             try:
                 s3_client.upload_file(str(file_path), context.s3_bucket, key)
-                logger.info(
-                    "Uploaded %s to s3://%s/%s", file_path.name, context.s3_bucket, key
-                )
+                logger.info("Uploaded %s to s3://%s/%s", file_path.name, context.s3_bucket, key)
             except (Exception, BotoCoreError):
                 logger.exception("Failed to upload %s", file_path.name)
     except (Exception, BotoCoreError):
@@ -142,9 +128,7 @@ def after_feature(context, feature):
                         feature.name,
                     )
             except Exception:
-                logger.exception(
-                    "Failed to cleanup DynamoDB data for feature: %s", feature.name
-                )
+                logger.exception("Failed to cleanup DynamoDB data for feature: %s", feature.name)
 
 
 def after_all(context):
@@ -159,17 +143,11 @@ def after_all(context):
             s3_client = boto3.client("s3", region_name=context.aws_region)
             json_files = list(context.s3_data_path.glob("*.json"))
             for file_path in json_files:
-                key = (
-                    f"{context.s3_upload_dir}/{file_path.name}"
-                    if context.s3_upload_dir
-                    else file_path.name
-                )
+                key = f"{context.s3_upload_dir}/{file_path.name}" if context.s3_upload_dir else file_path.name
                 try:
                     s3_client.delete_object(Bucket=context.s3_bucket, Key=key)
                     logger.info("Deleted s3://%s/%s", context.s3_bucket, key)
                 except (Exception, BotoCoreError):
-                    logger.exception(
-                        "Failed to delete s3://%s/%s", context.s3_bucket, key
-                    )
+                    logger.exception("Failed to delete s3://%s/%s", context.s3_bucket, key)
         except Exception:
             logger.exception("S3 cleanup failed")
