@@ -1,13 +1,17 @@
 {
-  "scenario_name": "RSV - Not Eligible",
+  "scenario_name": "RSV - Actionable due to membership of an Age Cohort incl. suggested action (existing national booking)",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000004"
+  },
+  "config_filename": "AUTO_RSV_SB_001.json",
   "data": [
     {
-      "NHS_NUMBER": "5000000014",
+      "NHS_NUMBER": "5000000004",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MAP": {
         "cohorts": {
           "M": {
-            "covid_16+_immunosuppression": {
+            "no_group_description": {
               "M": {
                 "dateJoined": {
                   "S": "20230515"
@@ -19,9 +23,9 @@
       }
     },
     {
-      "NHS_NUMBER": "50000000014",
+      "NHS_NUMBER": "5000000004",
       "ATTRIBUTE_TYPE": "PERSON",
-      "DATE_OF_BIRTH": "<<DATE_AGE_50>>",
+      "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
       "POSTCODE": "LS1 1AB",
       "POSTCODE_SECTOR": "LS1",
@@ -35,6 +39,12 @@
       "13Q_FLAG": "N",
       "CARE_HOME_FLAG": "N",
       "DE_FLAG": "N"
+    },
+    {
+      "NHS_NUMBER": "5000000004",
+      "ATTRIBUTE_TYPE": "RSV",
+      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+1>>",
+      "BOOKED_APPOINTMENT_PROVIDER": "NBS"
     }
   ]
 }

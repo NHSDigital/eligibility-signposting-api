@@ -1,8 +1,12 @@
 {
-  "scenario_name": "RSV - Not Actionable, membership of Age Cohort, dose not yet due",
+  "scenario_name": "RSV - No RSV response as no active campaign (not available type 2)",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000008"
+  },
+  "config_filename": "AUTO_RSV_SB_008.json",
   "data": [
     {
-      "NHS_NUMBER": "5000000009",
+      "NHS_NUMBER": "5000000008",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MAP": {
         "cohorts": {
@@ -19,7 +23,7 @@
       }
     },
     {
-      "NHS_NUMBER": "5000000009",
+      "NHS_NUMBER": "5000000008",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
@@ -37,9 +41,9 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "5000000009",
+      "NHS_NUMBER": "5000000008",
       "ATTRIBUTE_TYPE": "RSV",
-      "LAST_SUCCESSFUL_DATE": "2023-07-01"
+      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+5>>"
     }
   ]
 }

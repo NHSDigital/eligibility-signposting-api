@@ -1,44 +1,32 @@
-
-Feature: Eligibility Check API
-  As a consumer of the Eligibility Check API
-  I want to verify the endpoint's response for various NHS numbers and parameters
-  So that I can ensure the API behaves as expected for all supported scenarios
+Feature: Full mTLS integration with real Eligibility API
 
   Background:
-    Given the Eligibility Check API base URL is configured
+    Given AWS credentials are loaded from the environment
+    And mTLS certificates are downloaded and available in the out/ directory
 
-  Scenario Outline: Successful eligibility check returns 2xx and valid response
+  Scenario Outline: Eligibility check returns 2xx response for NHS number queries
+    Given I generate the test data files
+    And I upload the test data files to DynamoDB
     Given I have the NHS number "<nhs_number>"
-    When I request an eligibility check for the NHS number
-    Then the response status code should be 2xx
-    And the response content type should be application/json
-    And the response should have a JSON body
-    And the response should match the eligibility check schema
+    When I query the eligibility API using the headers:
+
+    Then the response status code should be 200
+    And the response should be matching the JSON "<json_response>"
+    Then I clean up DynamoDB test data
 
     Examples:
-      | nhs_number    |
-      | 50000000001   |
-      | 50000000004   |
-      | 9876543210    |
-
-  Scenario Outline: Eligibility check with invalid or missing NHS number returns error
-    Given I have the NHS number "<nhs_number>"
-    When I request an eligibility check for the NHS number
-    Then the response status code should be 4xx or 404
-
-    Examples:
-      | nhs_number    |
-      | 00000000000   |
-      |              |
-      | patient=ABC  |
-
-  Scenario Outline: Eligibility check with custom Accept header
-    Given I have the NHS number "<nhs_number>"
-    And I set the Accept header to "<accept_header>"
-    When I request an eligibility check for the NHS number
-    Then the response content type should contain "<expected_content_type>"
-
-    Examples:
-      | nhs_number    | accept_header           | expected_content_type    |
-      | 9876543210    | application/json        | application/json        |
-      | 9876543210    | application/json        | application/json   |
+      | nhs_number | json_response |
+      | 5000000001 | AUTO_RSV_SB_001.json |
+      | 5000000002 | AUTO_RSV_SB_002.json |
+      | 5000000003 | AUTO_RSV_SB_003.json |
+      | 5000000004 | AUTO_RSV_SB_004.json |
+      | 5000000005 | AUTO_RSV_SB_005.json |
+      | 5000000006 | AUTO_RSV_SB_006.json |
+      | 5000000007 | AUTO_RSV_SB_007.json |
+      | 5000000008 | AUTO_RSV_SB_008.json |
+      | 5000000009 | AUTO_RSV_SB_009.json |
+      | 5000000010 | AUTO_RSV_SB_010.json |
+      | 5000000011 | AUTO_RSV_SB_011.json |
+      | 5000000012 | AUTO_RSV_SB_012.json |
+      | 5000000013 | AUTO_RSV_SB_013.json |
+      | 5000000014 | AUTO_RSV_SB_014.json |

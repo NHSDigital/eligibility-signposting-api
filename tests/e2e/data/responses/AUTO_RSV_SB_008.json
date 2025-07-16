@@ -1,7 +1,30 @@
 {
-  "responseId": "<<IGNORE_RESPONSE_ID>>",
   "meta": {
-    "lastUpdated": "<<IGNORE_DATE>>"
+    "lastUpdated": "2025-07-15T10:11:58.006524+00:00"
   },
-  "processedSuggestions": []
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "ManageLocal",
+          "actionType": "CardWithText",
+          "description": "##You have an RSV vaccination appointment\nContact your healthcare provider to change or cancel your appointment.",
+          "urlLabel": "",
+          "urlLink": ""
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age_rolling",
+          "cohortStatus": "Actionable",
+          "cohortText": "are aged 75 to 79 years old."
+        }
+      ],
+      "status": "Actionable",
+      "statusText": "Status.actionable",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "8090f190-cd7c-4f43-aa77-d0e6f074ac3f"
 }

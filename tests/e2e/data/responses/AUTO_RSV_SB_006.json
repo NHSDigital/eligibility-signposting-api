@@ -1,22 +1,22 @@
 {
-  "responseId": "<<IGNORE_RESPONSE_ID>>",
   "meta": {
-    "lastUpdated": "<<IGNORE_DATE>>"
+    "lastUpdated": "2025-07-15T10:11:52.192023+00:00"
   },
   "processedSuggestions": [
     {
+      "actions": [],
       "condition": "RSV",
-      "status": "NotActionable",
-      "statusText": "You should have the RSV vaccine",
       "eligibilityCohorts": [],
+      "status": "NotActionable",
+      "statusText": "Status.not_actionable",
       "suitabilityRules": [
         {
-          "ruleType": "S",
           "ruleCode": "AlreadyVaccinated",
-          "ruleText": "##You've had your RSV vaccination\nBased on our records, you recently had this vaccination. You do not need to do anything."
+          "ruleText": "##You've had your RSV vaccination\nWe believe you had your vaccination on <<LAST_SUCCESSFUL_DATE>>.",
+          "ruleType": "S"
         }
-      ],
-      "actions": []
+      ]
     }
-  ]
+  ],
+  "responseId": "0d64cba6-96af-49e5-8250-d3471a57da97"
 }

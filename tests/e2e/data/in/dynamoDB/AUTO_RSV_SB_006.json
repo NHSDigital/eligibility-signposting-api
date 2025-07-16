@@ -1,13 +1,18 @@
 {
-  "scenario_name": "RSV - Not Actionable despite to membership of an Age Cohort with reasoning of vaccination given in other setting (e.g. care home)",
+  "scenario_name": "RSV - Not Actionable despite membership of an Age Cohort, already vaccinated",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000006"
+  },
+  "config_filename": "AUTO_RSV_SB_001.json",
+  "notes": "actions need updating in the response when the functionality is delivered to provide actions for not_actionable responses",
   "data": [
     {
-      "NHS_NUMBER": "5000000011",
+      "NHS_NUMBER": "5000000006",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MAP": {
         "cohorts": {
           "M": {
-            "rsv_75_rolling": {
+            "no_group_description": {
               "M": {
                 "dateJoined": {
                   "S": "20230515"
@@ -19,7 +24,7 @@
       }
     },
     {
-      "NHS_NUMBER": "5000000011",
+      "NHS_NUMBER": "5000000006",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
@@ -33,8 +38,13 @@
       "ICB": "QWO",
       "COMMISSIONING_REGION": "Y63",
       "13Q_FLAG": "N",
-      "CARE_HOME_FLAG": "Y",
+      "CARE_HOME_FLAG": "N",
       "DE_FLAG": "N"
+    },
+    {
+      "NHS_NUMBER": "5000000006",
+      "ATTRIBUTE_TYPE": "RSV",
+      "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_-7>>"
     }
   ]
 }
