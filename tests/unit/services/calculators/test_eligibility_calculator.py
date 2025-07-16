@@ -2692,13 +2692,15 @@ def test_actions_returned_when_non_eligible_actions_not_given_and_defaultcomms_g
                     rule_builder.IterationFactory.build(
                         iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                         default_not_eligible_routing="defaultCommsCode",
-                        actions_mapper=rule_builder.ActionsMapperFactory.build(root={
-                            "defaultCommsCode": AvailableAction(
-                                ActionType="DefaultInfoText",
-                                ExternalRoutingCode="DefaultHealthcareProInfo",
-                                ActionDescription="Default Speak to your healthcare professional.",
-                            )
-                        }),
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "defaultCommsCode": AvailableAction(
+                                    ActionType="DefaultInfoText",
+                                    ExternalRoutingCode="DefaultHealthcareProInfo",
+                                    ActionDescription="Default Speak to your healthcare professional.",
+                                )
+                            }
+                        ),
                         iteration_rules=[],
                     )
                 ],
@@ -2716,27 +2718,25 @@ def test_actions_returned_when_non_eligible_actions_not_given_and_defaultcomms_g
 
         # Then
         expected_actions = [
-                SuggestedAction(
-                    internal_action_code=InternalActionCode("defaultCommsCode"),
-                    action_type=ActionType("DefaultInfoText"),
-                    action_code=ActionCode("DefaultHealthcareProInfo"),
-                    action_description=ActionDescription(
-                        "Default Speak to your healthcare professional."
-                    ),
-                    url_link=None,
-                    url_label=None,
-                )
-            ]
+            SuggestedAction(
+                internal_action_code=InternalActionCode("defaultCommsCode"),
+                action_type=ActionType("DefaultInfoText"),
+                action_code=ActionCode("DefaultHealthcareProInfo"),
+                action_description=ActionDescription("Default Speak to your healthcare professional."),
+                url_link=None,
+                url_label=None,
+            )
+        ]
         expected_audit_action = [
-                AuditAction(
-                    internal_action_code="defaultCommsCode",
-                    action_code="DefaultHealthcareProInfo",
-                    action_type="DefaultInfoText",
-                    action_description="Default Speak to your healthcare professional.",
-                    action_url=None,
-                    action_url_label=None,
-                )
-            ]
+            AuditAction(
+                internal_action_code="defaultCommsCode",
+                action_code="DefaultHealthcareProInfo",
+                action_type="DefaultInfoText",
+                action_description="Default Speak to your healthcare professional.",
+                action_url=None,
+                action_url_label=None,
+            )
+        ]
         assert_that(
             actual,
             is_eligibility_status().with_conditions(
@@ -3018,13 +3018,15 @@ def test_actions_returned_when_non_actionable_actions_not_given_and_defaultcomms
                     rule_builder.IterationFactory.build(
                         iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                         default_not_actionable_routing="defaultCommsCode",
-                        actions_mapper=rule_builder.ActionsMapperFactory.build(root={
-                            "defaultCommsCode": AvailableAction(
-                                ActionType="DefaultInfoText",
-                                ExternalRoutingCode="DefaultHealthcareProInfo",
-                                ActionDescription="Default Speak to your healthcare professional.",
-                            )
-                        }),
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "defaultCommsCode": AvailableAction(
+                                    ActionType="DefaultInfoText",
+                                    ExternalRoutingCode="DefaultHealthcareProInfo",
+                                    ActionDescription="Default Speak to your healthcare professional.",
+                                )
+                            }
+                        ),
                         iteration_rules=[rule_builder.DetainedEstateSuppressionRuleFactory.build()],
                     )
                 ],
@@ -3046,9 +3048,7 @@ def test_actions_returned_when_non_actionable_actions_not_given_and_defaultcomms
                 internal_action_code=InternalActionCode("defaultCommsCode"),
                 action_type=ActionType("DefaultInfoText"),
                 action_code=ActionCode("DefaultHealthcareProInfo"),
-                action_description=ActionDescription(
-                    "Default Speak to your healthcare professional."
-                ),
+                action_description=ActionDescription("Default Speak to your healthcare professional."),
                 url_link=None,
                 url_label=None,
             )
