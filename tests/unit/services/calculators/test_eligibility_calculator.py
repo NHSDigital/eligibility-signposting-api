@@ -2382,6 +2382,7 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
         ),
     )
 
+
 @pytest.mark.parametrize(
     ("campaign_target", "campaign_type", "conditions_filter", "category_filter", "expected_result"),
     [
