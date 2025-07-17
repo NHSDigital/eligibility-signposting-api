@@ -84,6 +84,8 @@ class RuleCalculator:
                 rules.RuleType.filter: eligibility.Status.not_eligible,
                 rules.RuleType.suppression: eligibility.Status.not_actionable,
                 rules.RuleType.redirect: eligibility.Status.actionable,
+                rules.RuleType.not_eligible_actions: eligibility.Status.not_eligible,
+                rules.RuleType.not_actionable_actions: eligibility.Status.not_actionable,
             }[self.rule.type]
             return status, str(reason), matcher_matched
         matcher.describe_mismatch(attribute_value, reason)

@@ -3,10 +3,12 @@ from typing import Any
 
 import pytest
 from faker import Faker
+from flask import Flask, g
 from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_to, has_item, has_items, is_, is_in
 from pydantic import HttpUrl, ValidationError
 
+from eligibility_signposting_api.audit.audit_models import AuditAction, AuditEvent
 from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
 from eligibility_signposting_api.model.eligibility import (
@@ -37,9 +39,14 @@ from tests.fixtures.matchers.eligibility import (
 from tests.fixtures.matchers.rules import is_iteration_rule
 
 
+@pytest.fixture
+def app():
+    return Flask(__name__)
+
+
 class TestEligibilityCalculator:
     @staticmethod
-    def test_get_redirect_rules():
+    def test_get_action_rules_components():
         # Given
 
         iteration = rule_builder.IterationFactory.build(
@@ -67,7 +74,9 @@ class TestEligibilityCalculator:
         )
 
         # when
-        actual_rules, actual_action_mapper, actual_default_comms = EligibilityCalculator.get_redirect_rules(iteration)
+        actual_rules, actual_action_mapper, actual_default_comms = EligibilityCalculator.get_action_rules_components(
+            iteration, rules.RuleType.redirect
+        )
 
         # then
         assert_that(actual_rules, has_item(is_iteration_rule().with_name(iteration.iteration_rules[0].name)))
@@ -2404,3 +2413,667 @@ def test_campaigns_grouped_by_condition_name_filters_correctly(
     result = list(calculator.campaigns_grouped_by_condition_name(conditions_filter, category_filter))
 
     assert_that([(str(name), group[0].type) for name, group in result], is_(expected_result))
+
+
+@pytest.mark.parametrize(
+    (
+        "test_comment",
+        "person_icb",
+        "default_comms_routing",
+        "comms_routing",
+        "actions_mapper",
+        "expected_actions",
+        "expected_audit_actions",
+        "expected_rule_priority",
+        "expected_rule_name",
+    ),
+    [
+        (
+            """Not eligible person with matching NonEligibleActionRule""",
+            "QE1",
+            "",
+            "ActionCode1",
+            {
+                "ActionCode1": AvailableAction(
+                    ActionType="InfoText",
+                    ExternalRoutingCode="HealthcareProInfo",
+                    ActionDescription="""Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                )
+            },
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("ActionCode1"),
+                    action_type=ActionType("InfoText"),
+                    action_code=ActionCode("HealthcareProInfo"),
+                    action_description=ActionDescription(
+                        """Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
+                    ),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
+            [
+                AuditAction(
+                    internal_action_code="ActionCode1",
+                    action_code="HealthcareProInfo",
+                    action_type="InfoText",
+                    action_description="""Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ],
+            "20",
+            "In QE1",
+        ),
+        (
+            """Not eligible person with NON matching NonEligibleActionRule""",
+            "WS3",
+            "defaultCommsCode",
+            "ActionCode1",
+            {
+                "defaultCommsCode": AvailableAction(
+                    ActionType="DefaultInfoText",
+                    ExternalRoutingCode="DefaultHealthcareProInfo",
+                    ActionDescription="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                )
+            },
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultCommsCode"),
+                    action_type=ActionType("DefaultInfoText"),
+                    action_code=ActionCode("DefaultHealthcareProInfo"),
+                    action_description=ActionDescription(
+                        """Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
+                    ),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
+            [
+                AuditAction(
+                    internal_action_code="defaultCommsCode",
+                    action_code="DefaultHealthcareProInfo",
+                    action_type="DefaultInfoText",
+                    action_description="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ],
+            None,
+            None,
+        ),
+        (
+            """Not eligible person with matching but missing NonEligibleActionRule, fall back to default comms""",
+            "QE1",
+            "defaultCommsCode",
+            "ActionCode1",
+            {
+                "defaultCommsCode": AvailableAction(
+                    ActionType="DefaultInfoText",
+                    ExternalRoutingCode="DefaultHealthcareProInfo",
+                    ActionDescription="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                )
+            },
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultCommsCode"),
+                    action_type=ActionType("DefaultInfoText"),
+                    action_code=ActionCode("DefaultHealthcareProInfo"),
+                    action_description=ActionDescription(
+                        """Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
+                    ),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
+            [
+                AuditAction(
+                    internal_action_code="defaultCommsCode",
+                    action_code="DefaultHealthcareProInfo",
+                    action_type="DefaultInfoText",
+                    action_description="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ],
+            "20",
+            "In QE1",
+        ),
+    ],
+)
+def test_correct_actions_determined_from_not_eligible_action_rules(  # noqa: PLR0913
+    app,
+    test_comment,
+    person_icb,
+    default_comms_routing,
+    comms_routing,
+    actions_mapper,
+    expected_actions,
+    expected_audit_actions,
+    expected_rule_priority,
+    expected_rule_name,
+    faker: Faker,
+):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["NotEligibleCohort"], icb=person_icb)
+
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_not_eligible_routing=default_comms_routing,
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(root=actions_mapper),
+                        iteration_rules=[
+                            rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=comms_routing)
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_eligible))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+            test_comment,
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_actions
+
+        assert getattr(cond.action_rule, "rule_priority", None) == expected_rule_priority
+        assert getattr(cond.action_rule, "rule_name", None) == expected_rule_name
+
+
+def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_given(
+    app,
+    faker: Faker,
+):
+    """
+    ELI-295 - Campaign config without NonEligibleActions (X rules) should not return
+    any actions/default actions for NonEligible status
+    """
+
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["NotEligibleCohort"])
+
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        actions_mapper={},
+                        iteration_rules=[],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+
+        # Then
+        expected_actions = []
+        expected_audit_action = []
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_eligible))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_action
+
+
+def test_actions_returned_when_non_eligible_actions_not_given_and_defaultcomms_given(
+    app,
+    faker: Faker,
+):
+    """
+    ELI-295 - Campaign config without NonEligibleActions (X rules) but with default comms routing
+    should return the default comms actions
+    """
+
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["NotEligibleCohort"])
+
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_not_eligible_routing="defaultCommsCode",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "defaultCommsCode": AvailableAction(
+                                    ActionType="DefaultInfoText",
+                                    ExternalRoutingCode="DefaultHealthcareProInfo",
+                                    ActionDescription="Default Speak to your healthcare professional.",
+                                )
+                            }
+                        ),
+                        iteration_rules=[],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+
+        # Then
+        expected_actions = [
+            SuggestedAction(
+                internal_action_code=InternalActionCode("defaultCommsCode"),
+                action_type=ActionType("DefaultInfoText"),
+                action_code=ActionCode("DefaultHealthcareProInfo"),
+                action_description=ActionDescription("Default Speak to your healthcare professional."),
+                url_link=None,
+                url_label=None,
+            )
+        ]
+        expected_audit_action = [
+            AuditAction(
+                internal_action_code="defaultCommsCode",
+                action_code="DefaultHealthcareProInfo",
+                action_type="DefaultInfoText",
+                action_description="Default Speak to your healthcare professional.",
+                action_url=None,
+                action_url_label=None,
+            )
+        ]
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_eligible))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_action
+
+
+@pytest.mark.parametrize(
+    (
+        "test_comment",
+        "person_icb",
+        "default_comms_routing",
+        "comms_routing",
+        "actions_mapper",
+        "expected_actions",
+        "expected_audit_actions",
+    ),
+    [
+        (
+            """Not actionable person with matching NonActionableActionRule""",
+            "QE1",
+            "",
+            "ActionCode1",
+            {
+                "ActionCode1": AvailableAction(
+                    ActionType="InfoText",
+                    ExternalRoutingCode="HealthcareProInfo",
+                    ActionDescription="""Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                )
+            },
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("ActionCode1"),
+                    action_type=ActionType("InfoText"),
+                    action_code=ActionCode("HealthcareProInfo"),
+                    action_description=ActionDescription(
+                        """Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
+                    ),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
+            [
+                AuditAction(
+                    internal_action_code="ActionCode1",
+                    action_code="HealthcareProInfo",
+                    action_type="InfoText",
+                    action_description="""Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ],
+        ),
+        (
+            """Not actionable person with NON matching NonActionableActionRule""",
+            "WS3",
+            "defaultCommsCode",
+            "ActionCode1",
+            {
+                "defaultCommsCode": AvailableAction(
+                    ActionType="DefaultInfoText",
+                    ExternalRoutingCode="DefaultHealthcareProInfo",
+                    ActionDescription="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                )
+            },
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultCommsCode"),
+                    action_type=ActionType("DefaultInfoText"),
+                    action_code=ActionCode("DefaultHealthcareProInfo"),
+                    action_description=ActionDescription(
+                        """Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
+                    ),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
+            [
+                AuditAction(
+                    internal_action_code="defaultCommsCode",
+                    action_code="DefaultHealthcareProInfo",
+                    action_type="DefaultInfoText",
+                    action_description="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ],
+        ),
+        (
+            """Not actionable person with matching but missing NonActionableActionRule, fall back to default comms""",
+            "QE1",
+            "defaultCommsCode",
+            "ActionCode1",
+            {
+                "defaultCommsCode": AvailableAction(
+                    ActionType="DefaultInfoText",
+                    ExternalRoutingCode="DefaultHealthcareProInfo",
+                    ActionDescription="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                )
+            },
+            [
+                SuggestedAction(
+                    internal_action_code=InternalActionCode("defaultCommsCode"),
+                    action_type=ActionType("DefaultInfoText"),
+                    action_code=ActionCode("DefaultHealthcareProInfo"),
+                    action_description=ActionDescription(
+                        """Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination."""
+                    ),
+                    url_link=None,
+                    url_label=None,
+                )
+            ],
+            [
+                AuditAction(
+                    internal_action_code="defaultCommsCode",
+                    action_code="DefaultHealthcareProInfo",
+                    action_type="DefaultInfoText",
+                    action_description="""Default Speak to your healthcare professional if you think
+                        you should be offered this vaccination.""",
+                    action_url=None,
+                    action_url_label=None,
+                )
+            ],
+        ),
+    ],
+)
+def test_correct_actions_determined_from_not_actionable_action_rules(  # noqa: PLR0913
+    app,
+    test_comment,
+    person_icb,
+    default_comms_routing,
+    comms_routing,
+    actions_mapper,
+    expected_actions,
+    expected_audit_actions,
+    faker: Faker,
+):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], icb=person_icb, de=True)
+
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_not_actionable_routing=default_comms_routing,
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(root=actions_mapper),
+                        iteration_rules=[
+                            rule_builder.DetainedEstateSuppressionRuleFactory.build(),
+                            rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=comms_routing),
+                        ],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_actionable))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+            test_comment,
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_actions
+
+
+def test_no_actions_returned_when_non_actionable_actions_and_defaultcomms_not_given(
+    app,
+    faker: Faker,
+):
+    """
+    ELI-295 - Campaign config without NonActionableActions (Y rules) should not return
+    any actions/default actions for NonActionable status
+    """
+
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], de=True)
+
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        actions_mapper={},
+                        iteration_rules=[rule_builder.DetainedEstateSuppressionRuleFactory.build()],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+
+        # Then
+        expected_actions = []
+        expected_audit_action = []
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_actionable))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_action
+
+
+def test_actions_returned_when_non_actionable_actions_not_given_and_defaultcomms_given(
+    app,
+    faker: Faker,
+):
+    """
+    ELI-295 - Campaign config without NonActionableActions (Y rules) with default comms routing
+    should return default comms actions
+    """
+
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"], de=True)
+
+    campaign_configs = [
+        (
+            rule_builder.CampaignConfigFactory.build(
+                target="RSV",
+                iterations=[
+                    rule_builder.IterationFactory.build(
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                        default_not_actionable_routing="defaultCommsCode",
+                        actions_mapper=rule_builder.ActionsMapperFactory.build(
+                            root={
+                                "defaultCommsCode": AvailableAction(
+                                    ActionType="DefaultInfoText",
+                                    ExternalRoutingCode="DefaultHealthcareProInfo",
+                                    ActionDescription="Default Speak to your healthcare professional.",
+                                )
+                            }
+                        ),
+                        iteration_rules=[rule_builder.DetainedEstateSuppressionRuleFactory.build()],
+                    )
+                ],
+            )
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+
+        # Then
+        expected_actions = [
+            SuggestedAction(
+                internal_action_code=InternalActionCode("defaultCommsCode"),
+                action_type=ActionType("DefaultInfoText"),
+                action_code=ActionCode("DefaultHealthcareProInfo"),
+                action_description=ActionDescription("Default Speak to your healthcare professional."),
+                url_link=None,
+                url_label=None,
+            )
+        ]
+        expected_audit_action = [
+            AuditAction(
+                internal_action_code="defaultCommsCode",
+                action_code="DefaultHealthcareProInfo",
+                action_type="DefaultInfoText",
+                action_description="Default Speak to your healthcare professional.",
+                action_url=None,
+                action_url_label=None,
+            )
+        ]
+        assert_that(
+            actual,
+            is_eligibility_status().with_conditions(
+                has_items(
+                    is_condition()
+                    .with_condition_name(ConditionName("RSV"))
+                    .and_status(equal_to(Status.not_actionable))
+                    .and_actions(equal_to(expected_actions))
+                )
+            ),
+        )
+
+        cond = g.audit_log.response.condition[0]
+        assert cond.actions == expected_audit_action

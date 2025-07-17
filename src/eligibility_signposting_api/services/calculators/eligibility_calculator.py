@@ -19,6 +19,7 @@ if TYPE_CHECKING:
         IterationCohort,
         RuleName,
         RulePriority,
+        RuleType,
     )
 
 from wireup import service
@@ -140,15 +141,20 @@ class EligibilityCalculator:
         return filter_rules, suppression_rules
 
     @staticmethod
-    def get_redirect_rules(
-        active_iteration: Iteration,
-    ) -> tuple[tuple[rules.IterationRule, ...], ActionsMapper, str]:
-        redirect_rules = tuple(
-            rule for rule in active_iteration.iteration_rules if rule.type in rules.RuleType.redirect
-        )
-        default_comms = active_iteration.default_comms_routing
+    def get_action_rules_components(
+        active_iteration: Iteration, rule_type: RuleType
+    ) -> tuple[tuple[rules.IterationRule, ...], ActionsMapper, str | None]:
+        action_rules = tuple(rule for rule in active_iteration.iteration_rules if rule.type in rule_type)
+
+        routing_map = {
+            rules.RuleType.redirect: active_iteration.default_comms_routing,
+            rules.RuleType.not_eligible_actions: active_iteration.default_not_eligible_routing,
+            rules.RuleType.not_actionable_actions: active_iteration.default_not_actionable_routing,
+        }
+
+        default_comms = routing_map.get(rule_type)
         action_mapper = active_iteration.actions_mapper
-        return redirect_rules, action_mapper, default_comms
+        return action_rules, action_mapper, default_comms
 
     def evaluate_eligibility(
         self, include_actions: str, conditions: list[str], category: str
@@ -156,7 +162,7 @@ class EligibilityCalculator:
         include_actions_flag = include_actions.upper() == "Y"
         condition_results: dict[ConditionName, IterationResult] = {}
         actions: list[SuggestedAction] | None = []
-        redirect_rule_priority, redirect_rule_name = None, None
+        action_rule_priority, action_rule_name = None, None
 
         for condition_name, campaign_group in self.campaigns_grouped_by_condition_name(conditions, category):
             best_active_iteration: Iteration | None
@@ -188,15 +194,25 @@ class EligibilityCalculator:
 
             condition_results[condition_name] = best_candidate
 
-            if best_candidate.status == Status.actionable and best_active_iteration is not None:
+            status_to_rule_type = {
+                Status.actionable: rules.RuleType.redirect,
+                Status.not_eligible: rules.RuleType.not_eligible_actions,
+                Status.not_actionable: rules.RuleType.not_actionable_actions,
+            }
+
+            if best_candidate.status in status_to_rule_type and best_active_iteration is not None:
                 if include_actions_flag:
-                    actions, matched_r_rule_priority, matched_r_rule_name = self.handle_redirect_rules(
-                        best_active_iteration
+                    rule_type = status_to_rule_type[best_candidate.status]
+                    actions, matched_action_rule_priority, matched_action_rule_name = self.handle_action_rules(
+                        best_active_iteration, rule_type
                     )
-                    redirect_rule_name = matched_r_rule_name
-                    redirect_rule_priority = matched_r_rule_priority
+                    action_rule_name = matched_action_rule_name
+                    action_rule_priority = matched_action_rule_priority
                 else:
                     actions = None
+
+            else:
+                actions = None
 
             if best_candidate.status in (Status.not_eligible, Status.not_actionable) and not include_actions_flag:
                 actions = None
@@ -212,7 +228,7 @@ class EligibilityCalculator:
                 condition_name,
                 (best_active_iteration, best_candidate, best_cohort_results),
                 (best_campaign_id, best_campaign_version),
-                (redirect_rule_priority, redirect_rule_name),
+                (action_rule_priority, action_rule_name),
             )
 
         # Consolidate all the results and return
@@ -240,15 +256,16 @@ class EligibilityCalculator:
             )
         return iteration_results
 
-    def handle_redirect_rules(
-        self, best_active_iteration: Iteration
+    def handle_action_rules(
+        self, best_active_iteration: Iteration, rule_type: RuleType
     ) -> tuple[list[SuggestedAction] | None, RulePriority | None, RuleName | None]:
-        redirect_rules, action_mapper, default_comms = self.get_redirect_rules(best_active_iteration)
+        action_rules, action_mapper, default_comms = self.get_action_rules_components(best_active_iteration, rule_type)
         priority_getter = attrgetter("priority")
-        sorted_rules_by_priority = sorted(redirect_rules, key=priority_getter)
+        sorted_rules_by_priority = sorted(action_rules, key=priority_getter)
 
-        actions: list[SuggestedAction] | None = self.get_actions_from_comms(action_mapper, default_comms)
-        matched_redirect_rule_priority, matched_redirect_rule_name = None, None
+        actions: list[SuggestedAction] | None = self.get_actions_from_comms(action_mapper, default_comms)  # pyright: ignore[reportArgumentType]
+
+        matched_action_rule_priority, matched_action_rule_name = None, None
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
             rule_group_list = list(rule_group)
             matcher_matched_list = [
@@ -261,11 +278,11 @@ class EligibilityCalculator:
                 rule_actions = self.get_actions_from_comms(action_mapper, comms_routing)
                 if rule_actions and len(rule_actions) > 0:
                     actions = rule_actions
-                matched_redirect_rule_priority = rule_group_list[0].priority
-                matched_redirect_rule_name = rule_group_list[0].name
+                matched_action_rule_priority = rule_group_list[0].priority
+                matched_action_rule_name = rule_group_list[0].name
                 break
 
-        return actions, matched_redirect_rule_priority, matched_redirect_rule_name
+        return actions, matched_action_rule_priority, matched_action_rule_name
 
     def get_cohort_results(self, active_iteration: rules.Iteration) -> dict[str, CohortGroupResult]:
         cohort_results: dict[str, CohortGroupResult] = {}

@@ -31,6 +31,8 @@ class RuleType(StrEnum):
     filter = "F"
     suppression = "S"
     redirect = "R"
+    not_eligible_actions = "X"
+    not_actionable_actions = "Y"
 
 
 @total_ordering
