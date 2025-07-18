@@ -25,6 +25,8 @@
         "IterationDate": "20250601",
         "IterationNumber": 1,
         "CommsType": "I",
+        "DefaultNotEligibleRouting": "",
+        "DefaultNotActionableRouting": "",
         "ApprovalMinimum": 0,
         "ApprovalMaximum": 0,
         "Type": "M",

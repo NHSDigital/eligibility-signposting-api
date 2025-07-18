@@ -121,6 +121,25 @@ def load_all_test_scenarios(folder_path):
     return all_data, dto
 
 
+def load_data_items_to_dynamo(folder_path):
+    dto = PlaceholderDTO()  # Shared across all files
+
+    for path in Path(folder_path).iterdir():
+        if path.suffix != ".json":
+            continue
+
+        with path.open() as f:
+            raw_json = json.load(f)
+
+        raw_data = raw_json["data"]
+
+        # Resolve placeholders with shared DTO
+        resolved_data = resolve_placeholders_in_data(raw_data, dto, path.name)
+
+        # Insert immediately
+        insert_into_dynamo(resolved_data)
+
+
 def clean_responses(data: dict, ignore_keys: list) -> dict:
     return _mask_volatile_fields(data, ignore_keys)
 

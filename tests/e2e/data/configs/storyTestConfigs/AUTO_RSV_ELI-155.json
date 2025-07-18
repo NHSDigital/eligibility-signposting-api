@@ -25,6 +25,8 @@
         "IterationDate": "20250601",
         "IterationNumber": 1,
         "CommsType": "I",
+        "DefaultNotEligibleRouting": "",
+        "DefaultNotActionableRouting": "",
         "ApprovalMinimum": 0,
         "ApprovalMaximum": 0,
         "Type": "M",
@@ -41,7 +43,7 @@
             "CohortGroup": "eli_155_out_group",
             "PositiveDescription": "You are currently in eli_155_out",
             "NegativeDescription": "You are not currently in eli_155_out",
-            "Priority": 0
+            "Priority": 1
           }
         ],
         "IterationRules": [

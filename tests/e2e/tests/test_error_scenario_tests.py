@@ -4,7 +4,7 @@ import pytest
 
 from tests.e2e.utils.s3_config_manager import delete_all_configs_from_s3
 
-
+@pytest.mark.errorscenarios
 @pytest.mark.smoketest
 def test_check_for_missing_person(eligibility_client):
     nhs_number = "9934567890"
@@ -43,7 +43,7 @@ def test_check_for_missing_person(eligibility_client):
     assert response["headers"].get("Content-Type".lower()) == "application/fhir+json"
 
 
-@pytest.mark.smoketest
+@pytest.mark.errorscenarios
 @pytest.mark.parametrize(
     "test_case",
     [
@@ -148,6 +148,7 @@ def test_nhs_login_header_handling(eligibility_client, test_case):
     assert response["headers"].get("Content-Type".lower()) == "application/fhir+json"
 
 
+@pytest.mark.errorscenarios
 @pytest.mark.parametrize(
     "test_case",
     [
@@ -225,7 +226,7 @@ def test_query_param_errors(eligibility_client, test_case):
     assert response["body"] == test_case["expected_body"], f"{test_case['scenario']} failed on response body"
     assert response["headers"].get("Content-Type".lower()) == "application/fhir+json"
 
-
+@pytest.mark.errorscenarios
 def test_no_config_error(eligibility_client):
     expected_response = {
         "id": "<ignored>",
