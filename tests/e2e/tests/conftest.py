@@ -7,11 +7,14 @@ import boto3
 import pytest
 from dotenv import load_dotenv
 
+from tests.e2e.utils.eligibility_api_client import EligibilityApiClient
+from tests.e2e.utils.s3_config_manager import upload_configs_to_s3
+
 # Load environment variables from .env.local
-load_dotenv(dotenv_path=".env.local")
+load_dotenv(dotenv_path=".env")
 
 # Constants
-BASE_URL = os.getenv("BASE_URL", "https://sandbox.api.service.nhs.uk/eligibility-signposting-api")
+BASE_URL = os.getenv("BASE_URL", "https://test.eligibility-signposting-api.nhs.uk/patient-check")
 API_KEY = os.getenv("API_KEY", "")
 VALID_NHS_NUMBER = os.getenv("VALID_NHS_NUMBER", "50000000004")
 DYNAMODB_TABLE_NAME = os.getenv("DYNAMODB_TABLE_NAME", "eligibility_data_store")
@@ -28,7 +31,7 @@ def pytest_addoption(parser):
     parser.addoption("--keep-seed", action="store_true", default=False, help="Keep DynamoDB seed data after tests")
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session", autouse=False)
 def setup_dynamodb_data(request):
     """Insert test data into DynamoDB before tests and optionally clean up after."""
     logger.info("[⚙] Connecting to DynamoDB table: %s in region %s", DYNAMODB_TABLE_NAME, AWS_REGION)
@@ -78,3 +81,25 @@ def setup_dynamodb_data(request):
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError):
             logger.exception("[x] Failed to delete item %s", item.get("PK", "<unknown>"))
     logger.info("[✓] Deleted %d/%d items", delete_count, len(items))
+
+
+@pytest.fixture(scope="session")
+def eligibility_client():
+    return EligibilityApiClient(BASE_URL, cert_dir="certs")
+
+
+@pytest.fixture
+def get_scenario_params(request):
+    _ = request
+
+    def _setup(scenario, config_path):
+        nhs_number = scenario["nhs_number"]
+        config_filenames = scenario.get("config_filenames", [])
+        request_headers = scenario.get("request_headers", {})
+        query_params = scenario.get("query_params", {})
+
+        upload_configs_to_s3(config_filenames, config_path)
+
+        return nhs_number, config_filenames, request_headers, query_params
+
+    return _setup
