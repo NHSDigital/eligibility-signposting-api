@@ -33,7 +33,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "support:*",
       "sqs:*",
       "tag:*",
-      "trustedadvisor:*"
+      "trustedadvisor:*",
+      "xray:*"
     ]
 
     resources = ["*"]
