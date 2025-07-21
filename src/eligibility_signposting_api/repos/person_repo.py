@@ -5,7 +5,7 @@ from boto3.dynamodb.conditions import Key
 from boto3.resources.base import ServiceResource
 from wireup import Inject, service
 
-from eligibility_signposting_api.model.eligibility import NHSNumber
+from eligibility_signposting_api.model.eligibility_status import NHSNumber
 from eligibility_signposting_api.repos.exceptions import NotFoundError
 
 logger = logging.getLogger(__name__)

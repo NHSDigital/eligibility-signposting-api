@@ -27,7 +27,7 @@ def is_api_accessible():
         return response.status_code != HTTP_STATUS_NOT_FOUND
 
 
-@pytest.mark.eligibility
+@pytest.mark.eligibility_response
 class TestEligibilityCheck:
     """Test suite for the Eligibility Check endpoint."""
 

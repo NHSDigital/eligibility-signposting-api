@@ -9,7 +9,7 @@ from pydantic import HttpUrl
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_models import AuditAction, AuditEvent
 from eligibility_signposting_api.audit.audit_service import AuditService
-from eligibility_signposting_api.model.eligibility import (
+from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
     ActionDescription,
     ActionType,

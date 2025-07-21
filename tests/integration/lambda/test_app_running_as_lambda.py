@@ -23,7 +23,7 @@ from hamcrest import (
 )
 from yarl import URL
 
-from eligibility_signposting_api.model.eligibility import NHSNumber
+from eligibility_signposting_api.model.eligibility_status import NHSNumber
 from eligibility_signposting_api.model.rules import CampaignConfig
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 

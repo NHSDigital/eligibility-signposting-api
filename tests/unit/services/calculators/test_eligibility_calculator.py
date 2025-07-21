@@ -11,7 +11,7 @@ from pydantic import HttpUrl, ValidationError
 from eligibility_signposting_api.audit.audit_models import AuditAction, AuditEvent
 from eligibility_signposting_api.model import rules
 from eligibility_signposting_api.model import rules as rules_model
-from eligibility_signposting_api.model.eligibility import (
+from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
     ActionDescription,
     ActionType,

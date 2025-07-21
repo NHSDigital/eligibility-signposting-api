@@ -2,7 +2,7 @@ import logging
 
 from wireup import service
 
-from eligibility_signposting_api.model import eligibility
+from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.repos import CampaignRepo, NotFoundError, PersonRepo
 from eligibility_signposting_api.services.calculators import eligibility_calculator as calculator
 
@@ -32,11 +32,11 @@ class EligibilityService:
 
     def get_eligibility_status(
         self,
-        nhs_number: eligibility.NHSNumber,
+        nhs_number: eligibility_status.NHSNumber,
         include_actions: str,
         conditions: list[str],
         category: str,
-    ) -> eligibility.EligibilityStatus:
+    ) -> eligibility_status.EligibilityStatus:
         """Calculate a person's eligibility for vaccination given an NHS number."""
         if nhs_number:
             try:
