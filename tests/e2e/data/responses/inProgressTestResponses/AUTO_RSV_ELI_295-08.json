@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-18T14:33:55.562448+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "OtherY",
+          "actionType": "OtherYType",
+          "description": "OtherYDescription",
+          "urlLabel": "OtherYLabel",
+          "urlLink": "https://www.otheryaction.com/"
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "eli_295_group",
+          "cohortStatus": "NotActionable",
+          "cohortText": "You are currently in eli_295"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "Test S Rule",
+          "ruleText": "Test S Rule",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "7e7578a6-cddf-4d9e-8552-9d5502bb4d4c"
+}
