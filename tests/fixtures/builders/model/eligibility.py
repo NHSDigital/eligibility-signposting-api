@@ -7,6 +7,7 @@ from polyfactory.factories import DataclassFactory
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.eligibility_status import RuleType, UrlLink
 
+
 class SuggestedActionFactory(DataclassFactory[eligibility_status.SuggestedAction]):
     url_link = UrlLink("https://test-example.com")
 
