@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-15T14:52:52.785698+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "AmendNBS",
+          "actionType": "ButtonWithAuthLink",
+          "description": "##You have an flu screening appointment\nYou can view, change or cancel your appointment below.",
+          "urlLabel": "Manage your appointment",
+          "urlLink": "http://www.nhs.uk/book-bs"
+        }
+      ],
+      "condition": "FLU",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "FLU_screening_cohort_group",
+          "cohortStatus": "Actionable",
+          "cohortText": "You are currently in an flu SCREENING cohort"
+        }
+      ],
+      "status": "Actionable",
+      "statusText": "You should have the FLU vaccine",
+      "suitabilityRules": []
+    },
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_screening_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an RSV SCREENING cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "5c8d1cb3-8326-40b1-93ad-1b7fa24c2595"
+}

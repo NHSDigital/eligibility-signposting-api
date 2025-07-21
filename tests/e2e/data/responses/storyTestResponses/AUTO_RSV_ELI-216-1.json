@@ -1,0 +1,30 @@
+{
+  "responseId": "<<IGNORE_ID>>",
+  "meta": {
+    "lastUpdated": "<<IGNORE_DATE>>"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "status": "Actionable",
+      "statusText": "You should have the RSV vaccine",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "eli_216_cohort_group",
+          "cohortStatus": "Actionable",
+          "cohortText": "You are currently in eli_216_cohort"
+        }
+      ],
+      "suitabilityRules": [],
+      "actions": [
+        {
+          "actionCode": "ActionOneRoutingCode",
+          "description": "ActionOneDescription",
+          "actionType": "ActionOneActionType",
+          "urlLabel": "ActionOneUrlLabel",
+          "urlLink": "http://www.actiononeurl.com/"
+        }
+      ]
+    }
+  ]
+}

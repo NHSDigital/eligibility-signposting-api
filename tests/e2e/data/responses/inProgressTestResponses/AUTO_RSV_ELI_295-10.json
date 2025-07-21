@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-18T14:29:05.049816+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "eli_295_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in eli_295"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "5a263695-083e-4218-bbdf-969427913aa7"
+}
