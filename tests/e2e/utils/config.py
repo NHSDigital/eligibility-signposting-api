@@ -8,15 +8,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Configuration
-BASE_URL = os.getenv("BASE_URL", "https://sandbox.api.service.nhs.uk/eligibility-signposting-api")
-API_KEY = os.getenv("API_KEY", "srgedsrgveg")
+BASE_URL = os.getenv("BASE_URL", "https://test.eligibility-signposting-api.nhs.uk")
+# API_KEY removed - using mTLS authentication only
 
 # Test Data
 VALID_NHS_NUMBER = os.getenv("VALID_NHS_NUMBER", "50000000004")
 INVALID_NHS_NUMBER = os.getenv("INVALID_NHS_NUMBER", "9876543210")
 
 # API Endpoints
-ELIGIBILITY_CHECK_ENDPOINT = "/eligibility-check"
+PATIENT_CHECK_ENDPOINT = "/patient-check"
 
 # Response Schema
 ELIGIBILITY_CHECK_SCHEMA = {

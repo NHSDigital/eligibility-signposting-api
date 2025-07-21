@@ -1,28 +1,28 @@
 {
-  "responseId": "<<IGNORE_RESPONSE_ID>>",
   "meta": {
-    "lastUpdated": "<<IGNORE_DATE>>"
+    "lastUpdated": "2025-07-15T10:12:04.565581+00:00"
   },
   "processedSuggestions": [
     {
+      "actions": [],
       "condition": "RSV",
-      "status": "NotActionable",
-      "statusText": "You should have the RSV vaccine",
       "eligibilityCohorts": [
         {
           "cohortCode": "rsv_age_rolling",
-          "cohortText": "You are aged 75 to 79 years old.",
-          "cohortStatus": "NotActionable"
+          "cohortStatus": "NotActionable",
+          "cohortText": "are aged 75 to 79 years old."
         }
       ],
+      "status": "NotActionable",
+      "statusText": "Status.not_actionable",
       "suitabilityRules": [
         {
-          "ruleType": "S",
           "ruleCode": "TooClose",
-          "ruleText": "Your previous vaccination was less than 91 days ago."
+          "ruleText": "TooClose|Your previous vaccination was less than 91 days ago.",
+          "ruleType": "S"
         }
-      ],
-      "actions": []
+      ]
     }
-  ]
+  ],
+  "responseId": "3d3db0f9-ccf8-4e39-a905-37e060317e0b"
 }

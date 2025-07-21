@@ -1,8 +1,12 @@
 {
-  "scenario_name": "RSV - Actionable due to membership of an Age Cohort incl. suggested actions (with local booking)",
+  "scenario_name": "RSV - Not Actionable despite to membership of an Age Cohort with reasoning of dose not far enough apart",
+  "request_headers": {
+    "nhs-login-nhs-number": "5000000010"
+  },
+  "config_filename": "AUTO_RSV_SB_001.json",
   "data": [
     {
-      "NHS_NUMBER": "5000000005",
+      "NHS_NUMBER": "5000000010",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MAP": {
         "cohorts": {
@@ -19,7 +23,7 @@
       }
     },
     {
-      "NHS_NUMBER": "5000000005",
+      "NHS_NUMBER": "5000000010",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
@@ -37,10 +41,9 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "5000000005",
+      "NHS_NUMBER": "5000000010",
       "ATTRIBUTE_TYPE": "RSV",
-      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+1>>",
-      "BOOKED_APPOINTMENT_PROVIDER": "ACC"
+      "LAST_SUCCESSFUL_DATE": "20250327"
     }
   ]
 }

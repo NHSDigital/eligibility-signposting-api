@@ -1,28 +1,30 @@
 {
-  "responseId": "<<IGNORE_RESPONSE_ID>>",
   "meta": {
-    "lastUpdated": "<<IGNORE_DATE>>"
+    "lastUpdated": "2025-07-15T10:11:39.467491+00:00"
   },
   "processedSuggestions": [
     {
+      "actions": [
+        {
+          "actionCode": "BookLocal",
+          "actionType": "InfoText",
+          "description": "##Getting the vaccine\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
+          "urlLabel": "",
+          "urlLink": ""
+        }
+      ],
       "condition": "RSV",
-      "status": "Actionable",
-      "statusText": "You should have the RSV vaccine",
       "eligibilityCohorts": [
         {
           "cohortCode": "rsv_age_catchup",
-          "cohortText": "You turned 80 between 2nd September 2024 and 31st August 2025",
-          "cohortStatus": "Actionable"
+          "cohortStatus": "Actionable",
+          "cohortText": "turned 80 between 2nd September 2024 and 31st August 2025"
         }
       ],
-      "suitabilityRules": [],
-      "actions": [
-        {
-          "actionType": "CareCardWithText",
-          "actionCode": "BookLocal",
-          "description": "##Getting the vaccine\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination."
-        }
-      ]
+      "status": "Actionable",
+      "statusText": "Status.actionable",
+      "suitabilityRules": []
     }
-  ]
+  ],
+  "responseId": "30de7114-1ff9-410f-be9b-7ff8327e78b3"
 }
