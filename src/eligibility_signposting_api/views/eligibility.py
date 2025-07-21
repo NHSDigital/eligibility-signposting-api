@@ -8,18 +8,18 @@ from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
 from wireup import Injected
 
-from eligibility_signposting_api.api_error_response import NHS_NUMBER_NOT_FOUND_ERROR
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
-from eligibility_signposting_api.model.eligibility import Condition, EligibilityStatus, NHSNumber, Status
+from eligibility_signposting_api.common.api_error_response import NHS_NUMBER_NOT_FOUND_ERROR
+from eligibility_signposting_api.model.eligibility_status import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
-from eligibility_signposting_api.views.response_model import eligibility
-from eligibility_signposting_api.views.response_model.eligibility import ProcessedSuggestion
+from eligibility_signposting_api.views.response_model import eligibility_response
+from eligibility_signposting_api.views.response_model.eligibility_response import ProcessedSuggestion
 
 STATUS_MAPPING = {
-    Status.actionable: eligibility.Status.actionable,
-    Status.not_actionable: eligibility.Status.not_actionable,
-    Status.not_eligible: eligibility.Status.not_eligible,
+    Status.actionable: eligibility_response.Status.actionable,
+    Status.not_actionable: eligibility_response.Status.not_actionable,
+    Status.not_eligible: eligibility_response.Status.not_eligible,
 }
 
 logger = logging.getLogger(__name__)
@@ -56,11 +56,9 @@ def check_eligibility(
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
     else:
-        eligibility_response: eligibility.EligibilityResponse = build_eligibility_response(eligibility_status)
+        response: eligibility_response.EligibilityResponse = build_eligibility_response(eligibility_status)
         AuditContext.write_to_firehose(audit_service)
-        return make_response(
-            eligibility_response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK
-        )
+        return make_response(response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK)
 
 
 def get_or_default_query_params() -> dict[str, Any]:
@@ -103,7 +101,7 @@ def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:
     return make_response(response.get("body"), response.get("statusCode"), response.get("headers"))
 
 
-def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibility.EligibilityResponse:
+def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibility_response.EligibilityResponse:
     """Return an object representing the API response we are going to send, given an evaluation of the person's
     eligibility."""
 
@@ -111,9 +109,9 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibi
 
     for condition in eligibility_status.conditions:
         suggestions = ProcessedSuggestion(  # pyright: ignore[reportCallIssue]
-            condition=eligibility.ConditionName(condition.condition_name),  # pyright: ignore[reportCallIssue]
+            condition=eligibility_response.ConditionName(condition.condition_name),  # pyright: ignore[reportCallIssue]
             status=STATUS_MAPPING[condition.status],
-            statusText=eligibility.StatusText(condition.status_text),  # pyright: ignore[reportCallIssue]
+            statusText=eligibility_response.StatusText(condition.status_text),  # pyright: ignore[reportCallIssue]
             eligibilityCohorts=build_eligibility_cohorts(condition),  # pyright: ignore[reportCallIssue]
             suitabilityRules=build_suitability_results(condition),  # pyright: ignore[reportCallIssue]
             actions=build_actions(condition),
@@ -122,27 +120,29 @@ def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibi
         processed_suggestions.append(suggestions)
 
     response_id = uuid.uuid4()
-    updated = eligibility.LastUpdated(datetime.now(tz=UTC))
+    updated = eligibility_response.LastUpdated(datetime.now(tz=UTC))
 
     AuditContext.add_response_details(response_id, updated)
 
-    return eligibility.EligibilityResponse(  # pyright: ignore[reportCallIssue]
+    return eligibility_response.EligibilityResponse(  # pyright: ignore[reportCallIssue]
         responseId=response_id,  # pyright: ignore[reportCallIssue]
-        meta=eligibility.Meta(lastUpdated=updated),
+        meta=eligibility_response.Meta(lastUpdated=updated),
         # pyright: ignore[reportCallIssue]
         processedSuggestions=processed_suggestions,
     )
 
 
-def build_actions(condition: Condition) -> list[eligibility.Action] | None:
+def build_actions(condition: Condition) -> list[eligibility_response.Action] | None:
     if condition.actions is not None:
         return [
-            eligibility.Action(
-                actionType=eligibility.ActionType(action.action_type),
-                actionCode=eligibility.ActionCode(action.action_code),
-                description=eligibility.Description(action.action_description or ""),
-                urlLabel=eligibility.UrlLabel(action.url_label or ""),
-                urlLink=eligibility.UrlLink(str(action.url_link)) if action.url_link else eligibility.UrlLink(""),
+            eligibility_response.Action(
+                actionType=eligibility_response.ActionType(action.action_type),
+                actionCode=eligibility_response.ActionCode(action.action_code),
+                description=eligibility_response.Description(action.action_description or ""),
+                urlLabel=eligibility_response.UrlLabel(action.url_label or ""),
+                urlLink=eligibility_response.UrlLink(str(action.url_link))
+                if action.url_link
+                else eligibility_response.UrlLink(""),
             )
             for action in condition.actions
         ]
@@ -150,13 +150,13 @@ def build_actions(condition: Condition) -> list[eligibility.Action] | None:
     return None
 
 
-def build_eligibility_cohorts(condition: Condition) -> list[eligibility.EligibilityCohort]:
+def build_eligibility_cohorts(condition: Condition) -> list[eligibility_response.EligibilityCohort]:
     """Group Iteration cohorts and make only one entry per cohort group"""
 
     return [
-        eligibility.EligibilityCohort(
-            cohortCode=eligibility.CohortCode(cohort_result.cohort_code),
-            cohortText=eligibility.CohortText(cohort_result.description),
+        eligibility_response.EligibilityCohort(
+            cohortCode=eligibility_response.CohortCode(cohort_result.cohort_code),
+            cohortText=eligibility_response.CohortText(cohort_result.description),
             cohortStatus=STATUS_MAPPING[cohort_result.status],
         )
         for cohort_result in condition.cohort_results
@@ -164,7 +164,7 @@ def build_eligibility_cohorts(condition: Condition) -> list[eligibility.Eligibil
     ]
 
 
-def build_suitability_results(condition: Condition) -> list[eligibility.SuitabilityRule]:
+def build_suitability_results(condition: Condition) -> list[eligibility_response.SuitabilityRule]:
     """Make only one entry if there are duplicate rules"""
     if condition.status != Status.not_actionable:
         return []
@@ -178,10 +178,10 @@ def build_suitability_results(condition: Condition) -> list[eligibility.Suitabil
                 if reason.rule_name not in unique_rule_codes and reason.rule_description:
                     unique_rule_codes.add(reason.rule_name)
                     suitability_results.append(
-                        eligibility.SuitabilityRule(
-                            ruleType=eligibility.RuleType(reason.rule_type.value),
-                            ruleCode=eligibility.RuleCode(reason.rule_name),
-                            ruleText=eligibility.RuleText(reason.rule_description),
+                        eligibility_response.SuitabilityRule(
+                            ruleType=eligibility_response.RuleType(reason.rule_type.value),
+                            ruleCode=eligibility_response.RuleCode(reason.rule_name),
+                            ruleText=eligibility_response.RuleText(reason.rule_description),
                         )
                     )
 

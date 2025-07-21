@@ -1,4 +1,4 @@
-from eligibility_signposting_api.model.eligibility import ConditionName, Status, StatusText
+from eligibility_signposting_api.model.eligibility_status import ConditionName, Status, StatusText
 
 
 class TestStatus:

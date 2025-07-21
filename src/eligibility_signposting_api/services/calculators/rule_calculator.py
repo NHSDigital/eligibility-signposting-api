@@ -6,7 +6,7 @@ from typing import Any
 
 from hamcrest.core.string_description import StringDescription
 
-from eligibility_signposting_api.model import eligibility, rules
+from eligibility_signposting_api.model import eligibility_status, rules
 from eligibility_signposting_api.services.rules.operators import OperatorRegistry
 
 Row = Collection[Mapping[str, Any]]
@@ -17,15 +17,15 @@ class RuleCalculator:
     person_data: Row
     rule: rules.IterationRule
 
-    def evaluate_exclusion(self) -> tuple[eligibility.Status, eligibility.Reason]:
+    def evaluate_exclusion(self) -> tuple[eligibility_status.Status, eligibility_status.Reason]:
         """Evaluate if a particular rule excludes this person. Return the result, and the reason for the result."""
         attribute_value = self.get_attribute_value()
         status, reason, matcher_matched = self.evaluate_rule(attribute_value)
-        reason = eligibility.Reason(
-            rule_name=eligibility.RuleName(self.rule.name),
-            rule_type=eligibility.RuleType(self.rule.type),
-            rule_priority=eligibility.RulePriority(str(self.rule.priority)),
-            rule_description=eligibility.RuleDescription(self.rule.description),
+        reason = eligibility_status.Reason(
+            rule_name=eligibility_status.RuleName(self.rule.name),
+            rule_type=eligibility_status.RuleType(self.rule.type),
+            rule_priority=eligibility_status.RulePriority(str(self.rule.priority)),
+            rule_description=eligibility_status.RuleDescription(self.rule.description),
             matcher_matched=matcher_matched,
         )
         return status, reason
@@ -71,7 +71,7 @@ class RuleCalculator:
         v = dictionary.get(key, {}) if isinstance(dictionary, dict) else {}
         return v if isinstance(v, dict) else {}
 
-    def evaluate_rule(self, attribute_value: str | None) -> tuple[eligibility.Status, str, bool]:
+    def evaluate_rule(self, attribute_value: str | None) -> tuple[eligibility_status.Status, str, bool]:
         """Evaluate a rule against a person data attribute. Return the result, and the reason for the result."""
         matcher_class = OperatorRegistry.get(self.rule.operator)
         matcher = matcher_class(rule_value=self.rule.comparator)
@@ -81,12 +81,12 @@ class RuleCalculator:
         if matcher_matched:
             matcher.describe_match(attribute_value, reason)
             status = {
-                rules.RuleType.filter: eligibility.Status.not_eligible,
-                rules.RuleType.suppression: eligibility.Status.not_actionable,
-                rules.RuleType.redirect: eligibility.Status.actionable,
-                rules.RuleType.not_eligible_actions: eligibility.Status.not_eligible,
-                rules.RuleType.not_actionable_actions: eligibility.Status.not_actionable,
+                rules.RuleType.filter: eligibility_status.Status.not_eligible,
+                rules.RuleType.suppression: eligibility_status.Status.not_actionable,
+                rules.RuleType.redirect: eligibility_status.Status.actionable,
+                rules.RuleType.not_eligible_actions: eligibility_status.Status.not_eligible,
+                rules.RuleType.not_actionable_actions: eligibility_status.Status.not_actionable,
             }[self.rule.type]
             return status, str(reason), matcher_matched
         matcher.describe_mismatch(attribute_value, reason)
-        return eligibility.Status.actionable, str(reason), matcher_matched
+        return eligibility_status.Status.actionable, str(reason), matcher_matched

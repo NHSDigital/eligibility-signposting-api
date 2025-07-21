@@ -4,7 +4,7 @@ import pytest
 from faker import Faker
 from hamcrest import assert_that, contains_inanyorder, has_entries
 
-from eligibility_signposting_api.model.eligibility import NHSNumber
+from eligibility_signposting_api.model.eligibility_status import NHSNumber
 from eligibility_signposting_api.repos import NotFoundError
 from eligibility_signposting_api.repos.person_repo import PersonRepo
 
