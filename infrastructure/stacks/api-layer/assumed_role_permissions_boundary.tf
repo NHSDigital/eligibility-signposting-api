@@ -34,7 +34,7 @@ data "aws_iam_policy_document" "assumed_role_permissions_boundary" {
       "sqs:*",
       "tag:*",
       "trustedadvisor:*",
-      "xray:*"
+
     ]
 
     resources = ["*"]
