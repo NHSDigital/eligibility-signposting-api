@@ -22,7 +22,9 @@ class IterationCohortFactory(ModelFactory[rules.IterationCohort]):
 
 class IterationRuleFactory(ModelFactory[rules.IterationRule]):
     attribute_target = None
-    attribute_name = None
+    attribute_name = "DATE_OF_BIRTH"
+    operator = "Y>"
+    comparator = "-1"
     cohort_label = None
     rule_stop = False
 
