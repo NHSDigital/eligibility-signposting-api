@@ -18,7 +18,7 @@ from eligibility_signposting_api.audit.audit_models import (
     RequestAuditQueryParams,
 )
 from eligibility_signposting_api.audit.audit_service import AuditService
-from eligibility_signposting_api.model.eligibility import (
+from eligibility_signposting_api.model.eligibility_status import (
     CohortGroupResult,
     ConditionName,
     IterationResult,

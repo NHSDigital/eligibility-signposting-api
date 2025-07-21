@@ -4,8 +4,8 @@ from http import HTTPStatus
 
 import pytest
 
-from eligibility_signposting_api import wrapper
-from eligibility_signposting_api.wrapper import logger
+from eligibility_signposting_api.common import request_validator
+from eligibility_signposting_api.common.request_validator import logger
 
 
 @pytest.fixture(autouse=True)
@@ -27,7 +27,7 @@ def setup_logging_for_tests():
 )
 def test_validate_nhs_number(path_nhs, header_nhs, expected_result, expected_log_msg, caplog):
     with caplog.at_level(logging.ERROR):
-        result = wrapper.validate_nhs_number(path_nhs, header_nhs)
+        result = request_validator.validate_nhs_number(path_nhs, header_nhs)
 
     assert result == expected_result
 
@@ -59,7 +59,7 @@ def test_validate_query_params_conditions(conditions_input, is_valid_expected, e
     params = {"conditions": conditions_input}
 
     with caplog.at_level(logging.ERROR):
-        is_valid, problem = wrapper.validate_query_params(params)
+        is_valid, problem = request_validator.validate_query_params(params)
 
     assert is_valid == is_valid_expected
     if is_valid_expected:
@@ -73,7 +73,7 @@ def test_validate_query_params_conditions(conditions_input, is_valid_expected, e
 def test_validate_query_params_conditions_default(caplog):
     params = {"category": "ALL", "includeActions": "Y"}
     with caplog.at_level(logging.ERROR):
-        is_valid, problem = wrapper.validate_query_params(params)
+        is_valid, problem = request_validator.validate_query_params(params)
     assert is_valid is True
     assert problem is None
     assert not caplog.records
@@ -97,7 +97,7 @@ def test_validate_query_params_conditions_default(caplog):
 def test_validate_query_params_category(category_input, is_valid_expected, expected_log_msg, caplog):
     params = {"category": category_input}
     with caplog.at_level(logging.ERROR):
-        is_valid, problem = wrapper.validate_query_params(params)
+        is_valid, problem = request_validator.validate_query_params(params)
     assert is_valid == is_valid_expected
 
     if is_valid_expected:
@@ -111,7 +111,7 @@ def test_validate_query_params_category(category_input, is_valid_expected, expec
 def test_validate_query_params_category_default(caplog):
     params = {"conditions": "ALL", "includeActions": "Y"}
     with caplog.at_level(logging.ERROR):
-        is_valid, problem = wrapper.validate_query_params(params)
+        is_valid, problem = request_validator.validate_query_params(params)
     assert is_valid is True
     assert problem is None
     assert not caplog.records
@@ -136,7 +136,7 @@ def test_validate_query_params_category_default(caplog):
 def test_validate_query_params_include_actions(include_actions_input, is_valid_expected, expected_log_msg, caplog):
     params = {"includeActions": include_actions_input}
     with caplog.at_level(logging.ERROR):
-        is_valid, problem = wrapper.validate_query_params(params)
+        is_valid, problem = request_validator.validate_query_params(params)
     assert is_valid == is_valid_expected
 
     if is_valid_expected:
@@ -150,7 +150,7 @@ def test_validate_query_params_include_actions(include_actions_input, is_valid_e
 def test_validate_query_params_include_actions_default(caplog):
     params = {"conditions": "ALL", "category": "ALL"}
     with caplog.at_level(logging.ERROR):
-        is_valid, problem = wrapper.validate_query_params(params)
+        is_valid, problem = request_validator.validate_query_params(params)
     assert is_valid is True
     assert problem is None
     assert not caplog.records
@@ -159,7 +159,7 @@ def test_validate_query_params_include_actions_default(caplog):
 def test_validate_query_params_all_valid_params(caplog):
     params = {"conditions": "COND1,COND2", "category": "SCREENING", "includeActions": "N"}
     with caplog.at_level(logging.ERROR):
-        is_valid, problem = wrapper.validate_query_params(params)
+        is_valid, problem = request_validator.validate_query_params(params)
     assert is_valid is True
     assert problem is None
     assert not caplog.records
@@ -168,7 +168,7 @@ def test_validate_query_params_all_valid_params(caplog):
 def test_validate_query_params_mixed_valid_invalid_conditions_fail_first(caplog):
     params = {"conditions": "VALID_COND,INVALID!,ANOTHER_VALID", "category": "SCREENING", "includeActions": "N"}
     with caplog.at_level(logging.ERROR):
-        is_valid, problem = wrapper.validate_query_params(params)
+        is_valid, problem = request_validator.validate_query_params(params)
     assert is_valid is False
     assert problem is not None
     assert any(
@@ -180,7 +180,7 @@ def test_validate_query_params_mixed_valid_invalid_conditions_fail_first(caplog)
 def test_validate_query_params_valid_conditions_invalid_category_fail_second(caplog):
     params = {"conditions": "CONDITION", "category": "BAD_CAT", "includeActions": "N"}
     with caplog.at_level(logging.ERROR):
-        is_valid, problem = wrapper.validate_query_params(params)
+        is_valid, problem = request_validator.validate_query_params(params)
     assert is_valid is False
     assert problem is not None
     assert any(
@@ -194,7 +194,7 @@ def test_validate_query_params_valid_conditions_invalid_category_fail_second(cap
 def test_validate_query_params_valid_conditions_category_invalid_actions_fail_third(caplog):
     params = {"conditions": "CONDITION", "category": "VACCINATIONS", "includeActions": "Nope"}
     with caplog.at_level(logging.ERROR):
-        is_valid, problem = wrapper.validate_query_params(params)
+        is_valid, problem = request_validator.validate_query_params(params)
     assert is_valid is False
     assert problem is not None
     assert any(
@@ -209,7 +209,7 @@ def test_validate_query_params_returns_correct_problem_details_for_conditions_er
     invalid_condition = "FLU&COVID"
     params = {"conditions": invalid_condition}
 
-    is_valid, problem = wrapper.validate_query_params(params)
+    is_valid, problem = request_validator.validate_query_params(params)
 
     assert is_valid is False
     assert problem is not None
@@ -247,7 +247,7 @@ def test_validate_query_params_returns_correct_problem_details_for_category_erro
     invalid_category = "HEALTHCHECKS"
     params = {"category": invalid_category}
 
-    is_valid, problem = wrapper.validate_query_params(params)
+    is_valid, problem = request_validator.validate_query_params(params)
 
     assert is_valid is False
     assert problem is not None
@@ -282,7 +282,7 @@ def test_validate_query_params_returns_correct_problem_details_for_include_actio
     invalid_include_actions = "NAH"
     params = {"includeActions": invalid_include_actions}
 
-    is_valid, problem = wrapper.validate_query_params(params)
+    is_valid, problem = request_validator.validate_query_params(params)
 
     assert is_valid is False
     assert problem is not None
