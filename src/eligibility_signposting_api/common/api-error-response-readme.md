@@ -41,7 +41,7 @@ def get_category_error_response(category: str) -> dict[str, Any]:
     )
 ```
 
-#### Key Parameters for `log_and_generate_response()`:
+#### Key Parameters for `log_and_generate_response()`
 
 - `log_message`: A detailed message for internal logging. This should contain specific information useful for debugging.
 - `diagnostics`: The user-facing error message that will be included in the API response body.
