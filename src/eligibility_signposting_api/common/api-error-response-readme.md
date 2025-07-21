@@ -20,10 +20,11 @@ The error handling mechanism is built around the class `APIErrorResponse`.
 The primary way to handle errors is to import a pre-defined error object from `api_error_response.py` and call its `log_and_generate_response()` method.
 
 ### 1. Handling Specific, Known Errors
+
 For handling validation failures or other expected error conditions, use one of the pre-defined error instances.
 The `wrapper.py` module uses this pattern to validate query parameters. If a parameter is invalid, it calls the corresponding error function.
 
-**Example: Invalid "category" parameter**
+#### Example: Invalid "category" parameter
 
 ``` python
 # wrapper.py
@@ -40,7 +41,8 @@ def get_category_error_response(category: str) -> dict[str, Any]:
     )
 ```
 
-**Key Parameters for `log_and_generate_response()`:**
+#### Key Parameters for `log_and_generate_response()`:
+
 - `log_message`: A detailed message for internal logging. This should contain specific information useful for debugging.
 - `diagnostics`: The user-facing error message that will be included in the API response body.
 - `location_param` (optional): The name of the parameter that caused the error. This helps pinpoint the issue for API consumers.
