@@ -4,6 +4,7 @@ import pytest
 
 from tests.e2e.utils.s3_config_manager import delete_all_configs_from_s3
 
+
 @pytest.mark.errorscenarios
 @pytest.mark.smoketest
 def test_check_for_missing_person(eligibility_client):
@@ -225,6 +226,7 @@ def test_query_param_errors(eligibility_client, test_case):
     assert response["status_code"] == test_case["expected_status"], f"{test_case['scenario']} failed on status code"
     assert response["body"] == test_case["expected_body"], f"{test_case['scenario']} failed on response body"
     assert response["headers"].get("Content-Type".lower()) == "application/fhir+json"
+
 
 @pytest.mark.errorscenarios
 def test_no_config_error(eligibility_client):
