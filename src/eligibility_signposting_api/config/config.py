@@ -67,7 +67,7 @@ class EnrichedJsonFormatter(JsonFormatter):
 
 
 def init_logging(quieten: Sequence[str] = ("asyncio", "botocore", "boto3", "mangum", "urllib3")) -> None:
-    log_format = "%(asctime)s %(levelname)s %(name)s %(module)s %(funcName)s %(lineno)d %(message)s"
+    log_format = "%(asctime)s %(levelname)-8s %(name)s %(module)s.py:%(funcName)s():%(lineno)d %(message)s"
     formatter = EnrichedJsonFormatter(log_format)
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
