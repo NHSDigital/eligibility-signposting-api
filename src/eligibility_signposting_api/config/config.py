@@ -4,7 +4,6 @@ from collections.abc import Sequence
 from functools import cache
 from typing import Any, NewType
 
-from pythonjsonlogger.json import JsonFormatter
 from yarl import URL
 
 from eligibility_signposting_api.contextvars_manager import request_id_var
