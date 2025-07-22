@@ -5,7 +5,7 @@ from flask import make_response
 from flask.typing import ResponseReturnValue
 from werkzeug.exceptions import HTTPException
 
-from eligibility_signposting_api.api_error_response import INTERNAL_SERVER_ERROR
+from eligibility_signposting_api.common.api_error_response import INTERNAL_SERVER_ERROR
 
 logger = logging.getLogger(__name__)
 

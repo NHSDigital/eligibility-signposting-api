@@ -6,7 +6,7 @@ from typing import Any
 
 from mangum.types import LambdaContext, LambdaEvent
 
-from eligibility_signposting_api.api_error_response import (
+from eligibility_signposting_api.common.api_error_response import (
     INVALID_CATEGORY_ERROR,
     INVALID_CONDITION_FORMAT_ERROR,
     INVALID_INCLUDE_ACTIONS_ERROR,

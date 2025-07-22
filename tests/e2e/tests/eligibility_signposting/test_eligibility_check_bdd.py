@@ -8,7 +8,7 @@ from behave import scenarios
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 # Mark all tests as BDD tests
-pytestmark = [pytest.mark.bdd, pytest.mark.eligibility]
+pytestmark = [pytest.mark.bdd, pytest.mark.eligibility_response]
 
 # Load the scenarios from the feature file
 scenarios("../../features/eligibility_check/eligibility_check.feature")
