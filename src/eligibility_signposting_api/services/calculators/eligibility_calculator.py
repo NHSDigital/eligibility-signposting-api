@@ -24,8 +24,8 @@ if TYPE_CHECKING:
 
 from wireup import service
 
-from eligibility_signposting_api.model import eligibility, rules
-from eligibility_signposting_api.model.eligibility import (
+from eligibility_signposting_api.model import eligibility_status, rules
+from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
     ActionDescription,
     ActionType,
@@ -58,7 +58,7 @@ class EligibilityCalculator:
     person_data: Row
     campaign_configs: Collection[rules.CampaignConfig]
 
-    results: list[eligibility.Condition] = field(default_factory=list)
+    results: list[eligibility_status.Condition] = field(default_factory=list)
 
     @property
     def active_campaigns(self) -> list[rules.CampaignConfig]:
@@ -66,7 +66,7 @@ class EligibilityCalculator:
 
     def campaigns_grouped_by_condition_name(
         self, conditions: list[str], category: str
-    ) -> Iterator[tuple[eligibility.ConditionName, list[rules.CampaignConfig]]]:
+    ) -> Iterator[tuple[eligibility_status.ConditionName, list[rules.CampaignConfig]]]:
         """Generator that yields campaign groups filtered by condition names and campaign category."""
 
         mapping = {
@@ -100,9 +100,9 @@ class EligibilityCalculator:
         cohort_results: dict[str, CohortGroupResult],
     ) -> tuple[Status, list[CohortGroupResult]]:
         if not cohort_results:
-            return eligibility.Status.not_eligible, []
+            return eligibility_status.Status.not_eligible, []
 
-        best_status = eligibility.Status.best(*[result.status for result in cohort_results.values()])
+        best_status = eligibility_status.Status.best(*[result.status for result in cohort_results.values()])
         best_cohorts = [result for result in cohort_results.values() if result.status == best_status]
 
         best_cohorts = [
@@ -158,7 +158,7 @@ class EligibilityCalculator:
 
     def evaluate_eligibility(
         self, include_actions: str, conditions: list[str], category: str
-    ) -> eligibility.EligibilityStatus:
+    ) -> eligibility_status.EligibilityStatus:
         include_actions_flag = include_actions.upper() == "Y"
         condition_results: dict[ConditionName, IterationResult] = {}
         actions: list[SuggestedAction] | None = []
@@ -186,7 +186,7 @@ class EligibilityCalculator:
                     ),
                 ) = max(iteration_results.items(), key=lambda item: item[1][1].status.value)
             else:
-                best_candidate = IterationResult(eligibility.Status.not_eligible, [], actions)
+                best_candidate = IterationResult(eligibility_status.Status.not_eligible, [], actions)
                 best_campaign_id = None
                 best_campaign_version = None
                 best_active_iteration = None
@@ -233,7 +233,7 @@ class EligibilityCalculator:
 
         # Consolidate all the results and return
         final_result = self.build_condition_results(condition_results)
-        return eligibility.EligibilityStatus(conditions=final_result)
+        return eligibility_status.EligibilityStatus(conditions=final_result)
 
     def get_iteration_results(
         self, actions: list[SuggestedAction] | None, campaign_group: list[CampaignConfig]
@@ -406,20 +406,20 @@ class EligibilityCalculator:
 
     def evaluate_rules_priority_group(
         self, rules_group: Iterator[rules.IterationRule]
-    ) -> tuple[eligibility.Status, list[eligibility.Reason], bool]:
+    ) -> tuple[eligibility_status.Status, list[eligibility_status.Reason], bool]:
         is_rule_stop = False
         exclusion_reasons = []
-        best_status = eligibility.Status.not_eligible
+        best_status = eligibility_status.Status.not_eligible
 
         for rule in rules_group:
             is_rule_stop = rule.rule_stop or is_rule_stop
             rule_calculator = RuleCalculator(person_data=self.person_data, rule=rule)
             status, reason = rule_calculator.evaluate_exclusion()
             if status.is_exclusion:
-                best_status = eligibility.Status.best(status, best_status)
+                best_status = eligibility_status.Status.best(status, best_status)
                 exclusion_reasons.append(reason)
             else:
-                best_status = eligibility.Status.actionable
+                best_status = eligibility_status.Status.actionable
 
         return best_status, exclusion_reasons, is_rule_stop
 

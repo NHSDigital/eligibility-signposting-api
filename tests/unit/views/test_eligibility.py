@@ -14,7 +14,7 @@ from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.audit.audit_service import AuditService
-from eligibility_signposting_api.model.eligibility import (
+from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
     ActionDescription,
     ActionType,
@@ -39,7 +39,7 @@ from eligibility_signposting_api.views.eligibility import (
     build_suitability_results,
     get_or_default_query_params,
 )
-from eligibility_signposting_api.views.response_model import eligibility
+from eligibility_signposting_api.views.response_model import eligibility_response
 from tests.fixtures.builders.model.eligibility import (
     CohortResultFactory,
     ConditionFactory,
@@ -435,12 +435,12 @@ def test_no_suitability_rules_for_actionable():
                 )
             ],
             [
-                eligibility.Action(
-                    actionType=eligibility.ActionType("TYPE_A"),
-                    actionCode=eligibility.ActionCode("CODE123"),
-                    description=eligibility.Description("Some description"),
-                    urlLink=eligibility.UrlLink("https://example.com"),
-                    urlLabel=eligibility.UrlLabel("Learn more"),
+                eligibility_response.Action(
+                    actionType=eligibility_response.ActionType("TYPE_A"),
+                    actionCode=eligibility_response.ActionCode("CODE123"),
+                    description=eligibility_response.Description("Some description"),
+                    urlLink=eligibility_response.UrlLink("https://example.com"),
+                    urlLabel=eligibility_response.UrlLabel("Learn more"),
                 )
             ],
         ),
@@ -455,9 +455,9 @@ def test_no_suitability_rules_for_actionable():
                 )
             ],
             [
-                eligibility.Action(
-                    actionType=eligibility.ActionType("TYPE_B"),
-                    actionCode=eligibility.ActionCode("CODE123"),
+                eligibility_response.Action(
+                    actionType=eligibility_response.ActionType("TYPE_B"),
+                    actionCode=eligibility_response.ActionCode("CODE123"),
                     description="",
                     urlLink="",
                     urlLabel="",
@@ -483,23 +483,23 @@ def test_build_actions(suggested_actions, expected):
 
 
 def test_excludes_nulls_via_build_response(client: FlaskClient):
-    mocked_response = eligibility.EligibilityResponse(
+    mocked_response = eligibility_response.EligibilityResponse(
         responseId=uuid4(),
-        meta=eligibility.Meta(lastUpdated=eligibility.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
+        meta=eligibility_response.Meta(lastUpdated=eligibility_response.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
         processedSuggestions=[
-            eligibility.ProcessedSuggestion(
-                condition=eligibility.ConditionName("ConditionA"),
-                status=eligibility.Status.actionable,
-                statusText=eligibility.StatusText("Go ahead"),
+            eligibility_response.ProcessedSuggestion(
+                condition=eligibility_response.ConditionName("ConditionA"),
+                status=eligibility_response.Status.actionable,
+                statusText=eligibility_response.StatusText("Go ahead"),
                 eligibilityCohorts=[],
                 suitabilityRules=[],
                 actions=[
-                    eligibility.Action(
-                        actionType=eligibility.ActionType("TYPE_A"),
-                        actionCode=eligibility.ActionCode("CODE123"),
-                        description=eligibility.Description(""),  # Should be an empty string
-                        urlLink=eligibility.UrlLink(""),  # Should be an empty string
-                        urlLabel=eligibility.UrlLabel(""),  # Should be an empty string
+                    eligibility_response.Action(
+                        actionType=eligibility_response.ActionType("TYPE_A"),
+                        actionCode=eligibility_response.ActionCode("CODE123"),
+                        description=eligibility_response.Description(""),  # Should be an empty string
+                        urlLink=eligibility_response.UrlLink(""),  # Should be an empty string
+                        urlLabel=eligibility_response.UrlLabel(""),  # Should be an empty string
                     )
                 ],
             )
@@ -535,23 +535,23 @@ def test_excludes_nulls_via_build_response(client: FlaskClient):
 
 
 def test_build_response_include_values_that_are_not_null(client: FlaskClient):
-    mocked_response = eligibility.EligibilityResponse(
+    mocked_response = eligibility_response.EligibilityResponse(
         responseId=uuid4(),
-        meta=eligibility.Meta(lastUpdated=eligibility.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
+        meta=eligibility_response.Meta(lastUpdated=eligibility_response.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
         processedSuggestions=[
-            eligibility.ProcessedSuggestion(
-                condition=eligibility.ConditionName("ConditionA"),
-                status=eligibility.Status.actionable,
-                statusText=eligibility.StatusText("Go ahead"),
+            eligibility_response.ProcessedSuggestion(
+                condition=eligibility_response.ConditionName("ConditionA"),
+                status=eligibility_response.Status.actionable,
+                statusText=eligibility_response.StatusText("Go ahead"),
                 eligibilityCohorts=[],
                 suitabilityRules=[],
                 actions=[
-                    eligibility.Action(
-                        actionType=eligibility.ActionType("TYPE_A"),
-                        actionCode=eligibility.ActionCode("CODE123"),
-                        description=eligibility.Description("Contact GP"),
-                        urlLink=eligibility.UrlLink("https://example.dummy/"),
-                        urlLabel=eligibility.UrlLabel("GP contact"),
+                    eligibility_response.Action(
+                        actionType=eligibility_response.ActionType("TYPE_A"),
+                        actionCode=eligibility_response.ActionCode("CODE123"),
+                        description=eligibility_response.Description("Contact GP"),
+                        urlLink=eligibility_response.UrlLink("https://example.dummy/"),
+                        urlLabel=eligibility_response.UrlLabel("GP contact"),
                     )
                 ],
             )

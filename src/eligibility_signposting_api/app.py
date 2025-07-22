@@ -8,10 +8,10 @@ from mangum import Mangum
 from mangum.types import LambdaContext, LambdaEvent
 
 from eligibility_signposting_api import audit, repos, services
+from eligibility_signposting_api.common.error_handler import handle_exception
+from eligibility_signposting_api.common.request_validator import validate_request_params
 from eligibility_signposting_api.config.config import config, init_logging
-from eligibility_signposting_api.error_handler import handle_exception
 from eligibility_signposting_api.views import eligibility_blueprint
-from eligibility_signposting_api.wrapper import validate_request_params
 
 init_logging()
 logger = logging.getLogger(__name__)
