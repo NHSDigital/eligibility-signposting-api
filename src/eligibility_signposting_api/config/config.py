@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from functools import cache
 from typing import Any, NewType
 
+from pythonjsonlogger.json import JsonFormatter
 from yarl import URL
 
 from eligibility_signposting_api.contextvars_manager import request_id_var
@@ -59,21 +60,21 @@ def config() -> dict[str, Any]:
     }
 
 
-class LoggingJsonFormatter(logging.Formatter):
-    def format(self, record: logging.LogRecord) -> str:
-        # Insert request_id from contextvar for every log record
-        record.request_id = request_id_var.get() or "-"
-        return super().format(record)
+class EnrichedJsonFormatter(JsonFormatter):
+    def add_fields(self, log_record: dict[str, Any], record: logging.LogRecord, message_dict: dict[str, Any]) -> None:
+        super().add_fields(log_record, record, message_dict)
+        log_record["request_id"] = request_id_var.get() or "-"
 
 
 def init_logging(quieten: Sequence[str] = ("asyncio", "botocore", "boto3", "mangum", "urllib3")) -> None:
-    log_format = "%(asctime)s %(levelname)-8s %(name)s %(module)s.py:%(funcName)s():%(lineno)d %(message)s"
-    formatter = LoggingJsonFormatter(log_format)
+    log_format = "%(asctime)s %(levelname)s %(name)s %(module)s %(funcName)s %(lineno)d %(message)s"
+    formatter = EnrichedJsonFormatter(log_format)
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
-    logging.root.handlers = []  # Clear any existing handlers
-    logging.root.setLevel(LOG_LEVEL)  # Set log level
-    logging.root.addHandler(handler)  # Add handler
+
+    logging.root.handlers = []  # Remove default handlers
+    logging.root.setLevel(LOG_LEVEL)
+    logging.root.addHandler(handler)
 
     for q in quieten:
         logging.getLogger(q).setLevel(logging.WARNING)
