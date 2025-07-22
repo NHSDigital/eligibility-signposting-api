@@ -86,7 +86,7 @@ class AuditCondition(CamelCaseBaseModel):
 
 class ResponseAuditData(CamelCaseBaseModel):
     response_id: UUID | None = None
-    last_updated: str | None = None
+    last_updated: datetime | None = None
     condition: list[AuditCondition] = Field(default_factory=list)
 
 

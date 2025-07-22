@@ -1,10 +1,8 @@
 import logging
 import os
-from collections.abc import Sequence
 from functools import cache
 from typing import Any, NewType
 
-from pythonjsonlogger.json import JsonFormatter
 from yarl import URL
 
 from eligibility_signposting_api.repos.campaign_repo import BucketName
@@ -57,16 +55,3 @@ def config() -> dict[str, Any]:
         "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
         "log_level": log_level,
     }
-
-
-def init_logging(quieten: Sequence[str] = ("asyncio", "botocore", "boto3", "mangum", "urllib3")) -> None:
-    log_format = "%(asctime)s %(levelname)-8s %(name)s %(module)s.py:%(funcName)s():%(lineno)d %(message)s"
-    formatter = JsonFormatter(log_format)
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-    logging.root.handlers = []  # Clear any existing handlers
-    logging.root.setLevel(LOG_LEVEL)  # Set log level
-    logging.root.addHandler(handler)  # Add handler
-
-    for q in quieten:
-        logging.getLogger(q).setLevel(logging.WARNING)
