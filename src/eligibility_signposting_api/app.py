@@ -8,10 +8,10 @@ from mangum import Mangum
 from mangum.types import LambdaContext, LambdaEvent
 
 from eligibility_signposting_api import audit, repos, services
-from eligibility_signposting_api.common.contextvars_manager import get_request_id_for_logging
 from eligibility_signposting_api.common.error_handler import handle_exception
 from eligibility_signposting_api.common.request_validator import validate_request_params
-from eligibility_signposting_api.config.config import config, init_logging
+from eligibility_signposting_api.config.config import config
+from eligibility_signposting_api.logging.logs_manager import add_request_id_to_logs, init_logging
 from eligibility_signposting_api.views import eligibility_blueprint
 
 init_logging()
@@ -24,7 +24,7 @@ def main() -> None:  # pragma: no cover
     app.run(debug=config()["log_level"] == logging.DEBUG)
 
 
-@get_request_id_for_logging()
+@add_request_id_to_logs()
 @validate_request_params()
 def lambda_handler(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]:  # pragma: no cover
     """Run the Flask app as an AWS Lambda."""

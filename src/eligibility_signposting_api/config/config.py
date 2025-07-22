@@ -1,13 +1,10 @@
 import logging
 import os
-from collections.abc import Sequence
 from functools import cache
 from typing import Any, NewType
 
-from pythonjsonlogger.json import JsonFormatter
 from yarl import URL
 
-from eligibility_signposting_api.common.contextvars_manager import request_id_var
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
 
@@ -58,23 +55,3 @@ def config() -> dict[str, Any]:
         "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
         "log_level": log_level,
     }
-
-
-class EnrichedJsonFormatter(JsonFormatter):
-    def add_fields(self, log_record: dict[str, Any], record: logging.LogRecord, message_dict: dict[str, Any]) -> None:
-        super().add_fields(log_record, record, message_dict)
-        log_record["request_id"] = request_id_var.get() or "-"
-
-
-def init_logging(quieten: Sequence[str] = ("asyncio", "botocore", "boto3", "mangum", "urllib3")) -> None:
-    log_format = "%(asctime)s %(levelname)-8s %(name)s %(module)s.py:%(funcName)s():%(lineno)d %(message)s"
-    formatter = EnrichedJsonFormatter(log_format)
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-
-    logging.root.handlers = []  # Remove default handlers
-    logging.root.setLevel(LOG_LEVEL)
-    logging.root.addHandler(handler)
-
-    for q in quieten:
-        logging.getLogger(q).setLevel(logging.WARNING)
