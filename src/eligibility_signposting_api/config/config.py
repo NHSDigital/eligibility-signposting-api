@@ -7,7 +7,7 @@ from typing import Any, NewType
 from pythonjsonlogger.json import JsonFormatter
 from yarl import URL
 
-from eligibility_signposting_api.contextvars_manager import request_id_var
+from eligibility_signposting_api.common.contextvars_manager import request_id_var
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
 
