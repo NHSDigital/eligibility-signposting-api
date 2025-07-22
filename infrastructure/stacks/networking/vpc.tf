@@ -21,3 +21,8 @@ resource "aws_default_security_group" "default_vpc" {
     }
   )
 }
+
+# EC2.172 - block internet gateway access at the account level
+resource "aws_vpc_block_public_access_options" "default_vpc" {
+  internet_gateway_block_mode = "block-bidirectional"
+}
