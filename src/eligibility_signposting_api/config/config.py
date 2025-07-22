@@ -7,6 +7,7 @@ from typing import Any, NewType
 from pythonjsonlogger.json import JsonFormatter
 from yarl import URL
 
+from eligibility_signposting_api.contextvars_manager import request_id_var
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
 
@@ -59,9 +60,16 @@ def config() -> dict[str, Any]:
     }
 
 
+class LoggingJsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        # Insert request_id from contextvar for every log record
+        record.request_id = request_id_var.get() or "-"
+        return super().format(record)
+
+
 def init_logging(quieten: Sequence[str] = ("asyncio", "botocore", "boto3", "mangum", "urllib3")) -> None:
     log_format = "%(asctime)s %(levelname)-8s %(name)s %(module)s.py:%(funcName)s():%(lineno)d %(message)s"
-    formatter = JsonFormatter(log_format)
+    formatter = LoggingJsonFormatter(log_format)
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     logging.root.handlers = []  # Clear any existing handlers

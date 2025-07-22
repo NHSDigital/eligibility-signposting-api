@@ -11,6 +11,7 @@ from eligibility_signposting_api import audit, repos, services
 from eligibility_signposting_api.common.error_handler import handle_exception
 from eligibility_signposting_api.common.request_validator import validate_request_params
 from eligibility_signposting_api.config.config import config, init_logging
+from eligibility_signposting_api.contextvars_manager import request_id_var
 from eligibility_signposting_api.views import eligibility_blueprint
 
 init_logging()
@@ -25,6 +26,8 @@ def main() -> None:  # pragma: no cover
 
 @validate_request_params()
 def lambda_handler(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]:  # pragma: no cover
+    request_id_var.set(context.aws_request_id)
+
     """Run the Flask app as an AWS Lambda."""
     app = create_app()
     app.debug = config()["log_level"] == logging.DEBUG
