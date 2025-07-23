@@ -190,6 +190,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "ssm:DescribeParameters",
           "ec2:Describe*",
           "ec2:DescribeVpcs",
+          "ec2:ModifyVpcBlockPublicAccessOptions",
           # API Gateway domain and deployment
           "apigateway:*",
           # ACM for certs
@@ -204,6 +205,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "logs:PutLogEvents",
           # IAM PassRole for logging role association (if needed)
           "iam:PassRole"
+
         ],
         Resource = "*"
         #checkov:skip=CKV_AWS_289: Actions require wildcard resource
