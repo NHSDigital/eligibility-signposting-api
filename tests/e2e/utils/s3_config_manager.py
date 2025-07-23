@@ -1,4 +1,5 @@
 import hashlib
+import json
 import logging
 import os
 from pathlib import Path
@@ -6,6 +7,9 @@ from pathlib import Path
 import boto3
 import botocore
 from dotenv import load_dotenv
+
+from tests.e2e.utils.data_helper import resolve_placeholders_in_data
+from tests.e2e.utils.placeholder_context import PlaceholderDTO
 
 load_dotenv(dotenv_path=".env")
 logger = logging.getLogger(__name__)
@@ -87,22 +91,43 @@ class S3ConfigManager:
         desired_keys = {self._s3_key(name) for name in desired_filenames}
 
         existing_keys = self._list_existing_keys()
-
-        # Delete only unwanted ones (not in desired_keys)
         keys_to_delete = [key for key in existing_keys if key not in desired_keys]
         if keys_to_delete:
             self._delete_keys(keys_to_delete)
+
+        dto = PlaceholderDTO()
 
         for path in local_paths:
             filename = path.name
             s3_key = self._s3_key(filename)
 
-            if self.config_exists_and_matches(path, s3_key):
+            logger.info("🔧 Resolving placeholders in config: %s", filename)
+
+            with path.open() as f:
+                raw_data = json.load(f)
+
+            resolved = resolve_placeholders_in_data(raw_data, dto, filename)
+            resolved_json_str = json.dumps(resolved, indent=2)
+
+            if self.config_exists_and_matches_str(resolved_json_str, s3_key):
                 logger.info("✅ Config '%s' is unchanged in S3. Skipping upload.", filename)
             else:
                 logger.info("⬆️ Uploading config '%s' to S3...", filename)
-                self.s3_client.upload_file(path, self.bucket_name, s3_key)
+                self.s3_client.put_object(
+                    Body=resolved_json_str.encode("utf-8"),
+                    Bucket=self.bucket_name,
+                    Key=s3_key,
+                    ContentType="application/json",
+                )
                 logger.info("📄 Uploaded to s3://%s/%s", self.bucket_name, s3_key)
+
+    def config_exists_and_matches_str(self, local_json_str: str, s3_key: str) -> bool:
+        try:
+            response = self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key)
+            remote_str = response["Body"].read().decode("utf-8")
+            return local_json_str.strip() == remote_str.strip()
+        except self.s3_client.exceptions.NoSuchKey:
+            return False
 
     def _list_existing_keys(self) -> list[str]:
         """List all object keys under the current S3 prefix."""

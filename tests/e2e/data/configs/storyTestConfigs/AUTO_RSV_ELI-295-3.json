@@ -29,7 +29,7 @@
         "CommsType": "I",
         "ApprovalMinimum": 0,
         "ApprovalMaximum": 0,
-        "Type": "M",
+        "Type": "O",
         "IterationCohorts": [
           {
             "CohortLabel": "eli_295_cohort",

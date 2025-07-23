@@ -49,6 +49,8 @@ def _resolve_placeholder_value(placeholder: str) -> str:
             result = _resolve_age_placeholder(today, int(arg), parts[0])
         elif date_type == "DAY":
             result = _format_date(today + timedelta(days=int(arg)), parts[0])
+        elif date_type == "WEEK":
+            result = _format_date(today + timedelta(weeks=int(arg)), parts[0])
         elif date_type == "MONTH":
             result = _format_date(today + relativedelta(months=int(arg)), parts[0])
         elif date_type == "YEAR":

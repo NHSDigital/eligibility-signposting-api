@@ -29,7 +29,7 @@
         "DefaultNotActionableRouting": "",
         "ApprovalMinimum": 0,
         "ApprovalMaximum": 0,
-        "Type": "M",
+        "Type": "O",
         "IterationCohorts": [
           {
             "CohortLabel": "eli_317_cohort_2",
