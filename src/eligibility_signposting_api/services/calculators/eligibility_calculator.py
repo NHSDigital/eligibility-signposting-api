@@ -8,6 +8,8 @@ from itertools import groupby
 from typing import TYPE_CHECKING, Any
 
 from eligibility_signposting_api.audit.audit_context import AuditContext
+from eligibility_signposting_api.services.rules.filter_rules_evaluator import FilterRulesEvaluator
+from eligibility_signposting_api.services.rules.suitability_rules_evaluator import SuitabilityRulesEvaluator
 
 if TYPE_CHECKING:
     from eligibility_signposting_api.model.rules import (
@@ -291,9 +293,9 @@ class EligibilityCalculator:
             # Base Eligibility - check
             if cohort.cohort_label in self.person_cohorts or cohort.is_magic_cohort:
                 # Eligibility - check
-                if self.is_eligible_by_filter_rules(cohort, cohort_results, filter_rules):
+                if FilterRulesEvaluator(cohort=cohort, cohort_results=cohort_results, filter_rules=filter_rules, person_data=self.person_data).is_eligible():
                     # Actionability - evaluation
-                    self.evaluate_suppression_rules(cohort, cohort_results, suppression_rules)
+                    SuitabilityRulesEvaluator(cohort=cohort, cohort_results=cohort_results, suppression_rules=suppression_rules, person_data=self.person_data).evaluate_suppression_rules()
 
             # Not base eligible
             elif cohort.cohort_label is not None:
@@ -343,85 +345,6 @@ class EligibilityCalculator:
                 )
             )
         return conditions
-
-    def is_eligible_by_filter_rules(
-        self,
-        cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
-        filter_rules: Iterable[rules.IterationRule],
-    ) -> bool:
-        is_eligible = True
-        priority_getter = attrgetter("priority")
-        sorted_rules_by_priority = sorted(self.get_exclusion_rules(cohort, filter_rules), key=priority_getter)
-
-        for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
-            status, group_exclusion_reasons, _ = self.evaluate_rules_priority_group(rule_group)
-            if status.is_exclusion:
-                if cohort.cohort_label is not None:
-                    cohort_results[cohort.cohort_label] = CohortGroupResult(
-                        (cohort.cohort_group),
-                        Status.not_eligible,
-                        [],
-                        cohort.negative_description,
-                        group_exclusion_reasons,
-                    )
-                is_eligible = False
-                break
-        return is_eligible
-
-    def evaluate_suppression_rules(
-        self,
-        cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
-        suppression_rules: Iterable[rules.IterationRule],
-    ) -> None:
-        is_actionable: bool = True
-        priority_getter = attrgetter("priority")
-        suppression_reasons = []
-
-        sorted_rules_by_priority = sorted(self.get_exclusion_rules(cohort, suppression_rules), key=priority_getter)
-
-        for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
-            status, group_exclusion_reasons, rule_stop = self.evaluate_rules_priority_group(rule_group)
-            if status.is_exclusion:
-                is_actionable = False
-                suppression_reasons.extend(group_exclusion_reasons)
-                if rule_stop:
-                    break
-
-        if cohort.cohort_label is not None:
-            key = cohort.cohort_label
-            if is_actionable:
-                cohort_results[key] = CohortGroupResult(
-                    cohort.cohort_group, Status.actionable, [], cohort.positive_description, suppression_reasons
-                )
-            else:
-                cohort_results[key] = CohortGroupResult(
-                    cohort.cohort_group,
-                    Status.not_actionable,
-                    suppression_reasons,
-                    cohort.positive_description,
-                    suppression_reasons,
-                )
-
-    def evaluate_rules_priority_group(
-        self, rules_group: Iterator[rules.IterationRule]
-    ) -> tuple[eligibility_status.Status, list[eligibility_status.Reason], bool]:
-        is_rule_stop = False
-        exclusion_reasons = []
-        best_status = eligibility_status.Status.not_eligible
-
-        for rule in rules_group:
-            is_rule_stop = rule.rule_stop or is_rule_stop
-            rule_calculator = RuleCalculator(person_data=self.person_data, rule=rule)
-            status, reason = rule_calculator.evaluate_exclusion()
-            if status.is_exclusion:
-                best_status = eligibility_status.Status.best(status, best_status)
-                exclusion_reasons.append(reason)
-            else:
-                best_status = eligibility_status.Status.actionable
-
-        return best_status, exclusion_reasons, is_rule_stop
 
     @staticmethod
     def get_actions_from_comms(action_mapper: ActionsMapper, comms: str) -> list[SuggestedAction] | None:
