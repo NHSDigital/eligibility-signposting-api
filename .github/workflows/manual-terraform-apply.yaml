@@ -56,7 +56,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
           aws-region: eu-west-2
 
-      - name: "Terraform Plan Stacks"
+      - name: "Terraform Apply Stacks"
         env:
           ENVIRONMENT: ${{ inputs.environment }}
           WORKSPACE: "default"
@@ -66,8 +66,6 @@ jobs:
 
         run: |
           mkdir -p ./build
-          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=plan args=\"-auto-approve\""
-          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=plan args=\"-auto-approve\""
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
 
