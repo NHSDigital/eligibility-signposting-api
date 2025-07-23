@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-22T08:06:18.119910+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_group",
+          "cohortStatus": "NotActionable",
+          "cohortText": "You are currently in an rsv cohort"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "Test S Rule - Vaccinated",
+          "ruleText": "Test S Rule - Vaccinated",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "abcaf256-ed6a-4ffe-a3ea-de1539a72120"
+}

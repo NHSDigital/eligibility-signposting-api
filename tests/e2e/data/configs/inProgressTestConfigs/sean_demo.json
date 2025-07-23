@@ -1,0 +1,134 @@
+{
+  "CampaignConfig": {
+    "ID": "<<RANDOM_GUID>>",
+    "Version": "1",
+    "Name": "Sean Demo Campaign",
+    "Type": "V",
+    "Target": "RSV",
+    "Manager": "person1@nhs.net",
+    "Approver": "person1@nhs.net",
+    "Reviewer": "person1@nhs.net",
+    "IterationFrequency": "X",
+    "IterationType": "O",
+    "IterationTime": "07:00:00",
+    "DefaultCommsRouting": "CONTACT_GP",
+    "StartDate": "20250601",
+    "EndDate": "20260601",
+    "ApprovalMinimum": 0,
+    "ApprovalMaximum": 0,
+    "Iterations": [
+      {
+        "ID": ",<<RANDOM_GUID>>",
+        "DefaultCommsRouting": "DEFAULT_A",
+        "DefaultNotEligibleRouting": "",
+        "DefaultNotActionableRouting": "",
+        "Version": "1",
+        "Name": "Sean Demo Iteration",
+        "IterationDate": "20250601",
+        "IterationNumber": 1,
+        "CommsType": "I",
+        "ApprovalMinimum": 0,
+        "ApprovalMaximum": 0,
+        "Type": "O",
+        "IterationCohorts": [
+          {
+            "CohortLabel": "rsv_cohort",
+            "CohortGroup": "rsv_group",
+            "PositiveDescription": "You are currently in an rsv cohort",
+            "NegativeDescription": "You are not currently not in an rsv cohort",
+            "Priority": 0
+          },
+          {
+            "CohortLabel": "very_obesity_cohort",
+            "CohortGroup": "clinical_risk_group",
+            "PositiveDescription": "You are currently in a clinical risk group",
+            "NegativeDescription": "You are currently in not in a clinical risk group",
+            "Priority": 1
+          },
+          {
+            "CohortLabel": "obesity_cohort",
+            "CohortGroup": "clinical_risk_group",
+            "PositiveDescription": "You are currently in a clinical risk group",
+            "NegativeDescription": "You are currently in not in a clinical risk group",
+            "Priority": 2
+          }
+        ],
+        "IterationRules": [
+          {
+            "Type": "S",
+            "Name": "Test S Rule - Vaccinated",
+            "Description": "Test S Rule - Vaccinated",
+            "Priority": 500,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "Operator": "D<",
+            "Comparator": "0",
+            "RuleStop": "Y"
+          },
+          {
+            "Type": "S",
+            "Name": "Test S Rule - In a Carehome",
+            "Description": "Test S Rule - In a Carehome",
+            "Priority": 501,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "CARE_HOME_FLAG",
+            "Operator": "=",
+            "Comparator": "Y"
+          }
+        ],
+        "ActionsMapper": {
+          "AMEND_NBS": {
+            "ExternalRoutingCode": "AmendNBS",
+            "ActionDescription": "##You have an RSV vaccination appointment\\nYou can view, change or cancel your appointment below.",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Manage your appointment"
+          },
+          "ALREADY_VACCS": {
+            "ExternalRoutingCode": "ALREADYVACCS",
+            "ActionDescription": "##Our records show you have already been vaccinated\\nIf you think this is wrong then contact your healthcare professional.",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": ""
+          },
+          "DEFAULT_A": {
+            "ExternalRoutingCode": "DefaultA",
+            "ActionDescription": "DefaultADescription",
+            "ActionType": "DefaultAType",
+            "UrlLink": "https://www.defaultaaction.com",
+            "UrlLabel": "DefaultALabel"
+          },
+          "DEFAULT_X": {
+            "ExternalRoutingCode": "DefaultX",
+            "ActionDescription": "If you think this is wrong then contact your healthcare professional",
+            "ActionType": "DefaultXType",
+            "UrlLink": "https://www.defaultxaction.com",
+            "UrlLabel": "DefaultXLabel"
+          },
+          "OTHER_X": {
+            "ExternalRoutingCode": "OtherX",
+            "ActionDescription": "OtherXDescription",
+            "ActionType": "OtherXType",
+            "UrlLink": "https://www.otherxaction.com",
+            "UrlLabel": "OtherXLabel"
+          },
+          "OTHER_Y": {
+            "ExternalRoutingCode": "OtherY",
+            "ActionDescription": "OtherYDescription",
+            "ActionType": "OtherYType",
+            "UrlLink": "https://www.otheryaction.com",
+            "UrlLabel": "OtherYLabel"
+          },
+          "DEFAULT_Y": {
+            "ExternalRoutingCode": "DefaultY",
+            "ActionDescription": "DefaultYDescription",
+            "ActionType": "DefaultYType",
+            "UrlLink": "https://www.defaultyaction.com",
+            "UrlLabel": "DefaultYLabel"
+          }
+        }
+      }
+    ]
+  }
+}
