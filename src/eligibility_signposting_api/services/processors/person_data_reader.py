@@ -13,7 +13,7 @@ class PersonDataReader:
     """Handles extracting and interpreting person data."""
 
     def get_person_cohorts(self, person_data: Row) -> set[str]:
-        cohorts_row: Mapping[str, dict[str, dict[str, dict[str, Any]]]] = next(
+        cohorts_row: Mapping[str, list[dict[str, str]]] = next(
             (row for row in person_data if row.get("ATTRIBUTE_TYPE") == "COHORTS"),
             {},
         )
@@ -24,4 +24,3 @@ class PersonDataReader:
                 person_cohorts.add(membership.get("COHORT_LABEL"))
 
         return person_cohorts
-

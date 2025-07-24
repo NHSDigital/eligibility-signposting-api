@@ -5,9 +5,7 @@ from random import randint
 from polyfactory import Use
 from polyfactory.factories.pydantic_factory import ModelFactory
 
-from eligibility_signposting_api.model import rules, eligibility_status
-from eligibility_signposting_api.model.eligibility_status import Reason, RuleName, RuleType, RulePriority, \
-    RuleDescription
+from eligibility_signposting_api.model import rules
 
 
 def past_date(days_behind: int = 365) -> date:

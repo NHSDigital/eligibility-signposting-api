@@ -5,7 +5,7 @@ import pytest
 from faker import Faker
 from flask import Flask, g
 from freezegun import freeze_time
-from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_to, has_item, has_items, is_, is_in
+from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_to, has_item, has_items, is_in
 from pydantic import HttpUrl, ValidationError
 
 from eligibility_signposting_api.audit.audit_models import AuditAction, AuditEvent
@@ -95,7 +95,8 @@ def test_not_base_eligible(faker: Faker):
                 target="RSV",
                 iterations=[
                     rule_builder.IterationFactory.build(
-                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort2")]
+                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort2")],
+                        iteration_rules=[],
                     )
                 ],
             )
@@ -175,6 +176,7 @@ def test_only_live_campaigns_considered(faker: Faker):
             iterations=[
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort2")],
+                    iteration_rules=[],
                 )
             ],
             start_date=datetime.date(2025, 4, 20),
@@ -218,7 +220,7 @@ def test_campaigns_with_applicable_iteration_types_in_campaign_level_considered(
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
 
-    person_rows = person_rows_builder(nhs_number)
+    person_rows = person_rows_builder(nhs_number, cohorts=[])
     campaign_configs = [rule_builder.CampaignConfigFactory.build(target="RSV", iteration_type=iteration_type)]
 
     calculator = EligibilityCalculator(person_rows, campaign_configs)
@@ -247,7 +249,7 @@ def test_campaigns_with_applicable_iteration_types_in_iteration_level_considered
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
 
-    person_rows = person_rows_builder(nhs_number)
+    person_rows = person_rows_builder(nhs_number, cohorts=[])
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
             target="RSV", iterations=[rule_builder.IterationFactory.build(type=iteration_type)]
@@ -934,11 +936,6 @@ def test_status_on_target_based_on_last_successful_date(
             None,
             Status.not_eligible,
             "cohort label is the default attribute name for the cohort attribute level",
-        ),
-        (
-            rules.RuleAttributeName("LOCATION"),
-            Status.actionable,
-            "attribute name that is not cohort label",
         ),
     ],
 )

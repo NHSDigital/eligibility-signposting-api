@@ -1,10 +1,10 @@
+from collections.abc import Collection, Iterator
 from itertools import groupby
 from operator import attrgetter
-from typing import Collection, Iterator
 
 from wireup import service
 
-from eligibility_signposting_api.model import rules, eligibility_status
+from eligibility_signposting_api.model import eligibility_status, rules
 
 
 @service
@@ -34,6 +34,9 @@ class CampaignEvaluator:
             key=attrgetter("target"),
         ):
             campaigns = list(campaign_group)
-            if campaigns and campaigns[0].type in allowed_types and (
-                filter_all_conditions or str(condition_name) in conditions):
+            if (
+                campaigns
+                and campaigns[0].type in allowed_types
+                and (filter_all_conditions or str(condition_name) in conditions)
+            ):
                 yield condition_name, campaigns

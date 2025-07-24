@@ -65,8 +65,6 @@ class EligibilityCalculator:
 
     results: list[eligibility_status.Condition] = field(default_factory=list)
 
-
-
     @staticmethod
     def get_the_best_cohort_memberships(
         cohort_results: dict[str, CohortGroupResult],
@@ -136,9 +134,9 @@ class EligibilityCalculator:
         actions: list[SuggestedAction] | None = []
         action_rule_priority, action_rule_name = None, None
 
-        requested_grouped_campaigns = self.campaign_evaluator.get_requested_grouped_campaigns(self.campaign_configs,
-                                                                                              conditions,
-                                                                                              category)
+        requested_grouped_campaigns = self.campaign_evaluator.get_requested_grouped_campaigns(
+            self.campaign_configs, conditions, category
+        )
         for condition_name, campaign_group in requested_grouped_campaigns:
             best_active_iteration: Iteration | None
             best_candidate: IterationResult

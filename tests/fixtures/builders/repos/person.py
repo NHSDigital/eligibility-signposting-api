@@ -66,13 +66,9 @@ def person_rows_builder(  # noqa:PLR0913
         {
             "NHS_NUMBER": key,
             "ATTRIBUTE_TYPE": "COHORTS",
-            "COHORT_MAP": {
-                "cohorts": {
-                    "M": {
-                        cohort: {"M": {"dateJoined": {"S": faker.past_date().strftime("%Y%m%d")}}} for cohort in cohorts
-                    }
-                }
-            },
+            "COHORT_MEMBERSHIPS": [
+                {"COHORT_LABEL": cohort, "DATE_JOINED": faker.past_date().strftime("%Y%m%d")} for cohort in cohorts
+            ],
         },
     ]
     rows.extend(
