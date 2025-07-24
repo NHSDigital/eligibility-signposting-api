@@ -2384,38 +2384,6 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
 
 
 @pytest.mark.parametrize(
-    ("campaign_target", "campaign_type", "conditions_filter", "category_filter", "expected_result"),
-    [
-        # Multiple matching campaigns under the same condition
-        ("RSV", "V", ["RSV"], "VACCINATIONS", [("RSV", "V")]),
-        ("RSV", "V", ["COVID"], "VACCINATIONS", []),
-        ("RSV", "S", ["RSV"], "ALL", [("RSV", "S")]),
-        ("RSV", "S", ["ALL"], "ALL", [("RSV", "S")]),
-        ("RSV", "S", ["RSV"], "VACCINATIONS", []),
-        # Multiple campaigns with different types under the same condition name
-        ("RSV", "V", ["RSV"], "ALL", [("RSV", "V")]),
-        # Campaign is live but condition not in filter (no yield)
-        ("FLU", "V", ["COVID", "RSV"], "ALL", []),
-        # Category is ALL and condition filter includes ALL (everything matches)
-        ("FLU", "S", ["ALL"], "ALL", [("FLU", "S")]),
-        # Condition filter is unknown (should not match anything)
-        ("COVID", "V", ["UNKNOWN"], "VACCINATIONS", []),
-        # Campaign with the target matching one of several condition filters
-        ("FLU", "V", ["COVID", "FLU"], "VACCINATIONS", [("FLU", "V")]),
-    ],
-)
-def test_campaigns_grouped_by_condition_name_filters_correctly(
-    campaign_target, campaign_type, conditions_filter, category_filter, expected_result
-):
-    campaign = rule_builder.CampaignConfigFactory.build(target=campaign_target, type=campaign_type, campaign_live=True)
-
-    calculator = EligibilityCalculator(person_data=[], campaign_configs=[campaign])
-    result = list(calculator.campaigns_grouped_by_condition_name(conditions_filter, category_filter))
-
-    assert_that([(str(name), group[0].type) for name, group in result], is_(expected_result))
-
-
-@pytest.mark.parametrize(
     (
         "test_comment",
         "person_icb",

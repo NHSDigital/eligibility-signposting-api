@@ -7,7 +7,7 @@ from typing import Any
 from hamcrest.core.string_description import StringDescription
 
 from eligibility_signposting_api.model import eligibility_status, rules
-from eligibility_signposting_api.services.rules.operators import OperatorRegistry
+from eligibility_signposting_api.services.operators.operators import OperatorRegistry
 
 Row = Collection[Mapping[str, Any]]
 

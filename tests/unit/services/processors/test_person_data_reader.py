@@ -1,7 +1,7 @@
 import pytest
 from hamcrest import assert_that, is_
 
-from eligibility_signposting_api.services.person_data_reader import PersonDataReader
+from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
 
 
 @pytest.fixture

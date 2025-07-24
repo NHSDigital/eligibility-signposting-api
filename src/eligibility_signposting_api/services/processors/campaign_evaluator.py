@@ -14,7 +14,7 @@ class CampaignEvaluator:
     def get_active_campaigns(self, campaign_configs: Collection[rules.CampaignConfig]) -> list[rules.CampaignConfig]:
         return [cc for cc in campaign_configs if cc.campaign_live]
 
-    def campaigns_grouped_by_condition_name(
+    def get_requested_grouped_campaigns(
         self, campaign_configs: Collection[rules.CampaignConfig], conditions: list[str], category: str
     ) -> Iterator[tuple[eligibility_status.ConditionName, list[rules.CampaignConfig]]]:
         mapping = {
