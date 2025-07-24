@@ -6,7 +6,8 @@ from typing import Any
 
 from hamcrest.core.string_description import StringDescription
 
-from eligibility_signposting_api.model import eligibility_status, rules
+from eligibility_signposting_api.model import eligibility_status
+from eligibility_signposting_api.model.campaign_config import IterationRule, RuleAttributeLevel, RuleType
 from eligibility_signposting_api.services.operators.operators import OperatorRegistry
 from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
 
@@ -16,7 +17,7 @@ Row = Collection[Mapping[str, Any]]
 @dataclass
 class RuleCalculator:
     person_data: Row
-    rule: rules.IterationRule
+    rule: IterationRule
 
     person_data_reader: PersonDataReader = field(default_factory=PersonDataReader)
 
@@ -36,12 +37,12 @@ class RuleCalculator:
     def get_attribute_value(self) -> str | None:
         """Pull out the correct attribute for a rule from the person's data."""
         match self.rule.attribute_level:
-            case rules.RuleAttributeLevel.PERSON:
+            case RuleAttributeLevel.PERSON:
                 person: Mapping[str, str | None] | None = next(
                     (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == "PERSON"), None
                 )
                 attribute_value = person.get(str(self.rule.attribute_name)) if person else None
-            case rules.RuleAttributeLevel.COHORT:
+            case RuleAttributeLevel.COHORT:
                 cohorts: Mapping[str, str | None] | None = next(
                     (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"), None
                 )
@@ -51,7 +52,7 @@ class RuleCalculator:
                 else:
                     attribute_value = None
 
-            case rules.RuleAttributeLevel.TARGET:
+            case RuleAttributeLevel.TARGET:
                 target: Mapping[str, str | None] | None = next(
                     (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == self.rule.attribute_target), None
                 )
@@ -71,11 +72,11 @@ class RuleCalculator:
         if matcher_matched:
             matcher.describe_match(attribute_value, reason)
             status = {
-                rules.RuleType.filter: eligibility_status.Status.not_eligible,
-                rules.RuleType.suppression: eligibility_status.Status.not_actionable,
-                rules.RuleType.redirect: eligibility_status.Status.actionable,
-                rules.RuleType.not_eligible_actions: eligibility_status.Status.not_eligible,
-                rules.RuleType.not_actionable_actions: eligibility_status.Status.not_actionable,
+                RuleType.filter: eligibility_status.Status.not_eligible,
+                RuleType.suppression: eligibility_status.Status.not_actionable,
+                RuleType.redirect: eligibility_status.Status.actionable,
+                RuleType.not_eligible_actions: eligibility_status.Status.not_eligible,
+                RuleType.not_actionable_actions: eligibility_status.Status.not_actionable,
             }[self.rule.type]
             return status, str(reason), matcher_matched
         matcher.describe_mismatch(attribute_value, reason)

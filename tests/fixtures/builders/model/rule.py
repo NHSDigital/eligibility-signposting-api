@@ -5,7 +5,26 @@ from random import randint
 from polyfactory import Use
 from polyfactory.factories.pydantic_factory import ModelFactory
 
-from eligibility_signposting_api.model import rules
+from eligibility_signposting_api.model.campaign_config import (
+    ActionsMapper,
+    AvailableAction,
+    CampaignConfig,
+    CohortGroup,
+    CohortLabel,
+    CommsRouting,
+    Description,
+    Iteration,
+    IterationCohort,
+    IterationRule,
+    RuleAttributeLevel,
+    RuleAttributeName,
+    RuleComparator,
+    RuleDescription,
+    RuleName,
+    RuleOperator,
+    RulePriority,
+    RuleType,
+)
 
 
 def past_date(days_behind: int = 365) -> date:
@@ -16,11 +35,11 @@ def future_date(days_ahead: int = 365) -> date:
     return datetime.now(tz=UTC).date() + timedelta(days=randint(1, days_ahead))
 
 
-class IterationCohortFactory(ModelFactory[rules.IterationCohort]):
-    priority = rules.RulePriority(0)
+class IterationCohortFactory(ModelFactory[IterationCohort]):
+    priority = RulePriority(0)
 
 
-class IterationRuleFactory(ModelFactory[rules.IterationRule]):
+class IterationRuleFactory(ModelFactory[IterationRule]):
     attribute_target = None
     attribute_name = "DATE_OF_BIRTH"
     operator = "Y>"
@@ -29,7 +48,7 @@ class IterationRuleFactory(ModelFactory[rules.IterationRule]):
     rule_stop = False
 
 
-class AvailableActionDetailFactory(ModelFactory[rules.AvailableAction]):
+class AvailableActionDetailFactory(ModelFactory[AvailableAction]):
     action_type = "defaultcomms"
     action_code = "action_code"
     action_description = None
@@ -37,11 +56,11 @@ class AvailableActionDetailFactory(ModelFactory[rules.AvailableAction]):
     url_label = None
 
 
-class ActionsMapperFactory(ModelFactory[rules.ActionsMapper]):
+class ActionsMapperFactory(ModelFactory[ActionsMapper]):
     root = Use(lambda: {"defaultcomms": AvailableActionDetailFactory.build()})
 
 
-class IterationFactory(ModelFactory[rules.Iteration]):
+class IterationFactory(ModelFactory[Iteration]):
     iteration_cohorts = Use(IterationCohortFactory.batch, size=2)
     iteration_rules = Use(IterationRuleFactory.batch, size=2)
     iteration_date = Use(past_date)
@@ -49,7 +68,7 @@ class IterationFactory(ModelFactory[rules.Iteration]):
     actions_mapper = Use(ActionsMapperFactory.build)
 
 
-class RawCampaignConfigFactory(ModelFactory[rules.CampaignConfig]):
+class RawCampaignConfigFactory(ModelFactory[CampaignConfig]):
     iterations = Use(IterationFactory.batch, size=2)
 
     start_date = Use(past_date)
@@ -58,13 +77,13 @@ class RawCampaignConfigFactory(ModelFactory[rules.CampaignConfig]):
 
 class CampaignConfigFactory(RawCampaignConfigFactory):
     @classmethod
-    def build(cls, **kwargs) -> rules.CampaignConfig:
+    def build(cls, **kwargs) -> CampaignConfig:
         """Ensure invariants are met:
         * no iterations with duplicate iteration dates
         * must have iteration active from campaign start date"""
         processed_kwargs = cls.process_kwargs(**kwargs)
         start_date: date = processed_kwargs["start_date"]
-        iterations: list[rules.Iteration] = processed_kwargs["iterations"]
+        iterations: list[Iteration] = processed_kwargs["iterations"]
 
         CampaignConfigFactory.fix_iteration_date_invariants(iterations, start_date)
 
@@ -72,7 +91,7 @@ class CampaignConfigFactory(RawCampaignConfigFactory):
         return cls.__model__(**data)
 
     @staticmethod
-    def fix_iteration_date_invariants(iterations: list[rules.Iteration], start_date: date) -> None:
+    def fix_iteration_date_invariants(iterations: list[Iteration], start_date: date) -> None:
         iterations.sort(key=attrgetter("iteration_date"))
         iterations[0].iteration_date = start_date
 
@@ -89,113 +108,113 @@ class CampaignConfigFactory(RawCampaignConfigFactory):
 
 # Iteration cohort factories
 class MagicCohortFactory(IterationCohortFactory):
-    cohort_label = rules.CohortLabel("elid_all_people")
-    cohort_group = rules.CohortGroup("magic cohort group")
-    positive_description = rules.Description("magic positive description")
-    negative_description = rules.Description("magic negative description")
+    cohort_label = CohortLabel("elid_all_people")
+    cohort_group = CohortGroup("magic cohort group")
+    positive_description = Description("magic positive description")
+    negative_description = Description("magic negative description")
     priority = 1
 
 
 class Rsv75RollingCohortFactory(IterationCohortFactory):
-    cohort_label = rules.CohortLabel("rsv_75_rolling")
-    cohort_group = rules.CohortGroup("rsv_age_range")
-    positive_description = rules.Description("rsv_age_range positive description")
-    negative_description = rules.Description("rsv_age_range negative description")
+    cohort_label = CohortLabel("rsv_75_rolling")
+    cohort_group = CohortGroup("rsv_age_range")
+    positive_description = Description("rsv_age_range positive description")
+    negative_description = Description("rsv_age_range negative description")
     priority = 2
 
 
 class Rsv75to79CohortFactory(IterationCohortFactory):
-    cohort_label = rules.CohortLabel("rsv_75to79_2024")
-    cohort_group = rules.CohortGroup("rsv_age_range")
-    positive_description = rules.Description("rsv_age_range positive description")
-    negative_description = rules.Description("rsv_age_range negative description")
+    cohort_label = CohortLabel("rsv_75to79_2024")
+    cohort_group = CohortGroup("rsv_age_range")
+    positive_description = Description("rsv_age_range positive description")
+    negative_description = Description("rsv_age_range negative description")
     priority = 3
 
 
 class RsvPretendClinicalCohortFactory(IterationCohortFactory):
-    cohort_label = rules.CohortLabel("rsv_pretend_clinical_cohort")
-    cohort_group = rules.CohortGroup("rsv_clinical_cohort")
-    positive_description = rules.Description("rsv_clinical_cohort positive description")
-    negative_description = rules.Description("rsv_clinical_cohort negative description")
+    cohort_label = CohortLabel("rsv_pretend_clinical_cohort")
+    cohort_group = CohortGroup("rsv_clinical_cohort")
+    positive_description = Description("rsv_clinical_cohort positive description")
+    negative_description = Description("rsv_clinical_cohort negative description")
     priority = 4
 
 
 # Iteration rule factories
 class PersonAgeSuppressionRuleFactory(IterationRuleFactory):
-    type = rules.RuleType.suppression
-    name = rules.RuleName("Exclude too young less than 75")
-    description = rules.RuleDescription("Exclude too young less than 75")
-    priority = rules.RulePriority(10)
-    operator = rules.RuleOperator.year_gt
-    attribute_level = rules.RuleAttributeLevel.PERSON
-    attribute_name = rules.RuleAttributeName("DATE_OF_BIRTH")
-    comparator = rules.RuleComparator("-75")
+    type = RuleType.suppression
+    name = RuleName("Exclude too young less than 75")
+    description = RuleDescription("Exclude too young less than 75")
+    priority = RulePriority(10)
+    operator = RuleOperator.year_gt
+    attribute_level = RuleAttributeLevel.PERSON
+    attribute_name = RuleAttributeName("DATE_OF_BIRTH")
+    comparator = RuleComparator("-75")
 
 
 class PostcodeSuppressionRuleFactory(IterationRuleFactory):
-    type = rules.RuleType.suppression
-    name = rules.RuleName("Excluded postcode In SW19")
-    description = rules.RuleDescription("In SW19")
-    priority = rules.RulePriority(10)
-    operator = rules.RuleOperator.starts_with
-    attribute_level = rules.RuleAttributeLevel.PERSON
-    attribute_name = rules.RuleAttributeName("POSTCODE")
-    comparator = rules.RuleComparator("SW19")
+    type = RuleType.suppression
+    name = RuleName("Excluded postcode In SW19")
+    description = RuleDescription("In SW19")
+    priority = RulePriority(10)
+    operator = RuleOperator.starts_with
+    attribute_level = RuleAttributeLevel.PERSON
+    attribute_name = RuleAttributeName("POSTCODE")
+    comparator = RuleComparator("SW19")
 
 
 class DetainedEstateSuppressionRuleFactory(IterationRuleFactory):
-    type = rules.RuleType.suppression
-    name = rules.RuleName("Detained - Suppress Individuals In Detained Estates")
-    description = rules.RuleDescription("Suppress where individual is identified as being in a Detained Estate")
-    priority = rules.RulePriority(160)
-    attribute_level = rules.RuleAttributeLevel.PERSON
-    attribute_name = rules.RuleAttributeName("DE_FLAG")
-    operator = rules.RuleOperator.equals
-    comparator = rules.RuleComparator("Y")
+    type = RuleType.suppression
+    name = RuleName("Detained - Suppress Individuals In Detained Estates")
+    description = RuleDescription("Suppress where individual is identified as being in a Detained Estate")
+    priority = RulePriority(160)
+    attribute_level = RuleAttributeLevel.PERSON
+    attribute_name = RuleAttributeName("DE_FLAG")
+    operator = RuleOperator.equals
+    comparator = RuleComparator("Y")
 
 
 class ICBFilterRuleFactory(IterationRuleFactory):
-    type = rules.RuleType.filter
-    name = rules.RuleName("Not in QE1")
-    description = rules.RuleDescription("Not in QE1")
-    priority = rules.RulePriority(10)
-    operator = rules.RuleOperator.ne
-    attribute_level = rules.RuleAttributeLevel.PERSON
-    attribute_name = rules.RuleAttributeName("ICB")
-    comparator = rules.RuleComparator("QE1")
+    type = RuleType.filter
+    name = RuleName("Not in QE1")
+    description = RuleDescription("Not in QE1")
+    priority = RulePriority(10)
+    operator = RuleOperator.ne
+    attribute_level = RuleAttributeLevel.PERSON
+    attribute_name = RuleAttributeName("ICB")
+    comparator = RuleComparator("QE1")
 
 
 class ICBRedirectRuleFactory(IterationRuleFactory):
-    type = rules.RuleType.redirect
-    name = rules.RuleName("In QE1")
-    description = rules.RuleDescription("In QE1")
-    priority = rules.RulePriority(20)
-    operator = rules.RuleOperator.equals
-    attribute_level = rules.RuleAttributeLevel.PERSON
-    attribute_name = rules.RuleAttributeName("ICB")
-    comparator = rules.RuleComparator("QE1")
-    comms_routing = rules.CommsRouting("ActionCode1")
+    type = RuleType.redirect
+    name = RuleName("In QE1")
+    description = RuleDescription("In QE1")
+    priority = RulePriority(20)
+    operator = RuleOperator.equals
+    attribute_level = RuleAttributeLevel.PERSON
+    attribute_name = RuleAttributeName("ICB")
+    comparator = RuleComparator("QE1")
+    comms_routing = CommsRouting("ActionCode1")
 
 
 class ICBNonEligibleActionRuleFactory(IterationRuleFactory):
-    type = rules.RuleType.not_eligible_actions
-    name = rules.RuleName("In QE1")
-    description = rules.RuleDescription("In QE1")
-    priority = rules.RulePriority(20)
-    operator = rules.RuleOperator.equals
-    attribute_level = rules.RuleAttributeLevel.PERSON
-    attribute_name = rules.RuleAttributeName("ICB")
-    comparator = rules.RuleComparator("QE1")
-    comms_routing = rules.CommsRouting("ActionCode1")
+    type = RuleType.not_eligible_actions
+    name = RuleName("In QE1")
+    description = RuleDescription("In QE1")
+    priority = RulePriority(20)
+    operator = RuleOperator.equals
+    attribute_level = RuleAttributeLevel.PERSON
+    attribute_name = RuleAttributeName("ICB")
+    comparator = RuleComparator("QE1")
+    comms_routing = CommsRouting("ActionCode1")
 
 
 class ICBNonActionableActionRuleFactory(IterationRuleFactory):
-    type = rules.RuleType.not_actionable_actions
-    name = rules.RuleName("In QE1")
-    description = rules.RuleDescription("In QE1")
-    priority = rules.RulePriority(20)
-    operator = rules.RuleOperator.equals
-    attribute_level = rules.RuleAttributeLevel.PERSON
-    attribute_name = rules.RuleAttributeName("ICB")
-    comparator = rules.RuleComparator("QE1")
-    comms_routing = rules.CommsRouting("ActionCode1")
+    type = RuleType.not_actionable_actions
+    name = RuleName("In QE1")
+    description = RuleDescription("In QE1")
+    priority = RulePriority(20)
+    operator = RuleOperator.equals
+    attribute_level = RuleAttributeLevel.PERSON
+    attribute_name = RuleAttributeName("ICB")
+    comparator = RuleComparator("QE1")
+    comms_routing = CommsRouting("ActionCode1")

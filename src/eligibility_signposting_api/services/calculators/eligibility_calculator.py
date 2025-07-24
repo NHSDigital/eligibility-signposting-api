@@ -5,28 +5,24 @@ from collections import defaultdict
 from collections.abc import Collection, Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from itertools import groupby
-from typing import TYPE_CHECKING, Any
-
-from eligibility_signposting_api.audit.audit_context import AuditContext
-from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
-from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
-
-if TYPE_CHECKING:
-    from eligibility_signposting_api.model.rules import (
-        ActionsMapper,
-        CampaignConfig,
-        CampaignID,
-        CampaignVersion,
-        Iteration,
-        IterationCohort,
-        RuleName,
-        RulePriority,
-        RuleType,
-    )
+from typing import Any
 
 from wireup import service
 
-from eligibility_signposting_api.model import eligibility_status, rules
+from eligibility_signposting_api.audit.audit_context import AuditContext
+from eligibility_signposting_api.model import eligibility_status
+from eligibility_signposting_api.model.campaign_config import (
+    ActionsMapper,
+    CampaignConfig,
+    CampaignID,
+    CampaignVersion,
+    Iteration,
+    IterationCohort,
+    IterationRule,
+    RuleName,
+    RulePriority,
+    RuleType,
+)
 from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
     ActionDescription,
@@ -44,6 +40,8 @@ from eligibility_signposting_api.model.eligibility_status import (
 from eligibility_signposting_api.services.calculators.rule_calculator import (
     RuleCalculator,
 )
+from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
+from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
 
 Row = Collection[Mapping[str, Any]]
 
@@ -51,14 +49,14 @@ Row = Collection[Mapping[str, Any]]
 @service
 class EligibilityCalculatorFactory:
     @staticmethod
-    def get(person_data: Row, campaign_configs: Collection[rules.CampaignConfig]) -> EligibilityCalculator:
+    def get(person_data: Row, campaign_configs: Collection[CampaignConfig]) -> EligibilityCalculator:
         return EligibilityCalculator(person_data=person_data, campaign_configs=campaign_configs)
 
 
 @dataclass
 class EligibilityCalculator:
     person_data: Row
-    campaign_configs: Collection[rules.CampaignConfig]
+    campaign_configs: Collection[CampaignConfig]
 
     campaign_evaluator: CampaignEvaluator = field(default_factory=CampaignEvaluator)
     person_data_reader: PersonDataReader = field(default_factory=PersonDataReader)
@@ -89,9 +87,7 @@ class EligibilityCalculator:
         return best_status, best_cohorts
 
     @staticmethod
-    def get_exclusion_rules(
-        cohort: IterationCohort, filter_rules: Iterable[rules.IterationRule]
-    ) -> Iterator[rules.IterationRule]:
+    def get_exclusion_rules(cohort: IterationCohort, filter_rules: Iterable[IterationRule]) -> Iterator[IterationRule]:
         return (
             ir
             for ir in filter_rules
@@ -103,23 +99,23 @@ class EligibilityCalculator:
     @staticmethod
     def get_rules_by_type(
         active_iteration: Iteration,
-    ) -> tuple[tuple[rules.IterationRule, ...], tuple[rules.IterationRule, ...]]:
+    ) -> tuple[tuple[IterationRule, ...], tuple[IterationRule, ...]]:
         filter_rules, suppression_rules = (
             tuple(rule for rule in active_iteration.iteration_rules if attrgetter("type")(rule) == rule_type)
-            for rule_type in (rules.RuleType.filter, rules.RuleType.suppression)
+            for rule_type in (RuleType.filter, RuleType.suppression)
         )
         return filter_rules, suppression_rules
 
     @staticmethod
     def get_action_rules_components(
         active_iteration: Iteration, rule_type: RuleType
-    ) -> tuple[tuple[rules.IterationRule, ...], ActionsMapper, str | None]:
+    ) -> tuple[tuple[IterationRule, ...], ActionsMapper, str | None]:
         action_rules = tuple(rule for rule in active_iteration.iteration_rules if rule.type in rule_type)
 
         routing_map = {
-            rules.RuleType.redirect: active_iteration.default_comms_routing,
-            rules.RuleType.not_eligible_actions: active_iteration.default_not_eligible_routing,
-            rules.RuleType.not_actionable_actions: active_iteration.default_not_actionable_routing,
+            RuleType.redirect: active_iteration.default_comms_routing,
+            RuleType.not_eligible_actions: active_iteration.default_not_eligible_routing,
+            RuleType.not_actionable_actions: active_iteration.default_not_actionable_routing,
         }
 
         default_comms = routing_map.get(rule_type)
@@ -168,9 +164,9 @@ class EligibilityCalculator:
             condition_results[condition_name] = best_candidate
 
             status_to_rule_type = {
-                Status.actionable: rules.RuleType.redirect,
-                Status.not_eligible: rules.RuleType.not_eligible_actions,
-                Status.not_actionable: rules.RuleType.not_actionable_actions,
+                Status.actionable: RuleType.redirect,
+                Status.not_eligible: RuleType.not_eligible_actions,
+                Status.not_actionable: RuleType.not_actionable_actions,
             }
 
             if best_candidate.status in status_to_rule_type and best_active_iteration is not None:
@@ -257,7 +253,7 @@ class EligibilityCalculator:
 
         return actions, matched_action_rule_priority, matched_action_rule_name
 
-    def get_cohort_results(self, active_iteration: rules.Iteration) -> dict[str, CohortGroupResult]:
+    def get_cohort_results(self, active_iteration: Iteration) -> dict[str, CohortGroupResult]:
         cohort_results: dict[str, CohortGroupResult] = {}
         filter_rules, suppression_rules = self.get_rules_by_type(active_iteration)
         for cohort in sorted(active_iteration.iteration_cohorts, key=attrgetter("priority")):
@@ -322,7 +318,7 @@ class EligibilityCalculator:
         self,
         cohort: IterationCohort,
         cohort_results: dict[str, CohortGroupResult],
-        filter_rules: Iterable[rules.IterationRule],
+        filter_rules: Iterable[IterationRule],
     ) -> bool:
         is_eligible = True
         priority_getter = attrgetter("priority")
@@ -347,7 +343,7 @@ class EligibilityCalculator:
         self,
         cohort: IterationCohort,
         cohort_results: dict[str, CohortGroupResult],
-        suppression_rules: Iterable[rules.IterationRule],
+        suppression_rules: Iterable[IterationRule],
     ) -> None:
         is_actionable: bool = True
         priority_getter = attrgetter("priority")
@@ -379,7 +375,7 @@ class EligibilityCalculator:
                 )
 
     def evaluate_rules_priority_group(
-        self, rules_group: Iterator[rules.IterationRule]
+        self, rules_group: Iterator[IterationRule]
     ) -> tuple[eligibility_status.Status, list[eligibility_status.Reason], bool]:
         is_rule_stop = False
         exclusion_reasons = []
