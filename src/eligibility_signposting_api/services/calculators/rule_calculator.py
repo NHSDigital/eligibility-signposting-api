@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from hamcrest.core.string_description import StringDescription
 
 from eligibility_signposting_api.model import eligibility_status, rules
-from eligibility_signposting_api.services.rules.operators import OperatorRegistry
+from eligibility_signposting_api.services.operators.operators import OperatorRegistry
+from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
 
 Row = Collection[Mapping[str, Any]]
 
@@ -16,6 +17,8 @@ Row = Collection[Mapping[str, Any]]
 class RuleCalculator:
     person_data: Row
     rule: rules.IterationRule
+
+    person_data_reader: PersonDataReader = field(default_factory=PersonDataReader)
 
     def evaluate_exclusion(self) -> tuple[eligibility_status.Status, eligibility_status.Reason]:
         """Evaluate if a particular rule excludes this person. Return the result, and the reason for the result."""
@@ -43,15 +46,7 @@ class RuleCalculator:
                     (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"), None
                 )
                 if cohorts:
-                    attr_name = (
-                        "COHORT_MAP"
-                        if not self.rule.attribute_name or self.rule.attribute_name == "COHORT_LABEL"
-                        else self.rule.attribute_name
-                    )
-                    cohort_map = self.get_value(cohorts, attr_name)
-                    cohorts_dict = self.get_value(cohort_map, "cohorts")
-                    m_dict = self.get_value(cohorts_dict, "M")
-                    person_cohorts: set[str] = set(m_dict.keys())
+                    person_cohorts = self.person_data_reader.get_person_cohorts(self.person_data)
                     attribute_value = ",".join(person_cohorts)
                 else:
                     attribute_value = None
@@ -65,11 +60,6 @@ class RuleCalculator:
                 msg = f"{self.rule.attribute_level} not implemented"
                 raise NotImplementedError(msg)
         return attribute_value
-
-    @staticmethod
-    def get_value(dictionary: Mapping[str, Any] | None, key: str) -> dict:
-        v = dictionary.get(key, {}) if isinstance(dictionary, dict) else {}
-        return v if isinstance(v, dict) else {}
 
     def evaluate_rule(self, attribute_value: str | None) -> tuple[eligibility_status.Status, str, bool]:
         """Evaluate a rule against a person data attribute. Return the result, and the reason for the result."""

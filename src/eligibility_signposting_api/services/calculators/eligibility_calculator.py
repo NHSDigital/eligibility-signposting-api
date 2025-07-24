@@ -8,6 +8,8 @@ from itertools import groupby
 from typing import TYPE_CHECKING, Any
 
 from eligibility_signposting_api.audit.audit_context import AuditContext
+from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
+from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
 
 if TYPE_CHECKING:
     from eligibility_signposting_api.model.rules import (
@@ -58,42 +60,10 @@ class EligibilityCalculator:
     person_data: Row
     campaign_configs: Collection[rules.CampaignConfig]
 
+    campaign_evaluator: CampaignEvaluator = field(default_factory=CampaignEvaluator)
+    person_data_reader: PersonDataReader = field(default_factory=PersonDataReader)
+
     results: list[eligibility_status.Condition] = field(default_factory=list)
-
-    @property
-    def active_campaigns(self) -> list[rules.CampaignConfig]:
-        return [cc for cc in self.campaign_configs if cc.campaign_live]
-
-    def campaigns_grouped_by_condition_name(
-        self, conditions: list[str], category: str
-    ) -> Iterator[tuple[eligibility_status.ConditionName, list[rules.CampaignConfig]]]:
-        """Generator that yields campaign groups filtered by condition names and campaign category."""
-
-        mapping = {
-            "ALL": {"V", "S"},
-            "VACCINATIONS": {"V"},
-            "SCREENING": {"S"},
-        }
-
-        allowed_types = mapping.get(category, set())
-
-        filter_all_conditions = "ALL" in conditions
-
-        for condition_name, campaign_group in groupby(
-            sorted(self.active_campaigns, key=attrgetter("target")),
-            key=attrgetter("target"),
-        ):
-            campaigns = list(campaign_group)
-            if campaigns[0].type in allowed_types and (filter_all_conditions or str(condition_name) in conditions):
-                yield condition_name, campaigns
-
-    @property
-    def person_cohorts(self) -> set[str]:
-        cohorts_row: Mapping[str, dict[str, dict[str, dict[str, Any]]]] = next(
-            (row for row in self.person_data if row.get("ATTRIBUTE_TYPE") == "COHORTS"),
-            {},
-        )
-        return set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
 
     @staticmethod
     def get_the_best_cohort_memberships(
@@ -164,7 +134,10 @@ class EligibilityCalculator:
         actions: list[SuggestedAction] | None = []
         action_rule_priority, action_rule_name = None, None
 
-        for condition_name, campaign_group in self.campaigns_grouped_by_condition_name(conditions, category):
+        requested_grouped_campaigns = self.campaign_evaluator.get_requested_grouped_campaigns(
+            self.campaign_configs, conditions, category
+        )
+        for condition_name, campaign_group in requested_grouped_campaigns:
             best_active_iteration: Iteration | None
             best_candidate: IterationResult
             best_campaign_id: CampaignID | None
@@ -289,7 +262,8 @@ class EligibilityCalculator:
         filter_rules, suppression_rules = self.get_rules_by_type(active_iteration)
         for cohort in sorted(active_iteration.iteration_cohorts, key=attrgetter("priority")):
             # Base Eligibility - check
-            if cohort.cohort_label in self.person_cohorts or cohort.is_magic_cohort:
+            person_cohorts = self.person_data_reader.get_person_cohorts(self.person_data)
+            if cohort.cohort_label in person_cohorts or cohort.is_magic_cohort:
                 # Eligibility - check
                 if self.is_eligible_by_filter_rules(cohort, cohort_results, filter_rules):
                     # Actionability - evaluation
