@@ -17,5 +17,11 @@ class PersonDataReader:
             (row for row in person_data if row.get("ATTRIBUTE_TYPE") == "COHORTS"),
             {},
         )
-        return set(cohorts_row.get("COHORT_MAP", {}).get("cohorts", {}).get("M", {}).keys())
+        person_cohorts = set()
+
+        for membership in cohorts_row.get("COHORT_MEMBERSHIPS", []):
+            if membership.get("COHORT_LABEL"):
+                person_cohorts.add(membership.get("COHORT_LABEL"))
+
+        return person_cohorts
 
