@@ -9,6 +9,7 @@ from pydantic import HttpUrl
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_models import AuditAction, AuditEvent
 from eligibility_signposting_api.audit.audit_service import AuditService
+from eligibility_signposting_api.model.campaign_config import CampaignID, CampaignVersion, Iteration, RuleType
 from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
     ActionDescription,
@@ -26,7 +27,6 @@ from eligibility_signposting_api.model.eligibility_status import (
     UrlLabel,
     UrlLink,
 )
-from eligibility_signposting_api.model.rules import CampaignID, CampaignVersion, Iteration, RuleType
 from tests.fixtures.builders.model.rule import IterationFactory
 
 

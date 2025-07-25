@@ -5,7 +5,7 @@ from typing import Annotated, NewType
 from botocore.client import BaseClient
 from wireup import Inject, service
 
-from eligibility_signposting_api.model.rules import CampaignConfig, Rules
+from eligibility_signposting_api.model.campaign_config import CampaignConfig, Rules
 
 BucketName = NewType("BucketName", str)
 

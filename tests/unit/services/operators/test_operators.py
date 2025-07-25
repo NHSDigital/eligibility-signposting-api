@@ -2,7 +2,7 @@ import pytest
 from freezegun import freeze_time
 from hamcrest import assert_that, equal_to
 
-from eligibility_signposting_api.model.rules import RuleOperator
+from eligibility_signposting_api.model.campaign_config import RuleOperator
 from eligibility_signposting_api.services.operators.operators import Operator, OperatorRegistry
 
 # Test cases: person_data, rule_operator, rule_value, expected, test_comment

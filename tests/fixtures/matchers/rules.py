@@ -1,6 +1,6 @@
 from hamcrest.core.matcher import Matcher
 
-from eligibility_signposting_api.model.rules import CampaignConfig, Iteration, IterationRule
+from eligibility_signposting_api.model.campaign_config import CampaignConfig, Iteration, IterationRule
 
 from .meta import BaseAutoMatcher
 

@@ -18,6 +18,13 @@ from eligibility_signposting_api.audit.audit_models import (
     RequestAuditQueryParams,
 )
 from eligibility_signposting_api.audit.audit_service import AuditService
+from eligibility_signposting_api.model.campaign_config import (
+    CampaignID,
+    CampaignVersion,
+    Iteration,
+    RuleName,
+    RulePriority,
+)
 from eligibility_signposting_api.model.eligibility_status import (
     CohortGroupResult,
     ConditionName,
@@ -25,7 +32,6 @@ from eligibility_signposting_api.model.eligibility_status import (
     Status,
     SuggestedAction,
 )
-from eligibility_signposting_api.model.rules import CampaignID, CampaignVersion, Iteration, RuleName, RulePriority
 
 logger = logging.getLogger(__name__)
 
