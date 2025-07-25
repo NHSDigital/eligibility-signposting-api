@@ -39,7 +39,6 @@ from eligibility_signposting_api.services.calculators.rule_calculator import (
     RuleCalculator,
 )
 from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
-from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
 from eligibility_signposting_api.services.processors.rule_processor import RuleProcessor
 
 if TYPE_CHECKING:
@@ -61,7 +60,6 @@ class EligibilityCalculator:
     campaign_configs: Collection[CampaignConfig]
 
     campaign_evaluator: CampaignEvaluator = field(default_factory=CampaignEvaluator)
-    person_data_reader: PersonDataReader = field(default_factory=PersonDataReader)
     rule_processor: RuleProcessor = field(default_factory=RuleProcessor)
 
     results: list[eligibility_status.Condition] = field(default_factory=list)
@@ -88,16 +86,6 @@ class EligibilityCalculator:
         ]
 
         return best_status, best_cohorts
-
-    @staticmethod
-    def get_rules_by_type(
-        active_iteration: Iteration,
-    ) -> tuple[tuple[IterationRule, ...], tuple[IterationRule, ...]]:
-        filter_rules, suppression_rules = (
-            tuple(rule for rule in active_iteration.iteration_rules if attrgetter("type")(rule) == rule_type)
-            for rule_type in (RuleType.filter, RuleType.suppression)
-        )
-        return filter_rules, suppression_rules
 
     @staticmethod
     def get_action_rules_components(
@@ -205,7 +193,9 @@ class EligibilityCalculator:
         ] = {}
         for cc in campaign_group:
             active_iteration = cc.current_iteration
-            cohort_results: dict[str, CohortGroupResult] = self.get_cohort_results(active_iteration)
+            cohort_results: dict[str, CohortGroupResult] = self.rule_processor.get_cohort_group_results(
+                self.person, active_iteration
+            )
 
             # Determine Result between cohorts - get the best
             status, best_cohorts = self.get_the_best_cohort_memberships(cohort_results)
@@ -245,29 +235,6 @@ class EligibilityCalculator:
                 break
 
         return actions, matched_action_rule_priority, matched_action_rule_name
-
-    def get_cohort_results(self, active_iteration: Iteration) -> dict[str, CohortGroupResult]:
-        cohort_results: dict[str, CohortGroupResult] = {}
-        filter_rules, suppression_rules = self.get_rules_by_type(active_iteration)
-        for cohort in sorted(active_iteration.iteration_cohorts, key=attrgetter("priority")):
-            # Base Eligibility - check
-            person_cohorts = self.person_data_reader.get_person_cohorts(self.person)
-            if cohort.cohort_label in person_cohorts or cohort.is_magic_cohort:
-                # Eligibility - check
-                if self.rule_processor.is_eligible(self.person, cohort, cohort_results, filter_rules):
-                    # Actionability - evaluation
-                    self.rule_processor.is_actionable(self.person, cohort, cohort_results, suppression_rules)
-
-            # Not base eligible
-            elif cohort.cohort_label is not None:
-                cohort_results[cohort.cohort_label] = CohortGroupResult(
-                    cohort.cohort_group,
-                    Status.not_eligible,
-                    [],
-                    cohort.negative_description,
-                    [],
-                )
-        return cohort_results
 
     @staticmethod
     def build_condition_results(condition_results: dict[ConditionName, IterationResult]) -> list[Condition]:

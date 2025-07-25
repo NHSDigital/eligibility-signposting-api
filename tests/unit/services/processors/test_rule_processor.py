@@ -4,7 +4,7 @@ import pytest
 from hamcrest import assert_that, has_length, is_
 
 from eligibility_signposting_api.model.campaign_config import RuleType
-from eligibility_signposting_api.model.eligibility_status import Reason, Status
+from eligibility_signposting_api.model.eligibility_status import CohortGroupResult, Reason, Status
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.rule_processor import RuleProcessor
 from tests.fixtures.builders.model import rule as rule_builder
@@ -292,3 +292,77 @@ def test_evaluate_suppression_rules_does_not_stop_on_rule_stop_when_status_is_ac
 
     assert_that(mock_evaluate_rules_priority_group.call_count, is_(2))
     assert_that(mock_get_exclusion_rules.call_count, is_(1))
+
+
+def test_is_base_eligible():
+    person = Person(
+        [
+            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
+            {
+                "ATTRIBUTE_TYPE": "COHORTS",
+                "COHORT_MEMBERSHIPS": [
+                    {"COHORT_LABEL": "COHORT_A"},
+                    {"COHORT_LABEL": "COHORT_C"},
+                ],
+            },
+        ]
+    )
+
+    rule_processor = RuleProcessor()
+
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
+
+    assert_that(rule_processor.is_base_eligible(person, cohort), is_(True))
+
+
+def test_is_not_base_eligible():
+    person = Person(
+        [
+            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
+            {
+                "ATTRIBUTE_TYPE": "COHORTS",
+                "COHORT_MEMBERSHIPS": [
+                    {"COHORT_LABEL": "COHORT_C"},
+                ],
+            },
+        ]
+    )
+
+    rule_processor = RuleProcessor()
+
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
+
+    assert_that(rule_processor.is_base_eligible(person, cohort), is_(False))
+
+
+def test_gets_not_base_eligible_results_when_there_is_a_cohort_label():
+    rule_processor = RuleProcessor()
+
+    cohort = rule_builder.IterationCohortFactory.build(
+        cohort_label="COHORT_A", cohort_group="COHORT_GROUP", negative_description="Not Base Eligible"
+    )
+
+    actual = rule_processor.get_not_base_eligible_results(cohort, {})
+
+    expected = {"COHORT_A": CohortGroupResult("COHORT_GROUP", Status.not_eligible, [], "Not Base Eligible", [])}
+    assert_that(actual, is_(expected))
+
+
+def test_rules_get_group_by_types_of_rules():
+    rule_processor = RuleProcessor()
+
+    active_iteration = rule_builder.IterationFactory.build()
+    iteration_rules = active_iteration.iteration_rules
+    iteration_rules.append(rule_builder.IterationRuleFactory.build())
+
+    iteration_rules[0].type = RuleType.filter
+    iteration_rules[1].type = RuleType.suppression
+    iteration_rules[2].type = RuleType.filter
+
+    rules_by_type = rule_processor.get_rules_by_type(active_iteration)
+
+    assert_that(len(rules_by_type), is_(2))
+
+    assert_that(rules_by_type[0][0].type, is_(RuleType.filter))
+    assert_that(rules_by_type[0][1].type, is_(RuleType.filter))
+    assert_that(rules_by_type[1][0].type, is_(RuleType.suppression))
