@@ -103,10 +103,10 @@ class RuleProcessor:
         return best_status, exclusion_reasons, is_rule_stop
 
     @staticmethod
-    def get_exclusion_rules(cohort: IterationCohort, filter_rules: Iterable[IterationRule]) -> Iterator[IterationRule]:
+    def get_exclusion_rules(cohort: IterationCohort, rules: Iterable[IterationRule]) -> Iterator[IterationRule]:
         return (
             ir
-            for ir in filter_rules
+            for ir in rules
             if ir.cohort_label is None
             or cohort.cohort_label == ir.cohort_label
             or (isinstance(ir.cohort_label, (list, set, tuple)) and cohort.cohort_label in ir.cohort_label)
