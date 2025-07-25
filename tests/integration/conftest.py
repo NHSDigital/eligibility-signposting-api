@@ -336,7 +336,7 @@ def persisted_person(person_table: Any, faker: Faker) -> Generator[eligibility_s
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
 
     for row in (
-        rows := person_rows_builder(nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"])
+        rows := person_rows_builder(nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
     ):
         person_table.put_item(Item=row)
 
@@ -357,7 +357,7 @@ def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibil
             date_of_birth=date_of_birth,
             postcode="hp1",
             cohorts=["cohort1", "cohort2"],
-        )
+        ).data
     ):
         person_table.put_item(Item=row)
 
@@ -379,7 +379,7 @@ def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[e
             postcode="hp1",
             cohorts=["cohort_label1", "cohort_label2", "cohort_label3"],
             icb="QE1",
-        )
+        ).data
     ):
         person_table.put_item(Item=row)
 
@@ -393,7 +393,7 @@ def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[e
 def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
     nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
 
-    for row in (rows := person_rows_builder(nhs_number)):
+    for row in (rows := person_rows_builder(nhs_number).data):
         person_table.put_item(Item=row)
 
     yield nhs_number
@@ -407,7 +407,7 @@ def persisted_person_pc_sw19(person_table: Any, faker: Faker) -> Generator[eligi
     nhs_number = eligibility_status.NHSNumber(
         faker.nhs_number(),
     )
-    for row in (rows := person_rows_builder(nhs_number, postcode="SW19", cohorts=["cohort1"])):
+    for row in (rows := person_rows_builder(nhs_number, postcode="SW19", cohorts=["cohort1"]).data):
         person_table.put_item(Item=row)
 
     yield nhs_number

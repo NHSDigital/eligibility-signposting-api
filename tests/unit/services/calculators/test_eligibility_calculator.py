@@ -40,6 +40,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     UrlLabel,
     UrlLink,
 )
+from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
 from tests.fixtures.builders.model import rule as rule_builder
 from tests.fixtures.builders.repos.person import person_rows_builder
@@ -956,12 +957,12 @@ def test_status_on_cohort_attribute_level(
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
 
-    person_row: list[dict[str, Any]] = person_rows_builder(
-        nhs_number, cohorts=["cohort1", "covid_eligibility_complaint_list"]
-    )
-    person_row_with_extra_items_in_cohort_row = [
-        {**r, "LOCATION": "HP1"} for r in person_row if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"
-    ]
+    person_row: Person = person_rows_builder(nhs_number, cohorts=["cohort1", "covid_eligibility_complaint_list"])
+
+    person_row_with_extra_items_in_cohort_row = Person(person_row.data)
+    for row in person_row_with_extra_items_in_cohort_row.data:
+        if row.get("ATTRIBUTE_TYPE", "") == "COHORTS":
+            row["LOCATION"] = "HP1"
 
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(

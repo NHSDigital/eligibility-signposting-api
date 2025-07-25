@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from _operator import attrgetter
 from collections import defaultdict
-from collections.abc import Collection, Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from itertools import groupby
-from typing import Any
+from typing import TYPE_CHECKING
 
 from wireup import service
 
@@ -43,19 +42,22 @@ from eligibility_signposting_api.services.calculators.rule_calculator import (
 from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
 from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
 
-Row = Collection[Mapping[str, Any]]
+if TYPE_CHECKING:
+    from collections.abc import Collection, Iterable, Iterator
+
+    from eligibility_signposting_api.model.person import Person
 
 
 @service
 class EligibilityCalculatorFactory:
     @staticmethod
-    def get(person_data: Row, campaign_configs: Collection[CampaignConfig]) -> EligibilityCalculator:
-        return EligibilityCalculator(person_data=person_data, campaign_configs=campaign_configs)
+    def get(person: Person, campaign_configs: Collection[CampaignConfig]) -> EligibilityCalculator:
+        return EligibilityCalculator(person=person, campaign_configs=campaign_configs)
 
 
 @dataclass
 class EligibilityCalculator:
-    person_data: Row
+    person: Person
     campaign_configs: Collection[CampaignConfig]
 
     campaign_evaluator: CampaignEvaluator = field(default_factory=CampaignEvaluator)
@@ -238,7 +240,7 @@ class EligibilityCalculator:
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
             rule_group_list = list(rule_group)
             matcher_matched_list = [
-                RuleCalculator(person_data=self.person_data, rule=rule).evaluate_exclusion()[1].matcher_matched
+                RuleCalculator(person=self.person, rule=rule).evaluate_exclusion()[1].matcher_matched
                 for rule in rule_group_list
             ]
 
@@ -258,7 +260,7 @@ class EligibilityCalculator:
         filter_rules, suppression_rules = self.get_rules_by_type(active_iteration)
         for cohort in sorted(active_iteration.iteration_cohorts, key=attrgetter("priority")):
             # Base Eligibility - check
-            person_cohorts = self.person_data_reader.get_person_cohorts(self.person_data)
+            person_cohorts = self.person_data_reader.get_person_cohorts(self.person)
             if cohort.cohort_label in person_cohorts or cohort.is_magic_cohort:
                 # Eligibility - check
                 if self.is_eligible_by_filter_rules(cohort, cohort_results, filter_rules):
@@ -329,7 +331,7 @@ class EligibilityCalculator:
             if status.is_exclusion:
                 if cohort.cohort_label is not None:
                     cohort_results[cohort.cohort_label] = CohortGroupResult(
-                        (cohort.cohort_group),
+                        cohort.cohort_group,
                         Status.not_eligible,
                         [],
                         cohort.negative_description,
@@ -383,7 +385,7 @@ class EligibilityCalculator:
 
         for rule in rules_group:
             is_rule_stop = rule.rule_stop or is_rule_stop
-            rule_calculator = RuleCalculator(person_data=self.person_data, rule=rule)
+            rule_calculator = RuleCalculator(person=self.person, rule=rule)
             status, reason = rule_calculator.evaluate_exclusion()
             if status.is_exclusion:
                 best_status = eligibility_status.Status.best(status, best_status)
