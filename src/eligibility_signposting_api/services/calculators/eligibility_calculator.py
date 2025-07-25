@@ -16,7 +16,6 @@ from eligibility_signposting_api.model.campaign_config import (
     CampaignID,
     CampaignVersion,
     Iteration,
-    IterationCohort,
     IterationRule,
     RuleName,
     RulePriority,
@@ -41,9 +40,10 @@ from eligibility_signposting_api.services.calculators.rule_calculator import (
 )
 from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
 from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
+from eligibility_signposting_api.services.processors.rule_processor import RuleProcessor
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Iterable, Iterator
+    from collections.abc import Collection
 
     from eligibility_signposting_api.model.person import Person
 
@@ -62,6 +62,7 @@ class EligibilityCalculator:
 
     campaign_evaluator: CampaignEvaluator = field(default_factory=CampaignEvaluator)
     person_data_reader: PersonDataReader = field(default_factory=PersonDataReader)
+    rule_processor: RuleProcessor = field(default_factory=RuleProcessor)
 
     results: list[eligibility_status.Condition] = field(default_factory=list)
 
@@ -87,16 +88,6 @@ class EligibilityCalculator:
         ]
 
         return best_status, best_cohorts
-
-    @staticmethod
-    def get_exclusion_rules(cohort: IterationCohort, filter_rules: Iterable[IterationRule]) -> Iterator[IterationRule]:
-        return (
-            ir
-            for ir in filter_rules
-            if ir.cohort_label is None
-            or cohort.cohort_label == ir.cohort_label
-            or (isinstance(ir.cohort_label, (list, set, tuple)) and cohort.cohort_label in ir.cohort_label)
-        )
 
     @staticmethod
     def get_rules_by_type(
@@ -263,9 +254,9 @@ class EligibilityCalculator:
             person_cohorts = self.person_data_reader.get_person_cohorts(self.person)
             if cohort.cohort_label in person_cohorts or cohort.is_magic_cohort:
                 # Eligibility - check
-                if self.is_eligible_by_filter_rules(cohort, cohort_results, filter_rules):
+                if self.rule_processor.is_eligible(self.person, cohort, cohort_results, filter_rules):
                     # Actionability - evaluation
-                    self.evaluate_suppression_rules(cohort, cohort_results, suppression_rules)
+                    self.rule_processor.is_actionable(self.person, cohort, cohort_results, suppression_rules)
 
             # Not base eligible
             elif cohort.cohort_label is not None:
@@ -315,85 +306,6 @@ class EligibilityCalculator:
                 )
             )
         return conditions
-
-    def is_eligible_by_filter_rules(
-        self,
-        cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
-        filter_rules: Iterable[IterationRule],
-    ) -> bool:
-        is_eligible = True
-        priority_getter = attrgetter("priority")
-        sorted_rules_by_priority = sorted(self.get_exclusion_rules(cohort, filter_rules), key=priority_getter)
-
-        for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
-            status, group_exclusion_reasons, _ = self.evaluate_rules_priority_group(rule_group)
-            if status.is_exclusion:
-                if cohort.cohort_label is not None:
-                    cohort_results[cohort.cohort_label] = CohortGroupResult(
-                        cohort.cohort_group,
-                        Status.not_eligible,
-                        [],
-                        cohort.negative_description,
-                        group_exclusion_reasons,
-                    )
-                is_eligible = False
-                break
-        return is_eligible
-
-    def evaluate_suppression_rules(
-        self,
-        cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
-        suppression_rules: Iterable[IterationRule],
-    ) -> None:
-        is_actionable: bool = True
-        priority_getter = attrgetter("priority")
-        suppression_reasons = []
-
-        sorted_rules_by_priority = sorted(self.get_exclusion_rules(cohort, suppression_rules), key=priority_getter)
-
-        for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
-            status, group_exclusion_reasons, rule_stop = self.evaluate_rules_priority_group(rule_group)
-            if status.is_exclusion:
-                is_actionable = False
-                suppression_reasons.extend(group_exclusion_reasons)
-                if rule_stop:
-                    break
-
-        if cohort.cohort_label is not None:
-            key = cohort.cohort_label
-            if is_actionable:
-                cohort_results[key] = CohortGroupResult(
-                    cohort.cohort_group, Status.actionable, [], cohort.positive_description, suppression_reasons
-                )
-            else:
-                cohort_results[key] = CohortGroupResult(
-                    cohort.cohort_group,
-                    Status.not_actionable,
-                    suppression_reasons,
-                    cohort.positive_description,
-                    suppression_reasons,
-                )
-
-    def evaluate_rules_priority_group(
-        self, rules_group: Iterator[IterationRule]
-    ) -> tuple[eligibility_status.Status, list[eligibility_status.Reason], bool]:
-        is_rule_stop = False
-        exclusion_reasons = []
-        best_status = eligibility_status.Status.not_eligible
-
-        for rule in rules_group:
-            is_rule_stop = rule.rule_stop or is_rule_stop
-            rule_calculator = RuleCalculator(person=self.person, rule=rule)
-            status, reason = rule_calculator.evaluate_exclusion()
-            if status.is_exclusion:
-                best_status = eligibility_status.Status.best(status, best_status)
-                exclusion_reasons.append(reason)
-            else:
-                best_status = eligibility_status.Status.actionable
-
-        return best_status, exclusion_reasons, is_rule_stop
 
     @staticmethod
     def get_actions_from_comms(action_mapper: ActionsMapper, comms: str) -> list[SuggestedAction] | None:
