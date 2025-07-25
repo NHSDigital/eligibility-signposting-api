@@ -14,7 +14,7 @@ request_id_context_var: ContextVar[str | None] = ContextVar("request_id", defaul
 LOG_FORMAT = "%(asctime)s %(levelname)-8s %(name)s %(module)s.py:%(funcName)s():%(lineno)d %(message)s"
 
 
-def add_request_id_to_logs() -> Callable:
+def add_lambda_request_id_to_logger() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any] | None:

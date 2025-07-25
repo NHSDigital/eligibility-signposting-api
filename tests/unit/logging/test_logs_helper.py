@@ -46,13 +46,13 @@ def lambda_context():
     ],
 )
 def test_log_request_ids_decorator_logs_metadata(headers, gateway_request_id, expected_extra, lambda_context, caplog):
-    from eligibility_signposting_api.app import log_request_ids
+    from eligibility_signposting_api.app import log_request_ids_from_headers
 
     event = {"headers": headers}
     if gateway_request_id is not None:
         event["requestContext"] = {"requestId": gateway_request_id}
 
-    @log_request_ids()
+    @log_request_ids_from_headers()
     def test_handler(event, context):  # noqa : ARG001
         logger = logging.getLogger("test_logger")
         logger.info("Inside test handler")

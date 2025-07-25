@@ -47,3 +47,8 @@ variable "log_level" {
   description = "log level"
   type        = string
 }
+
+variable "enable_xray_patching"{
+  description = "flag to enable xray tracing, which puts an entry for dynamodb, s3 and firehose in trace map"
+  type        = string
+}

@@ -24,5 +24,6 @@ module "eligibility_signposting_lambda_function" {
   eligibility_status_table_name   = module.eligibility_status_table.table_name
   kinesis_audit_stream_to_s3_name = module.eligibility_audit_firehose_delivery_stream.firehose_stream_name
   log_level                       = "INFO"
+  enable_xray_patching            = "true"
   stack_name                      = local.stack_name
 }
