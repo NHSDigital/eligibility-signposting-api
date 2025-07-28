@@ -7,38 +7,30 @@
     "category": "VACCINATIONS",
     "conditions": "covid"
   },
-  "config_filenames": ["AUTO_RSV_ELI-320-COVID.json","AUTO_RSV_ELI-320-MMR.json", "AUTO_RSV_ELI-320-SCREENING-1.json", "AUTO_RSV_ELI-320-SCREENING-2.json"],
+  "config_filenames": [
+    "AUTO_RSV_ELI-320-COVID.json",
+    "AUTO_RSV_ELI-320-MMR.json",
+    "AUTO_RSV_ELI-320-SCREENING-1.json",
+    "AUTO_RSV_ELI-320-SCREENING-2.json"
+  ],
   "data": [
     {
       "NHS_NUMBER": "9900032010",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "rsv_cohort": {
-              "M": {
-                "dateJoined": {
-                  "S": "20250604"
-                }
-              }
-            },
-            "covid_cohort": {
-              "M": {
-                "dateJoined": {
-                  "S": "20250604"
-                }
-              }
-            },
-            "FLU_screening_cohort": {
-              "M": {
-                "dateJoined": {
-                  "S": "20250604"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "covid_cohort",
+          "DATE_JOINED": "20231020"
+        },
+        {
+          "COHORT_LABEL": "rsv_cohort",
+          "DATE_JOINED": "20231020"
+        },
+        {
+          "COHORT_LABEL": "FLU_screening_cohort",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
       "NHS_NUMBER": "9900032010",

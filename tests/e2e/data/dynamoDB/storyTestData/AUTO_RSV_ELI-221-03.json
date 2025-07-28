@@ -1,29 +1,22 @@
 {
   "scenario_name": "RSV - RuleStop Not included in rules",
   "request_headers": {
-    "nhs-login-nhs-number": "9900022203"
+    "nhs-login-nhs-number": "9900022103"
   },
   "config_filenames": ["AUTO_RSV_ELI-221-03.json"],
   "data": [
     {
-      "NHS_NUMBER": "9900022203",
+      "NHS_NUMBER": "9900022103",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "eli_221_cohort": {
-              "M": {
-                "dateJoined": {
-                  "S": "20250604"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "eli_221_cohort",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
-      "NHS_NUMBER": "9900022203",
+      "NHS_NUMBER": "9900022103",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "19500601",
       "GENDER": "0",
@@ -41,7 +34,7 @@
       "DE_FLAG": "Y"
     },
     {
-      "NHS_NUMBER": "9900022203",
+      "NHS_NUMBER": "9900022103",
       "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_-7>>",
       "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+7>>",

@@ -1,20 +1,20 @@
 {
-  "scenario_name": "RSV - Regression - Actionable, Single Eligible Cohort",
-  "request_headers": {"nhs-login-nhs-number": "1000000001"},
+  "scenario_name": "RSV - Regression - Not Eligible, In Cohort - Future Date",
+  "request_headers": {"nhs-login-nhs-number": "1100000010"},
   "config_filenames": ["AUTO_RSV_REG_001.json"],
   "data": [
     {
-      "NHS_NUMBER": "1000000001",
+      "NHS_NUMBER": "1100000010",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [
         {
           "COHORT_LABEL": "rsv_cohort_2",
-          "DATE_JOINED": "20231020"
+          "DATE_JOINED": "<<DATE_DAY_1>>"
         }
       ]
     },
     {
-      "NHS_NUMBER": "1000000001",
+      "NHS_NUMBER": "1100000010",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",

@@ -7,22 +7,15 @@
     "AUTO_RSV_ELI-295-3.json"
   ],
   "data": [
-    {
+   {
       "NHS_NUMBER": "9900029515",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "eli_295_cohort": {
-              "M": {
-                "dateJoined": {
-                  "S": "20250604"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "eli_295_cohort",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
       "NHS_NUMBER": "9900029515",

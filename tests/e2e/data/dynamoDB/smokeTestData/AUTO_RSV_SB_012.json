@@ -9,13 +9,6 @@
   "data": [
     {
       "NHS_NUMBER": "5000000012",
-      "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {}
-      }
-    },
-    {
-      "NHS_NUMBER": "5000000012",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_50>>",
       "GENDER": "0",

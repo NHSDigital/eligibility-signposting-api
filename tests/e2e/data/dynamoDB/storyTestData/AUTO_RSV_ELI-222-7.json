@@ -1,29 +1,24 @@
 {
-  "scenario_name": "ELI-295 - NotEligible -Trigger an highest prio X Rule",
+  "scenario_name": "RSV - Magic Cohort - NotEligible - In Eligible Cohort - Filtered by age rule",
   "request_headers": {
-    "nhs-login-nhs-number": "9900029516"
+    "nhs-login-nhs-number": "9900002227"
   },
-  "config_filenames": ["AUTO_RSV_ELI-295-4.json"],
+  "config_filenames": [
+    "AUTO_RSV_ELI-222.json"
+  ],
   "data": [
     {
-      "NHS_NUMBER": "9900029516",
+      "NHS_NUMBER": "9900002227",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "eli_295_cohort": {
-              "M": {
-                "dateJoined": {
-                  "S": "20250604"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "rsv_75to79",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
-      "NHS_NUMBER": "9900029516",
+      "NHS_NUMBER": "9900002227",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_74>>",
       "GENDER": "0",

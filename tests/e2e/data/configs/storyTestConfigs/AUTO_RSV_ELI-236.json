@@ -129,7 +129,7 @@
             "Priority": 1008,
             "AttributeLevel": "TARGET",
             "AttributeTarget": "RSV",
-            "AttributeName": "LAST_INVITE_DATE",
+            "AttributeName": "LAST_VALID_DOSE_DATE",
             "Operator": "Y<",
             "Comparator": "-5[[NVL:<<DATE_YEAR_-6>>]]"
           }

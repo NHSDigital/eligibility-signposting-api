@@ -10,19 +10,12 @@
     {
       "NHS_NUMBER": "9900023602",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "eli_236_cohort": {
-              "M": {
-                "dateJoined": {
-                  "S": "20230515"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "eli_236_cohort",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
       "NHS_NUMBER": "9900023602",
@@ -44,7 +37,7 @@
       "POSTCODE_SECTOR": null
     },
     {
-      "NHS_NUMBER": "9411876722",
+      "NHS_NUMBER": "9900023602",
       "ATTRIBUTE_TYPE": "RSV",
       "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_-11>>",
       "BOOKED_APPOINTMENT_PROVIDER": null,

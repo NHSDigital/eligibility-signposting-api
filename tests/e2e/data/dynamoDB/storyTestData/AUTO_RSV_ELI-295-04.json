@@ -1,14 +1,23 @@
 {
-  "scenario_name": "RSV - Magic Cohort Has a Past RSV Vaccination - Future Booking",
+  "scenario_name": "ELI-295 - Not Eligible -Trigger the Default X Rule",
+  "note": "triggers the default due to being 75",
   "request_headers": {
-    "nhs-login-nhs-number": "9900022203"
+    "nhs-login-nhs-number": "9900029504"
   },
-  "config_filenames": [
-    "AUTO_RSV_ELI-222.json"
-  ],
+  "config_filenames": ["AUTO_RSV_ELI-295-2.json"],
   "data": [
+     {
+      "NHS_NUMBER": "9900029504",
+      "ATTRIBUTE_TYPE": "COHORTS",
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "other_cohort",
+          "DATE_JOINED": "20231020"
+        }
+      ]
+    },
     {
-      "NHS_NUMBER": "9900022203",
+      "NHS_NUMBER": "9900029504",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
@@ -24,13 +33,6 @@
       "13Q_FLAG": "N",
       "CARE_HOME_FLAG": "N",
       "DE_FLAG": "N"
-    },
-    {
-      "NHS_NUMBER": "9900022203",
-      "ATTRIBUTE_TYPE": "RSV",
-      "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_-7>>",
-      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+7>>",
-      "BOOKED_APPOINTMENT_PROVIDER": "ACC"
     }
   ]
 }

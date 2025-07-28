@@ -1,31 +1,26 @@
 {
   "scenario_name": "RSV - Magic Cohort Has a Past RSV Vaccination - No Booking",
   "request_headers": {
-    "nhs-login-nhs-number": "9900002224"
+    "nhs-login-nhs-number": "9900022204"
   },
-  "config_filenames": ["AUTO_RSV_ELI-222.json"],
+  "config_filenames": [
+    "AUTO_RSV_ELI-222.json"
+  ],
   "data": [
     {
-      "NHS_NUMBER": "9900002224",
+      "NHS_NUMBER": "9900022204",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "other_cohort": {
-              "M": {
-                "dateJoined": {
-                  "S": "20250604"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "other_cohort",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
-      "NHS_NUMBER": "9900002224",
+      "NHS_NUMBER": "9900022204",
       "ATTRIBUTE_TYPE": "PERSON",
-      "DATE_OF_BIRTH": "19500601",
+      "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
       "POSTCODE": "SG8 6EG",
       "POSTCODE_SECTOR": "SG86",
@@ -41,7 +36,7 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "9900002224",
+      "NHS_NUMBER": "9900022204",
       "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_-7>>"
     }

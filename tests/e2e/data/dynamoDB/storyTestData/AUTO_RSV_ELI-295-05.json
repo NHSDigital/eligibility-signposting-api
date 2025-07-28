@@ -1,29 +1,22 @@
 {
-  "scenario_name": "ELI-295 - Not Actionable - Blank (\"\") Default Y Rule - No Actions",
+  "scenario_name": "ELI-295 - Not Actionable -Trigger the Default Y Rule",
   "request_headers": {
-    "nhs-login-nhs-number": "9900029502"
+    "nhs-login-nhs-number": "9900029505"
   },
-  "config_filenames": ["AUTO_RSV_ELI-295-1.json"],
+  "config_filenames": ["AUTO_RSV_ELI-295-2.json"],
   "data": [
-    {
-      "NHS_NUMBER": "9900029502",
+     {
+      "NHS_NUMBER": "9900029505",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "eli_295_cohort": {
-              "M": {
-                "dateJoined": {
-                  "S": "20250604"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "eli_295_cohort",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
-      "NHS_NUMBER": "9900029502",
+      "NHS_NUMBER": "9900029505",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",

@@ -10,19 +10,12 @@
     {
       "NHS_NUMBER": "5000000005",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "no_group_description": {
-              "M": {
-                "dateJoined": {
-                  "S": "20230515"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "no_group_description",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
       "NHS_NUMBER": "5000000005",

@@ -6,26 +6,16 @@
     {
       "NHS_NUMBER": "1000000002",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "rsv_cohort_2": {
-              "M": {
-                "dateJoined": {
-                  "S": "20230515"
-                }
-              }
-            },
-            "rsv_cohort_3": {
-              "M": {
-                "dateJoined": {
-                  "S": "20230515"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "rsv_cohort_2",
+          "DATE_JOINED": "20231020"
+        },
+         {
+          "COHORT_LABEL": "rsv_cohort_3",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
       "NHS_NUMBER": "1000000002",

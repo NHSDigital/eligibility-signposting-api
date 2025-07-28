@@ -11,26 +11,16 @@
     {
       "NHS_NUMBER": "9990032040",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "rsv_cohort": {
-              "M": {
-                "dateJoined": {
-                  "S": "20250604"
-                }
-              }
-            },
-            "covid_cohort": {
-              "M": {
-                "dateJoined": {
-                  "S": "20250604"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "covid_cohort",
+          "DATE_JOINED": "20231020"
+        },
+        {
+          "COHORT_LABEL": "rsv_cohort",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
       "NHS_NUMBER": "9990032040",

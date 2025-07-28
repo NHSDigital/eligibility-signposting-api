@@ -4,31 +4,24 @@
     "AUTO_RSV_ELI-317-5.json"
   ],
   "request_headers": {
-    "nhs-login-nhs-number": "9000000010"
+    "nhs-login-nhs-number": "9900031705"
   },
   "query_params": {
     "includeActions": "Y"
   },
   "data": [
     {
-      "NHS_NUMBER": "9000000010",
+      "NHS_NUMBER": "9900031705",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "eli_317_cohort_5": {
-              "M": {
-                "dateJoined": {
-                  "S": "20230515"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "eli_317_cohort_5",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
-      "NHS_NUMBER": "9000000010",
+      "NHS_NUMBER": "9900031705",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",

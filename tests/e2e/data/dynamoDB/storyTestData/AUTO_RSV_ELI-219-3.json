@@ -4,28 +4,21 @@
     "AUTO_RSV_ELI-219-3.json"
   ],
   "request_headers": {
-    "nhs-login-nhs-number": "9000000005"
+    "nhs-login-nhs-number": "9900021903"
   },
   "data": [
-    {
-      "NHS_NUMBER": "9000000005",
+{
+      "NHS_NUMBER": "9900021903",
       "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MAP": {
-        "cohorts": {
-          "M": {
-            "eli_291_cohort_3": {
-              "M": {
-                "dateJoined": {
-                  "S": "20230515"
-                }
-              }
-            }
-          }
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "eli_291_cohort_3",
+          "DATE_JOINED": "20231020"
         }
-      }
+      ]
     },
     {
-      "NHS_NUMBER": "9000000005",
+      "NHS_NUMBER": "9900021903",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
@@ -43,7 +36,7 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "9000000005",
+      "NHS_NUMBER": "9900021903",
       "ATTRIBUTE_TYPE": "RSV",
       "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+5>>",
       "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_+5>>"
