@@ -17,7 +17,7 @@ class CohortEligibilityHandler(ABC):
     """Abstract base class for eligibility/actionability handlers."""
 
     def __init__(self, next_handler: CohortEligibilityHandler | None = None) -> None:
-        self._next_handler = next_handler
+        self.next_handler = next_handler
 
     @abstractmethod
     def handle(
@@ -29,7 +29,7 @@ class CohortEligibilityHandler(ABC):
     ) -> None:
         """Handles a part of the eligibility/actionability check or passes to the next handler."""
 
-    def _pass_to_next(
+    def pass_to_next(
         self,
         person: Person,
         cohort: IterationCohort,
@@ -37,8 +37,8 @@ class CohortEligibilityHandler(ABC):
         rules_processor: RuleProcessor,
     ) -> None:
         """Passes the request to the next handler in the chain if one exists."""
-        if self._next_handler:
-            self._next_handler.handle(person, cohort, cohort_results, rules_processor)
+        if self.next_handler:
+            self.next_handler.handle(person, cohort, cohort_results, rules_processor)
 
 
 class BaseEligibilityHandler(CohortEligibilityHandler):
@@ -61,7 +61,7 @@ class BaseEligibilityHandler(CohortEligibilityHandler):
             )
             return
 
-        self._pass_to_next(person, cohort, cohort_results, rules_processor)
+        self.pass_to_next(person, cohort, cohort_results, rules_processor)
 
 
 class FilterRuleHandler(CohortEligibilityHandler):
@@ -71,7 +71,7 @@ class FilterRuleHandler(CohortEligibilityHandler):
         self, filter_rules: Iterable[IterationRule], next_handler: CohortEligibilityHandler | None = None
     ) -> None:
         super().__init__(next_handler)
-        self._filter_rules = filter_rules
+        self.filter_rules = filter_rules
 
     def handle(
         self,
@@ -80,10 +80,10 @@ class FilterRuleHandler(CohortEligibilityHandler):
         cohort_results: dict[str, CohortGroupResult],
         rules_processor: RuleProcessor,
     ) -> None:
-        if not rules_processor.is_eligible(person, cohort, cohort_results, self._filter_rules):
+        if not rules_processor.is_eligible(person, cohort, cohort_results, self.filter_rules):
             return
 
-        self._pass_to_next(person, cohort, cohort_results, rules_processor)
+        self.pass_to_next(person, cohort, cohort_results, rules_processor)
 
 
 class SuppressionRuleHandler(CohortEligibilityHandler):
@@ -93,7 +93,7 @@ class SuppressionRuleHandler(CohortEligibilityHandler):
         self, suppression_rules: Iterable[IterationRule], next_handler: CohortEligibilityHandler | None = None
     ) -> None:
         super().__init__(next_handler)
-        self._suppression_rules = suppression_rules
+        self.suppression_rules = suppression_rules
 
     def handle(
         self,
@@ -102,4 +102,4 @@ class SuppressionRuleHandler(CohortEligibilityHandler):
         cohort_results: dict[str, CohortGroupResult],
         rules_processor: RuleProcessor,
     ) -> None:
-        rules_processor.is_actionable(person, cohort, cohort_results, self._suppression_rules)
+        rules_processor.is_actionable(person, cohort, cohort_results, self.suppression_rules)

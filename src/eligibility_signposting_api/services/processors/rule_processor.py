@@ -31,6 +31,11 @@ class RuleProcessor:
 
     person_data_reader: PersonDataReader = field(default_factory=PersonDataReader)
 
+
+    def is_base_eligible(self, person: Person, cohort: IterationCohort) -> bool:
+        person_cohorts = self.person_data_reader.get_person_cohorts(person)
+        return cohort.cohort_label in person_cohorts or cohort.is_magic_cohort
+
     def is_eligible(
         self,
         person: Person,
@@ -131,12 +136,8 @@ class RuleProcessor:
         cohort_base_handler = BaseEligibilityHandler(next_handler=filter_handler)
 
         for cohort in sorted(active_iteration.iteration_cohorts, key=attrgetter("priority")):
-            cohort_base_handler.handle(
-                person,
-                cohort,
-                cohort_results,
-                self,
-            )
+            cohort_base_handler.handle(person, cohort, cohort_results, self)
+
         return cohort_results
 
     def get_not_base_eligible_results(
@@ -150,10 +151,6 @@ class RuleProcessor:
             [],
         )
         return cohort_results
-
-    def is_base_eligible(self, person: Person, cohort: IterationCohort) -> bool:
-        person_cohorts = self.person_data_reader.get_person_cohorts(person)
-        return cohort.cohort_label in person_cohorts or cohort.is_magic_cohort
 
     @staticmethod
     def get_rules_by_type(active_iteration: Iteration) -> tuple[tuple[IterationRule, ...], tuple[IterationRule, ...]]:
