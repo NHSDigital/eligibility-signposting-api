@@ -31,7 +31,6 @@ class RuleProcessor:
 
     person_data_reader: PersonDataReader = field(default_factory=PersonDataReader)
 
-
     def is_base_eligible(self, person: Person, cohort: IterationCohort) -> bool:
         person_cohorts = self.person_data_reader.get_person_cohorts(person)
         return cohort.cohort_label in person_cohorts or cohort.is_magic_cohort
