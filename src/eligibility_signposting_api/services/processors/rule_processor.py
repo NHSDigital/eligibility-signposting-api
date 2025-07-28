@@ -130,9 +130,11 @@ class RuleProcessor:
         cohort_results: dict[str, CohortGroupResult] = {}
         filter_rules, suppression_rules = self.get_rules_by_type(active_iteration)
 
-        suppression_handler = SuppressionRuleHandler(suppression_rules=suppression_rules)
-        filter_handler = FilterRuleHandler(filter_rules=filter_rules, next_handler=suppression_handler)
-        cohort_base_handler = BaseEligibilityHandler(next_handler=filter_handler)
+        cohort_base_handler = BaseEligibilityHandler()
+        filter_rule_handler = FilterRuleHandler(filter_rules=filter_rules)
+        suppression_rule_handler = SuppressionRuleHandler(suppression_rules=suppression_rules)
+
+        cohort_base_handler.next(filter_rule_handler).next(suppression_rule_handler)
 
         for cohort in sorted(active_iteration.iteration_cohorts, key=attrgetter("priority")):
             cohort_base_handler.handle(person, cohort, cohort_results, self)

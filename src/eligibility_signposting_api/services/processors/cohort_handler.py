@@ -29,6 +29,12 @@ class CohortEligibilityHandler(ABC):
     ) -> None:
         """Handles a part of the eligibility/actionability check or passes to the next handler."""
 
+    def next(self, next_handler: CohortEligibilityHandler) -> CohortEligibilityHandler:
+        """Sets the next handler in the chain and returns this handler for chaining."""
+        self.next_handler = next_handler
+        return next_handler
+
+
     def pass_to_next(
         self,
         person: Person,
