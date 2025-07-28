@@ -5,6 +5,8 @@ from itertools import groupby
 from operator import attrgetter
 from typing import TYPE_CHECKING
 
+from wireup import service
+
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import Iteration, IterationCohort, IterationRule, RuleType
 from eligibility_signposting_api.model.eligibility_status import CohortGroupResult, Status
@@ -17,18 +19,22 @@ if TYPE_CHECKING:
     from eligibility_signposting_api.model.person import Person
 
 
+@service
 @dataclass
 class RuleProcessor:
     """Handles the processing and evaluation of different rules (filter, suppression) against person data."""
 
     person_data_reader: PersonDataReader = field(default_factory=PersonDataReader)
 
+    def __wireup_init__(self, person_data_reader: PersonDataReader) -> None:
+        self.person_data_reader = person_data_reader
+
     def is_eligible(
-        self,
-        person: Person,
-        cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
-        filter_rules: Iterable[IterationRule],
+            self,
+            person: Person,
+            cohort: IterationCohort,
+            cohort_results: dict[str, CohortGroupResult],
+            filter_rules: Iterable[IterationRule],
     ) -> bool:
         is_eligible = True
         priority_getter = attrgetter("priority")
@@ -50,11 +56,11 @@ class RuleProcessor:
         return is_eligible
 
     def is_actionable(
-        self,
-        person: Person,
-        cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
-        suppression_rules: Iterable[IterationRule],
+            self,
+            person: Person,
+            cohort: IterationCohort,
+            cohort_results: dict[str, CohortGroupResult],
+            suppression_rules: Iterable[IterationRule],
     ) -> None:
         is_actionable: bool = True
         priority_getter = attrgetter("priority")
@@ -86,7 +92,7 @@ class RuleProcessor:
                 )
 
     def evaluate_rules_priority_group(
-        self, person: Person, rules_group: Iterator[IterationRule]
+            self, person: Person, rules_group: Iterator[IterationRule]
     ) -> tuple[eligibility_status.Status, list[eligibility_status.Reason], bool]:
         is_rule_stop = False
         exclusion_reasons = []
@@ -110,11 +116,10 @@ class RuleProcessor:
             ir
             for ir in rules
             if ir.cohort_label is None
-            or cohort.cohort_label == ir.cohort_label
-            or (isinstance(ir.cohort_label, (list, set, tuple)) and cohort.cohort_label in ir.cohort_label)
+               or cohort.cohort_label == ir.cohort_label
+               or (isinstance(ir.cohort_label, (list, set, tuple)) and cohort.cohort_label in ir.cohort_label)
         )
 
-    # TODO: add unit tests
     def get_cohort_group_results(self, person: Person, active_iteration: Iteration) -> dict[str, CohortGroupResult]:
         cohort_results: dict[str, CohortGroupResult] = {}
         filter_rules, suppression_rules = self.get_rules_by_type(active_iteration)
@@ -129,7 +134,7 @@ class RuleProcessor:
         return cohort_results
 
     def get_not_base_eligible_results(
-        self, cohort: IterationCohort, cohort_results: dict[str, CohortGroupResult]
+            self, cohort: IterationCohort, cohort_results: dict[str, CohortGroupResult]
     ) -> dict[str, CohortGroupResult]:
         cohort_results[cohort.cohort_label] = CohortGroupResult(
             cohort.cohort_group,
