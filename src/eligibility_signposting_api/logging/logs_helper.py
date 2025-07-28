@@ -8,12 +8,12 @@ from mangum.types import LambdaContext, LambdaEvent
 logger = logging.getLogger(__name__)
 
 
-def log_request_ids() -> Callable:
+def log_request_ids_from_headers() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any] | None:
-            gateway_request_id = event.get("requestContext", {}).get("requestId")
-            headers = event.get("headers", {})
+            gateway_request_id = (event.get("requestContext") or {}).get("requestId")
+            headers = event.get("headers") or {}
             logger.info(
                 "request trace metadata",
                 extra={
