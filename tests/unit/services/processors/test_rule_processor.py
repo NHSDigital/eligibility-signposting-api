@@ -1,7 +1,7 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from hamcrest import assert_that, has_length, is_
+from hamcrest import assert_that, empty, has_length, is_
 
 from eligibility_signposting_api.model.campaign_config import RuleType
 from eligibility_signposting_api.model.eligibility_status import CohortGroupResult, Reason, Status
@@ -19,9 +19,7 @@ def mock_person_data_reader():
 
 @pytest.fixture
 def rule_processor(mock_person_data_reader):
-    processor = RuleProcessor()
-    processor.__wireup_init__(person_data_reader=mock_person_data_reader)
-    return processor
+    return RuleProcessor(mock_person_data_reader)
 
 
 MOCK_PERSON_DATA = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
@@ -302,7 +300,7 @@ def test_evaluate_suppression_rules_does_not_stop_on_rule_stop_when_status_is_ac
     assert_that(mock_get_exclusion_rules.call_count, is_(1))
 
 
-def test_is_base_eligible():
+def test_is_base_eligible(mock_person_data_reader):
     person = Person(
         [
             {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
@@ -316,14 +314,16 @@ def test_is_base_eligible():
         ]
     )
 
-    rule_processor = RuleProcessor()
+    rule_processor = RuleProcessor(mock_person_data_reader)
+    mock_person_data_reader.get_person_cohorts.return_value = {"COHORT_A", "COHORT_C"}
 
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
 
     assert_that(rule_processor.is_base_eligible(person, cohort), is_(True))
+    mock_person_data_reader.get_person_cohorts.assert_called_once_with(person)
 
 
-def test_is_not_base_eligible():
+def test_is_not_base_eligible(mock_person_data_reader):
     person = Person(
         [
             {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
@@ -336,29 +336,16 @@ def test_is_not_base_eligible():
         ]
     )
 
-    rule_processor = RuleProcessor()
+    rule_processor = RuleProcessor(mock_person_data_reader)
+    mock_person_data_reader.get_person_cohorts.return_value = {"COHORT_C"}
 
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
 
     assert_that(rule_processor.is_base_eligible(person, cohort), is_(False))
+    mock_person_data_reader.get_person_cohorts.assert_called_once_with(person)
 
 
-def test_gets_not_base_eligible_results_when_there_is_a_cohort_label():
-    rule_processor = RuleProcessor()
-
-    cohort = rule_builder.IterationCohortFactory.build(
-        cohort_label="COHORT_A", cohort_group="COHORT_GROUP", negative_description="Not Base Eligible"
-    )
-
-    actual = rule_processor.get_not_base_eligible_results(cohort, {})
-
-    expected = {"COHORT_A": CohortGroupResult("COHORT_GROUP", Status.not_eligible, [], "Not Base Eligible", [])}
-    assert_that(actual, is_(expected))
-
-
-def test_rules_get_group_by_types_of_rules():
-    rule_processor = RuleProcessor()
-
+def test_rules_get_group_by_types_of_rules(rule_processor):
     active_iteration = rule_builder.IterationFactory.build()
     iteration_rules = active_iteration.iteration_rules
     iteration_rules.append(rule_builder.IterationRuleFactory.build())
@@ -376,117 +363,110 @@ def test_rules_get_group_by_types_of_rules():
     assert_that(rules_by_type[1][0].type, is_(RuleType.suppression))
 
 
-@patch.object(RuleProcessor, "is_actionable")
-@patch.object(RuleProcessor, "is_eligible")
-@patch.object(RuleProcessor, "is_base_eligible")
-@patch.object(RuleProcessor, "get_rules_by_type")
-def test_get_cohort_group_results_is_actionable(
-    mock_get_rules_by_type,
-    mock_is_base_eligible,
-    mock_is_eligible,
-    mock_is_actionable,
-    rule_processor,
-):
-    person = Person([])
-    cohort1 = rule_builder.IterationCohortFactory.build(
-        cohort_label="cohort1", cohort_group="group1", positive_description="Positive description"
-    )
-    active_iteration = rule_builder.IterationFactory.build(iteration_cohorts=[cohort1])
+@patch.object(RuleProcessor, "evaluate_rules_priority_group")
+@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+def test_is_eligible_by_filter_rules(mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor):
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
+    cohort_results = {}
+    filter_rule = rule_builder.IterationRuleFactory.build(priority=1, type=RuleType.filter)
+    filter_rules = [filter_rule]
 
-    mock_filter_rules = [Mock()]
-    mock_get_rules_by_type.return_value = (mock_filter_rules, [])
-    mock_is_base_eligible.return_value = True
-    mock_is_eligible.return_value = True
+    mock_evaluate_rules_priority_group.return_value = (Status.actionable, [], False)
 
-    def mock_is_actionable_side_effect(person1, cohort, cohort_results, suitability_rules):  # noqa: ARG001
+    is_eligible = rule_processor.is_eligible(MOCK_PERSON_DATA, cohort, cohort_results, filter_rules)
+
+    assert_that(is_eligible, is_(True))
+    assert_that(cohort_results, is_({}))
+    mock_get_exclusion_rules.assert_called_once_with(cohort, filter_rules)
+    mock_evaluate_rules_priority_group.assert_called_once()
+
+
+@patch.object(RuleProcessor, "evaluate_rules_priority_group")
+@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+def test_is_not_eligible_by_filter_rules(mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor):
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A", negative_description="Not Eligible")
+    cohort_results = {}
+    filter_rule = rule_builder.IterationRuleFactory.build(priority=1, type=RuleType.filter, name="F1")
+    filter_rules = [filter_rule]
+    mock_reason = ReasonFactory.build(rule_name="F1_Reason")
+
+    def mock_evaluate_side_effect(person, rules_group):  # noqa: ARG001
         cohort_results[cohort.cohort_label] = CohortGroupResult(
-            cohort.cohort_group, Status.actionable, [], cohort.positive_description, []
+            cohort.cohort_group,
+            Status.not_eligible,
+            [],
+            cohort.negative_description,
+            [mock_reason],
         )
+        return Status.not_eligible, [mock_reason], False
 
-    mock_is_actionable.side_effect = mock_is_actionable_side_effect
+    mock_evaluate_rules_priority_group.side_effect = mock_evaluate_side_effect
 
-    results = rule_processor.get_cohort_group_results(person, active_iteration)
+    is_eligible = rule_processor.is_eligible(MOCK_PERSON_DATA, cohort, cohort_results, filter_rules)
 
-    assert_that(results, has_length(1))
-    assert_that(results["cohort1"].status, is_(Status.actionable))
-    assert_that(results["cohort1"].description, is_("Positive description"))
-
-    mock_get_rules_by_type.assert_called_once_with(active_iteration)
-    mock_is_base_eligible.assert_called_once_with(person, cohort1)
-
-    mock_is_eligible.assert_called_once_with(person, cohort1, results, mock_filter_rules)
-    mock_is_actionable.assert_called_once_with(person, cohort1, results, [])
+    assert_that(is_eligible, is_(False))
+    assert_that(cohort_results, has_length(1))
+    assert_that(cohort_results["COHORT_A"].status, is_(Status.not_eligible))
+    assert_that(cohort_results["COHORT_A"].description, is_("Not Eligible"))
+    assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason]))
+    mock_get_exclusion_rules.assert_called_once_with(cohort, filter_rules)
+    mock_evaluate_rules_priority_group.assert_called_once()
 
 
-@patch.object(RuleProcessor, "is_actionable")
-@patch.object(RuleProcessor, "is_eligible")
-@patch.object(RuleProcessor, "is_base_eligible")
-@patch.object(RuleProcessor, "get_rules_by_type")
-def test_get_cohort_group_results_not_base_eligible(
-    mock_get_rules_by_type,
-    mock_is_base_eligible,
-    mock_is_eligible,
-    mock_is_actionable,
-    rule_processor,
+@patch.object(RuleProcessor, "evaluate_rules_priority_group")
+@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+def test_is_actionable_by_suppression_rules(
+    mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor
 ):
-    person = Person([])
-    cohort1 = rule_builder.IterationCohortFactory.build(
-        cohort_label="cohort1", cohort_group="group1", negative_description="Negative description"
-    )
-    active_iteration = rule_builder.IterationFactory.build(iteration_cohorts=[cohort1])
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A", positive_description="Actionable")
+    cohort_results = {}
+    suppression_rule = rule_builder.IterationRuleFactory.build(priority=1, type=RuleType.suppression)
+    suppression_rules = [suppression_rule]
 
-    mock_get_rules_by_type.return_value = ([], [])
-    mock_is_base_eligible.return_value = False
+    mock_evaluate_rules_priority_group.return_value = (Status.actionable, [], False)
 
-    results = rule_processor.get_cohort_group_results(person, active_iteration)
+    rule_processor.is_actionable(MOCK_PERSON_DATA, cohort, cohort_results, suppression_rules)
 
-    assert_that(results, has_length(1))
-    assert_that(results["cohort1"].status, is_(Status.not_eligible))
-    assert_that(results["cohort1"].description, is_("Negative description"))
-
-    mock_get_rules_by_type.assert_called_once_with(active_iteration)
-    mock_is_base_eligible.assert_called_once_with(person, cohort1)
-    mock_is_eligible.assert_not_called()
-    mock_is_actionable.assert_not_called()
+    assert_that(cohort_results, has_length(1))
+    assert_that(cohort_results["COHORT_A"].status, is_(Status.actionable))
+    assert_that(cohort_results["COHORT_A"].description, is_("Actionable"))
+    assert_that(cohort_results["COHORT_A"].reasons, is_(empty()))
+    assert_that(cohort_results["COHORT_A"].audit_rules, is_(empty()))
+    mock_get_exclusion_rules.assert_called_once_with(cohort, suppression_rules)
+    mock_evaluate_rules_priority_group.assert_called_once()
 
 
-@patch.object(RuleProcessor, "is_actionable")
-@patch.object(RuleProcessor, "is_eligible")
-@patch.object(RuleProcessor, "is_base_eligible")
-@patch.object(RuleProcessor, "get_rules_by_type")
-def test_get_cohort_group_results_not_eligible_by_filter(
-    mock_get_rules_by_type,
-    mock_is_base_eligible,
-    mock_is_eligible,
-    mock_is_actionable,
-    rule_processor,
+@patch.object(RuleProcessor, "evaluate_rules_priority_group")
+@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+def test_is_not_actionable_by_suppression_rules(
+    mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor
 ):
-    person = Person([])
-    cohort1 = rule_builder.IterationCohortFactory.build(
-        cohort_label="cohort1", cohort_group="group1", negative_description="Negative description"
+    cohort = rule_builder.IterationCohortFactory.build(
+        cohort_label="COHORT_A", positive_description="Positive Description"
     )
-    active_iteration = rule_builder.IterationFactory.build(iteration_cohorts=[cohort1])
+    cohort_results = {}
+    suppression_rule = rule_builder.IterationRuleFactory.build(priority=1, type=RuleType.suppression, name="S1")
+    suppression_rules = [suppression_rule]
+    mock_reason = ReasonFactory.build(rule_name="S1_Reason")
 
-    mock_filter_rules = [Mock()]
-    mock_get_rules_by_type.return_value = (mock_filter_rules, [])
-    mock_is_base_eligible.return_value = True
-
-    def mock_is_eligible_side_effect(person_mock, cohort, cohort_results, filter_rules):  # noqa: ARG001
+    def mock_evaluate_side_effect(person, rules_group):  # noqa: ARG001
         cohort_results[cohort.cohort_label] = CohortGroupResult(
-            cohort.cohort_group, Status.not_eligible, [], cohort.negative_description, []
+            cohort.cohort_group,
+            Status.not_actionable,
+            [mock_reason],
+            cohort.positive_description,
+            [mock_reason],
         )
-        return False
+        return Status.not_actionable, [mock_reason], False
 
-    mock_is_eligible.side_effect = mock_is_eligible_side_effect
+    mock_evaluate_rules_priority_group.side_effect = mock_evaluate_side_effect
 
-    results = rule_processor.get_cohort_group_results(person, active_iteration)
+    rule_processor.is_actionable(MOCK_PERSON_DATA, cohort, cohort_results, suppression_rules)
 
-    assert_that(results, has_length(1))
-    assert_that(results["cohort1"].status, is_(Status.not_eligible))
-    assert_that(results["cohort1"].description, is_("Negative description"))
-
-    mock_get_rules_by_type.assert_called_once_with(active_iteration)
-    mock_is_base_eligible.assert_called_once_with(person, cohort1)
-
-    mock_is_eligible.assert_called_once_with(person, cohort1, results, mock_filter_rules)
-    mock_is_actionable.assert_not_called()
+    assert_that(cohort_results, has_length(1))
+    assert_that(cohort_results["COHORT_A"].status, is_(Status.not_actionable))
+    assert_that(cohort_results["COHORT_A"].description, is_("Positive Description"))
+    assert_that(cohort_results["COHORT_A"].reasons, is_([mock_reason]))
+    assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason]))
+    mock_get_exclusion_rules.assert_called_once_with(cohort, suppression_rules)
+    mock_evaluate_rules_priority_group.assert_called_once()
