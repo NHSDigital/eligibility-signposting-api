@@ -34,7 +34,6 @@ class CohortEligibilityHandler(ABC):
         self.next_handler = next_handler
         return next_handler
 
-
     def pass_to_next(
         self,
         person: Person,
