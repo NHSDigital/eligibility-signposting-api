@@ -103,18 +103,18 @@ class EligibilityCalculator:
         action_mapper = active_iteration.actions_mapper
         return action_rules, action_mapper, default_comms
 
-    def evaluate_eligibility(
+    def get_eligibility_status(
         self, include_actions: str, conditions: list[str], category: str
     ) -> eligibility_status.EligibilityStatus:
         include_actions_flag = include_actions.upper() == "Y"
         condition_results: dict[ConditionName, IterationResult] = {}
-        actions: list[SuggestedAction] | None = []
         action_rule_priority, action_rule_name = None, None
 
         requested_grouped_campaigns = self.campaign_evaluator.get_requested_grouped_campaigns(
             self.campaign_configs, conditions, category
         )
         for condition_name, campaign_group in requested_grouped_campaigns:
+            actions: list[SuggestedAction] | None = []
             best_active_iteration: Iteration | None
             best_candidate: IterationResult
             best_campaign_id: CampaignID | None
@@ -169,8 +169,6 @@ class EligibilityCalculator:
 
             # add actions to condition results
             condition_results[condition_name].actions = actions
-            # reset actions for the next condition
-            actions: list[SuggestedAction] | None = []
 
             # add audit data
             AuditContext.append_audit_condition(
