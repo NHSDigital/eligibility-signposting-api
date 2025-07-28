@@ -141,7 +141,7 @@ jobs:
       #     asset_name: lambda-${{ needs.metadata.outputs.version }}.zip
       #     asset_content_type: application/zip
       - name: "Notify Slack on PR merge"
-        uses: slackapi/slack-github-action@v2.1.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: webhook-trigger
