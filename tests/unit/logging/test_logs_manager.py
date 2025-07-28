@@ -11,7 +11,7 @@ from mangum.types import LambdaContext
 from eligibility_signposting_api.logging.logs_manager import (
     LOG_FORMAT,
     EnrichedJsonFormatter,
-    add_request_id_to_logs,
+    add_lambda_request_id_to_logger,
     request_id_context_var,
 )
 
@@ -21,7 +21,7 @@ def test_decorator_sets_request_id_in_context():
     mock_context = MagicMock()
     mock_context.aws_request_id = test_request_id
 
-    @add_request_id_to_logs()
+    @add_lambda_request_id_to_logger()
     def decorated_handler(event, context):  # noqa : ARG001
         return request_id_context_var.get()
 
@@ -35,7 +35,7 @@ def test_decorator_preserves_function_return_value():
     mock_context = MagicMock()
     mock_context.aws_request_id = "any-id"
 
-    @add_request_id_to_logs()
+    @add_lambda_request_id_to_logger()
     def decorated_handler(event, context):  # noqa : ARG001
         return expected_result
 
@@ -47,7 +47,7 @@ def test_decorator_preserves_function_return_value():
 def test_request_id_context_is_properly_isolated():
     results = {}
 
-    @add_request_id_to_logs()
+    @add_lambda_request_id_to_logger()
     def decorated_handler(event, context):  # noqa : ARG001
         rid = request_id_context_var.get()
         results[threading.current_thread().name] = rid
@@ -86,7 +86,7 @@ def lambda_context():
 
 
 def test_enriched_json_formatter_adds_all_fields(lambda_context):
-    @add_request_id_to_logs()
+    @add_lambda_request_id_to_logger()
     def test_handler(event, context):  # noqa : ARG001
         logger = logging.getLogger("test_logger")
         logger.info("Test log inside handler")
