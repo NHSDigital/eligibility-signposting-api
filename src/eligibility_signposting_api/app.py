@@ -18,7 +18,7 @@ from eligibility_signposting_api.logging.logs_manager import add_lambda_request_
 from eligibility_signposting_api.logging.tracing_helper import tracing_setup
 from eligibility_signposting_api.views import eligibility_blueprint
 
-if os.getenv("ENABLE_XRAY_PATCHING", "false") == "true":
+if os.getenv("ENABLE_XRAY_PATCHING"):
     patch_all()
 
 init_logging()
