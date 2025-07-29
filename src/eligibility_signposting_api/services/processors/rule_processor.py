@@ -8,7 +8,13 @@ from typing import TYPE_CHECKING
 from wireup import service
 
 from eligibility_signposting_api.model import eligibility_status
-from eligibility_signposting_api.model.campaign_config import Iteration, IterationCohort, IterationRule, RuleType
+from eligibility_signposting_api.model.campaign_config import (
+    CohortLabel,
+    Iteration,
+    IterationCohort,
+    IterationRule,
+    RuleType,
+)
 from eligibility_signposting_api.model.eligibility_status import CohortGroupResult, Status
 from eligibility_signposting_api.services.calculators.rule_calculator import RuleCalculator
 from eligibility_signposting_api.services.processors.cohort_handler import (
@@ -39,7 +45,7 @@ class RuleProcessor:
         self,
         person: Person,
         cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
+        cohort_results: dict[CohortLabel, CohortGroupResult],
         filter_rules: Iterable[IterationRule],
     ) -> bool:
         is_eligible = True
@@ -65,7 +71,7 @@ class RuleProcessor:
         self,
         person: Person,
         cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
+        cohort_results: dict[CohortLabel, CohortGroupResult],
         suppression_rules: Iterable[IterationRule],
     ) -> None:
         is_actionable: bool = True
@@ -126,8 +132,10 @@ class RuleProcessor:
             or (isinstance(ir.cohort_label, (list, set, tuple)) and cohort.cohort_label in ir.cohort_label)
         )
 
-    def get_cohort_group_results(self, person: Person, active_iteration: Iteration) -> dict[str, CohortGroupResult]:
-        cohort_results: dict[str, CohortGroupResult] = {}
+    def get_cohort_group_results(
+        self, person: Person, active_iteration: Iteration
+    ) -> dict[CohortLabel, CohortGroupResult]:
+        cohort_results: dict[CohortLabel, CohortGroupResult] = {}
         filter_rules, suppression_rules = self.get_rules_by_type(active_iteration)
 
         cohort_base_handler = BaseEligibilityHandler()

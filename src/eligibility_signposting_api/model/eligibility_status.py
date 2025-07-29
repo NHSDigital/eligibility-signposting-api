@@ -4,9 +4,13 @@ from dataclasses import dataclass
 from datetime import date
 from enum import Enum, StrEnum, auto
 from functools import total_ordering
-from typing import NewType, Self
+from typing import TYPE_CHECKING, NewType, Self
 
 from pydantic import HttpUrl
+
+if TYPE_CHECKING:
+    from eligibility_signposting_api.model import campaign_config
+    from eligibility_signposting_api.model.campaign_config import CampaignID, CampaignVersion, CohortLabel, Iteration
 
 NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
@@ -120,6 +124,22 @@ class IterationResult:
     status: Status
     cohort_results: list[CohortGroupResult]
     actions: list[SuggestedAction] | None
+
+
+@dataclass
+class BestIterationResult:
+    iteration_result: IterationResult
+    active_iteration: Iteration | None = None
+    campaign_id: CampaignID | None = None
+    campaign_version: CampaignVersion | None = None
+    cohort_results: dict[CohortLabel, CohortGroupResult] | None = None
+
+
+@dataclass
+class MatchedActionDetail:
+    rule_name: campaign_config.RuleName | None = None
+    rule_priority: campaign_config.RulePriority | None = None
+    actions: list[SuggestedAction] | None = None
 
 
 @dataclass

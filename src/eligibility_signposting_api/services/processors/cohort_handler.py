@@ -8,7 +8,7 @@ from eligibility_signposting_api.model.eligibility_status import CohortGroupResu
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from eligibility_signposting_api.model.campaign_config import IterationCohort, IterationRule
+    from eligibility_signposting_api.model.campaign_config import CohortLabel, IterationCohort, IterationRule
     from eligibility_signposting_api.model.person import Person
     from eligibility_signposting_api.services.processors.rule_processor import RuleProcessor
 
@@ -24,7 +24,7 @@ class CohortEligibilityHandler(ABC):
         self,
         person: Person,
         cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
+        cohort_results: dict[CohortLabel, CohortGroupResult],
         rules_processor: RuleProcessor,
     ) -> None:
         """Handles a part of the eligibility/actionability check or passes to the next handler."""
@@ -38,7 +38,7 @@ class CohortEligibilityHandler(ABC):
         self,
         person: Person,
         cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
+        cohort_results: dict[CohortLabel, CohortGroupResult],
         rules_processor: RuleProcessor,
     ) -> None:
         """Passes the request to the next handler in the chain if one exists."""
@@ -53,7 +53,7 @@ class BaseEligibilityHandler(CohortEligibilityHandler):
         self,
         person: Person,
         cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
+        cohort_results: dict[CohortLabel, CohortGroupResult],
         rules_processor: RuleProcessor,
     ) -> None:
         if not rules_processor.is_base_eligible(person, cohort):
@@ -82,7 +82,7 @@ class FilterRuleHandler(CohortEligibilityHandler):
         self,
         person: Person,
         cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
+        cohort_results: dict[CohortLabel, CohortGroupResult],
         rules_processor: RuleProcessor,
     ) -> None:
         if not rules_processor.is_eligible(person, cohort, cohort_results, self.filter_rules):
@@ -104,7 +104,7 @@ class SuppressionRuleHandler(CohortEligibilityHandler):
         self,
         person: Person,
         cohort: IterationCohort,
-        cohort_results: dict[str, CohortGroupResult],
+        cohort_results: dict[CohortLabel, CohortGroupResult],
         rules_processor: RuleProcessor,
     ) -> None:
         rules_processor.is_actionable(person, cohort, cohort_results, self.suppression_rules)
