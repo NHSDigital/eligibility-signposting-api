@@ -11,7 +11,7 @@ from dateutil.relativedelta import relativedelta
 from hamcrest.core.base_matcher import BaseMatcher
 from hamcrest.core.description import Description
 
-from eligibility_signposting_api.model.rules import RuleOperator
+from eligibility_signposting_api.model.campaign_config import RuleOperator
 
 logger = logging.getLogger(__name__)
 

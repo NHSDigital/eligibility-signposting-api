@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from faker import Faker
 from hamcrest import assert_that
 
-from eligibility_signposting_api.model.rules import IterationRule
+from eligibility_signposting_api.model.campaign_config import IterationRule
 from tests.fixtures.builders.model.rule import IterationFactory, RawCampaignConfigFactory
 from tests.fixtures.matchers.rules import is_iteration_rule
 

@@ -4,19 +4,20 @@ from operator import attrgetter
 
 from wireup import service
 
-from eligibility_signposting_api.model import eligibility_status, rules
+from eligibility_signposting_api.model import eligibility_status
+from eligibility_signposting_api.model.campaign_config import CampaignConfig
 
 
 @service
 class CampaignEvaluator:
     """Filters and groups campaign configurations."""
 
-    def get_active_campaigns(self, campaign_configs: Collection[rules.CampaignConfig]) -> list[rules.CampaignConfig]:
+    def get_active_campaigns(self, campaign_configs: Collection[CampaignConfig]) -> list[CampaignConfig]:
         return [cc for cc in campaign_configs if cc.campaign_live]
 
     def get_requested_grouped_campaigns(
-        self, campaign_configs: Collection[rules.CampaignConfig], conditions: list[str], category: str
-    ) -> Iterator[tuple[eligibility_status.ConditionName, list[rules.CampaignConfig]]]:
+        self, campaign_configs: Collection[CampaignConfig], conditions: list[str], category: str
+    ) -> Iterator[tuple[eligibility_status.ConditionName, list[CampaignConfig]]]:
         mapping = {
             "ALL": {"V", "S"},
             "VACCINATIONS": {"V"},

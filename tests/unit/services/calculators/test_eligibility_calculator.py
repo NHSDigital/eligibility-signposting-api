@@ -9,8 +9,22 @@ from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_t
 from pydantic import HttpUrl, ValidationError
 
 from eligibility_signposting_api.audit.audit_models import AuditAction, AuditEvent
-from eligibility_signposting_api.model import rules
-from eligibility_signposting_api.model import rules as rules_model
+from eligibility_signposting_api.model import campaign_config as rules_model
+from eligibility_signposting_api.model.campaign_config import (
+    ActionsMapper,
+    AvailableAction,
+    CohortLabel,
+    Description,
+    IterationCohort,
+    RuleAttributeLevel,
+    RuleAttributeName,
+    RuleAttributeTarget,
+    RuleComparator,
+    RuleName,
+    RuleOperator,
+    RuleStop,
+    RuleType,
+)
 from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
     ActionDescription,
@@ -26,7 +40,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     UrlLabel,
     UrlLink,
 )
-from eligibility_signposting_api.model.rules import ActionsMapper, AvailableAction
+from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
 from tests.fixtures.builders.model import rule as rule_builder
 from tests.fixtures.builders.repos.person import person_rows_builder
@@ -75,7 +89,7 @@ class TestEligibilityCalculator:
 
         # when
         actual_rules, actual_action_mapper, actual_default_comms = EligibilityCalculator.get_action_rules_components(
-            iteration, rules.RuleType.redirect
+            iteration, RuleType.redirect
         )
 
         # then
@@ -106,7 +120,7 @@ def test_not_base_eligible(faker: Faker):
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -151,7 +165,7 @@ def test_base_eligible_with_when_magic_cohort_is_present(
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -201,7 +215,7 @@ def test_only_live_campaigns_considered(faker: Faker):
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -226,7 +240,7 @@ def test_campaigns_with_applicable_iteration_types_in_campaign_level_considered(
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -259,7 +273,7 @@ def test_campaigns_with_applicable_iteration_types_in_iteration_level_considered
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -315,7 +329,7 @@ def test_base_eligible_and_simple_rule_includes(faker: Faker):
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -347,7 +361,7 @@ def test_base_eligible_but_simple_rule_excludes(faker: Faker):
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -394,7 +408,7 @@ def test_simple_rule_only_excludes_from_live_iteration(faker: Faker):
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -430,7 +444,7 @@ def test_rule_types_cause_correct_statuses(rule_type: rules_model.RuleType, expe
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -474,7 +488,7 @@ def test_multiple_rule_types_cause_correct_status(faker: Faker):
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -563,7 +577,7 @@ def test_rules_with_same_priority_must_all_match_to_exclude(
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -616,7 +630,7 @@ def test_multiple_conditions_where_both_are_actionable(faker: Faker):
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -697,7 +711,7 @@ def test_multiple_conditions_where_all_give_unique_statuses(faker: Faker):
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("N", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("N", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -781,7 +795,7 @@ def test_multiple_campaigns_for_single_condition(
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -828,7 +842,7 @@ def test_base_eligible_and_icb_example(
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -879,28 +893,26 @@ def test_status_on_target_based_on_last_successful_date(
                 rule_builder.IterationFactory.build(
                     iteration_rules=[
                         rule_builder.IterationRuleFactory.build(
-                            type=rules.RuleType.suppression,
-                            name=rules.RuleName("You have already been vaccinated against RSV in the last year"),
-                            description=rules.RuleDescription(
-                                "Exclude anyone Completed RSV Vaccination in the last year"
-                            ),
+                            type=RuleType.suppression,
+                            name=RuleName("You have already been vaccinated against RSV in the last year"),
+                            description=RuleDescription("Exclude anyone Completed RSV Vaccination in the last year"),
                             priority=10,
-                            operator=rules.RuleOperator.day_gte,
-                            attribute_level=rules.RuleAttributeLevel.TARGET,
-                            attribute_name=rules.RuleAttributeName("LAST_SUCCESSFUL_DATE"),
-                            comparator=rules.RuleComparator("-365"),
-                            attribute_target=rules.RuleAttributeTarget("RSV"),
+                            operator=RuleOperator.day_gte,
+                            attribute_level=RuleAttributeLevel.TARGET,
+                            attribute_name=RuleAttributeName("LAST_SUCCESSFUL_DATE"),
+                            comparator=RuleComparator("-365"),
+                            attribute_target=RuleAttributeTarget("RSV"),
                         ),
                         rule_builder.IterationRuleFactory.build(
-                            type=rules.RuleType.suppression,
-                            name=rules.RuleName("You have a vaccination date in the future for RSV"),
-                            description=rules.RuleDescription("Exclude anyone with future Completed RSV Vaccination"),
+                            type=RuleType.suppression,
+                            name=RuleName("You have a vaccination date in the future for RSV"),
+                            description=RuleDescription("Exclude anyone with future Completed RSV Vaccination"),
                             priority=10,
-                            operator=rules.RuleOperator.day_lte,
-                            attribute_level=rules.RuleAttributeLevel.TARGET,
-                            attribute_name=rules.RuleAttributeName("LAST_SUCCESSFUL_DATE"),
-                            comparator=rules.RuleComparator("0"),
-                            attribute_target=rules.RuleAttributeTarget("RSV"),
+                            operator=RuleOperator.day_lte,
+                            attribute_level=RuleAttributeLevel.TARGET,
+                            attribute_name=RuleAttributeName("LAST_SUCCESSFUL_DATE"),
+                            comparator=RuleComparator("0"),
+                            attribute_target=RuleAttributeTarget("RSV"),
                         ),
                     ],
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
@@ -912,7 +924,7 @@ def test_status_on_target_based_on_last_successful_date(
     calculator = EligibilityCalculator(target_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -928,7 +940,7 @@ def test_status_on_target_based_on_last_successful_date(
     ("attribute_name", "expected_status", "test_comment"),
     [
         (
-            rules.RuleAttributeName("COHORT_LABEL"),
+            RuleAttributeName("COHORT_LABEL"),
             Status.not_eligible,
             "cohort label provided",
         ),
@@ -940,17 +952,17 @@ def test_status_on_target_based_on_last_successful_date(
     ],
 )
 def test_status_on_cohort_attribute_level(
-    attribute_name: rules.RuleAttributeName, expected_status: Status, test_comment: str, faker: Faker
+    attribute_name: RuleAttributeName, expected_status: Status, test_comment: str, faker: Faker
 ):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
 
-    person_row: list[dict[str, Any]] = person_rows_builder(
-        nhs_number, cohorts=["cohort1", "covid_eligibility_complaint_list"]
-    )
-    person_row_with_extra_items_in_cohort_row = [
-        {**r, "LOCATION": "HP1"} for r in person_row if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"
-    ]
+    person_row: Person = person_rows_builder(nhs_number, cohorts=["cohort1", "covid_eligibility_complaint_list"])
+
+    person_row_with_extra_items_in_cohort_row = Person(person_row.data)
+    for row in person_row_with_extra_items_in_cohort_row.data:
+        if row.get("ATTRIBUTE_TYPE", "") == "COHORTS":
+            row["LOCATION"] = "HP1"
 
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
@@ -960,16 +972,16 @@ def test_status_on_cohort_attribute_level(
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                     iteration_rules=[
                         rule_builder.IterationRuleFactory.build(
-                            type=rules.RuleType.filter,
-                            name=rules.RuleName("Exclude those in a complaint cohort"),
-                            description=rules.RuleDescription(
+                            type=RuleType.filter,
+                            name=RuleName("Exclude those in a complaint cohort"),
+                            description=RuleDescription(
                                 "Ensure anyone who has registered a complaint is not shown as eligible"
                             ),
                             priority=15,
-                            operator=rules.RuleOperator.member_of,
-                            attribute_level=rules.RuleAttributeLevel.COHORT,
+                            operator=RuleOperator.member_of,
+                            attribute_level=RuleAttributeLevel.COHORT,
                             attribute_name=attribute_name,
-                            comparator=rules.RuleComparator("covid_eligibility_complaint_list"),
+                            comparator=RuleComparator("covid_eligibility_complaint_list"),
                         )
                     ],
                 )
@@ -980,7 +992,7 @@ def test_status_on_cohort_attribute_level(
     calculator = EligibilityCalculator(person_row_with_extra_items_in_cohort_row, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -1026,7 +1038,7 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -1042,7 +1054,7 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
     ("rule_stop", "expected_reason_results", "test_comment"),  # Changed expected_reasons to expected_reason_results
     [
         (
-            rules.RuleStop(True),  # noqa: FBT003
+            RuleStop(True),  # noqa: FBT003
             [
                 RuleDescription("reason 1"),
                 RuleDescription("reason 2"),
@@ -1050,7 +1062,7 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
             "rule_stop is True, last rule should not run",
         ),
         (
-            rules.RuleStop(False),  # noqa: FBT003
+            RuleStop(False),  # noqa: FBT003
             [
                 RuleDescription("reason 1"),
                 RuleDescription("reason 2"),
@@ -1061,7 +1073,7 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
     ],
 )
 def test_rules_stop_behavior(
-    rule_stop: rules.RuleStop, expected_reason_results: list[RuleDescription], test_comment: str, faker: Faker
+    rule_stop: RuleStop, expected_reason_results: list[RuleDescription], test_comment: str, faker: Faker
 ) -> None:
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
@@ -1090,7 +1102,7 @@ def test_rules_stop_behavior(
     calculator = EligibilityCalculator(person_rows, [campaign_config])
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -1191,7 +1203,7 @@ def test_eligibility_results_when_multiple_cohorts(
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -1285,14 +1297,14 @@ def test_cohort_groups_and_their_descriptions_when_magic_cohort_is_present(
                     ],
                     iteration_rules=[
                         # F common rule
-                        rule_builder.DetainedEstateSuppressionRuleFactory.build(type=rules.RuleType.filter),
+                        rule_builder.DetainedEstateSuppressionRuleFactory.build(type=RuleType.filter),
                         # F rules for rsv_75_rolling
                         rule_builder.ICBFilterRuleFactory.build(
-                            type=rules.RuleType.filter, cohort_label=rules.CohortLabel("rsv_75_rolling")
+                            type=RuleType.filter, cohort_label=CohortLabel("rsv_75_rolling")
                         ),
                         # S common rule
                         rule_builder.PostcodeSuppressionRuleFactory.build(
-                            comparator=rules.RuleComparator("SW19"),
+                            comparator=RuleComparator("SW19"),
                         ),
                     ],
                 )
@@ -1303,7 +1315,7 @@ def test_cohort_groups_and_their_descriptions_when_magic_cohort_is_present(
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -1356,7 +1368,7 @@ def test_cohort_groups_and_their_descriptions_when_best_status_is_not_eligible(
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -1444,7 +1456,7 @@ def test_cohort_groups_and_their_descriptions_and_the_collection_of_s_rules_when
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -1526,7 +1538,7 @@ def test_cohort_group_and_descriptions_when_best_status_is_actionable(
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -1586,13 +1598,13 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[
                         rule_builder.Rsv75to79CohortFactory.build(
-                            positive_description=rules.Description("rsv_age_range positive description 2"),
-                            negative_description=rules.Description("rsv_age_range negative description 2"),
+                            positive_description=Description("rsv_age_range positive description 2"),
+                            negative_description=Description("rsv_age_range negative description 2"),
                             priority=2,
                         ),
                         rule_builder.Rsv75RollingCohortFactory.build(
-                            positive_description=rules.Description("rsv_age_range positive description 1"),
-                            negative_description=rules.Description("rsv_age_range negative description 1"),
+                            positive_description=Description("rsv_age_range positive description 1"),
+                            negative_description=Description("rsv_age_range negative description 1"),
                             priority=1,
                         ),
                     ],
@@ -1605,7 +1617,7 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -1712,7 +1724,7 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
 )
 def test_cohort_group_descriptions_pick_first_non_empty_if_available(
     person_rows: list[dict[str, Any]],
-    iteration_cohorts: list[rules.IterationCohort],
+    iteration_cohorts: list[IterationCohort],
     expected_cohort_group_and_description: list[tuple[str, str]],
     expected_status: Status,
     test_comment: str,
@@ -1725,7 +1737,7 @@ def test_cohort_group_descriptions_pick_first_non_empty_if_available(
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=iteration_cohorts,
                     iteration_rules=[
-                        rule_builder.PostcodeSuppressionRuleFactory.build(type=rules.RuleType.filter),
+                        rule_builder.PostcodeSuppressionRuleFactory.build(type=RuleType.filter),
                         rule_builder.DetainedEstateSuppressionRuleFactory.build(),
                     ],
                 )
@@ -1736,7 +1748,7 @@ def test_cohort_group_descriptions_pick_first_non_empty_if_available(
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -1981,7 +1993,7 @@ def test_correct_actions_determined_from_redirect_r_rules(  # noqa: PLR0913
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -2026,7 +2038,7 @@ def test_cohort_label_not_supported_used_in_r_rules(test_comment: str, redirect_
                         ),
                         iteration_rules=[
                             rule_builder.ICBRedirectRuleFactory.build(
-                                cohort_label=rules.CohortLabel(redirect_r_rule_cohort_label)
+                                cohort_label=CohortLabel(redirect_r_rule_cohort_label)
                             )
                         ],
                     )
@@ -2038,7 +2050,7 @@ def test_cohort_label_not_supported_used_in_r_rules(test_comment: str, redirect_
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -2094,7 +2106,7 @@ def test_multiple_r_rules_match_with_same_priority(faker: Faker):
                             rule_builder.ICBRedirectRuleFactory.build(comms_routing="rule_2_comms_routing"),
                             rule_builder.ICBRedirectRuleFactory.build(
                                 priority=2,
-                                attribute_name=rules.RuleAttributeName("ICBMismatch"),
+                                attribute_name=RuleAttributeName("ICBMismatch"),
                                 comms_routing="rule_3_comms_routing",
                             ),
                         ],
@@ -2107,7 +2119,7 @@ def test_multiple_r_rules_match_with_same_priority(faker: Faker):
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -2161,7 +2173,7 @@ def test_multiple_r_rules_with_same_priority_one_rule_mismatch_should_return_def
                             rule_builder.ICBRedirectRuleFactory.build(comms_routing="rule_1_comms_routing"),
                             rule_builder.ICBRedirectRuleFactory.build(comms_routing="rule_2_comms_routing"),
                             rule_builder.ICBRedirectRuleFactory.build(
-                                attribute_name=rules.RuleAttributeName("ICBMismatch"),
+                                attribute_name=RuleAttributeName("ICBMismatch"),
                                 comms_routing="rule_3_comms_routing",
                             ),
                         ],
@@ -2174,7 +2186,7 @@ def test_multiple_r_rules_with_same_priority_one_rule_mismatch_should_return_def
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -2248,7 +2260,7 @@ def test_only_highest_priority_rule_is_applied_and_return_actions_only_for_that_
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     expected_actions = SuggestedAction(
         internal_action_code=InternalActionCode("rule_1_comms_routing"),
@@ -2304,7 +2316,7 @@ def test_should_include_actions_when_include_actions_flag_is_true_when_status_is
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -2364,7 +2376,7 @@ def test_should_not_include_actions_when_include_actions_flag_is_false_when_stat
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
     # When
-    actual = calculator.evaluate_eligibility("N", ["ALL"], "ALL")
+    actual = calculator.get_eligibility_status("N", ["ALL"], "ALL")
 
     # Then
     assert_that(
@@ -2557,7 +2569,7 @@ def test_correct_actions_determined_from_not_eligible_action_rules(  # noqa: PLR
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+        actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
         assert_that(
             actual,
@@ -2614,7 +2626,7 @@ def test_no_actions_returned_when_non_eligible_actions_and_defaultcomms_not_give
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+        actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
         # Then
         expected_actions = []
@@ -2679,7 +2691,7 @@ def test_actions_returned_when_non_eligible_actions_not_given_and_defaultcomms_g
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+        actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
         # Then
         expected_actions = [
@@ -2886,7 +2898,7 @@ def test_correct_actions_determined_from_not_actionable_action_rules(  # noqa: P
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+        actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
         assert_that(
             actual,
@@ -2940,7 +2952,7 @@ def test_no_actions_returned_when_non_actionable_actions_and_defaultcomms_not_gi
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+        actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
         # Then
         expected_actions = []
@@ -3005,7 +3017,7 @@ def test_actions_returned_when_non_actionable_actions_not_given_and_defaultcomms
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        actual = calculator.evaluate_eligibility("Y", ["ALL"], "ALL")
+        actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
         # Then
         expected_actions = [

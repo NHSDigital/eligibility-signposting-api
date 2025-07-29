@@ -3,7 +3,7 @@ import datetime
 import pytest
 from hamcrest import assert_that, is_
 
-from eligibility_signposting_api.model.rules import CampaignID
+from eligibility_signposting_api.model.campaign_config import CampaignID
 from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
 from tests.fixtures.builders.model import rule
 

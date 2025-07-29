@@ -11,10 +11,10 @@ from hamcrest import (
     has_key,
 )
 
+from eligibility_signposting_api.model.campaign_config import CampaignConfig
 from eligibility_signposting_api.model.eligibility_status import (
     NHSNumber,
 )
-from eligibility_signposting_api.model.rules import CampaignConfig
 
 
 class TestBaseLine:
