@@ -32,9 +32,6 @@ class TestMandateFieldsSchemaValidations:
         data.pop(mandate_field, None)  # Simulate missing field
         with pytest.raises(ValidationError):
             CampaignConfigValidation(**data)
-        assert mandate_field.lower()
-
-        # ID field
 
     # ID
     @pytest.mark.parametrize("id_value", ["CAMP001", "12345", "X001"])
@@ -77,7 +74,7 @@ class TestMandateFieldsSchemaValidations:
         model = CampaignConfigValidation(**data)
         assert model.target == target_value
 
-    @pytest.mark.parametrize("target_value", ["EBOLA", "HEP", "", None])
+    @pytest.mark.parametrize("target_value", ["XYZ", "ABC", "", None])
     def test_invalid_target(self, target_value, valid_campaign_config_with_only_mandate_fields):
         data = {**valid_campaign_config_with_only_mandate_fields, "Target": target_value}
         with pytest.raises(ValidationError):
@@ -198,29 +195,30 @@ class TestBUCValidations:
     @pytest.mark.parametrize(
         ("start_date", "end_date"),
         [
-            ("20250101", "20250331"),  # typical valid range
-            ("20250601", "20250630"),  # short range
+            ("20250101", "20250331"),  # valid range
+            ("20250601", "20250630"),  # valid short range
             ("20250101", "20250101"),  # same day
         ],
     )
-    def test_valid_start_and_end_dates_relationship_with_iteration_dates(self, start_date, end_date, valid_campaign_config_with_only_mandate_fields):
+    def test_valid_start_and_end_dates_and_iteration_dates_relation(self, start_date, end_date, valid_campaign_config_with_only_mandate_fields):
         data = valid_campaign_config_with_only_mandate_fields.copy()
         data["StartDate"] = start_date
         data["EndDate"] = end_date
-        # If any error is raised, the test fails
+        data["Iterations"][0]["IterationDate"] = "20241231"
         CampaignConfigValidation(**data)
 
     @pytest.mark.parametrize(
         ("start_date", "end_date"),
         [
-            ("20241231", "20250101"),  # year transition
+            ("20241230", "20250101"),  # campaign start date is after the iteration date
             ("20250331", "20250101"),  # end before start
         ],
     )
-    def test_invalid_start_and_end_dates_relationship_with_iteration_dates(self, start_date, end_date, valid_campaign_config_with_only_mandate_fields):
+    def test_invalid_start_and_end_dates_and_iteration_dates_relation(self, start_date, end_date, valid_campaign_config_with_only_mandate_fields):
         data = valid_campaign_config_with_only_mandate_fields.copy()
         data["StartDate"] = start_date
         data["EndDate"] = end_date
+        data["Iterations"][0]["IterationDate"] = "20241231"
         with pytest.raises(ValidationError):
             CampaignConfigValidation(**data)
 
@@ -229,7 +227,6 @@ class TestBUCValidations:
         data = {**valid_campaign_config_with_only_mandate_fields, "Iterations": []}
         with pytest.raises(ValidationError) as error:
             CampaignConfigValidation(**data)
-        # Inspect errors and check for specific field
         errors = error.value.errors()
         assert any(
             e["loc"][-1] == "Iterations" for e in errors), "Expected validation error on 'Iterations'"

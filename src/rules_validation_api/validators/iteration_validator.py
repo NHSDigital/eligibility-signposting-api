@@ -5,18 +5,4 @@ from rules_validation_api.validators.iteration_rules_validator import IterationR
 
 
 class IterationValidation(Iteration):
-    iteration_rules: list[IterationRuleValidation] = Field(..., min_length=1, alias="IterationRules")
-
-    @field_validator("id")
-    @classmethod
-    def validate_name(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("ID must not be empty")
-        return value
-
-    @field_validator("id")
-    @classmethod
-    def validate_name(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("ID must not be empty")
-        return value
+    iteration_rules: list[IterationRuleValidation] = Field(..., alias="IterationRules")

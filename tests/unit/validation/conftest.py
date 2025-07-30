@@ -27,22 +27,24 @@ def valid_campaign_config_with_only_mandate_fields():
                 "DefaultNotEligibleRouting": "RouteB",
                 "DefaultNotActionableRouting": "RouteC",
                 "IterationCohorts": [],
-                "IterationRules": [
-                    {
-                        "Type": "F",
-                        "Name": "Assure only already vaccinated taken from magic cohort",
-                        "Description": "Exclude anyone who has NOT been given a dose of RSV "
-                        "Vaccination from the magic cohort",
-                        "Operator": "is_empty",
-                        "Comparator": "",
-                        "AttributeTarget": "RSV",
-                        "AttributeLevel": "TARGET",
-                        "AttributeName": "LAST_SUCCESSFUL_DATE",
-                        "CohortLabel": "elid_all_people",
-                        "Priority": 100,
-                    }
-                ],
+                "IterationRules": [],
                 "ActionsMapper": {},
             }
         ],
+    }
+
+@pytest.fixture
+def valid_iteration_rule_with_only_mandate_fields():
+    return {
+        "Type": "F",
+        "Name": "Assure only already vaccinated taken from magic cohort",
+        "Description": "Exclude anyone who has NOT been given a dose of RSV "
+                       "Vaccination from the magic cohort",
+        "Operator": "is_empty",
+        "Comparator": "",
+        "AttributeTarget": "RSV",
+        "AttributeLevel": "TARGET",
+        "AttributeName": "LAST_SUCCESSFUL_DATE",
+        "CohortLabel": "elid_all_people",
+        "Priority": 100,
     }

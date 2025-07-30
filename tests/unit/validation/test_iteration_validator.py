@@ -121,16 +121,3 @@ class TestOptionalFieldsSchemaValidations:
         data = {**valid_campaign_config_with_only_mandate_fields["Iterations"][0], "ApprovalMaximum": approval_maximum}
         model = IterationValidation(**data)
         assert model.approval_maximum == approval_maximum
-
-class TestBUCValidations:
-    # IterationRules
-    def test_validate_iteration_rules_non_empty(self, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields["Iterations"][0], "IterationRules": []}
-
-        with pytest.raises(ValidationError) as error:
-            IterationValidation(**data)
-
-        # Inspect errors and check for specific field
-        errors = error.value.errors()
-        assert any(e["loc"][-1] == "IterationRules" for e in errors), "Expected validation error on 'IterationRules'"
-
