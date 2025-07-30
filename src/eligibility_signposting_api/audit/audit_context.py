@@ -18,17 +18,12 @@ from eligibility_signposting_api.audit.audit_models import (
     RequestAuditQueryParams,
 )
 from eligibility_signposting_api.audit.audit_service import AuditService
-from eligibility_signposting_api.model.campaign_config import (
-    CampaignID,
-    CampaignVersion,
-    Iteration,
-    RuleName,
-    RulePriority,
-)
 from eligibility_signposting_api.model.eligibility_status import (
+    BestIterationResult,
     CohortGroupResult,
     ConditionName,
     IterationResult,
+    MatchedActionDetail,
     Status,
     SuggestedAction,
 )
@@ -65,17 +60,15 @@ class AuditContext:
 
     @staticmethod
     def append_audit_condition(
-        suggested_actions: list[SuggestedAction] | None,
         condition_name: ConditionName,
-        best_results: tuple[Iteration | None, IterationResult | None, dict[str, CohortGroupResult] | None],
-        campaign_details: tuple[CampaignID | None, CampaignVersion | None],
-        action_rule_details: tuple[RulePriority | None, RuleName | None],
+        best_iteration_result: BestIterationResult,
+        action_detail: MatchedActionDetail,
     ) -> None:
         audit_eligibility_cohorts, audit_eligibility_cohort_groups, audit_actions = [], [], []
         audit_filter_rule, audit_suitability_rule, audit_action_rule = None, None, None
-        best_active_iteration = best_results[0]
-        best_candidate = best_results[1]
-        best_cohort_results = best_results[2]
+        best_active_iteration = best_iteration_result.active_iteration
+        best_candidate = best_iteration_result.iteration_result
+        best_cohort_results = best_iteration_result.cohort_results
 
         if best_cohort_results:
             for cohort_label, result in sorted(best_cohort_results.items(), key=lambda item: item[1].cohort_code):
@@ -94,13 +87,13 @@ class AuditContext:
                     audit_filter_rule = AuditContext.create_audit_filter_rule(best_candidate, result)
                     audit_suitability_rule = AuditContext.create_audit_suitability_rule(best_candidate, result)
 
-        audit_action_rule = AuditContext.add_rule_name_and_priority_to_audit(best_candidate, action_rule_details)
+        audit_action_rule = AuditContext.add_rule_name_and_priority_to_audit(best_candidate, action_detail)
 
-        audit_actions = AuditContext.create_audit_actions(suggested_actions)
+        audit_actions = AuditContext.create_audit_actions(action_detail.actions)
 
         audit_condition = AuditCondition(
-            campaign_id=campaign_details[0],
-            campaign_version=campaign_details[1],
+            campaign_id=best_iteration_result.campaign_id,
+            campaign_version=best_iteration_result.campaign_version,
             iteration_id=best_active_iteration.id if best_active_iteration else None,
             iteration_version=best_active_iteration.version if best_active_iteration else None,
             condition_name=condition_name,
@@ -119,15 +112,15 @@ class AuditContext:
     @staticmethod
     def add_rule_name_and_priority_to_audit(
         best_candidate: IterationResult | None,
-        action_rule_details: tuple[RulePriority | None, RuleName | None] | None,
+        action_detail: MatchedActionDetail,
     ) -> AuditRedirectRule | None:
         audit_action_rule = None
         if best_candidate and best_candidate.status:
-            if action_rule_details is None or (action_rule_details[0] is None and action_rule_details[1] is None):
+            if action_detail.rule_priority is None and action_detail.rule_name is None:
                 audit_action_rule = None
             else:
                 audit_action_rule = AuditRedirectRule(
-                    rule_priority=str(action_rule_details[0]), rule_name=action_rule_details[1]
+                    rule_priority=str(action_detail.rule_priority), rule_name=action_detail.rule_name
                 )
         return audit_action_rule
 

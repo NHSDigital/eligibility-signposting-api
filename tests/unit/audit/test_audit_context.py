@@ -9,15 +9,17 @@ from pydantic import HttpUrl
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_models import AuditAction, AuditEvent
 from eligibility_signposting_api.audit.audit_service import AuditService
-from eligibility_signposting_api.model.campaign_config import CampaignID, CampaignVersion, Iteration, RuleType
+from eligibility_signposting_api.model.campaign_config import CampaignID, CampaignVersion, RuleType
 from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
     ActionDescription,
     ActionType,
+    BestIterationResult,
     CohortGroupResult,
     ConditionName,
     InternalActionCode,
     IterationResult,
+    MatchedActionDetail,
     Reason,
     RuleDescription,
     RuleName,
@@ -83,9 +85,7 @@ def test_add_request_details_when_headers_are_empty_sets_audit_log_on_g(app):
 def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
     suggested_actions: list[SuggestedAction] | None
     condition_name: ConditionName
-    best_results: tuple[Iteration, IterationResult, dict[str, CohortGroupResult]]
     campaign_details: tuple[CampaignID | None, CampaignVersion | None]
-    redirect_rule_details: tuple[RulePriority | None, RuleName | None]
 
     suggested_actions = [
         SuggestedAction(
@@ -119,16 +119,17 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
     iteration_result = IterationResult(
         status=Status.actionable, cohort_results=[cohort_group_result], actions=suggested_actions
     )
-    best_results = (iteration, iteration_result, {"CohortCode1": cohort_group_result})
     campaign_details = (CampaignID("CampaignID1"), CampaignVersion("CampaignVersion1"))
-    redirect_rule_details = (RulePriority("1"), RuleName("RedirectRuleName1"))
+    matched_action_detail = MatchedActionDetail(RuleName("RedirectRuleName1"), RulePriority("1"), suggested_actions)
+
+    best_iteration_results = BestIterationResult(
+        iteration_result, iteration, campaign_details[0], campaign_details[1], {"CohortCode1": cohort_group_result}
+    )
 
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(
-            suggested_actions, condition_name, best_results, campaign_details, redirect_rule_details
-        )
+        AuditContext.append_audit_condition(condition_name, best_iteration_results, matched_action_detail)
 
         expected_audit_action = [
             AuditAction(
@@ -148,7 +149,7 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
         assert cond.campaign_version == campaign_details[1]
         assert cond.iteration_id == iteration.id
         assert cond.iteration_version == iteration.version
-        assert cond.status == best_results[1].status.name
+        assert cond.status == "actionable"
         assert cond.status_text == "You should have the Condition1 vaccine"
         assert cond.actions == expected_audit_action
         assert cond.action_rule.rule_priority == "1"
