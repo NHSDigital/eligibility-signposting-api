@@ -1,6 +1,6 @@
 from pydantic import field_validator
 
-from eligibility_signposting_api.model.campaign_config import ActionsMapper, IterationRule
+from eligibility_signposting_api.model.campaign_config import IterationRule
 
 
 class IterationRuleValidation(IterationRule):

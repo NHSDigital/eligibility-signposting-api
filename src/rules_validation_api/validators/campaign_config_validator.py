@@ -1,13 +1,11 @@
-from typing import List
+from pydantic import Field, field_validator
 
-from pydantic import field_validator, Field
-
-from eligibility_signposting_api.model.campaign_config import CampaignConfig, Iteration
+from eligibility_signposting_api.model.campaign_config import CampaignConfig
 from rules_validation_api.validators.iteration_validator import IterationValidation
 
 
 class CampaignConfigValidation(CampaignConfig):
-    iterations: List[IterationValidation] = Field(..., min_length=1, alias="Iterations")
+    iterations: list[IterationValidation] = Field(..., min_length=1, alias="Iterations")
 
     @field_validator("id")
     def validate_name(cls, value: str) -> str:
@@ -21,4 +19,3 @@ class CampaignConfigValidation(CampaignConfig):
         if value not in allowed_values:
             raise ValueError(f"type must be one of {allowed_values}")
         return value
-
