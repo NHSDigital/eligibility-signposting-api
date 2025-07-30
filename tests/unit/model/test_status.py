@@ -1,4 +1,4 @@
-from eligibility_signposting_api.model.eligibility_status import ConditionName, Status, StatusText
+from eligibility_signposting_api.model.eligibility_status import ConditionName, RuleType, Status, StatusText
 
 
 class TestStatus:
@@ -38,3 +38,10 @@ class TestStatus:
         assert Status.actionable.get_status_text(ConditionName("COVID")) == StatusText(
             "You should have the COVID vaccine"
         )
+
+    def test_get_action_rule_type(self):
+        assert Status.not_eligible.get_action_rule_type() == RuleType(RuleType.not_eligible_actions)
+
+        assert Status.not_actionable.get_action_rule_type() == RuleType(RuleType.not_actionable_actions)
+
+        assert Status.actionable.get_action_rule_type() == RuleType(RuleType.redirect)

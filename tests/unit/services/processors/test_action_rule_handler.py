@@ -10,6 +10,8 @@ from eligibility_signposting_api.model.eligibility_status import (
     ActionDescription,
     ActionType,
     InternalActionCode,
+    IterationResult,
+    MatchedActionDetail,
     Status,
     SuggestedAction,
     UrlLabel,
@@ -18,11 +20,13 @@ from eligibility_signposting_api.model.eligibility_status import (
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.action_rule_handler import ActionRuleHandler
 from tests.fixtures.builders.model import rule as rule_builder
-from tests.fixtures.builders.model.rule import ActionsMapperFactory
+from tests.fixtures.builders.model.rule import ActionsMapperFactory, IterationFactory
+
+# flake8: noqa: SLF001
 
 
 @pytest.fixture
-def action_rule_handler():
+def handler():
     return ActionRuleHandler()
 
 
@@ -51,7 +55,7 @@ def test_get_action_rules_components_redirect_type():
         actions_mapper=ActionsMapperFactory.build(),
         iteration_rules=[rule_builder.ICBRedirectRuleFactory.build(name="RedirectRule")],
     )
-    rules_found, mapper, default_comms = ActionRuleHandler.get_action_rules_components(iteration, RuleType.redirect)
+    rules_found, mapper, default_comms = ActionRuleHandler._get_action_rules_components(iteration, RuleType.redirect)
     assert_that(len(rules_found), is_(1))
     assert_that(rules_found[0].name, is_(RuleName("RedirectRule")))
     assert_that(mapper, is_(iteration.actions_mapper))
@@ -66,7 +70,7 @@ def test_get_action_rules_components_not_eligible_actions_type():
         actions_mapper=ActionsMapperFactory.build(),
         iteration_rules=[rule_builder.ICBNonEligibleActionRuleFactory.build(name="NonEligibleRule")],
     )
-    rules_found, mapper, default_comms = ActionRuleHandler.get_action_rules_components(
+    rules_found, mapper, default_comms = ActionRuleHandler._get_action_rules_components(
         iteration, RuleType.not_eligible_actions
     )
     assert_that(len(rules_found), is_(1))
@@ -79,13 +83,13 @@ def test_get_action_rules_components_no_matching_rules():
     iteration = rule_builder.IterationFactory.build(
         iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()]
     )
-    rules_found, _, _ = ActionRuleHandler.get_action_rules_components(iteration, RuleType.redirect)
+    rules_found, _, _ = ActionRuleHandler._get_action_rules_components(iteration, RuleType.redirect)
     assert_that(len(rules_found), is_(0))
 
 
 def test_get_actions_from_comms_single_comm():
     action_mapper = ActionsMapperFactory.build(root={"book_nbs": BOOK_NBS_COMMS})
-    actions = ActionRuleHandler.get_actions_from_comms(action_mapper, "book_nbs")
+    actions = ActionRuleHandler._get_actions_from_comms(action_mapper, "book_nbs")
     assert_that(len(actions), is_(1))
     assert_that(actions[0].internal_action_code, is_(InternalActionCode("book_nbs")))
     assert_that(actions[0].action_code, is_(ActionCode("BookNBS")))
@@ -93,7 +97,7 @@ def test_get_actions_from_comms_single_comm():
 
 def test_get_actions_from_comms_multiple_comms():
     action_mapper = ActionsMapperFactory.build(root={"book_nbs": BOOK_NBS_COMMS, "default_comms": DEFAULT_COMMS_DETAIL})
-    actions = ActionRuleHandler.get_actions_from_comms(action_mapper, "book_nbs|default_comms")
+    actions = ActionRuleHandler._get_actions_from_comms(action_mapper, "book_nbs|default_comms")
     assert_that(len(actions), is_(2))
     assert_that(actions[0].internal_action_code, is_(InternalActionCode("book_nbs")))
     assert_that(actions[1].internal_action_code, is_(InternalActionCode("default_comms")))
@@ -101,31 +105,31 @@ def test_get_actions_from_comms_multiple_comms():
 
 def test_get_actions_from_comms_unknown_comm_code():
     action_mapper = ActionsMapperFactory.build(root={"book_nbs": BOOK_NBS_COMMS})
-    actions = ActionRuleHandler.get_actions_from_comms(action_mapper, "book_nbs|unknown_code")
+    actions = ActionRuleHandler._get_actions_from_comms(action_mapper, "book_nbs|unknown_code")
     assert_that(len(actions), is_(1))
     assert_that(actions[0].internal_action_code, is_(InternalActionCode("book_nbs")))
 
 
 def test_get_actions_from_comms_empty_string():
     action_mapper = ActionsMapperFactory.build(root={"book_nbs": BOOK_NBS_COMMS})
-    actions = ActionRuleHandler.get_actions_from_comms(action_mapper, "")
+    actions = ActionRuleHandler._get_actions_from_comms(action_mapper, "")
     assert_that(len(actions), is_(0))
 
 
 def test_get_actions_from_comms_no_actions_found():
     action_mapper = ActionsMapperFactory.build(root={})
-    actions = ActionRuleHandler.get_actions_from_comms(action_mapper, "unknown_code")
+    actions = ActionRuleHandler._get_actions_from_comms(action_mapper, "unknown_code")
     assert_that(len(actions), is_(0))
 
 
 @patch("eligibility_signposting_api.services.calculators.rule_calculator.RuleCalculator")
-@patch.object(ActionRuleHandler, "get_actions_from_comms")
-@patch.object(ActionRuleHandler, "get_action_rules_components")
+@patch.object(ActionRuleHandler, "_get_actions_from_comms")
+@patch.object(ActionRuleHandler, "_get_action_rules_components")
 def test_handle_actions_no_matching_rules_returns_default(
     mock_get_action_rules_components,
     mock_get_actions_from_comms,
     mock_rule_calculator_class,
-    action_rule_handler: ActionRuleHandler,
+    handler: ActionRuleHandler,
 ):
     active_iteration = rule_builder.IterationFactory.build(
         default_comms_routing="default_action_code",
@@ -153,7 +157,7 @@ def test_handle_actions_no_matching_rules_returns_default(
         [],
     ]
 
-    matched_action_detail = action_rule_handler.handle(MOCK_PERSON, active_iteration, RuleType.redirect)
+    matched_action_detail = handler._handle(MOCK_PERSON, active_iteration, RuleType.redirect)
 
     assert_that(len(matched_action_detail.actions), is_(1))
     assert_that(matched_action_detail.actions[0].internal_action_code, is_(InternalActionCode("default_action_code")))
@@ -165,13 +169,13 @@ def test_handle_actions_no_matching_rules_returns_default(
 
 
 @patch("eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator")
-@patch.object(ActionRuleHandler, "get_actions_from_comms")
-@patch.object(ActionRuleHandler, "get_action_rules_components")
+@patch.object(ActionRuleHandler, "_get_actions_from_comms")
+@patch.object(ActionRuleHandler, "_get_action_rules_components")
 def test_handle_actions_matching_rule_overrides_default(
     mock_get_action_rules_components,
     mock_get_actions_from_comms,
     mock_rule_calculator_class,
-    action_rule_handler: ActionRuleHandler,
+    handler: ActionRuleHandler,
 ):
     matching_rule = rule_builder.ICBRedirectRuleFactory.build(
         priority=10, comms_routing="rule_specific_action", name="RuleSpecificAction"
@@ -216,7 +220,7 @@ def test_handle_actions_matching_rule_overrides_default(
     mock_rule_instance.evaluate_exclusion.return_value = (Status.actionable, Mock(matcher_matched=True))
     mock_rule_calculator_class.return_value = mock_rule_instance
 
-    matched_action_detail = action_rule_handler.handle(MOCK_PERSON, active_iteration, RuleType.redirect)
+    matched_action_detail = handler._handle(MOCK_PERSON, active_iteration, RuleType.redirect)
 
     assert_that(len(matched_action_detail.actions), is_(1))
     assert_that(matched_action_detail.actions[0].internal_action_code, is_(InternalActionCode("rule_specific_action")))
@@ -231,13 +235,13 @@ def test_handle_actions_matching_rule_overrides_default(
 
 
 @patch("eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator")
-@patch.object(ActionRuleHandler, "get_actions_from_comms")
-@patch.object(ActionRuleHandler, "get_action_rules_components")
+@patch.object(ActionRuleHandler, "_get_actions_from_comms")
+@patch.object(ActionRuleHandler, "_get_action_rules_components")
 def test_handle_non_matching_rule_returns_default(
     mock_get_action_rules_components,
     mock_get_actions_from_comms,
     mock_rule_calculator_class,
-    action_rule_handler: ActionRuleHandler,
+    handler: ActionRuleHandler,
 ):
     non_matching_rule = rule_builder.ICBRedirectRuleFactory.build(
         priority=10, comms_routing="rule_specific_action", name="RuleSpecificAction"
@@ -285,7 +289,7 @@ def test_handle_non_matching_rule_returns_default(
         Mock(matcher_matched=False),
     )
 
-    matched_action_detail = action_rule_handler.handle(MOCK_PERSON, active_iteration, rule_type)
+    matched_action_detail = handler._handle(MOCK_PERSON, active_iteration, rule_type)
 
     assert_that(len(matched_action_detail.actions), is_(1))
     assert_that(matched_action_detail.actions[0].internal_action_code, is_(InternalActionCode("default_action_code")))
@@ -299,13 +303,13 @@ def test_handle_non_matching_rule_returns_default(
 
 
 @patch("eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator")
-@patch.object(ActionRuleHandler, "get_actions_from_comms")
-@patch.object(ActionRuleHandler, "get_action_rules_components")
+@patch.object(ActionRuleHandler, "_get_actions_from_comms")
+@patch.object(ActionRuleHandler, "_get_action_rules_components")
 def test_handle_multiple_rules_same_priority_all_match(
     mock_get_action_rules_components,
     mock_get_actions_from_comms,
     mock_rule_calculator_class,
-    action_rule_handler: ActionRuleHandler,
+    handler: ActionRuleHandler,
 ):
     rule1 = rule_builder.ICBRedirectRuleFactory.build(priority=10, comms_routing="action_a", name="RuleA")
     rule2 = rule_builder.ICBRedirectRuleFactory.build(priority=10, comms_routing="action_b", name="RuleB")
@@ -363,7 +367,7 @@ def test_handle_multiple_rules_same_priority_all_match(
         Mock(evaluate_exclusion=Mock(return_value=(Status.actionable, Mock(matcher_matched=True)))),
     ]
 
-    matched_action_detail = action_rule_handler.handle(MOCK_PERSON, active_iteration, RuleType.redirect)
+    matched_action_detail = handler._handle(MOCK_PERSON, active_iteration, RuleType.redirect)
 
     assert_that(len(matched_action_detail.actions), is_(2))
     assert_that(matched_action_detail.actions[0].internal_action_code, is_(InternalActionCode("action_a")))
@@ -378,13 +382,13 @@ def test_handle_multiple_rules_same_priority_all_match(
 
 
 @patch("eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator")
-@patch.object(ActionRuleHandler, "get_actions_from_comms")
-@patch.object(ActionRuleHandler, "get_action_rules_components")
+@patch.object(ActionRuleHandler, "_get_actions_from_comms")
+@patch.object(ActionRuleHandler, "_get_action_rules_components")
 def test_handle_multiple_rules_same_priority_one_mismatch(
     mock_get_action_rules_components,
     mock_get_actions_from_comms,
     mock_rule_calculator_class,
-    action_rule_handler: ActionRuleHandler,
+    handler: ActionRuleHandler,
 ):
     rule1 = rule_builder.ICBRedirectRuleFactory.build(priority=10, comms_routing="action_a", name="RuleA")
     rule2 = rule_builder.ICBRedirectRuleFactory.build(priority=10, comms_routing="action_b", name="RuleB")
@@ -425,7 +429,7 @@ def test_handle_multiple_rules_same_priority_one_mismatch(
         Mock(evaluate_exclusion=Mock(return_value=(Status.actionable, Mock(matcher_matched=False)))),
     ]
 
-    matched_action_detail = action_rule_handler.handle(MOCK_PERSON, active_iteration, rule_type)
+    matched_action_detail = handler._handle(MOCK_PERSON, active_iteration, rule_type)
 
     assert_that(len(matched_action_detail.actions), is_(1))
     assert_that(matched_action_detail.actions[0].internal_action_code, is_(InternalActionCode("default_action_code")))
@@ -442,13 +446,13 @@ def test_handle_multiple_rules_same_priority_one_mismatch(
 
 
 @patch("eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator")
-@patch.object(ActionRuleHandler, "get_actions_from_comms")
-@patch.object(ActionRuleHandler, "get_action_rules_components")
+@patch.object(ActionRuleHandler, "_get_actions_from_comms")
+@patch.object(ActionRuleHandler, "_get_action_rules_components")
 def test_handle_different_priority_rules_highest_priority_wins(
     mock_get_action_rules_components,
     mock_get_actions_from_comms,
     mock_rule_calculator_class,
-    action_rule_handler: ActionRuleHandler,
+    handler: ActionRuleHandler,
 ):
     lower_priority_rule = rule_builder.ICBRedirectRuleFactory.build(
         priority=20, comms_routing="action_low", name="LowP"
@@ -513,7 +517,7 @@ def test_handle_different_priority_rules_highest_priority_wins(
         Mock(evaluate_exclusion=Mock(return_value=(Status.actionable, Mock(matcher_matched=True)))),
     ]
 
-    matched_action_detail = action_rule_handler.handle(MOCK_PERSON, active_iteration, rule_type)
+    matched_action_detail = handler._handle(MOCK_PERSON, active_iteration, rule_type)
 
     assert_that(len(matched_action_detail.actions), is_(1))
     assert_that(matched_action_detail.actions[0].internal_action_code, is_(InternalActionCode("action_high")))
@@ -527,7 +531,7 @@ def test_handle_different_priority_rules_highest_priority_wins(
     mock_get_actions_from_comms.assert_any_call(active_iteration.actions_mapper, "action_high")
 
 
-def test_handle_no_actions_mapper_entry_for_rule_comms_returns_default(action_rule_handler: ActionRuleHandler):
+def test_handle_no_actions_mapper_entry_for_rule_comms_returns_default(handler: ActionRuleHandler):
     matching_rule = rule_builder.ICBRedirectRuleFactory.build(
         priority=10, comms_routing="non_existent_action", name="RuleSpecificAction"
     )
@@ -539,8 +543,8 @@ def test_handle_no_actions_mapper_entry_for_rule_comms_returns_default(action_ru
     rule_type = RuleType.redirect
 
     with (
-        patch.object(ActionRuleHandler, "get_action_rules_components") as mock_get_action_rules_components,
-        patch.object(ActionRuleHandler, "get_actions_from_comms") as mock_get_actions_from_comms,
+        patch.object(ActionRuleHandler, "_get_action_rules_components") as mock_get_action_rules_components,
+        patch.object(ActionRuleHandler, "_get_actions_from_comms") as mock_get_actions_from_comms,
         patch(
             "eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator"
         ) as mock_rule_calculator_class,
@@ -568,7 +572,7 @@ def test_handle_no_actions_mapper_entry_for_rule_comms_returns_default(action_ru
             Mock(matcher_matched=True),
         )
 
-        matched_action_detail = action_rule_handler.handle(MOCK_PERSON, active_iteration, rule_type)
+        matched_action_detail = handler._handle(MOCK_PERSON, active_iteration, rule_type)
 
         assert_that(len(matched_action_detail.actions), is_(1))
         assert_that(
@@ -583,7 +587,7 @@ def test_handle_no_actions_mapper_entry_for_rule_comms_returns_default(action_ru
         mock_rule_calculator_class.assert_called_once()
 
 
-def test_handle_no_default_comms_and_no_matching_rule(action_rule_handler: ActionRuleHandler):
+def test_handle_no_default_comms_and_no_matching_rule(handler: ActionRuleHandler):
     active_iteration = rule_builder.IterationFactory.build(
         default_comms_routing="",
         actions_mapper=ActionsMapperFactory.build(root={}),
@@ -592,8 +596,8 @@ def test_handle_no_default_comms_and_no_matching_rule(action_rule_handler: Actio
     rule_type = RuleType.redirect
 
     with (
-        patch.object(ActionRuleHandler, "get_action_rules_components") as mock_get_action_rules_components,
-        patch.object(ActionRuleHandler, "get_actions_from_comms") as mock_get_actions_from_comms,
+        patch.object(ActionRuleHandler, "_get_action_rules_components") as mock_get_action_rules_components,
+        patch.object(ActionRuleHandler, "_get_actions_from_comms") as mock_get_actions_from_comms,
         patch(
             "eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator"
         ) as mock_rule_calculator_class,
@@ -609,7 +613,7 @@ def test_handle_no_default_comms_and_no_matching_rule(action_rule_handler: Actio
             Mock(matcher_matched=True),
         )
 
-        matched_action_detail = action_rule_handler.handle(MOCK_PERSON, active_iteration, rule_type)
+        matched_action_detail = handler._handle(MOCK_PERSON, active_iteration, rule_type)
 
         assert_that(matched_action_detail.actions, is_(None))
         assert_that(matched_action_detail.rule_priority, is_(RulePriority(20)))
@@ -619,3 +623,34 @@ def test_handle_no_default_comms_and_no_matching_rule(action_rule_handler: Actio
         mock_get_actions_from_comms.assert_any_call(active_iteration.actions_mapper, None)
         mock_get_actions_from_comms.assert_any_call(active_iteration.actions_mapper, "some_action")
         mock_rule_calculator_class.assert_called_once()
+
+
+@patch.object(ActionRuleHandler, "_handle")
+def test_handle_when_active_iteration_present_and_include_actions_is_true(mock_handle, handler: ActionRuleHandler):
+    mock_handle.side_effect = [MatchedActionDetail()]
+
+    handler.get_actions(
+        MOCK_PERSON, IterationFactory.build(), IterationResult(Status.actionable, [], []), include_actions_flag=True
+    )
+
+    assert_that(mock_handle.call_count, is_(1))
+
+
+@patch.object(ActionRuleHandler, "_handle")
+def test_handle_when_active_iteration_absent_and_include_actions_is_true(mock_handle, handler: ActionRuleHandler):
+    mock_handle.side_effect = [MatchedActionDetail()]
+
+    handler.get_actions(MOCK_PERSON, None, IterationResult(Status.actionable, [], []), include_actions_flag=True)
+
+    assert_that(mock_handle.call_count, is_(0))
+
+
+@patch.object(ActionRuleHandler, "_handle")
+def test_handle_is_not_called_when_include_actions_is_false(mock_handle, handler: ActionRuleHandler):
+    mock_handle.side_effect = [MatchedActionDetail()]
+
+    handler.get_actions(
+        MOCK_PERSON, IterationFactory.build(), IterationResult(Status.actionable, [], []), include_actions_flag=False
+    )
+
+    assert_that(mock_handle.call_count, is_(0))

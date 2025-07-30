@@ -81,6 +81,13 @@ class Status(Enum):
         }
         return status_to_text_mapping.get(self, lambda: StatusText("Unknown status provided"))()
 
+    def get_action_rule_type(self) -> RuleType:
+        return {
+            self.not_eligible: RuleType.not_eligible_actions,
+            self.not_actionable: RuleType.not_actionable_actions,
+            self.actionable: RuleType.redirect,
+        }[self]
+
 
 @dataclass
 class Reason:

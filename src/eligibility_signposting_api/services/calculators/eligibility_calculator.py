@@ -8,13 +8,6 @@ from wireup import service
 
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.model import eligibility_status
-from eligibility_signposting_api.model.campaign_config import (
-    CampaignConfig,
-    CohortLabel,
-    Iteration,
-    IterationName,
-    RuleType,
-)
 from eligibility_signposting_api.model.eligibility_status import (
     BestIterationResult,
     CohortGroupResult,
@@ -22,7 +15,6 @@ from eligibility_signposting_api.model.eligibility_status import (
     ConditionName,
     EligibilityStatus,
     IterationResult,
-    MatchedActionDetail,
     Status,
 )
 from eligibility_signposting_api.services.processors.action_rule_handler import ActionRuleHandler
@@ -32,6 +24,11 @@ from eligibility_signposting_api.services.processors.rule_processor import RuleP
 if TYPE_CHECKING:
     from collections.abc import Collection
 
+    from eligibility_signposting_api.model.campaign_config import (
+        CampaignConfig,
+        CohortLabel,
+        IterationName,
+    )
     from eligibility_signposting_api.model.person import Person
 
 
@@ -85,7 +82,9 @@ class EligibilityCalculator:
         )
         for condition_name, campaign_group in requested_grouped_campaigns:
             best_iteration_result = self.get_best_iteration_result(campaign_group)
-            matched_action_detail = self.get_actions(
+
+            matched_action_detail = self.action_rule_handler.get_actions(
+                self.person,
                 best_iteration_result.active_iteration,
                 best_iteration_result.iteration_result,
                 include_actions_flag=include_actions_flag,
@@ -99,27 +98,6 @@ class EligibilityCalculator:
         # Consolidate all the results and return
         final_result = self.build_condition_results(condition_results)
         return eligibility_status.EligibilityStatus(conditions=final_result)
-
-    def get_actions(
-        self, active_iteration: Iteration | None, best_iteration_result: IterationResult, *, include_actions_flag: bool
-    ) -> MatchedActionDetail:
-        status_to_rule_type = {
-            Status.actionable: RuleType.redirect,
-            Status.not_eligible: RuleType.not_eligible_actions,
-            Status.not_actionable: RuleType.not_actionable_actions,
-        }
-
-        action_detail = MatchedActionDetail()
-
-        if (
-            best_iteration_result.status in status_to_rule_type
-            and active_iteration is not None
-            and include_actions_flag
-        ):
-            rule_type = status_to_rule_type[best_iteration_result.status]
-            action_detail = self.action_rule_handler.handle(self.person, active_iteration, rule_type)
-
-        return action_detail
 
     def get_best_iteration_result(self, campaign_group: list[CampaignConfig]) -> BestIterationResult:
         iteration_results = self.get_iteration_results(campaign_group)
