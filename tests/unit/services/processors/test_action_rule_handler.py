@@ -233,13 +233,13 @@ def test_handle_actions_matching_rule_overrides_default(
 @patch("eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator")
 @patch.object(ActionRuleHandler, "get_actions_from_comms")
 @patch.object(ActionRuleHandler, "get_action_rules_components")
-def test_handle_rule_mismatch_returns_default(
+def test_handle_non_matching_rule_returns_default(
     mock_get_action_rules_components,
     mock_get_actions_from_comms,
     mock_rule_calculator_class,
     action_rule_handler: ActionRuleHandler,
 ):
-    mismatching_rule = rule_builder.ICBRedirectRuleFactory.build(
+    non_matching_rule = rule_builder.ICBRedirectRuleFactory.build(
         priority=10, comms_routing="rule_specific_action", name="RuleSpecificAction"
     )
     active_iteration = rule_builder.IterationFactory.build(
@@ -247,12 +247,12 @@ def test_handle_rule_mismatch_returns_default(
         actions_mapper=ActionsMapperFactory.build(
             root={"default_action_code": DEFAULT_COMMS_DETAIL, "rule_specific_action": BOOK_NBS_COMMS}
         ),
-        iteration_rules=[mismatching_rule],
+        iteration_rules=[non_matching_rule],
     )
     rule_type = RuleType.redirect
 
     mock_get_action_rules_components.return_value = (
-        (mismatching_rule,),
+        (non_matching_rule,),
         active_iteration.actions_mapper,
         active_iteration.default_comms_routing,
     )
@@ -295,7 +295,7 @@ def test_handle_rule_mismatch_returns_default(
     mock_get_action_rules_components.assert_called_once_with(active_iteration, rule_type)
     assert_that(mock_get_actions_from_comms.call_count, is_(1))
     mock_get_actions_from_comms.assert_called_once_with(active_iteration.actions_mapper, "default_action_code")
-    mock_rule_calculator_class.assert_called_once_with(person=MOCK_PERSON, rule=mismatching_rule)
+    mock_rule_calculator_class.assert_called_once_with(person=MOCK_PERSON, rule=non_matching_rule)
 
 
 @patch("eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator")
@@ -346,9 +346,7 @@ def test_handle_multiple_rules_same_priority_all_match(
                 action_description=ActionDescription(BOOK_NBS_COMMS.action_description),
                 url_link=BOOK_NBS_COMMS.url_link,
                 url_label=BOOK_NBS_COMMS.url_label,
-            )
-        ],
-        [
+            ),
             SuggestedAction(
                 internal_action_code=InternalActionCode("action_b"),
                 action_type=ActionType(DEFAULT_COMMS_DETAIL.action_type),
@@ -356,7 +354,7 @@ def test_handle_multiple_rules_same_priority_all_match(
                 action_description=ActionDescription(DEFAULT_COMMS_DETAIL.action_description),
                 url_link=DEFAULT_COMMS_DETAIL.url_link,
                 url_label=DEFAULT_COMMS_DETAIL.url_label,
-            )
+            ),
         ],
     ]
 
@@ -367,8 +365,9 @@ def test_handle_multiple_rules_same_priority_all_match(
 
     matched_action_detail = action_rule_handler.handle(MOCK_PERSON, active_iteration, RuleType.redirect)
 
-    assert_that(len(matched_action_detail.actions), is_(1))
+    assert_that(len(matched_action_detail.actions), is_(2))
     assert_that(matched_action_detail.actions[0].internal_action_code, is_(InternalActionCode("action_a")))
+    assert_that(matched_action_detail.actions[1].internal_action_code, is_(InternalActionCode("action_b")))
     assert_that(matched_action_detail.rule_priority, is_(RulePriority(10)))
     assert_that(matched_action_detail.rule_name, is_(RuleName("RuleA")))
 
