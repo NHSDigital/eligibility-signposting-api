@@ -5,8 +5,9 @@ from rules_validation_api.validators.campaign_config_validator import CampaignCo
 
 
 class TestMandatoryFieldsSchemaValidations:
-    def test_campaign_config_with_only_mandatory_fields_configuration(self,
-                                                                    valid_campaign_config_with_only_mandatory_fields):
+    def test_campaign_config_with_only_mandatory_fields_configuration(
+        self, valid_campaign_config_with_only_mandatory_fields
+    ):
         try:
             CampaignConfigValidation(**valid_campaign_config_with_only_mandatory_fields)
         except ValidationError as e:
@@ -190,7 +191,6 @@ class TestOptionalFieldsSchemaValidations:
 
 
 class TestBUCValidations:
-
     # StartDate and EndDates
     @pytest.mark.parametrize(
         ("start_date", "end_date"),
@@ -200,7 +200,9 @@ class TestBUCValidations:
             ("20250101", "20250101"),  # same day
         ],
     )
-    def test_valid_start_and_end_dates_and_iteration_dates_relation(self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields):
+    def test_valid_start_and_end_dates_and_iteration_dates_relation(
+        self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields
+    ):
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = start_date
         data["EndDate"] = end_date
@@ -214,7 +216,9 @@ class TestBUCValidations:
             ("20250331", "20250101"),  # end before start
         ],
     )
-    def test_invalid_start_and_end_dates_and_iteration_dates_relation(self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields):
+    def test_invalid_start_and_end_dates_and_iteration_dates_relation(
+        self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields
+    ):
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = start_date
         data["EndDate"] = end_date
@@ -228,5 +232,4 @@ class TestBUCValidations:
         with pytest.raises(ValidationError) as error:
             CampaignConfigValidation(**data)
         errors = error.value.errors()
-        assert any(
-            e["loc"][-1] == "Iterations" for e in errors), "Expected validation error on 'Iterations'"
+        assert any(e["loc"][-1] == "Iterations" for e in errors), "Expected validation error on 'Iterations'"

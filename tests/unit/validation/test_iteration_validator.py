@@ -7,8 +7,9 @@ from rules_validation_api.validators.iteration_validator import IterationValidat
 
 
 class TestMandatoryFieldsSchemaValidations:
-    def test_campaign_config_with_only_mandatory_fields_configuration(self,
-                                                                    valid_campaign_config_with_only_mandatory_fields):
+    def test_campaign_config_with_only_mandatory_fields_configuration(
+        self, valid_campaign_config_with_only_mandatory_fields
+    ):
         try:
             IterationValidation(**(valid_campaign_config_with_only_mandatory_fields["Iterations"][0]))
         except ValidationError as e:
@@ -27,8 +28,8 @@ class TestMandatoryFieldsSchemaValidations:
             "DefaultNotActionableRouting",
             "IterationCohorts",
             "IterationRules",
-            "ActionsMapper"
-        ]
+            "ActionsMapper",
+        ],
     )
     def test_missing_mandatory_fields(self, mandatory_field, valid_campaign_config_with_only_mandatory_fields):
         data = valid_campaign_config_with_only_mandatory_fields["Iterations"][0].copy()
@@ -82,42 +83,60 @@ class TestMandatoryFieldsSchemaValidations:
     # DefaultCommsRouting
     @pytest.mark.parametrize("routing_value", ["RouteA", "R1", "MainComm"])
     def test_valid_default_comms_routing(self, routing_value, valid_campaign_config_with_only_mandatory_fields):
-        data = {**valid_campaign_config_with_only_mandatory_fields["Iterations"][0], "DefaultCommsRouting": routing_value}
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "DefaultCommsRouting": routing_value,
+        }
         model = IterationValidation(**data)
         assert model.default_comms_routing == routing_value
 
     # DefaultNotEligibleRouting
     @pytest.mark.parametrize("routing_value", ["RouteB", "NotEligComm", "NoComms"])
     def test_valid_default_not_eligible_routing(self, routing_value, valid_campaign_config_with_only_mandatory_fields):
-        data = {**valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
-                "DefaultNotEligibleRouting": routing_value}
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "DefaultNotEligibleRouting": routing_value,
+        }
         model = IterationValidation(**data)
         assert model.default_not_eligible_routing == routing_value
 
     # DefaultNotActionableRouting
     @pytest.mark.parametrize("routing_value", ["RouteC", "HoldComm", "Inactive"])
-    def test_valid_default_not_actionable_routing(self, routing_value, valid_campaign_config_with_only_mandatory_fields):
-        data = {**valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
-                "DefaultNotActionableRouting": routing_value}
+    def test_valid_default_not_actionable_routing(
+        self, routing_value, valid_campaign_config_with_only_mandatory_fields
+    ):
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "DefaultNotActionableRouting": routing_value,
+        }
         model = IterationValidation(**data)
         assert model.default_not_actionable_routing == routing_value
 
-class TestOptionalFieldsSchemaValidations:
 
+class TestOptionalFieldsSchemaValidations:
     @pytest.mark.parametrize("iteration_number", [1, 5, 10])
     def test_iteration_number(self, iteration_number, valid_campaign_config_with_only_mandatory_fields):
-        data = {**valid_campaign_config_with_only_mandatory_fields["Iterations"][0], "IterationNumber": iteration_number}
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "IterationNumber": iteration_number,
+        }
         model = IterationValidation(**data)
         assert model.iteration_number == iteration_number
 
     @pytest.mark.parametrize("approval_minimum", [0, 25, 99])
     def test_approval_minimum(self, approval_minimum, valid_campaign_config_with_only_mandatory_fields):
-        data = {**valid_campaign_config_with_only_mandatory_fields["Iterations"][0], "ApprovalMinimum": approval_minimum}
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "ApprovalMinimum": approval_minimum,
+        }
         model = IterationValidation(**data)
         assert model.approval_minimum == approval_minimum
 
     @pytest.mark.parametrize("approval_maximum", [100, 250, 999])
     def test_approval_maximum(self, approval_maximum, valid_campaign_config_with_only_mandatory_fields):
-        data = {**valid_campaign_config_with_only_mandatory_fields["Iterations"][0], "ApprovalMaximum": approval_maximum}
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "ApprovalMaximum": approval_maximum,
+        }
         model = IterationValidation(**data)
         assert model.approval_maximum == approval_maximum

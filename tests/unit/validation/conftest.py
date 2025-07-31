@@ -33,13 +33,13 @@ def valid_campaign_config_with_only_mandatory_fields():
         ],
     }
 
+
 @pytest.fixture
 def valid_iteration_rule_with_only_mandatory_fields():
     return {
         "Type": "F",
         "Name": "Assure only already vaccinated taken from magic cohort",
-        "Description": "Exclude anyone who has NOT been given a dose of RSV "
-                       "Vaccination from the magic cohort",
+        "Description": "Exclude anyone who has NOT been given a dose of RSV Vaccination from the magic cohort",
         "Operator": "is_empty",
         "Comparator": "",
         "AttributeTarget": "RSV",
