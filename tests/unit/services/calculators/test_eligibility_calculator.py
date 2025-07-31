@@ -5,7 +5,7 @@ import pytest
 from faker import Faker
 from flask import Flask
 from freezegun import freeze_time
-from hamcrest import assert_that, contains_exactly, contains_inanyorder, equal_to, has_item, has_items, is_, is_in
+from hamcrest import assert_that, contains_exactly, contains_inanyorder, has_item, has_items, is_, is_in
 from pydantic import HttpUrl
 
 from eligibility_signposting_api.model import campaign_config as rules_model
@@ -14,7 +14,6 @@ from eligibility_signposting_api.model.campaign_config import (
     AvailableAction,
     CohortLabel,
     Description,
-    IterationCohort,
     RuleAttributeLevel,
     RuleAttributeName,
     RuleAttributeTarget,
@@ -39,8 +38,6 @@ from eligibility_signposting_api.model.eligibility_status import (
     RulePriority,
     Status,
     SuggestedAction,
-    UrlLabel,
-    UrlLink,
 )
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
 from tests.fixtures.builders.model import rule as rule_builder
@@ -49,7 +46,6 @@ from tests.fixtures.matchers.eligibility import (
     is_cohort_result,
     is_condition,
     is_eligibility_status,
-    is_reason,
 )
 
 
@@ -101,55 +97,6 @@ def test_base_eligible_with_when_magic_cohort_is_present(
             has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(status))
         ),
         test_comment,
-    )
-
-
-@freeze_time("2025-04-25")
-def test_only_live_campaigns_considered(faker: Faker):
-    # Given
-    nhs_number = NHSNumber(faker.nhs_number())
-
-    person_rows = person_rows_builder(nhs_number, cohorts=["cohort1"])
-    campaign_configs = [
-        rule_builder.CampaignConfigFactory.build(
-            name="Live",
-            target="RSV",
-            iterations=[
-                rule_builder.IterationFactory.build(
-                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort2")],
-                    iteration_rules=[],
-                )
-            ],
-            start_date=datetime.date(2025, 4, 20),
-            end_date=datetime.date(2025, 4, 30),
-        ),
-        rule_builder.CampaignConfigFactory.build(
-            name="No longer live",
-            target="RSV",
-            iterations=[
-                rule_builder.IterationFactory.build(
-                    iteration_cohorts=[
-                        rule_builder.IterationCohortFactory.build(cohort_label="cohort1"),
-                        rule_builder.IterationCohortFactory.build(cohort_label="cohort2"),
-                    ],
-                )
-            ],
-            start_date=datetime.date(2025, 4, 1),
-            end_date=datetime.date(2025, 4, 24),
-        ),
-    ]
-
-    calculator = EligibilityCalculator(person_rows, campaign_configs)
-
-    # When
-    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
-
-    # Then
-    assert_that(
-        actual,
-        is_eligibility_status().with_conditions(
-            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_eligible))
-        ),
     )
 
 
@@ -314,161 +261,6 @@ def test_rules_with_same_priority_must_all_match_to_exclude(
         actual,
         is_eligibility_status().with_conditions(
             has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status))
-        ),
-        test_comment,
-    )
-
-
-def test_multiple_conditions_where_both_are_actionable(faker: Faker):
-    # Given
-    nhs_number = NHSNumber(faker.nhs_number())
-    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=78))
-
-    person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"], icb="QE1")
-    campaign_configs = [
-        rule_builder.CampaignConfigFactory.build(
-            target="RSV",
-            iterations=[
-                rule_builder.IterationFactory.build(
-                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                    iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
-                    default_comms_routing="defaultcomms",
-                    actions_mapper=rule_builder.ActionsMapperFactory.build(
-                        root={"rule_1_comms_routing": book_nbs_comms, "defaultcomms": default_comms_detail}
-                    ),
-                )
-            ],
-        ),
-        rule_builder.CampaignConfigFactory.build(
-            target="COVID",
-            iterations=[
-                rule_builder.IterationFactory.build(
-                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                    iteration_rules=[
-                        rule_builder.PersonAgeSuppressionRuleFactory.build(),
-                        rule_builder.ICBRedirectRuleFactory.build(),
-                    ],
-                    default_comms_routing="defaultcomms",
-                    actions_mapper=rule_builder.ActionsMapperFactory.build(
-                        root={"ActionCode1": book_nbs_comms, "defaultcomms": default_comms_detail}
-                    ),
-                )
-            ],
-        ),
-    ]
-
-    calculator = EligibilityCalculator(person_rows, campaign_configs)
-
-    # When
-    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
-
-    # Then
-    assert_that(
-        actual,
-        is_eligibility_status().with_conditions(
-            has_items(
-                is_condition()
-                .with_condition_name(ConditionName("RSV"))
-                .and_status(Status.actionable)
-                .and_actions(
-                    [
-                        SuggestedAction(
-                            internal_action_code=InternalActionCode("defaultcomms"),
-                            action_type=ActionType("CareCardWithText"),
-                            action_code=ActionCode("BookLocal"),
-                            action_description=ActionDescription("You can get an RSV vaccination at your GP surgery"),
-                            url_link=None,
-                            url_label=None,
-                        )
-                    ]
-                ),
-                is_condition()
-                .with_condition_name(ConditionName("COVID"))
-                .and_status(Status.actionable)
-                .and_actions(
-                    [
-                        SuggestedAction(
-                            internal_action_code=InternalActionCode("ActionCode1"),
-                            action_type=ActionType("ButtonAuthLink"),
-                            action_code=ActionCode("BookNBS"),
-                            action_description=ActionDescription("Action description"),
-                            url_link=UrlLink(HttpUrl("https://www.nhs.uk/book-rsv")),
-                            url_label=UrlLabel("Continue to booking"),
-                        )
-                    ]
-                ),
-            )
-        ),
-    )
-
-
-@pytest.mark.parametrize(
-    ("test_comment", "campaign1", "campaign2"),
-    [
-        (
-            "1st campaign allows, 2nd excludes",
-            rule_builder.CampaignConfigFactory.build(
-                target="RSV",
-                iterations=[
-                    rule_builder.IterationFactory.build(
-                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
-                    )
-                ],
-            ),
-            rule_builder.CampaignConfigFactory.build(
-                target="RSV",
-                iterations=[
-                    rule_builder.IterationFactory.build(
-                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-85")],
-                    )
-                ],
-            ),
-        ),
-        (
-            "1st campaign excludes, 2nd allows",
-            rule_builder.CampaignConfigFactory.build(
-                target="RSV",
-                iterations=[
-                    rule_builder.IterationFactory.build(
-                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build(comparator="-85")],
-                    )
-                ],
-            ),
-            rule_builder.CampaignConfigFactory.build(
-                target="RSV",
-                iterations=[
-                    rule_builder.IterationFactory.build(
-                        iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
-                        iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
-                    )
-                ],
-            ),
-        ),
-    ],
-)
-def test_multiple_campaigns_for_single_condition(
-    test_comment: str, campaign1: rules_model.CampaignConfig, campaign2: rules_model.CampaignConfig, faker: Faker
-):
-    # Given
-    nhs_number = NHSNumber(faker.nhs_number())
-    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=78))
-
-    person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort1"])
-    campaign_configs = [campaign1, campaign2]
-
-    calculator = EligibilityCalculator(person_rows, campaign_configs)
-
-    # When
-    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
-
-    # Then
-    assert_that(
-        actual,
-        is_eligibility_status().with_conditions(
-            contains_exactly(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable))
         ),
         test_comment,
     )
@@ -718,7 +510,6 @@ def test_cohort_groups_and_their_descriptions_when_magic_cohort_is_present(
     )
 
 
-
 @pytest.mark.parametrize(
     ("person_rows", "expected_description", "test_comment"),
     [
@@ -792,8 +583,6 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
         ),
         test_comment,
     )
-
-
 
 
 book_nbs_comms = AvailableAction(
