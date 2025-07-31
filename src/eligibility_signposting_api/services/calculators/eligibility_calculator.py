@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -11,7 +10,6 @@ from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.eligibility_status import (
     BestIterationResult,
     CohortGroupResult,
-    Condition,
     ConditionName,
     EligibilityStatus,
     IterationResult,
@@ -19,6 +17,7 @@ from eligibility_signposting_api.model.eligibility_status import (
 )
 from eligibility_signposting_api.services.processors.action_rule_handler import ActionRuleHandler
 from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
+from eligibility_signposting_api.services.processors.eligibility_result_builder import EligibilityResultBuilder
 from eligibility_signposting_api.services.processors.rule_processor import RuleProcessor
 
 if TYPE_CHECKING:
@@ -47,6 +46,7 @@ class EligibilityCalculator:
     campaign_evaluator: CampaignEvaluator = field(default_factory=CampaignEvaluator)
     rule_processor: RuleProcessor = field(default_factory=RuleProcessor)
     action_rule_handler: ActionRuleHandler = field(default_factory=ActionRuleHandler)
+    eligibility_result_builder: EligibilityResultBuilder = field(default_factory=EligibilityResultBuilder)
 
     results: list[eligibility_status.Condition] = field(default_factory=list)
 
@@ -96,7 +96,7 @@ class EligibilityCalculator:
             AuditContext.append_audit_condition(condition_name, best_iteration_result, matched_action_detail)
 
         # Consolidate all the results and return
-        final_result = self.build_condition_results(condition_results)
+        final_result = self.eligibility_result_builder.build_condition_results(condition_results)
         return eligibility_status.EligibilityStatus(conditions=final_result)
 
     def get_best_iteration_result(self, campaign_group: list[CampaignConfig]) -> BestIterationResult:
@@ -131,41 +131,3 @@ class EligibilityCalculator:
                 IterationResult(status, best_cohorts, []), active_iteration, cc.id, cc.version, cohort_results
             )
         return iteration_results
-
-    @staticmethod
-    def build_condition_results(condition_results: dict[ConditionName, IterationResult]) -> list[Condition]:
-        conditions: list[Condition] = []
-        # iterate over conditions
-        for condition_name, active_iteration_result in condition_results.items():
-            grouped_cohort_results = defaultdict(list)
-            # iterate over cohorts and group them by status and cohort_group
-            for cohort_result in active_iteration_result.cohort_results:
-                if active_iteration_result.status == cohort_result.status:
-                    grouped_cohort_results[cohort_result.cohort_code].append(cohort_result)
-
-            # deduplicate grouped cohort results by cohort_code
-            deduplicated_cohort_results = [
-                CohortGroupResult(
-                    cohort_code=group_cohort_code,
-                    status=group[0].status,
-                    # Flatten all reasons from the group
-                    reasons=[reason for cohort in group for reason in cohort.reasons],
-                    # get the first nonempty description
-                    description=next((c.description for c in group if c.description), group[0].description),
-                    audit_rules=[],
-                )
-                for group_cohort_code, group in grouped_cohort_results.items()
-                if group
-            ]
-
-            # return condition with cohort results
-            conditions.append(
-                Condition(
-                    condition_name=condition_name,
-                    status=active_iteration_result.status,
-                    cohort_results=list(deduplicated_cohort_results),
-                    actions=condition_results[condition_name].actions,
-                    status_text=active_iteration_result.status.get_status_text(condition_name),
-                )
-            )
-        return conditions

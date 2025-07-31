@@ -1,10 +1,10 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from hamcrest import assert_that, empty, has_length, is_
+from hamcrest import assert_that, empty, is_
 
-from eligibility_signposting_api.model.campaign_config import RuleType
-from eligibility_signposting_api.model.eligibility_status import CohortGroupResult, Reason, Status
+from eligibility_signposting_api.model.campaign_config import CohortLabel, RuleType
+from eligibility_signposting_api.model.eligibility_status import CohortGroupResult, Reason, RuleName, Status
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
 from eligibility_signposting_api.services.processors.rule_processor import RuleProcessor
@@ -116,8 +116,8 @@ def test_evaluate_rules_priority_group_one_not_eligible(mock_rule_calculator_cla
     status, reasons, is_rule_stop = rule_processor.evaluate_rules_priority_group(MOCK_PERSON_DATA, rules_group)
 
     assert_that(status, is_(Status.actionable))
-    assert_that(reasons, has_length(1))
-    assert_that(reasons[0].rule_name, is_("ExclusionReason"))
+    assert_that(len(reasons), is_(1))
+    assert_that(reasons[0].rule_name, is_(RuleName("ExclusionReason")))
     assert_that(is_rule_stop, is_(False))
     assert_that(mock_rule_calculator_class.call_count, is_(2))
 
@@ -140,7 +140,7 @@ def test_evaluate_rules_priority_group_with_rule_stop(mock_rule_calculator_class
     status, reasons, is_rule_stop = rule_processor.evaluate_rules_priority_group(MOCK_PERSON_DATA, rules_group)
 
     assert_that(status, is_(Status.actionable))
-    assert_that(reasons, has_length(1))
+    assert_that(len(reasons), is_(1))
     assert_that(is_rule_stop, is_(True))
 
 
@@ -180,7 +180,7 @@ def test_is_eligible_by_filter_rules_not_eligible(
     is_eligible = rule_processor.is_eligible(MOCK_PERSON_DATA, cohort, cohort_results, filter_rules)
 
     assert_that(is_eligible, is_(False))
-    assert_that(cohort_results, has_length(1))
+    assert_that(len(cohort_results), is_(1))
     assert_that(cohort_results["COHORT_A"].status, is_(Status.not_eligible))
     assert_that(cohort_results["COHORT_A"].description, is_("Not Eligible"))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason]))
@@ -202,7 +202,7 @@ def test_evaluate_suppression_rules_actionable(
 
     rule_processor.is_actionable(MOCK_PERSON_DATA, cohort, cohort_results, suppression_rules)
 
-    assert_that(cohort_results, has_length(1))
+    assert_that(len(cohort_results), is_(1))
     assert_that(cohort_results["COHORT_A"].status, is_(Status.actionable))
     assert_that(cohort_results["COHORT_A"].description, is_("Actionable"))
     assert_that(cohort_results["COHORT_A"].reasons, is_([]))
@@ -228,7 +228,7 @@ def test_evaluate_suppression_rules_not_actionable(
 
     rule_processor.is_actionable(MOCK_PERSON_DATA, cohort, cohort_results, suppression_rules)
 
-    assert_that(cohort_results, has_length(1))
+    assert_that(len(cohort_results), is_(1))
     assert_that(cohort_results["COHORT_A"].status, is_(Status.not_actionable))
     assert_that(cohort_results["COHORT_A"].description, is_("Positive Description"))
     assert_that(cohort_results["COHORT_A"].reasons, is_([mock_reason]))
@@ -260,7 +260,7 @@ def test_evaluate_suppression_rules_stops_on_rule_stop(
 
     rule_processor.is_actionable(MOCK_PERSON_DATA, cohort, cohort_results, suppression_rules)
 
-    assert_that(cohort_results, has_length(1))
+    assert_that(len(cohort_results), is_(1))
     assert_that(cohort_results["COHORT_A"].status, is_(Status.not_actionable))
     assert_that(cohort_results["COHORT_A"].reasons, is_([mock_reason_p1]))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason_p1]))
@@ -291,7 +291,7 @@ def test_evaluate_suppression_rules_does_not_stop_on_rule_stop_when_status_is_ac
 
     rule_processor.is_actionable(MOCK_PERSON_DATA, cohort, cohort_results, suppression_rules)
 
-    assert_that(cohort_results, has_length(1))
+    assert_that(len(cohort_results), is_(1))
     assert_that(cohort_results["COHORT_A"].status, is_(Status.not_actionable))
     assert_that(cohort_results["COHORT_A"].reasons, is_([mock_reason_p2]))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason_p2]))
@@ -405,7 +405,7 @@ def test_is_not_eligible_by_filter_rules(mock_get_exclusion_rules, mock_evaluate
     is_eligible = rule_processor.is_eligible(MOCK_PERSON_DATA, cohort, cohort_results, filter_rules)
 
     assert_that(is_eligible, is_(False))
-    assert_that(cohort_results, has_length(1))
+    assert_that(len(cohort_results), is_(1))
     assert_that(cohort_results["COHORT_A"].status, is_(Status.not_eligible))
     assert_that(cohort_results["COHORT_A"].description, is_("Not Eligible"))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason]))
@@ -427,7 +427,7 @@ def test_is_actionable_by_suppression_rules(
 
     rule_processor.is_actionable(MOCK_PERSON_DATA, cohort, cohort_results, suppression_rules)
 
-    assert_that(cohort_results, has_length(1))
+    assert_that(len(cohort_results), is_(1))
     assert_that(cohort_results["COHORT_A"].status, is_(Status.actionable))
     assert_that(cohort_results["COHORT_A"].description, is_("Actionable"))
     assert_that(cohort_results["COHORT_A"].reasons, is_(empty()))
@@ -463,10 +463,133 @@ def test_is_not_actionable_by_suppression_rules(
 
     rule_processor.is_actionable(MOCK_PERSON_DATA, cohort, cohort_results, suppression_rules)
 
-    assert_that(cohort_results, has_length(1))
+    assert_that(len(cohort_results), is_(1))
     assert_that(cohort_results["COHORT_A"].status, is_(Status.not_actionable))
     assert_that(cohort_results["COHORT_A"].description, is_("Positive Description"))
     assert_that(cohort_results["COHORT_A"].reasons, is_([mock_reason]))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason]))
     mock_get_exclusion_rules.assert_called_once_with(cohort, suppression_rules)
     mock_evaluate_rules_priority_group.assert_called_once()
+
+
+@patch.object(RuleProcessor, "get_rules_by_type")
+@patch("eligibility_signposting_api.services.processors.rule_processor.BaseEligibilityHandler")
+@patch("eligibility_signposting_api.services.processors.rule_processor.FilterRuleHandler")
+@patch("eligibility_signposting_api.services.processors.rule_processor.SuppressionRuleHandler")
+def test_get_cohort_group_results(
+    mock_suppression_handler_class,
+    mock_filter_handler_class,
+    mock_base_handler_class,
+    mock_get_rules_by_type,
+    rule_processor,
+):
+    mock_base_handler_instance = mock_base_handler_class.return_value
+    mock_filter_handler_instance = mock_filter_handler_class.return_value
+    mock_suppression_handler_instance = mock_suppression_handler_class.return_value
+
+    mock_base_handler_instance.next.return_value = mock_filter_handler_instance
+    mock_filter_handler_instance.next.return_value = mock_suppression_handler_instance
+
+    cohort_a = rule_builder.IterationCohortFactory.build(
+        cohort_label="COHORT_A", priority=1, cohort_group="common_cohort"
+    )
+    cohort_b = rule_builder.IterationCohortFactory.build(
+        cohort_label="COHORT_B", priority=2, cohort_group="common_cohort"
+    )
+    active_iteration = rule_builder.IterationFactory.build(
+        iteration_cohorts=[cohort_a, cohort_b],
+        iteration_rules=[
+            rule_builder.IterationRuleFactory.build(type=RuleType.filter, priority=1),
+            rule_builder.IterationRuleFactory.build(type=RuleType.suppression, priority=1),
+        ],
+    )
+
+    filter_rules = (rule_builder.IterationRuleFactory.build(type=RuleType.filter),)
+    suppression_rules = (rule_builder.IterationRuleFactory.build(type=RuleType.suppression),)
+    mock_get_rules_by_type.return_value = (filter_rules, suppression_rules)
+
+    def mock_handle_side_effect(person, cohort, cohort_results_dict, rule_processor_instance):  # noqa: ARG001
+        if cohort.cohort_label == CohortLabel("COHORT_A"):
+            cohort_results_dict[CohortLabel("COHORT_A")] = CohortGroupResult(
+                cohort_code=cohort.cohort_group,
+                status=Status.actionable,
+                reasons=[],
+                description="Cohort A Description",
+                audit_rules=[],
+            )
+        elif cohort.cohort_label == CohortLabel("COHORT_B"):
+            cohort_results_dict[CohortLabel("COHORT_B")] = CohortGroupResult(
+                cohort_code=cohort.cohort_group,
+                status=Status.not_eligible,
+                reasons=[],
+                description="Cohort B Description",
+                audit_rules=[],
+            )
+
+    mock_base_handler_instance.handle.side_effect = mock_handle_side_effect
+
+    result = rule_processor.get_cohort_group_results(MOCK_PERSON_DATA, active_iteration)
+
+    mock_get_rules_by_type.assert_called_once_with(active_iteration)
+
+    mock_base_handler_class.assert_called_once_with()
+    mock_filter_handler_class.assert_called_once_with(filter_rules=filter_rules)
+    mock_suppression_handler_class.assert_called_once_with(suppression_rules=suppression_rules)
+
+    mock_base_handler_instance.next.assert_called_once_with(mock_filter_handler_instance)
+    mock_filter_handler_instance.next.assert_called_once_with(mock_suppression_handler_instance)
+
+    assert_that(mock_base_handler_instance.handle.call_count, is_(2))
+    calls = mock_base_handler_instance.handle.call_args_list
+    assert_that(calls[0].args[1], is_(cohort_a))
+    assert_that(calls[1].args[1], is_(cohort_b))
+
+    assert_that(len(result), is_(2))
+    expected_result = {
+        CohortLabel("COHORT_A"): CohortGroupResult(
+            cohort_code=cohort_a.cohort_group,
+            status=Status.actionable,
+            reasons=[],
+            description="Cohort A Description",
+            audit_rules=[],
+        ),
+        CohortLabel("COHORT_B"): CohortGroupResult(
+            cohort_code=cohort_b.cohort_group,
+            status=Status.not_eligible,
+            reasons=[],
+            description="Cohort B Description",
+            audit_rules=[],
+        ),
+    }
+    assert_that(result, is_(expected_result))
+
+    assert_that(result[CohortLabel("COHORT_A")].status, is_(Status.actionable))
+    assert_that(result[CohortLabel("COHORT_B")].status, is_(Status.not_eligible))
+
+    assert_that(result[CohortLabel("COHORT_A")].status, is_(Status.actionable))
+    assert_that(result[CohortLabel("COHORT_B")].status, is_(Status.not_eligible))
+
+
+@patch.object(RuleProcessor, "get_rules_by_type", return_value=((), ()))
+@patch("eligibility_signposting_api.services.processors.rule_processor.BaseEligibilityHandler")
+@patch("eligibility_signposting_api.services.processors.rule_processor.FilterRuleHandler")
+@patch("eligibility_signposting_api.services.processors.rule_processor.SuppressionRuleHandler")
+def test_get_cohort_group_results_no_rules_no_cohorts(
+    mock_suppression_handler_class,
+    mock_filter_handler_class,
+    mock_base_handler_class,
+    mock_get_rules_by_type,
+    rule_processor,
+):
+    mock_base_handler_instance = mock_base_handler_class.return_value
+    active_iteration = rule_builder.IterationFactory.build(iteration_cohorts=[], iteration_rules=[])
+
+    result = rule_processor.get_cohort_group_results(MOCK_PERSON_DATA, active_iteration)
+
+    mock_get_rules_by_type.assert_called_once_with(active_iteration)
+    mock_base_handler_class.assert_called_once_with()
+    mock_filter_handler_class.assert_called_once_with(filter_rules=())
+    mock_suppression_handler_class.assert_called_once_with(suppression_rules=())
+
+    mock_base_handler_instance.handle.assert_not_called()
+    assert_that(result, is_({}))
