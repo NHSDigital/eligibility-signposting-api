@@ -50,52 +50,11 @@ from tests.fixtures.matchers.eligibility import (
     is_eligibility_status,
     is_reason,
 )
-from tests.fixtures.matchers.rules import is_iteration_rule
 
 
 @pytest.fixture
 def app():
     return Flask(__name__)
-
-
-class TestEligibilityCalculator:
-    @staticmethod
-    def test_get_action_rules_components():
-        # Given
-
-        iteration = rule_builder.IterationFactory.build(
-            iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort2")],
-            default_comms_routing="defaultcomms",
-            actions_mapper=rule_builder.ActionsMapperFactory.build(
-                root={
-                    "ActionCode1": AvailableAction(
-                        ActionType="ActionType1",
-                        ExternalRoutingCode="ActionCode1",
-                        ActionDescription="ActionDescription1",
-                        UrlLink=HttpUrl("https://www.ActionUrl1.com"),
-                        UrlLabel="ActionLabel1",
-                    ),
-                    "defaultcomms": AvailableAction(
-                        ActionType="ActionType2",
-                        ExternalRoutingCode="defaultcomms",
-                        ActionDescription="ActionDescription2",
-                        UrlLink=HttpUrl("https://www.ActionUrl2.com"),
-                        UrlLabel="ActionLabel2",
-                    ),
-                }
-            ),
-            iteration_rules=[rule_builder.ICBRedirectRuleFactory.build()],
-        )
-
-        # when
-        actual_rules, actual_action_mapper, actual_default_comms = EligibilityCalculator.get_action_rules_components(
-            iteration, RuleType.redirect
-        )
-
-        # then
-        assert_that(actual_rules, has_item(is_iteration_rule().with_name(iteration.iteration_rules[0].name)))
-        assert actual_action_mapper == iteration.actions_mapper
-        assert actual_default_comms == iteration.default_comms_routing
 
 
 def test_not_base_eligible(faker: Faker):

@@ -1,49 +1,34 @@
 from __future__ import annotations
 
-from _operator import attrgetter
 from collections import defaultdict
 from dataclasses import dataclass, field
-from itertools import groupby
 from typing import TYPE_CHECKING
 
 from wireup import service
 
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.model import eligibility_status
-from eligibility_signposting_api.model.campaign_config import (
-    ActionsMapper,
-    CampaignConfig,
-    CampaignID,
-    CampaignVersion,
-    Iteration,
-    IterationRule,
-    RuleName,
-    RulePriority,
-    RuleType,
-)
 from eligibility_signposting_api.model.eligibility_status import (
-    ActionCode,
-    ActionDescription,
-    ActionType,
+    BestIterationResult,
     CohortGroupResult,
     Condition,
     ConditionName,
-    InternalActionCode,
+    EligibilityStatus,
     IterationResult,
     Status,
-    SuggestedAction,
-    UrlLabel,
-    UrlLink,
 )
-from eligibility_signposting_api.services.calculators.rule_calculator import (
-    RuleCalculator,
-)
+from eligibility_signposting_api.services.processors.action_rule_handler import ActionRuleHandler
 from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
 from eligibility_signposting_api.services.processors.rule_processor import RuleProcessor
 
 if TYPE_CHECKING:
     from collections.abc import Collection
 
+    from eligibility_signposting_api.model.campaign_config import (
+        CampaignConfig,
+        CohortLabel,
+        IterationName,
+    )
     from eligibility_signposting_api.model.person import Person
 
 
@@ -61,12 +46,13 @@ class EligibilityCalculator:
 
     campaign_evaluator: CampaignEvaluator = field(default_factory=CampaignEvaluator)
     rule_processor: RuleProcessor = field(default_factory=RuleProcessor)
+    action_rule_handler: ActionRuleHandler = field(default_factory=ActionRuleHandler)
 
     results: list[eligibility_status.Condition] = field(default_factory=list)
 
     @staticmethod
     def get_the_best_cohort_memberships(
-        cohort_results: dict[str, CohortGroupResult],
+        cohort_results: dict[CohortLabel, CohortGroupResult],
     ) -> tuple[Status, list[CohortGroupResult]]:
         if not cohort_results:
             return eligibility_status.Status.not_eligible, []
@@ -87,152 +73,64 @@ class EligibilityCalculator:
 
         return best_status, best_cohorts
 
-    @staticmethod
-    def get_action_rules_components(
-        active_iteration: Iteration, rule_type: RuleType
-    ) -> tuple[tuple[IterationRule, ...], ActionsMapper, str | None]:
-        action_rules = tuple(rule for rule in active_iteration.iteration_rules if rule.type in rule_type)
-
-        routing_map = {
-            RuleType.redirect: active_iteration.default_comms_routing,
-            RuleType.not_eligible_actions: active_iteration.default_not_eligible_routing,
-            RuleType.not_actionable_actions: active_iteration.default_not_actionable_routing,
-        }
-
-        default_comms = routing_map.get(rule_type)
-        action_mapper = active_iteration.actions_mapper
-        return action_rules, action_mapper, default_comms
-
-    def get_eligibility_status(
-        self, include_actions: str, conditions: list[str], category: str
-    ) -> eligibility_status.EligibilityStatus:
+    def get_eligibility_status(self, include_actions: str, conditions: list[str], category: str) -> EligibilityStatus:
         include_actions_flag = include_actions.upper() == "Y"
         condition_results: dict[ConditionName, IterationResult] = {}
-        action_rule_priority, action_rule_name = None, None
 
         requested_grouped_campaigns = self.campaign_evaluator.get_requested_grouped_campaigns(
             self.campaign_configs, conditions, category
         )
         for condition_name, campaign_group in requested_grouped_campaigns:
-            actions: list[SuggestedAction] | None = []
-            best_active_iteration: Iteration | None
-            best_candidate: IterationResult
-            best_campaign_id: CampaignID | None
-            best_campaign_version: CampaignVersion | None
-            best_cohort_results: dict[str, CohortGroupResult] | None
+            best_iteration_result = self.get_best_iteration_result(campaign_group)
 
-            iteration_results = self.get_iteration_results(actions, campaign_group)
-
-            # Determine results between iterations - get the best
-            if iteration_results:
-                (
-                    best_iteration_name,
-                    (
-                        best_active_iteration,
-                        best_candidate,
-                        best_campaign_id,
-                        best_campaign_version,
-                        best_cohort_results,
-                    ),
-                ) = max(iteration_results.items(), key=lambda item: item[1][1].status.value)
-            else:
-                best_candidate = IterationResult(eligibility_status.Status.not_eligible, [], actions)
-                best_campaign_id = None
-                best_campaign_version = None
-                best_active_iteration = None
-                best_cohort_results = None
-
-            condition_results[condition_name] = best_candidate
-
-            status_to_rule_type = {
-                Status.actionable: RuleType.redirect,
-                Status.not_eligible: RuleType.not_eligible_actions,
-                Status.not_actionable: RuleType.not_actionable_actions,
-            }
-
-            if best_candidate.status in status_to_rule_type and best_active_iteration is not None:
-                if include_actions_flag:
-                    rule_type = status_to_rule_type[best_candidate.status]
-                    actions, matched_action_rule_priority, matched_action_rule_name = self.handle_action_rules(
-                        best_active_iteration, rule_type
-                    )
-                    action_rule_name = matched_action_rule_name
-                    action_rule_priority = matched_action_rule_priority
-                else:
-                    actions = None
-
-            else:
-                actions = None
-
-            if best_candidate.status in (Status.not_eligible, Status.not_actionable) and not include_actions_flag:
-                actions = None
-
-            # add actions to condition results
-            condition_results[condition_name].actions = actions
-
-            # add audit data
-            AuditContext.append_audit_condition(
-                condition_results[condition_name].actions,
-                condition_name,
-                (best_active_iteration, best_candidate, best_cohort_results),
-                (best_campaign_id, best_campaign_version),
-                (action_rule_priority, action_rule_name),
+            matched_action_detail = self.action_rule_handler.get_actions(
+                self.person,
+                best_iteration_result.active_iteration,
+                best_iteration_result.iteration_result,
+                include_actions_flag=include_actions_flag,
             )
+
+            condition_results[condition_name] = best_iteration_result.iteration_result
+            condition_results[condition_name].actions = matched_action_detail.actions
+
+            AuditContext.append_audit_condition(condition_name, best_iteration_result, matched_action_detail)
 
         # Consolidate all the results and return
         final_result = self.build_condition_results(condition_results)
         return eligibility_status.EligibilityStatus(conditions=final_result)
 
-    def get_iteration_results(
-        self, actions: list[SuggestedAction] | None, campaign_group: list[CampaignConfig]
-    ) -> dict[str, tuple[Iteration, IterationResult, CampaignID, CampaignVersion, dict[str, CohortGroupResult]]]:
-        iteration_results: dict[
-            str, tuple[Iteration, IterationResult, CampaignID, CampaignVersion, dict[str, CohortGroupResult]]
-        ] = {}
+    def get_best_iteration_result(self, campaign_group: list[CampaignConfig]) -> BestIterationResult:
+        iteration_results = self.get_iteration_results(campaign_group)
+
+        if iteration_results:
+            (best_iteration_name, best_iteration_result) = max(
+                iteration_results.items(),
+                key=lambda item: next(iter(item[1].cohort_results.values())).status.value
+                # Below handles the case where there are no cohort results
+                if item[1].cohort_results
+                else -1,
+            )
+        else:
+            iteration_result = IterationResult(eligibility_status.Status.not_eligible, [], [])
+            best_iteration_result = BestIterationResult(iteration_result, None, None, None, {})
+
+        return best_iteration_result
+
+    def get_iteration_results(self, campaign_group: list[CampaignConfig]) -> dict[IterationName, BestIterationResult]:
+        iteration_results: dict[IterationName, BestIterationResult] = {}
+
         for cc in campaign_group:
             active_iteration = cc.current_iteration
-            cohort_results: dict[str, CohortGroupResult] = self.rule_processor.get_cohort_group_results(
+            cohort_results: dict[CohortLabel, CohortGroupResult] = self.rule_processor.get_cohort_group_results(
                 self.person, active_iteration
             )
 
             # Determine Result between cohorts - get the best
             status, best_cohorts = self.get_the_best_cohort_memberships(cohort_results)
-            iteration_results[active_iteration.name] = (
-                active_iteration,
-                IterationResult(status, best_cohorts, actions),
-                cc.id,
-                cc.version,
-                cohort_results,
+            iteration_results[active_iteration.name] = BestIterationResult(
+                IterationResult(status, best_cohorts, []), active_iteration, cc.id, cc.version, cohort_results
             )
         return iteration_results
-
-    def handle_action_rules(
-        self, best_active_iteration: Iteration, rule_type: RuleType
-    ) -> tuple[list[SuggestedAction] | None, RulePriority | None, RuleName | None]:
-        action_rules, action_mapper, default_comms = self.get_action_rules_components(best_active_iteration, rule_type)
-        priority_getter = attrgetter("priority")
-        sorted_rules_by_priority = sorted(action_rules, key=priority_getter)
-
-        actions: list[SuggestedAction] | None = self.get_actions_from_comms(action_mapper, default_comms)  # pyright: ignore[reportArgumentType]
-
-        matched_action_rule_priority, matched_action_rule_name = None, None
-        for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
-            rule_group_list = list(rule_group)
-            matcher_matched_list = [
-                RuleCalculator(person=self.person, rule=rule).evaluate_exclusion()[1].matcher_matched
-                for rule in rule_group_list
-            ]
-
-            comms_routing = rule_group_list[0].comms_routing
-            if comms_routing and all(matcher_matched_list):
-                rule_actions = self.get_actions_from_comms(action_mapper, comms_routing)
-                if rule_actions and len(rule_actions) > 0:
-                    actions = rule_actions
-                matched_action_rule_priority = rule_group_list[0].priority
-                matched_action_rule_name = rule_group_list[0].name
-                break
-
-        return actions, matched_action_rule_priority, matched_action_rule_name
 
     @staticmethod
     def build_condition_results(condition_results: dict[ConditionName, IterationResult]) -> list[Condition]:
@@ -271,23 +169,3 @@ class EligibilityCalculator:
                 )
             )
         return conditions
-
-    @staticmethod
-    def get_actions_from_comms(action_mapper: ActionsMapper, comms: str) -> list[SuggestedAction] | None:
-        suggested_actions: list[SuggestedAction] = []
-        for comm in comms.split("|"):
-            action = action_mapper.get(comm)
-            if action is not None:
-                suggested_actions.append(
-                    SuggestedAction(
-                        internal_action_code=InternalActionCode(comm),
-                        action_type=ActionType(action.action_type),
-                        action_code=ActionCode(action.action_code),
-                        action_description=ActionDescription(action.action_description)
-                        if action.action_description
-                        else None,
-                        url_link=UrlLink(action.url_link) if action.url_link else None,
-                        url_label=UrlLabel(action.url_label) if action.url_label else None,
-                    )
-                )
-        return suggested_actions
