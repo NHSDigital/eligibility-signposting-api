@@ -1,135 +1,223 @@
-from datetime import datetime
-
 import pytest
 from pydantic import ValidationError
 
-from eligibility_signposting_api.config.contants import RULE_STOP_DEFAULT
-from eligibility_signposting_api.model.campaign_config import RuleStop
-from rules_validation_api.validators.iteration_validator import IterationValidation
+from rules_validation_api.validators.iteration_validator import IterationRuleValidation
 
 
 class TestMandatoryFieldsSchemaValidations:
     def test_campaign_config_with_only_mandatory_fields_configuration(
-            self, valid_iteration_rule_with_only_mandatory_fields
+        self, valid_iteration_rule_with_only_mandatory_fields
     ):
         try:
-            IterationValidation(**(valid_iteration_rule_with_only_mandatory_fields["Iterations"][0]))
+            IterationRuleValidation(**valid_iteration_rule_with_only_mandatory_fields)
         except ValidationError as e:
             pytest.fail(f"Unexpected error during model instantiation: {e}")
 
     @pytest.mark.parametrize(
         "mandatory_field",
-        [
-            "Type"
-            "Name"
-            "Description"
-            "Priority"
-            "AttributeLevel"
-            "Operator"
-            "Comparator"
-        ],
+        ["Type", "Name", "Description", "Priority", "AttributeLevel", "Operator", "Comparator"],
     )
     def test_missing_mandatory_fields(self, mandatory_field, valid_iteration_rule_with_only_mandatory_fields):
-        data = valid_iteration_rule_with_only_mandatory_fields["Iterations"][0].copy()
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data.pop(mandatory_field, None)  # Simulate missing field
         with pytest.raises(ValidationError):
-            IterationValidation(**data)
+            IterationRuleValidation(**data)
         assert mandatory_field.lower()
 
-    # Type
-    def test_missing_type(self, valid_iteration_rule_with_only_mandatory_fields):
+    @pytest.mark.parametrize("type_value", ["F", "S", "R", "X", "Y"])
+    def test_valid_type(self, type_value, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
-        data.pop("Type", None)
-        with pytest.raises(ValidationError) as e:
-            IterationValidation(**data)
-        assert any(err["loc"][-1] == "Type" for err in e.value.errors())
+        data["Type"] = type_value
+        result = IterationRuleValidation(**data)
+        assert result.type.value == type_value
 
-    # Name
-    def test_missing_name(self, valid_iteration_rule_with_only_mandatory_fields):
+    @pytest.mark.parametrize("type_value", ["Z", 123, None])
+    def test_invalid_type(self, type_value, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
-        data.pop("Name", None)
-        with pytest.raises(ValidationError) as e:
-            IterationValidation(**data)
-        assert any(err["loc"][-1] == "Name" for err in e.value.errors())
+        data["Type"] = type_value
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
 
-    # Description
-    def test_missing_description(self, valid_iteration_rule_with_only_mandatory_fields):
+    @pytest.mark.parametrize("name_value", ["", "ValidName", "Test_Rule_01"])
+    def test_valid_name(self, name_value, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
-        data.pop("Description", None)
-        with pytest.raises(ValidationError) as e:
-            IterationValidation(**data)
-        assert any(err["loc"][-1] == "Description" for err in e.value.errors())
+        data["Name"] = name_value
+        result = IterationRuleValidation(**data)
+        assert result.name == name_value
 
-    # Priority
-    def test_missing_priority(self, valid_iteration_rule_with_only_mandatory_fields):
+    @pytest.mark.parametrize("name_value", [None, 42])
+    def test_invalid_name(self, name_value, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
-        data.pop("Priority", None)
-        with pytest.raises(ValidationError) as e:
-            IterationValidation(**data)
-        assert any(err["loc"][-1] == "Priority" for err in e.value.errors())
+        data["Name"] = name_value
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
 
-    # AttributeLevel
-    def test_missing_attribute_level(self, valid_iteration_rule_with_only_mandatory_fields):
+    @pytest.mark.parametrize("description_value", ["", "A rule description", "Sample text"])
+    def test_valid_description(self, description_value, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
-        data.pop("AttributeLevel", None)
-        with pytest.raises(ValidationError) as e:
-            IterationValidation(**data)
-        assert any(err["loc"][-1] == "AttributeLevel" for err in e.value.errors())
+        data["Description"] = description_value
+        result = IterationRuleValidation(**data)
+        assert result.description == description_value
+
+    @pytest.mark.parametrize("description_value", [None])
+    def test_invalid_description(self, description_value, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["Description"] = description_value
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
+
+    @pytest.mark.parametrize("priority_value", [-1, -5, 1, 100, 999])
+    def test_valid_priority(self, priority_value, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["Priority"] = priority_value
+        result = IterationRuleValidation(**data)
+        assert result.priority == priority_value
+
+    @pytest.mark.parametrize("priority_value", ["high", None])
+    def test_invalid_priority(self, priority_value, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["Priority"] = priority_value
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
+
+    @pytest.mark.parametrize("attribute_level", ["PERSON", "TARGET", "COHORT"])
+    def test_valid_attribute_level(self, attribute_level, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["AttributeLevel"] = attribute_level
+        result = IterationRuleValidation(**data)
+        assert result.attribute_level == attribute_level
+
+    @pytest.mark.parametrize("attribute_level", ["", None, 42, "basic", "BASIC"])
+    def test_invalid_attribute_level(self, attribute_level, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["AttributeLevel"] = attribute_level
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
+
+    @pytest.mark.parametrize("operator_value", ["=", "!=", ">", "<=", "contains", "is_true"])
+    def test_valid_operator(self, operator_value, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["Operator"] = operator_value
+        result = IterationRuleValidation(**data)
+        assert result.operator.value == operator_value
+
+    @pytest.mark.parametrize("operator_value", ["approx", "", None])
+    def test_invalid_operator(self, operator_value, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["Operator"] = operator_value
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
+
+    @pytest.mark.parametrize("comparator_value", ["status", "true", "0"])
+    def test_valid_comparator(self, comparator_value, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["Comparator"] = comparator_value
+        result = IterationRuleValidation(**data)
+        assert result.comparator == comparator_value
+
+    @pytest.mark.parametrize("comparator_value", [None, 123])
+    def test_invalid_comparator(self, comparator_value, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["Comparator"] = comparator_value
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
 
 
 class TestOptionalFieldsSchemaValidations:
-    # AttributeName
-    def test_attribute_name_accepts_value(self, valid_iteration_rule_with_only_mandatory_fields):
-        data = {**valid_iteration_rule_with_only_mandatory_fields, "AttributeName": "LAST_SUCCESSFUL_DATE"}
-        model = IterationValidation(**data)
-        assert model.attribute_name == "LAST_SUCCESSFUL_DATE"
-
-    def test_attribute_name_accepts_none(self, valid_iteration_rule_with_only_mandatory_fields):
-        data = {**valid_iteration_rule_with_only_mandatory_fields, "AttributeName": None}
-        model = IterationValidation(**data)
-        assert model.attribute_name is None
-
-    # CohortLabel
-    def test_cohort_label_accepts_value(self, valid_iteration_rule_with_only_mandatory_fields):
-        data = {**valid_iteration_rule_with_only_mandatory_fields, "CohortLabel": "elid_all_people"}
-        model = IterationValidation(**data)
-        assert model.cohort_label == "elid_all_people"
-
-    def test_cohort_label_accepts_none(self, valid_iteration_rule_with_only_mandatory_fields):
-        data = {**valid_iteration_rule_with_only_mandatory_fields, "CohortLabel": None}
-        model = IterationValidation(**data)
-        assert model.cohort_label is None
-
-    # AttributeTarget
-    def test_attribute_target_accepts_value(self, valid_iteration_rule_with_only_mandatory_fields):
-        data = {**valid_iteration_rule_with_only_mandatory_fields, "AttributeTarget": "RSV"}
-        model = IterationValidation(**data)
-        assert model.attribute_target == "RSV"
-
-    def test_attribute_target_accepts_none(self, valid_iteration_rule_with_only_mandatory_fields):
-        data = {**valid_iteration_rule_with_only_mandatory_fields, "AttributeTarget": None}
-        model = IterationValidation(**data)
-        assert model.attribute_target is None
-
-    # RuleStop
-    def test_rule_stop_uses_default_when_missing(self, valid_iteration_rule_with_only_mandatory_fields):
+    # AttributeName (Optional)
+    @pytest.mark.parametrize("attr_name", ["status", "user_type", None])
+    def test_valid_attribute_name(self, attr_name, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
-        data.pop("RuleStop", None)
-        model = IterationValidation(**data)
-        assert model.rule_stop == RuleStop(RULE_STOP_DEFAULT)
+        data["AttributeName"] = attr_name
+        result = IterationRuleValidation(**data)
+        assert result.attribute_name == attr_name
 
-    def test_rule_stop_accepts_value(self, valid_iteration_rule_with_only_mandatory_fields):
-        data = {**valid_iteration_rule_with_only_mandatory_fields, "RuleStop": "soft_stop"}
-        model = IterationValidation(**data)
-        assert model.rule_stop == "soft_stop"
+    @pytest.mark.parametrize("attr_name", [123, {}, []])
+    def test_invalid_attribute_name(self, attr_name, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["AttributeName"] = attr_name
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
 
-    # CommsRouting
-    def test_comms_routing_accepts_value(self, valid_iteration_rule_with_only_mandatory_fields):
-        data = {**valid_iteration_rule_with_only_mandatory_fields, "CommsRouting": "RouteA"}
-        model = IterationValidation(**data)
-        assert model.comms_routing == "RouteA"
+    # CohortLabel (Optional)
+    @pytest.mark.parametrize("label", ["Cohort_A", "Segment_2025", None, ""])
+    def test_valid_cohort_label(self, label, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["CohortLabel"] = label
+        result = IterationRuleValidation(**data)
+        assert result.cohort_label == label
 
-    def test_comms_routing_accepts_none(self, valid_iteration_rule_with_only_mandatory_fields):
-        data = {**valid_iteration_rule_with_only_mandatory_fields, "CommsRouting": None}
-        model = IterationValidation(**data)
-        assert model.comms_routing is None
+    @pytest.mark.parametrize("label", [123, [], {}])
+    def test_invalid_cohort_label(self, label, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["CohortLabel"] = label
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
+
+    # AttributeTarget (Optional)
+    @pytest.mark.parametrize("target", ["target_value", None])
+    def test_valid_attribute_target(self, target, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["AttributeTarget"] = target
+        result = IterationRuleValidation(**data)
+        assert result.attribute_target == target
+
+    @pytest.mark.parametrize("target", [123, [], {}])
+    def test_invalid_attribute_target(self, target, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["AttributeTarget"] = target
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
+
+    # RuleStop (Optional boolean with string "Y"/"N")
+    @pytest.mark.parametrize("rule_stop_value", [True, False, "Y", "N", "YES", "NO", "YEAH", "ONE"])
+    def test_valid_rule_stop(self, rule_stop_value, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["RuleStop"] = rule_stop_value
+        result = IterationRuleValidation(**data)
+        assert isinstance(result.rule_stop, bool)
+
+    @pytest.mark.parametrize("rule_stop_value", [{}, None])
+    def test_invalid_rule_stop(self, rule_stop_value, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["RuleStop"] = rule_stop_value
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
+
+    # CommsRouting (Optional)
+    @pytest.mark.parametrize("routing_value", ["route_A", None])
+    def test_valid_comms_routing(self, routing_value, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["CommsRouting"] = routing_value
+        result = IterationRuleValidation(**data)
+        assert result.comms_routing == routing_value
+
+    @pytest.mark.parametrize("routing_value", [123, [], {}])
+    def test_invalid_comms_routing(self, routing_value, valid_iteration_rule_with_only_mandatory_fields):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["CommsRouting"] = routing_value
+        with pytest.raises(ValidationError):
+            IterationRuleValidation(**data)
+
+
+class TestBUCValidations:
+    @pytest.mark.parametrize(
+        "rule_stop_input, expected_bool",
+        [
+            (True, True),
+            (False, False),
+            ("Y", True),
+            ("N", False),
+            ("YES", False),
+            ("NO", False),
+            ("YEAH", False),
+            ("ONE", False),
+        ],
+    )
+    def test_rule_stop_boolean_resolution(
+        self, rule_stop_input, expected_bool, valid_iteration_rule_with_only_mandatory_fields
+    ):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["RuleStop"] = rule_stop_input
+        result = IterationRuleValidation(**data)
+        assert result.rule_stop is expected_bool
