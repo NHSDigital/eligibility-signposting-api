@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.fixture
-def valid_campaign_config_with_only_mandate_fields():
+def valid_campaign_config_with_only_mandatory_fields():
     return {
         "ID": "CAMP001",
         "Version": "v1.0",
@@ -34,7 +34,7 @@ def valid_campaign_config_with_only_mandate_fields():
     }
 
 @pytest.fixture
-def valid_iteration_rule_with_only_mandate_fields():
+def valid_iteration_rule_with_only_mandatory_fields():
     return {
         "Type": "F",
         "Name": "Assure only already vaccinated taken from magic cohort",

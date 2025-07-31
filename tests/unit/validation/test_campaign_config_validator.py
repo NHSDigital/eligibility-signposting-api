@@ -4,16 +4,16 @@ from pydantic import ValidationError
 from rules_validation_api.validators.campaign_config_validator import CampaignConfigValidation
 
 
-class TestMandateFieldsSchemaValidations:
-    def test_campaign_config_with_only_mandate_fields_configuration(self,
-                                                                    valid_campaign_config_with_only_mandate_fields):
+class TestMandatoryFieldsSchemaValidations:
+    def test_campaign_config_with_only_mandatory_fields_configuration(self,
+                                                                    valid_campaign_config_with_only_mandatory_fields):
         try:
-            CampaignConfigValidation(**valid_campaign_config_with_only_mandate_fields)
+            CampaignConfigValidation(**valid_campaign_config_with_only_mandatory_fields)
         except ValidationError as e:
             pytest.fail(f"Unexpected error during model instantiation: {e}")
 
     @pytest.mark.parametrize(
-        "mandate_field",
+        "mandatory_field",
         [
             "ID",
             "Version",
@@ -27,82 +27,82 @@ class TestMandateFieldsSchemaValidations:
             "Iterations",
         ],
     )
-    def test_missing_mandate_fields(self, mandate_field, valid_campaign_config_with_only_mandate_fields):
-        data = valid_campaign_config_with_only_mandate_fields.copy()
-        data.pop(mandate_field, None)  # Simulate missing field
+    def test_missing_mandatory_fields(self, mandatory_field, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data.pop(mandatory_field, None)  # Simulate missing field
         with pytest.raises(ValidationError):
             CampaignConfigValidation(**data)
 
     # ID
     @pytest.mark.parametrize("id_value", ["CAMP001", "12345", "X001"])
-    def test_valid_id(self, id_value, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "ID": id_value}
+    def test_valid_id(self, id_value, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "ID": id_value}
         model = CampaignConfigValidation(**data)
         assert model.id == id_value
 
     # Version
     @pytest.mark.parametrize("version_value", ["v1.0", "v2.1", "V3.0"])
-    def test_valid_version(self, version_value, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "Version": version_value}
+    def test_valid_version(self, version_value, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "Version": version_value}
         model = CampaignConfigValidation(**data)
         assert model.version == version_value
 
     # Name
     @pytest.mark.parametrize("name_value", ["Spring Campaign", "COVID-Alert", "Mass Outreach"])
-    def test_valid_name(self, name_value, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "Name": name_value}
+    def test_valid_name(self, name_value, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "Name": name_value}
         model = CampaignConfigValidation(**data)
         assert model.name == name_value
 
     # Type
     @pytest.mark.parametrize("type_value", ["V", "S"])
-    def test_valid_type(self, type_value, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "Type": type_value}
+    def test_valid_type(self, type_value, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "Type": type_value}
         model = CampaignConfigValidation(**data)
         assert model.type == type_value
 
     @pytest.mark.parametrize("type_value", ["X", "", None])
-    def test_invalid_type(self, type_value, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "Type": type_value}
+    def test_invalid_type(self, type_value, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "Type": type_value}
         with pytest.raises(ValidationError):
             CampaignConfigValidation(**data)
 
     # Target
     @pytest.mark.parametrize("target_value", ["COVID", "FLU", "MMR", "RSV"])
-    def test_valid_target(self, target_value, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "Target": target_value}
+    def test_valid_target(self, target_value, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "Target": target_value}
         model = CampaignConfigValidation(**data)
         assert model.target == target_value
 
     @pytest.mark.parametrize("target_value", ["XYZ", "ABC", "", None])
-    def test_invalid_target(self, target_value, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "Target": target_value}
+    def test_invalid_target(self, target_value, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "Target": target_value}
         with pytest.raises(ValidationError):
             CampaignConfigValidation(**data)
 
     # IterationFrequency
     @pytest.mark.parametrize("freq_value", ["X", "D", "W", "M", "Q", "A"])
-    def test_valid_iteration_frequency(self, freq_value, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "IterationFrequency": freq_value}
+    def test_valid_iteration_frequency(self, freq_value, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "IterationFrequency": freq_value}
         model = CampaignConfigValidation(**data)
         assert model.iteration_frequency == freq_value
 
     @pytest.mark.parametrize("freq_value", ["Z", "", None])
-    def test_invalid_iteration_frequency(self, freq_value, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "IterationFrequency": freq_value}
+    def test_invalid_iteration_frequency(self, freq_value, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "IterationFrequency": freq_value}
         with pytest.raises(ValidationError):
             CampaignConfigValidation(**data)
 
     # IterationType
     @pytest.mark.parametrize("iter_type", ["A", "M", "S", "O"])
-    def test_valid_iteration_type(self, iter_type, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "IterationType": iter_type}
+    def test_valid_iteration_type(self, iter_type, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "IterationType": iter_type}
         model = CampaignConfigValidation(**data)
         assert model.iteration_type == iter_type
 
     @pytest.mark.parametrize("iter_type", ["B", "", None])
-    def test_invalid_iteration_type(self, iter_type, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "IterationType": iter_type}
+    def test_invalid_iteration_type(self, iter_type, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "IterationType": iter_type}
         with pytest.raises(ValidationError):
             CampaignConfigValidation(**data)
 
@@ -114,8 +114,8 @@ class TestMandateFieldsSchemaValidations:
             "invalid-date",  # malformed value
         ],
     )
-    def test_invalid_start_date(self, start_date, valid_campaign_config_with_only_mandate_fields):
-        data = valid_campaign_config_with_only_mandate_fields.copy()
+    def test_invalid_start_date(self, start_date, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = start_date
 
         with pytest.raises(ValidationError) as exc_info:
@@ -133,8 +133,8 @@ class TestMandateFieldsSchemaValidations:
             "31032025",  # malformed value
         ],
     )
-    def test_invalid_end_date(self, end_date, valid_campaign_config_with_only_mandate_fields):
-        data = valid_campaign_config_with_only_mandate_fields.copy()
+    def test_invalid_end_date(self, end_date, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["EndDate"] = end_date
 
         with pytest.raises(ValidationError) as exc_info:
@@ -147,44 +147,44 @@ class TestMandateFieldsSchemaValidations:
 
 class TestOptionalFieldsSchemaValidations:
     @pytest.mark.parametrize("manager", ["alice", "bob", "carol"])
-    def test_manager_field(self, manager, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "Manager": manager}
+    def test_manager_field(self, manager, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "Manager": manager}
         model = CampaignConfigValidation(**data)
         assert model.manager == manager
 
     @pytest.mark.parametrize("approver", ["bob", "dave", "rachel"])
-    def test_approver_field(self, approver, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "Approver": approver}
+    def test_approver_field(self, approver, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "Approver": approver}
         model = CampaignConfigValidation(**data)
         assert model.approver == approver
 
     @pytest.mark.parametrize("reviewer", ["carol", "eve", "zane"])
-    def test_reviewer_field(self, reviewer, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "Reviewer": reviewer}
+    def test_reviewer_field(self, reviewer, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "Reviewer": reviewer}
         model = CampaignConfigValidation(**data)
         assert model.reviewer == reviewer
 
     @pytest.mark.parametrize("iteration_time", ["14:00", "09:30", "18:45"])
-    def test_iteration_time_field(self, iteration_time, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "IterationTime": iteration_time}
+    def test_iteration_time_field(self, iteration_time, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "IterationTime": iteration_time}
         model = CampaignConfigValidation(**data)
         assert model.iteration_time == iteration_time
 
     @pytest.mark.parametrize("routing", ["email", "sms", "push"])
-    def test_default_comms_routing_field(self, routing, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "DefaultCommsRouting": routing}
+    def test_default_comms_routing_field(self, routing, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "DefaultCommsRouting": routing}
         model = CampaignConfigValidation(**data)
         assert model.default_comms_routing == routing
 
     @pytest.mark.parametrize("min_approval", [0, 1, 2])
-    def test_approval_minimum_field(self, min_approval, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "ApprovalMinimum": min_approval}
+    def test_approval_minimum_field(self, min_approval, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "ApprovalMinimum": min_approval}
         model = CampaignConfigValidation(**data)
         assert model.approval_minimum == min_approval
 
     @pytest.mark.parametrize("max_approval", [5, 10, 15])
-    def test_approval_maximum_field(self, max_approval, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "ApprovalMaximum": max_approval}
+    def test_approval_maximum_field(self, max_approval, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "ApprovalMaximum": max_approval}
         model = CampaignConfigValidation(**data)
         assert model.approval_maximum == max_approval
 
@@ -200,8 +200,8 @@ class TestBUCValidations:
             ("20250101", "20250101"),  # same day
         ],
     )
-    def test_valid_start_and_end_dates_and_iteration_dates_relation(self, start_date, end_date, valid_campaign_config_with_only_mandate_fields):
-        data = valid_campaign_config_with_only_mandate_fields.copy()
+    def test_valid_start_and_end_dates_and_iteration_dates_relation(self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = start_date
         data["EndDate"] = end_date
         data["Iterations"][0]["IterationDate"] = "20241231"
@@ -214,8 +214,8 @@ class TestBUCValidations:
             ("20250331", "20250101"),  # end before start
         ],
     )
-    def test_invalid_start_and_end_dates_and_iteration_dates_relation(self, start_date, end_date, valid_campaign_config_with_only_mandate_fields):
-        data = valid_campaign_config_with_only_mandate_fields.copy()
+    def test_invalid_start_and_end_dates_and_iteration_dates_relation(self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = start_date
         data["EndDate"] = end_date
         data["Iterations"][0]["IterationDate"] = "20241231"
@@ -223,8 +223,8 @@ class TestBUCValidations:
             CampaignConfigValidation(**data)
 
     # Iteration
-    def test_validate_iterations_non_empty(self, valid_campaign_config_with_only_mandate_fields):
-        data = {**valid_campaign_config_with_only_mandate_fields, "Iterations": []}
+    def test_validate_iterations_non_empty(self, valid_campaign_config_with_only_mandatory_fields):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "Iterations": []}
         with pytest.raises(ValidationError) as error:
             CampaignConfigValidation(**data)
         errors = error.value.errors()
