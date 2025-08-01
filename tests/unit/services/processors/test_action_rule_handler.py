@@ -79,6 +79,23 @@ def test_get_action_rules_components_not_eligible_actions_type():
     assert_that(default_comms, is_("default_not_eligible"))
 
 
+def test_get_action_rules_components_not_actionable_actions_type():
+    iteration = rule_builder.IterationFactory.build(
+        default_comms_routing="default_redirect",
+        default_not_eligible_routing="default_not_eligible",
+        default_not_actionable_routing="default_not_actionable",
+        actions_mapper=ActionsMapperFactory.build(),
+        iteration_rules=[rule_builder.ICBNonActionableActionRuleFactory.build(name="NonActionableRule")],
+    )
+    rules_found, mapper, default_comms = ActionRuleHandler._get_action_rules_components(
+        iteration, RuleType.not_actionable_actions
+    )
+    assert_that(len(rules_found), is_(1))
+    assert_that(rules_found[0].name, is_(RuleName("NonActionableRule")))
+    assert_that(mapper, is_(iteration.actions_mapper))
+    assert_that(default_comms, is_("default_not_actionable"))
+
+
 def test_get_action_rules_components_no_matching_rules():
     iteration = rule_builder.IterationFactory.build(
         iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()]
@@ -171,7 +188,7 @@ def test_handle_actions_no_matching_rules_returns_default(
 @patch("eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator")
 @patch.object(ActionRuleHandler, "_get_actions_from_comms")
 @patch.object(ActionRuleHandler, "_get_action_rules_components")
-def test_handle_actions_matching_rule_overrides_default(
+def test_handle_actions_matching_redirect_rule_overrides_default(
     mock_get_action_rules_components,
     mock_get_actions_from_comms,
     mock_rule_calculator_class,
@@ -230,6 +247,138 @@ def test_handle_actions_matching_rule_overrides_default(
     mock_get_action_rules_components.assert_called_once_with(active_iteration, RuleType.redirect)
     assert_that(mock_get_actions_from_comms.call_count, is_(2))
     mock_get_actions_from_comms.assert_any_call(active_iteration.actions_mapper, "default_action_code")
+    mock_get_actions_from_comms.assert_any_call(active_iteration.actions_mapper, "rule_specific_action")
+    mock_rule_calculator_class.assert_called_once_with(person=MOCK_PERSON, rule=matching_rule)
+
+
+@patch("eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator")
+@patch.object(ActionRuleHandler, "_get_actions_from_comms")
+@patch.object(ActionRuleHandler, "_get_action_rules_components")
+def test_handle_actions_matching_not_eligible_rule_overrides_default(
+    mock_get_action_rules_components,
+    mock_get_actions_from_comms,
+    mock_rule_calculator_class,
+    handler: ActionRuleHandler,
+):
+    matching_rule = rule_builder.ICBNonEligibleActionRuleFactory.build(
+        priority=10, comms_routing="rule_specific_action", name="RuleSpecificAction"
+    )
+    active_iteration = rule_builder.IterationFactory.build(
+        default_not_eligible_routing="default_not_eligible",
+        actions_mapper=ActionsMapperFactory.build(
+            root={"default_not_eligible": DEFAULT_COMMS_DETAIL, "rule_specific_action": BOOK_NBS_COMMS}
+        ),
+        iteration_rules=[matching_rule],
+    )
+    mock_get_action_rules_components.return_value = (
+        (matching_rule,),
+        active_iteration.actions_mapper,
+        active_iteration.default_not_eligible_routing,
+    )
+
+    mock_get_actions_from_comms.side_effect = [
+        [
+            SuggestedAction(
+                internal_action_code=InternalActionCode("default_not_eligible"),
+                action_type=ActionType(DEFAULT_COMMS_DETAIL.action_type),
+                action_code=ActionCode(DEFAULT_COMMS_DETAIL.action_code),
+                action_description=ActionDescription(DEFAULT_COMMS_DETAIL.action_description),
+                url_link=DEFAULT_COMMS_DETAIL.url_link,
+                url_label=DEFAULT_COMMS_DETAIL.url_label,
+            )
+        ],
+        [
+            SuggestedAction(
+                internal_action_code=InternalActionCode("rule_specific_action"),
+                action_type=ActionType(BOOK_NBS_COMMS.action_type),
+                action_code=ActionCode(BOOK_NBS_COMMS.action_code),
+                action_description=ActionDescription(BOOK_NBS_COMMS.action_description),
+                url_link=BOOK_NBS_COMMS.url_link,
+                url_label=BOOK_NBS_COMMS.url_label,
+            )
+        ],
+    ]
+
+    mock_rule_instance = Mock()
+    mock_rule_instance.evaluate_exclusion.return_value = (Status.actionable, Mock(matcher_matched=True))
+    mock_rule_calculator_class.return_value = mock_rule_instance
+
+    matched_action_detail = handler._handle(MOCK_PERSON, active_iteration, RuleType.not_eligible_actions)
+
+    assert_that(len(matched_action_detail.actions), is_(1))
+    assert_that(matched_action_detail.actions[0].internal_action_code, is_(InternalActionCode("rule_specific_action")))
+    assert_that(matched_action_detail.rule_priority, is_(RulePriority(10)))
+    assert_that(matched_action_detail.rule_name, is_(RuleName("RuleSpecificAction")))
+
+    mock_get_action_rules_components.assert_called_once_with(active_iteration, RuleType.not_eligible_actions)
+    assert_that(mock_get_actions_from_comms.call_count, is_(2))
+    mock_get_actions_from_comms.assert_any_call(active_iteration.actions_mapper, "default_not_eligible")
+    mock_get_actions_from_comms.assert_any_call(active_iteration.actions_mapper, "rule_specific_action")
+    mock_rule_calculator_class.assert_called_once_with(person=MOCK_PERSON, rule=matching_rule)
+
+
+@patch("eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator")
+@patch.object(ActionRuleHandler, "_get_actions_from_comms")
+@patch.object(ActionRuleHandler, "_get_action_rules_components")
+def test_handle_actions_matching_not_actionable_rule_overrides_default(
+    mock_get_action_rules_components,
+    mock_get_actions_from_comms,
+    mock_rule_calculator_class,
+    handler: ActionRuleHandler,
+):
+    matching_rule = rule_builder.ICBNonActionableActionRuleFactory.build(
+        priority=10, comms_routing="rule_specific_action", name="RuleSpecificAction"
+    )
+    active_iteration = rule_builder.IterationFactory.build(
+        default_not_actionable_routing="default_not_actionable",
+        actions_mapper=ActionsMapperFactory.build(
+            root={"default_not_actionable": DEFAULT_COMMS_DETAIL, "rule_specific_action": BOOK_NBS_COMMS}
+        ),
+        iteration_rules=[matching_rule],
+    )
+    mock_get_action_rules_components.return_value = (
+        (matching_rule,),
+        active_iteration.actions_mapper,
+        active_iteration.default_not_actionable_routing,
+    )
+
+    mock_get_actions_from_comms.side_effect = [
+        [
+            SuggestedAction(
+                internal_action_code=InternalActionCode("default_not_actionable"),
+                action_type=ActionType(DEFAULT_COMMS_DETAIL.action_type),
+                action_code=ActionCode(DEFAULT_COMMS_DETAIL.action_code),
+                action_description=ActionDescription(DEFAULT_COMMS_DETAIL.action_description),
+                url_link=DEFAULT_COMMS_DETAIL.url_link,
+                url_label=DEFAULT_COMMS_DETAIL.url_label,
+            )
+        ],
+        [
+            SuggestedAction(
+                internal_action_code=InternalActionCode("rule_specific_action"),
+                action_type=ActionType(BOOK_NBS_COMMS.action_type),
+                action_code=ActionCode(BOOK_NBS_COMMS.action_code),
+                action_description=ActionDescription(BOOK_NBS_COMMS.action_description),
+                url_link=BOOK_NBS_COMMS.url_link,
+                url_label=BOOK_NBS_COMMS.url_label,
+            )
+        ],
+    ]
+
+    mock_rule_instance = Mock()
+    mock_rule_instance.evaluate_exclusion.return_value = (Status.actionable, Mock(matcher_matched=True))
+    mock_rule_calculator_class.return_value = mock_rule_instance
+
+    matched_action_detail = handler._handle(MOCK_PERSON, active_iteration, RuleType.not_actionable_actions)
+
+    assert_that(len(matched_action_detail.actions), is_(1))
+    assert_that(matched_action_detail.actions[0].internal_action_code, is_(InternalActionCode("rule_specific_action")))
+    assert_that(matched_action_detail.rule_priority, is_(RulePriority(10)))
+    assert_that(matched_action_detail.rule_name, is_(RuleName("RuleSpecificAction")))
+
+    mock_get_action_rules_components.assert_called_once_with(active_iteration, RuleType.not_actionable_actions)
+    assert_that(mock_get_actions_from_comms.call_count, is_(2))
+    mock_get_actions_from_comms.assert_any_call(active_iteration.actions_mapper, "default_not_actionable")
     mock_get_actions_from_comms.assert_any_call(active_iteration.actions_mapper, "rule_specific_action")
     mock_rule_calculator_class.assert_called_once_with(person=MOCK_PERSON, rule=matching_rule)
 
