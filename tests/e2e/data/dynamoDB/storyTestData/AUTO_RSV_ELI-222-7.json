@@ -34,6 +34,13 @@
       "13Q_FLAG": "N",
       "CARE_HOME_FLAG": "N",
       "DE_FLAG": "N"
+    },
+    {
+      "NHS_NUMBER": "9900002227",
+      "ATTRIBUTE_TYPE": "COVID",
+      "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_-7>>",
+      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_-14>>",
+      "BOOKED_APPOINTMENT_PROVIDER": "NBS"
     }
   ]
 }

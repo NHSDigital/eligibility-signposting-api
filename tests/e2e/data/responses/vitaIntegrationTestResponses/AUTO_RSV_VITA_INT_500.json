@@ -1,0 +1,23 @@
+{
+  "resourceType": "OperationOutcome",
+  "id": "a4639b8e-4359-4f17-8016-d325846bbc2a",
+  "meta": {
+    "lastUpdated": "2025-08-01T08:16:47.379654Z"
+  },
+  "issue": [
+    {
+      "severity": "error",
+      "code": "processing",
+      "details": {
+        "coding": [
+          {
+            "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+            "code": "INTERNAL_SERVER_ERROR",
+            "display": "An unexpected internal server error occurred."
+          }
+        ]
+      },
+      "diagnostics": "An unexpected error occurred."
+    }
+  ]
+}

@@ -1,24 +1,22 @@
 {
-  "scenario_name": "RSV - Magic Cohort Has Past booking No Vaccination",
+  "scenario_name": "RSV - Actionable - In rsv_80_since_02_Sept_2024 Cohort - CP Expansion Area - ICB",
   "request_headers": {
-    "nhs-login-nhs-number": "9900022202"
+    "nhs-login-nhs-number": "9900036520"
   },
-  "config_filenames": [
-    "AUTO_RSV_ELI-222.json"
-  ],
+  "config_filenames": ["AUTO_RSV_ELI-365.json"],
   "data": [
     {
-      "NHS_NUMBER": "9900022202",
+      "NHS_NUMBER": "9900036520",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [
         {
-          "COHORT_LABEL": "other_cohort",
+          "COHORT_LABEL": "rsv_80_since_02_Sept_2024",
           "DATE_JOINED": "20231020"
         }
       ]
     },
     {
-      "NHS_NUMBER": "9900022202",
+      "NHS_NUMBER": "9900036520",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
@@ -29,18 +27,18 @@
       "LSOA": "E01018267",
       "GP_PRACTICE_CODE": "D81046",
       "PCN": "U75549",
-      "ICB": "QUE",
+      "ICB": "QJG",
       "COMMISSIONING_REGION": "Y61",
       "13Q_FLAG": "N",
       "CARE_HOME_FLAG": "N",
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "9900022202",
+      "NHS_NUMBER": "9900036520",
       "ATTRIBUTE_TYPE": "RSV",
-      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_-7>>",
-      "BOOKED_APPOINTMENT_PROVIDER": "NBS",
-      "LAST_SUCCESSFUL_DATE": null
+      "LAST_SUCCESSFUL_DATE": null,
+      "BOOKED_APPOINTMENT_DATE" : null,
+      "BOOKED_APPOINTMENT_PROVIDER": null
     }
   ]
 }

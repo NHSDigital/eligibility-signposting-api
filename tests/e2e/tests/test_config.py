@@ -11,9 +11,12 @@ REGRESSION_TEST_DATA: str = "data/dynamoDB/regressionTestData/"
 REGRESSION_RESPONSES: str = "data/responses/regressionTestResponses/"
 REGRESSION_CONFIGS: str = "data/configs/regressionTestConfigs"
 
-# Story Test Data Paths
+# In Progress Test Data Paths
 IN_PROGRESS_TEST_DATA: str = "data/dynamoDB/inProgressTestData/"
 IN_PROGRESS_RESPONSES: str = "data/responses/inProgressTestResponses/"
 IN_PROGRESS_CONFIGS: str = "data/configs/inProgressTestConfigs"
 
-INTEGRATION_TEST_DATA: str = "data/dynamoDB/integrationTestData/"
+# Vita Integration Test Data Paths
+VITA_INTEGRATION_TEST_DATA: str = "data/dynamoDB/vitaIntegrationTestData/"
+VITA_INTEGRATION_RESPONSES: str = "data/responses/vitaIntegrationTestResponses/"
+VITA_INTEGRATION_CONFIGS: str = "data/configs/vitaIntegrationTestConfigs"

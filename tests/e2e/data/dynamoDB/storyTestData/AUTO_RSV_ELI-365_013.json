@@ -1,24 +1,22 @@
 {
-  "scenario_name": "RSV - Magic Cohort Has Past booking No Vaccination",
+  "scenario_name": "RSV - NotActionable - In Eligible Cohort - Already Vaccinated",
   "request_headers": {
-    "nhs-login-nhs-number": "9900022202"
+    "nhs-login-nhs-number": "9900036513"
   },
-  "config_filenames": [
-    "AUTO_RSV_ELI-222.json"
-  ],
+  "config_filenames": ["AUTO_RSV_ELI-365.json"],
   "data": [
     {
-      "NHS_NUMBER": "9900022202",
+      "NHS_NUMBER": "9900036513",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [
         {
-          "COHORT_LABEL": "other_cohort",
+          "COHORT_LABEL": "rsv_80_since_02_Sept_2024",
           "DATE_JOINED": "20231020"
         }
       ]
     },
     {
-      "NHS_NUMBER": "9900022202",
+      "NHS_NUMBER": "9900036513",
       "ATTRIBUTE_TYPE": "PERSON",
       "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "0",
@@ -36,11 +34,11 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "9900022202",
+      "NHS_NUMBER": "9900036513",
       "ATTRIBUTE_TYPE": "RSV",
-      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_-7>>",
-      "BOOKED_APPOINTMENT_PROVIDER": "NBS",
-      "LAST_SUCCESSFUL_DATE": null
+      "LAST_SUCCESSFUL_DATE": "<<DATE_YEAR_-24>>",
+      "BOOKED_APPOINTMENT_DATE" : null,
+      "BOOKED_APPOINTMENT_PROVIDER": null
     }
   ]
 }
