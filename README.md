@@ -189,15 +189,25 @@ graph TB
         direction TB
         App["app.py (WireUp DI)"]
         Config["config.py, error_handler.py"]
+        subgraph "Audit Layer"
+            direction TB
+            Audit["audit/audit_service.py"]
+            AuditModels["audit/audit_models.py"]
+        end
+        subgraph "Validation Layer"
+            direction TB
+            Validator["common/request_validator.py"]
+            ApiErrResp["common/api_error_response.py"]
+        end
         subgraph "Presentation Layer"
             direction TB
             View["views/eligibility.py"]
-            ResponseModel["views/response_model/eligibility.py"]
+            ResponseModel["views/response_model/eligibility_response.py"]
         end
         subgraph "Business Logic Layer"
             direction TB
             Service["services/eligibility_services.py"]
-            Operators["services/rules/operators.py"]
+            Operators["services/operators/operators.py"]
         end
         subgraph "Data Access Layer"
             direction TB
@@ -207,24 +217,30 @@ graph TB
         end
         subgraph "Models"
             direction TB
-            ModelElig["model/eligibility.py"]
-            ModelRules["model/rules.py"]
+            ModelElig["model/eligibility_status.py"]
+            ModelRules["model/campaign_config.py"]
         end
     end
 
     Lambda -->|"loads"| App
     App -->|injects| View
     View -->|calls| Service
+    View -->|validates via| Validator
+    View -->|audits via| Audit
+    View -->|uses| RespModel
+    Audit -->|uses| AuditModels
+    Validator -->|uses| ApiErrResp
+
     Service -->|calls| Operators
     Service -->|calls| PersonRepo
     Service -->|calls| CampaignRepo
     PersonRepo -->|uses| DynamoDB
     CampaignRepo -->|uses| S3Bucket
-    View -->|uses| ResponseModel
     App -->|reads| Config
+    App -->|wires| Factory
+
     Service -->|uses| ModelElig
     Operators -->|uses| ModelRules
-    App -->|wires| Factory
 
 ```
 
