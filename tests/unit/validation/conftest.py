@@ -58,3 +58,14 @@ def valid_iteration_rule_with_only_mandatory_fields():
         "CohortLabel": "elid_all_people",
         "Priority": 100,
     }
+
+
+@pytest.fixture
+def valid_available_action():
+    return {
+        "ExternalRoutingCode": "BookNBS",
+        "ActionDescription": "",
+        "ActionType": "ButtonWithAuthLink",
+        "UrlLink": "http://www.nhs.uk/book-rsv",
+        "UrlLabel": "Continue to booking"
+    }
