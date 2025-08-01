@@ -99,7 +99,7 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
     ]
 
     condition_name = ConditionName("Condition1")
-    iteration = IterationFactory.build()
+    iteration = IterationFactory.build(version=12345)
     audit_rules = [
         Reason(
             rule_type=RuleType.filter,
@@ -119,7 +119,7 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
     iteration_result = IterationResult(
         status=Status.actionable, cohort_results=[cohort_group_result], actions=suggested_actions
     )
-    campaign_details = (CampaignID("CampaignID1"), CampaignVersion("CampaignVersion1"))
+    campaign_details = (CampaignID("CampaignID1"), CampaignVersion(123))
     matched_action_detail = MatchedActionDetail(RuleName("RedirectRuleName1"), RulePriority("1"), suggested_actions)
 
     best_iteration_results = BestIterationResult(

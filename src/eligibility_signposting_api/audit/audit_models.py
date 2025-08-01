@@ -70,9 +70,9 @@ class AuditAction(CamelCaseBaseModel):
 
 class AuditCondition(CamelCaseBaseModel):
     campaign_id: str | None = None
-    campaign_version: str | None = None
+    campaign_version: int | None = None
     iteration_id: str | None = None
-    iteration_version: str | None = None
+    iteration_version: int | None = None
     condition_name: str | None = None
     status: str | None = None
     status_text: str | None = None
