@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from pydantic import ValidationError
 
@@ -6,15 +7,13 @@ from rules_validation_api.validators.campaign_config_validator import CampaignCo
 
 
 def main() -> None:
-    print("Starting rules validation")
-    with open("campaign_config.json") as file:
+    with Path.open(Path("campaign_config.json")) as file:
         json_data = json.load(file)  # this validates json
 
     try:
-        user = CampaignConfigValidation(**json_data["CampaignConfig"])
-        print("validation successful")
+        CampaignConfigValidation(**json_data["CampaignConfig"])
     except ValidationError as e:
-        print(e)
+        print(e)  # noqa: T201
 
 
 if __name__ == "__main__":

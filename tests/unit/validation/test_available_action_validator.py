@@ -8,7 +8,6 @@ from rules_validation_api.validators.available_action_validator import Available
 
 # 🔍 Mandatory Fields
 class TestMandatoryFieldsSchemaValidations:
-
     def test_valid_minimal_input(self, valid_available_action):
         data = copy.deepcopy(valid_available_action)
         data.pop("ActionDescription")
@@ -34,7 +33,6 @@ class TestMandatoryFieldsSchemaValidations:
 
 # 🔍 Optional Fields
 class TestOptionalFieldsSchemaValidations:
-
     def test_valid_full_input(self, valid_available_action):
         action = AvailableActionValidation(**valid_available_action)
         assert action.action_type == "ButtonWithAuthLink"

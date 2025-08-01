@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -64,7 +64,7 @@ class TestMandatoryFieldsSchemaValidations:
     def test_valid_iteration_date(self, date_value, valid_campaign_config_with_only_mandatory_fields):
         data = {**valid_campaign_config_with_only_mandatory_fields["Iterations"][0], "IterationDate": date_value}
         model = IterationValidation(**data)
-        expected_date = datetime.strptime(date_value, "%Y%m%d").date()
+        expected_date = datetime.strptime(str(date_value), "%Y%m%d").replace(tzinfo=UTC).date()
         assert model.iteration_date == expected_date, f"Expected {expected_date}, got {model.iteration_date}"
 
     # Type
@@ -143,34 +143,39 @@ class TestOptionalFieldsSchemaValidations:
 
 
 class TestIterationCohortsSchemaValidations:
-    def test_valid_iteration_if_actions_mapper_has_entry_for_the_provided_default_routing_key(self, valid_campaign_config_with_only_mandatory_fields):
+    def test_valid_iteration_if_actions_mapper_has_entry_for_the_provided_default_routing_key(
+        self, valid_campaign_config_with_only_mandatory_fields
+    ):
         expected_action = {
             "ExternalRoutingCode": "BookLocal",
             "ActionDescription": "##Getting the vaccine\n"
-                                 "You can get an RSV vaccination at your GP surgery.\n"
-                                 "Your GP surgery may contact you about getting the RSV vaccine. "
-                                 "This may be by letter, text, phone call, email or through the NHS App. "
-                                 "You do not need to wait to be contacted before booking your vaccination.",
-            "ActionType": "InfoText"
+            "You can get an RSV vaccination at your GP surgery.\n"
+            "Your GP surgery may contact you about getting the RSV vaccine. "
+            "This may be by letter, text, phone call, email or through the NHS App. "
+            "You do not need to wait to be contacted before booking your vaccination.",
+            "ActionType": "InfoText",
         }
 
-        data = {**valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
-                "DefaultCommsRouting": "BOOK_LOCAL", "ActionsMapper": {
-                "BOOK_LOCAL": expected_action
-            }}
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "DefaultCommsRouting": "BOOK_LOCAL",
+            "ActionsMapper": {"BOOK_LOCAL": expected_action},
+        }
         IterationValidation(**data)
 
-    def test_invalid_iteration_if_actions_mapper_has_no_entry_for_the_provided_default_routing_key(self, valid_campaign_config_with_only_mandatory_fields):
-        data = {**valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
-                "DefaultCommsRouting": "BOOK_LOCAL", "ActionsMapper": {}} # Missing BOOK_LOCAL in ActionsMapper
+    def test_invalid_iteration_if_actions_mapper_has_no_entry_for_the_provided_default_routing_key(
+        self, valid_campaign_config_with_only_mandatory_fields
+    ):
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "DefaultCommsRouting": "BOOK_LOCAL",
+            "ActionsMapper": {},
+        }  # Missing BOOK_LOCAL in ActionsMapper
 
         with pytest.raises(ValidationError) as error:
             IterationValidation(**data)
 
         errors = error.value.errors()
-        assert any(
-            e["loc"][-1] == "actions_mapper" and "BOOK_LOCAL" in str(e["msg"])
-            for e in errors
-        ), "Expected validation error for missing BOOK_LOCAL entry in ActionsMapper"
-
-
+        assert any(e["loc"][-1] == "actions_mapper" and "BOOK_LOCAL" in str(e["msg"]) for e in errors), (
+            "Expected validation error for missing BOOK_LOCAL entry in ActionsMapper"
+        )

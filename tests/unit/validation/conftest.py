@@ -28,17 +28,15 @@ def valid_campaign_config_with_only_mandatory_fields():
                 "DefaultNotActionableRouting": "RouteC",
                 "IterationCohorts": [],
                 "IterationRules": [],
-                "ActionsMapper":
-                    {
-                        "BOOK_NBS":
-                            {
-                                "ExternalRoutingCode": "BookNBS",
-                                "ActionDescription": "",
-                                "ActionType": "ButtonWithAuthLink",
-                                "UrlLink": "http://www.nhs.uk/book-rsv",
-                                "UrlLabel": "Continue to booking"
-                            }
+                "ActionsMapper": {
+                    "BOOK_NBS": {
+                        "ExternalRoutingCode": "BookNBS",
+                        "ActionDescription": "",
+                        "ActionType": "ButtonWithAuthLink",
+                        "UrlLink": "http://www.nhs.uk/book-rsv",
+                        "UrlLabel": "Continue to booking",
                     }
+                },
             }
         ],
     }
@@ -67,5 +65,5 @@ def valid_available_action():
         "ActionDescription": "",
         "ActionType": "ButtonWithAuthLink",
         "UrlLink": "http://www.nhs.uk/book-rsv",
-        "UrlLabel": "Continue to booking"
+        "UrlLabel": "Continue to booking",
     }

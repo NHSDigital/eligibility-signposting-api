@@ -124,7 +124,7 @@ class TestMandatoryFieldsSchemaValidations:
 
 
 class TestOptionalFieldsSchemaValidations:
-    # AttributeName (Optional)
+    # AttributeName
     @pytest.mark.parametrize("attr_name", ["status", "user_type", None])
     def test_valid_attribute_name(self, attr_name, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
@@ -139,7 +139,7 @@ class TestOptionalFieldsSchemaValidations:
         with pytest.raises(ValidationError):
             IterationRuleValidation(**data)
 
-    # CohortLabel (Optional)
+    # CohortLabel
     @pytest.mark.parametrize("label", ["Cohort_A", "Segment_2025", None, ""])
     def test_valid_cohort_label(self, label, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
@@ -154,7 +154,7 @@ class TestOptionalFieldsSchemaValidations:
         with pytest.raises(ValidationError):
             IterationRuleValidation(**data)
 
-    # AttributeTarget (Optional)
+    # AttributeTarget
     @pytest.mark.parametrize("target", ["target_value", None])
     def test_valid_attribute_target(self, target, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
@@ -169,7 +169,7 @@ class TestOptionalFieldsSchemaValidations:
         with pytest.raises(ValidationError):
             IterationRuleValidation(**data)
 
-    # RuleStop (Optional boolean with string "Y"/"N")
+    # RuleStop
     @pytest.mark.parametrize("rule_stop_value", [True, False, "Y", "N", "YES", "NO", "YEAH", "ONE"])
     def test_valid_rule_stop(self, rule_stop_value, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
@@ -184,7 +184,7 @@ class TestOptionalFieldsSchemaValidations:
         with pytest.raises(ValidationError):
             IterationRuleValidation(**data)
 
-    # CommsRouting (Optional)
+    # CommsRouting
     @pytest.mark.parametrize("routing_value", ["route_A", None])
     def test_valid_comms_routing(self, routing_value, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
@@ -202,7 +202,7 @@ class TestOptionalFieldsSchemaValidations:
 
 class TestBUCValidations:
     @pytest.mark.parametrize(
-        "rule_stop_input, expected_bool",
+        ("rule_stop_input", "expected_bool"),
         [
             (True, True),
             (False, False),
