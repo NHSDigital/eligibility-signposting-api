@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-# Use the python from PATH (set by setup-python)
+# Use the python from PATH (set by setup-python) - test commit
 PYTHON_BIN="${PYTHON_BIN:-python}"
 
 if ! [ -x "$(command -v poetry)" ]; then
