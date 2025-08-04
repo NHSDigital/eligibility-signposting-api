@@ -1,16 +1,24 @@
 import typing
 
-from pydantic import Field, ValidationError, model_validator
+from pydantic import ValidationError, field_validator, model_validator
 from pydantic_core import InitErrorDetails
 
-from eligibility_signposting_api.model.campaign_config import Iteration
+from eligibility_signposting_api.model.campaign_config import ActionsMapper, Iteration, IterationRule
 from rules_validation_api.validators.actions_mapper_validator import ActionsMapperValidator
 from rules_validation_api.validators.iteration_rules_validator import IterationRuleValidation
 
 
 class IterationValidation(Iteration):
-    iteration_rules: list[IterationRuleValidation] = Field(..., alias="IterationRules")
-    actions_mapper: ActionsMapperValidator = Field(..., alias="ActionsMapper")
+    @classmethod
+    @field_validator("iteration_rules")
+    def validate_iterations(cls, iteration_rules: list[IterationRule]) -> list[IterationRuleValidation]:
+        return [IterationRuleValidation(**i.model_dump()) for i in iteration_rules]
+
+    @classmethod
+    @field_validator("actions_mapper", mode="after")
+    def transform_actions_mapper(cls, action_mapper: ActionsMapper) -> ActionsMapper:
+        ActionsMapperValidator(action_mapper.root)
+        return action_mapper
 
     @model_validator(mode="after")
     def validate_default_comms_routing_in_actions_mapper(self) -> typing.Self:

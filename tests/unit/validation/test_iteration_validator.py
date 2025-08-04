@@ -112,14 +112,17 @@ class TestMandatoryFieldsSchemaValidations:
         model = IterationValidation(**data)
         assert model.default_not_actionable_routing == routing_value
 
-    def test_invalid_actions_mapper_empty_key(self, valid_campaign_config_with_only_mandatory_fields, valid_available_action):
+    def test_invalid_actions_mapper_empty_key(
+        self, valid_campaign_config_with_only_mandatory_fields, valid_available_action
+    ):
         actions_mapper = {"": valid_available_action, "action2": valid_available_action}
         data = {
             **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
-            "actions_mapper": actions_mapper,
+            "ActionsMapper": actions_mapper,
         }
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValidationError):
             IterationValidation(**data)
+
 
 class TestOptionalFieldsSchemaValidations:
     @pytest.mark.parametrize("iteration_number", [1, 5, 10])
