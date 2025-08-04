@@ -17,7 +17,7 @@ class IterationValidation(Iteration):
     @classmethod
     @field_validator("actions_mapper", mode="after")
     def transform_actions_mapper(cls, action_mapper: ActionsMapper) -> ActionsMapper:
-        ActionsMapperValidator(action_mapper.root)
+        ActionsMapperValidator.model_validate(action_mapper.model_dump())
         return action_mapper
 
     @model_validator(mode="after")
