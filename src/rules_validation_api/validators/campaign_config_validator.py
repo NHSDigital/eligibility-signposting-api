@@ -1,8 +1,11 @@
-from pydantic import Field
 
-from eligibility_signposting_api.model.campaign_config import CampaignConfig
+from pydantic import field_validator
+
+from eligibility_signposting_api.model.campaign_config import CampaignConfig, Iteration
 from rules_validation_api.validators.iteration_validator import IterationValidation
 
 
 class CampaignConfigValidation(CampaignConfig):
-    iterations: list[IterationValidation] = Field(..., min_length=1, alias="Iterations")
+    @field_validator("iterations")
+    def validate_iterations(cls, iterations: list[Iteration]) -> list[IterationValidation]:
+        return [IterationValidation(**i.model_dump()) for i in iterations]
