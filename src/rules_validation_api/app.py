@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from rules_validation_api.validators.campaign_config_validator import CampaignConfigValidation
+from rules_validation_api.validators.rules_validator import RulesValidation
 
 
 def main() -> None:
@@ -11,7 +11,8 @@ def main() -> None:
         json_data = json.load(file)  # this validates json
 
     try:
-        CampaignConfigValidation(**json_data["CampaignConfig"])
+        RulesValidation(**json_data)
+        print("No validation errors")  # noqa: T201
     except ValidationError as e:
         print(e)  # noqa: T201
 
