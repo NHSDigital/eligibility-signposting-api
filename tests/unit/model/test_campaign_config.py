@@ -92,3 +92,23 @@ def test_iteration_rule_deserialisation(rule_stop: str, expected):
 
     # Then
     assert_that(actual, is_iteration_rule().with_rule_stop(expected))
+
+
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("manager", "manager@test.com"),
+        ("approver", "approver@test.com"),
+        ("reviewer", "reviewer@test.com"),
+    ],
+)
+def test_campaign_should_accept_list_of_strings_for_different_role_emails(field_name: str, value: str):
+    # Given
+    kwargs = {field_name: value}
+
+    # When, Then
+    with pytest.raises(
+        ValueError,
+        match=rf"1 validation error for CampaignConfig\n{field_name}\n\s+Input should be a valid list.*",
+    ):
+        RawCampaignConfigFactory.build(**kwargs)
