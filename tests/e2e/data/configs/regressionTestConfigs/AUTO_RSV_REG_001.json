@@ -1,13 +1,13 @@
 {
   "CampaignConfig": {
     "ID": "Automation RSV - Regression Test Config - Camp ID",
-    "Version": "1",
+    "Version": 1,
     "Name": "Automation RSV - Regression Test Config",
     "Type": "V",
     "Target": "RSV",
-    "Manager": "person1@nhs.net",
-    "Approver": "person1@nhs.net",
-    "Reviewer": "person1@nhs.net",
+    "Manager": ["person1@nhs.net"],
+    "Approver": ["person1@nhs.net"],
+    "Reviewer": ["person1@nhs.net"],
     "IterationFrequency": "X",
     "IterationType": "O",
     "IterationTime": "07:00:00",
@@ -20,7 +20,7 @@
       {
         "ID": "Automation RSV - Regression Test Config - It ID",
         "DefaultCommsRouting": "DEFAULT_ACTION",
-        "Version": "1",
+        "Version": 1,
         "Name": "Automation RSV - Regression Test Config Iteration",
         "IterationDate": "20250601",
         "IterationNumber": 1,

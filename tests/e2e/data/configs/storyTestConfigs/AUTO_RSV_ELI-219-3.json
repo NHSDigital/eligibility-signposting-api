@@ -1,13 +1,13 @@
 {
   "CampaignConfig": {
     "ID": "<<RANDOM_GUID>>",
-    "Version": "1",
+    "Version": 1,
     "Name": "ELI-219 - Support Actions R Rules - 9000000004",
     "Type": "V",
     "Target": "RSV",
-    "Manager": "person1@nhs.net",
-    "Approver": "person1@nhs.net",
-    "Reviewer": "person1@nhs.net",
+    "Manager": ["person1@nhs.net"],
+    "Approver": ["person1@nhs.net"],
+    "Reviewer": ["person1@nhs.net"],
     "IterationFrequency": "X",
     "IterationType": "O",
     "IterationTime": "07:00:00",
@@ -20,7 +20,7 @@
       {
         "ID": ",<<RANDOM_GUID>>",
         "DefaultCommsRouting": "DEFAULT_ACTION",
-        "Version": "1",
+        "Version": 1,
         "Name": "ELI-219 - Support Actions R Rules - 9000000004",
         "IterationDate": "20250601",
         "IterationNumber": 1,

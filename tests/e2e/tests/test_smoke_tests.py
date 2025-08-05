@@ -17,15 +17,16 @@ id_list = [f"{filename} - {scenario.get('scenario_name', 'No Scenario')}" for fi
 @pytest.mark.sandboxtests
 @pytest.mark.parametrize(("filename", "scenario"), param_list, ids=id_list)
 def test_run_smoke_case(filename, scenario, eligibility_client, get_scenario_params):
-    nhs_number, config_filenames, request_headers, query_params = get_scenario_params(scenario, config_path)
+    nhs_number, config_filenames, request_headers, query_params, expected_response_code = get_scenario_params(scenario, config_path)
 
     actual_response = eligibility_client.make_request(
         nhs_number, headers=request_headers, query_params=query_params, strict_ssl=False
     )
     expected_response = all_expected_responses.get(filename).get("response_items", {})
 
-    # Assert and show details on failure
-    assert actual_response["status_code"] == http.HTTPStatus.OK
+    expected_response_code = expected_response_code or http.HTTPStatus.OK
+
+    assert actual_response["status_code"] == expected_response_code
     assert actual_response["body"] == expected_response, (
         f"\n❌ Mismatch in test: {filename}\n"
         f"NHS Number: {nhs_number}\n"

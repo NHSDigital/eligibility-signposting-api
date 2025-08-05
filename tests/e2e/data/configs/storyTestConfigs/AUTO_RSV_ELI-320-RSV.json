@@ -1,13 +1,13 @@
 {
   "CampaignConfig": {
     "ID": "CC5678",
-    "Version": "1",
+    "Version": 1,
     "Name": "ELI-320 - RSV Config",
     "Type": "V",
     "Target": "RSV",
-    "Manager": "person1@nhs.net",
-    "Approver": "person1@nhs.net",
-    "Reviewer": "person1@nhs.net",
+    "Manager": ["person1@nhs.net"],
+    "Approver": ["person1@nhs.net"],
+    "Reviewer": ["person1@nhs.net"],
     "IterationFrequency": "X",
     "IterationType": "O",
     "IterationTime": "07:00:00",
@@ -20,7 +20,7 @@
       {
         "ID": "IC5678",
         "DefaultCommsRouting": "AmendNBS",
-        "Version": "1",
+        "Version": 1,
         "Name": "ELI-320 - RSV Iteration Config",
         "IterationDate": "20250601",
         "IterationNumber": 1,

@@ -1,13 +1,13 @@
 {
   "CampaignConfig": {
     "ID": "CC8901",
-    "Version": "1",
+    "Version": 1,
     "Name": "ELI-320 - MMR Config",
     "Type": "V",
     "Target": "MMR",
-    "Manager": "person1@nhs.net",
-    "Approver": "person1@nhs.net",
-    "Reviewer": "person1@nhs.net",
+    "Manager": ["person1@nhs.net"],
+    "Approver": ["person1@nhs.net"],
+    "Reviewer": ["person1@nhs.net"],
     "IterationFrequency": "X",
     "IterationType": "O",
     "IterationTime": "07:00:00",
@@ -20,7 +20,7 @@
       {
         "ID": "IC8901",
         "DefaultCommsRouting": "CONTACT_GP",
-        "Version": "1",
+        "Version": 1,
         "Name": "ELI-320 - MMR Iteration Config",
         "IterationDate": "20250601",
         "IterationNumber": 1,

@@ -1,13 +1,13 @@
 {
   "CampaignConfig": {
     "ID": "CC56789",
-    "Version": "1",
+    "Version": 1,
     "Name": "ELI-320 - FLU SCREENING Config",
     "Type": "S",
     "Target": "FLU",
-    "Manager": "person1@nhs.net",
-    "Approver": "person1@nhs.net",
-    "Reviewer": "person1@nhs.net",
+    "Manager": ["person1@nhs.net"],
+    "Approver": ["person1@nhs.net"],
+    "Reviewer": ["person1@nhs.net"],
     "IterationFrequency": "X",
     "IterationType": "O",
     "IterationTime": "07:00:00",
@@ -20,7 +20,7 @@
       {
         "ID": "IC56789",
         "DefaultCommsRouting": "AmendNBS",
-        "Version": "1",
+        "Version": 1,
         "Name": "ELI-320 - FLU Screening Iteration Config",
         "IterationDate": "20250601",
         "IterationNumber": 1,
