@@ -5,7 +5,7 @@ import pytest
 def valid_campaign_config_with_only_mandatory_fields():
     return {
         "ID": "CAMP001",
-        "Version": "v1.0",
+        "Version": 1,
         "Name": "Spring Campaign",
         "Type": "V",
         "Target": "COVID",
@@ -16,7 +16,7 @@ def valid_campaign_config_with_only_mandatory_fields():
         "Iterations": [
             {
                 "ID": "ITER001",
-                "Version": "v1.0",
+                "Version": 1,
                 "Name": "Mid-January Push",
                 "IterationDate": "20250101",
                 "IterationNumber": 1,

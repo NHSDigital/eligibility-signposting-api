@@ -46,7 +46,7 @@ class TestMandatoryFieldsSchemaValidations:
         assert model.id == id_value
 
     # Version
-    @pytest.mark.parametrize("version_value", ["v1.0", "v2.3", "V4.5"])
+    @pytest.mark.parametrize("version_value", [1,2,100])
     def test_valid_version(self, version_value, valid_campaign_config_with_only_mandatory_fields):
         data = {**valid_campaign_config_with_only_mandatory_fields["Iterations"][0], "Version": version_value}
         model = IterationValidation(**data)

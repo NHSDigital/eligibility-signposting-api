@@ -42,7 +42,7 @@ class TestMandatoryFieldsSchemaValidations:
         assert model.id == id_value
 
     # Version
-    @pytest.mark.parametrize("version_value", ["v1.0", "v2.1", "V3.0"])
+    @pytest.mark.parametrize("version_value", [1,2,100])
     def test_valid_version(self, version_value, valid_campaign_config_with_only_mandatory_fields):
         data = {**valid_campaign_config_with_only_mandatory_fields, "Version": version_value}
         model = CampaignConfigValidation(**data)
@@ -147,19 +147,19 @@ class TestMandatoryFieldsSchemaValidations:
 
 
 class TestOptionalFieldsSchemaValidations:
-    @pytest.mark.parametrize("manager", ["alice", "bob", "carol"])
+    @pytest.mark.parametrize("manager", [["alice"], ["bob"], ["carol"]])
     def test_manager_field(self, manager, valid_campaign_config_with_only_mandatory_fields):
         data = {**valid_campaign_config_with_only_mandatory_fields, "Manager": manager}
         model = CampaignConfigValidation(**data)
         assert model.manager == manager
 
-    @pytest.mark.parametrize("approver", ["bob", "dave", "rachel"])
+    @pytest.mark.parametrize("approver",[["alice"], ["bob"], ["carol"]])
     def test_approver_field(self, approver, valid_campaign_config_with_only_mandatory_fields):
         data = {**valid_campaign_config_with_only_mandatory_fields, "Approver": approver}
         model = CampaignConfigValidation(**data)
         assert model.approver == approver
 
-    @pytest.mark.parametrize("reviewer", ["carol", "eve", "zane"])
+    @pytest.mark.parametrize("reviewer", [["alice"], ["bob"], ["carol"]])
     def test_reviewer_field(self, reviewer, valid_campaign_config_with_only_mandatory_fields):
         data = {**valid_campaign_config_with_only_mandatory_fields, "Reviewer": reviewer}
         model = CampaignConfigValidation(**data)
