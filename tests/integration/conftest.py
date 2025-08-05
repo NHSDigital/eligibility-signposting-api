@@ -480,6 +480,40 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
     yield campaign
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
+@pytest.fixture(scope="class")
+def campaign_config_with_and_rule(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="RSV",
+        iterations=[
+            rule.IterationFactory.build(
+                iteration_rules=[
+                    rule.PostcodeSuppressionRuleFactory.build(cohort_label="cohort2",),
+                    rule.PersonAgeSuppressionRuleFactory.build(),
+                ],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort1",
+                        cohort_group="cohort_group1",
+                        positive_description="positive_description",
+                        negative_description="negative_description",
+                    ),
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort2",
+                        cohort_group="cohort_group2",
+                        positive_description="positive_description",
+                        negative_description="negative_description",
+                    )
+                ],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
 
 @pytest.fixture(scope="class")
 def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:

@@ -78,9 +78,22 @@ class RuleProcessor:
         priority_getter = attrgetter("priority")
         suppression_reasons = []
 
-        sorted_rules_by_priority = sorted(self.get_exclusion_rules(cohort, suppression_rules), key=priority_getter)
+        sorted_rules_by_priority = sorted(suppression_rules, key=priority_getter)
 
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
+            group_rules = list(rule_group)
+            cohort_specific_rules = [rule for rule in group_rules if rule.cohort_label is not None]
+            matching_specific_rules = [
+                rule for rule in cohort_specific_rules if rule.cohort_label == cohort.cohort_label
+            ]
+            if cohort_specific_rules and not matching_specific_rules:
+                continue
+
+            applicable_rules = list(self.get_exclusion_rules(cohort, group_rules))
+
+            if not applicable_rules:
+                continue
+
             status, group_exclusion_reasons, rule_stop = self.evaluate_rules_priority_group(person, rule_group)
             if status.is_exclusion:
                 is_actionable = False
