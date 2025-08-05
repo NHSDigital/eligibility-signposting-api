@@ -42,7 +42,7 @@ class TestMandatoryFieldsSchemaValidations:
         assert model.id == id_value
 
     # Version
-    @pytest.mark.parametrize("version_value", [1,2,100])
+    @pytest.mark.parametrize("version_value", [1, 2, 100])
     def test_valid_version(self, version_value, valid_campaign_config_with_only_mandatory_fields):
         data = {**valid_campaign_config_with_only_mandatory_fields, "Version": version_value}
         model = CampaignConfigValidation(**data)
@@ -153,7 +153,7 @@ class TestOptionalFieldsSchemaValidations:
         model = CampaignConfigValidation(**data)
         assert model.manager == manager
 
-    @pytest.mark.parametrize("approver",[["alice"], ["bob"], ["carol"]])
+    @pytest.mark.parametrize("approver", [["alice"], ["bob"], ["carol"]])
     def test_approver_field(self, approver, valid_campaign_config_with_only_mandatory_fields):
         data = {**valid_campaign_config_with_only_mandatory_fields, "Approver": approver}
         model = CampaignConfigValidation(**data)
