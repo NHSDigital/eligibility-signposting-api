@@ -299,6 +299,8 @@ locals {
 resource "aws_sns_topic" "cloudwatch_alarms" {
   name = "cloudwatch-security-alarms"
 
+  kms_master_key_id = aws_kms_key.sns_encryption_key.id
+
   tags = {
     Environment = var.environment
     Purpose     = "security-alerting"
@@ -306,8 +308,21 @@ resource "aws_sns_topic" "cloudwatch_alarms" {
   }
 }
 
+resource "aws_kms_key" "sns_encryption_key" {
+  description             = "KMS key for encrypting CloudWatch alarms SNS topic"
+  deletion_window_in_days = 7
+
+  tags = {
+    Name        = "cloudwatch-alarms-sns-encryption-key"
+    Environment = var.environment
+    Purpose     = "sns-encryption"
+    ManagedBy   = "terraform"
+  }
+}
+
 # Security Alarms (CloudTrail-based)
 resource "aws_cloudwatch_metric_alarm" "cloudtrail_custom_metric_alarms" {
+  # checkov:skip=CKV_AWS_319: Disabling some alarms until service is live
   for_each = local.cloudwatch_alarm_config
 
   alarm_name          = "SecurityAlert-${each.key}"
@@ -337,6 +352,7 @@ resource "aws_cloudwatch_metric_alarm" "cloudtrail_custom_metric_alarms" {
 
 # API Gateway CloudWatch Alarms
 resource "aws_cloudwatch_metric_alarm" "api_gateway_alarms" {
+  # checkov:skip=CKV_AWS_319: Disabling some alarms until service is live
   for_each = local.api_gateway_alarm_config
 
   alarm_name          = "APIGateway-${each.key}"
