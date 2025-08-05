@@ -311,6 +311,8 @@ resource "aws_sns_topic" "cloudwatch_alarms" {
 resource "aws_kms_key" "sns_encryption_key" {
   description             = "KMS key for encrypting CloudWatch alarms SNS topic"
   deletion_window_in_days = 7
+  enable_key_rotation     = true
+
 
   tags = {
     Name        = "cloudwatch-alarms-sns-encryption-key"
