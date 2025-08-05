@@ -8,7 +8,7 @@
         "Target": "RSV",
         "Manager": "person1@nhs.net",
         "Approver": "person1@nhs.net",
-        "Reviewer": "person1@nhs.net",
+        "Reviewer": "person2@nhs.net",
         "IterationFrequency": "X",
         "IterationType": "O",
         "IterationTime": "07:00:00",
