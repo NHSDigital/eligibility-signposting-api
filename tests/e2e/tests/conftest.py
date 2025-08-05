@@ -46,25 +46,3 @@ def get_scenario_params(request):
         return nhs_number, config_filenames, request_headers, query_params, expected_response_code
 
     return _setup
-
-@pytest.fixture(scope="session")
-def validate_against_spec():
-    """
-    Validates an API response against the Eligibility Signposting API spec.
-    Loads the spec once per test session.
-    """
-    parser = ResolvingParser(SPEC_PATH)
-    openapi_spec = parser.specification
-
-    def _validate(status_code, response_body):
-        try:
-            method_spec = openapi_spec["paths"][API_PATH][API_METHOD]
-            response_schema = method_spec["responses"][str(status_code)]["content"]["application/json"]["schema"]
-
-            validate(instance=response_body, schema=response_schema)
-        except KeyError as e:
-            pytest.fail(f"Spec does not define schema for GET {API_PATH} {status_code}: {e}")
-        except Exception as e:
-            pytest.fail(f"Schema validation failed: {e}")
-
-    return _validate
