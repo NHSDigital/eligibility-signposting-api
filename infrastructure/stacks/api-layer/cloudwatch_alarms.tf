@@ -8,7 +8,7 @@ locals {
       period              = 300
       statistic           = "Sum"
       alarm_description   = "Unauthorized API calls detected - immediate alert on any occurrence"
-      actions_enabled     = true
+      actions_enabled     = false # Disabling as cloudhealth role is triggering this alarm
     }
     ConsoleAuthenticationFailures = {
       threshold           = 3
