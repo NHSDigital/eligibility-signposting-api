@@ -11,7 +11,7 @@ YELLOW = "\033[93m"
 RED = "\033[91m"
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     parser = argparse.ArgumentParser(description="Validate campaign configuration.")
     parser.add_argument("--config_path", required=True, help="Path to the campaign config JSON file")
     args = parser.parse_args()
@@ -25,5 +25,5 @@ def main() -> None:
         sys.stderr.write(f"{YELLOW}Validation Error:{RESET} {RED}{e}{RESET}\n")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
