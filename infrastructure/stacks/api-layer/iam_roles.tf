@@ -33,6 +33,21 @@ data "aws_iam_policy_document" "firehose_assume_role" {
   }
 }
 
+resource "aws_iam_role" "splunk_firehose_assume_role" {
+  name = "splunk-firehose-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = {
+        Service = "firehose.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
 # Roles
 
 resource "aws_iam_role" "eligibility_lambda_role" {

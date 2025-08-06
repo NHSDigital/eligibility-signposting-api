@@ -284,6 +284,53 @@ resource "aws_kms_key_policy" "s3_rules_kms_key" {
   policy = data.aws_iam_policy_document.s3_rules_kms_key_policy.json
 }
 
+resource "aws_iam_role_policy" "splunk_firehose_policy" {
+  name = "splunk-firehose-policy"
+  role = aws_iam_role.splunk_firehose_assume_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      # Allow Firehose to write to S3 backup bucket
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:GetBucketLocation",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          module.s3_firehose_backup_bucket.storage_bucket_arn,
+          "${module.s3_firehose_backup_bucket.storage_bucket_arn}/*"
+        ]
+      },
+      # Allow Firehose to use KMS key for S3 encryption
+      {
+        Effect = "Allow",
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
+        ],
+        Resource = [module.s3_firehose_backup_bucket.storage_bucket_kms_key_arn]
+      },
+      # Allow Firehose to access Splunk endpoint (no explicit IAM action needed, but you can restrict VPC/network access separately)
+      # Allow logging to CloudWatch
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:PutLogEvents",
+          "logs:CreateLogStream",
+          "logs:CreateLogGroup"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
   #checkov:skip=CKV_AWS_111: Root user needs full KMS key management
   #checkov:skip=CKV_AWS_356: Root user needs full KMS key management
