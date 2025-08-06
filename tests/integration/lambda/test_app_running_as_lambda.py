@@ -242,11 +242,13 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
                 }
             ],
             "filterRules": None,
-            "suitabilityRules": {
-                "rulePriority": "10",
-                "ruleName": "Exclude too young less than 75",
-                "ruleMessage": "Exclude too young less than 75",
-            },
+            "suitabilityRules": [
+                {
+                    "rulePriority": "10",
+                    "ruleName": "Exclude too young less than 75",
+                    "ruleMessage": "Exclude too young less than 75",
+                }
+            ],
             "actionRule": None,
             "actions": [],
         }
