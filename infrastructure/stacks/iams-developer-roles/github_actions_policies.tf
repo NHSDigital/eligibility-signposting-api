@@ -475,6 +475,50 @@ resource "aws_iam_policy" "firehose_readonly" {
   tags = merge(local.tags, { Name = "firehose-describe-access" })
 }
 
+resource "aws_iam_policy" "cloudwatch_alarms" {
+  name        = "cloudwatch-alarms-management"
+  description = "Allow GitHub Actions to manage CloudWatch alarms and SNS topics"
+  path        = "/service-policies/"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          # CloudWatch Alarms management
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:DescribeAlarmsForMetric",
+          "cloudwatch:ListTagsForResource",
+          "cloudwatch:TagResource",
+          "cloudwatch:UntagResource",
+          # SNS Topic management for alarm notifications
+          "sns:CreateTopic",
+          "sns:DeleteTopic",
+          "sns:GetTopicAttributes",
+          "sns:SetTopicAttributes",
+          "sns:ListTopics",
+          "sns:ListTagsForResource",
+          "sns:TagResource",
+          "sns:UntagResource",
+          "sns:Subscribe",
+          "sns:Unsubscribe",
+          "sns:ListSubscriptions",
+          "sns:ListSubscriptionsByTopic"
+        ],
+        Resource = [
+          "arn:aws:cloudwatch:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alarm:*",
+          "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*"
+        ]
+      }
+    ]
+  })
+
+  tags = merge(local.tags, { Name = "cloudwatch-alarms-management" })
+}
+
 # Attach the policies to the role
 resource "aws_iam_role_policy_attachment" "terraform_state" {
   role       = aws_iam_role.github_actions.name
@@ -519,4 +563,9 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_logging" {
 resource "aws_iam_role_policy_attachment" "firehose_readonly_attach" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.firehose_readonly.arn
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_alarms" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.cloudwatch_alarms.arn
 }
