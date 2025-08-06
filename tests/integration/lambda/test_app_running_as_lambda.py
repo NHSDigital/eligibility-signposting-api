@@ -459,15 +459,18 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "conditionName": rsv_campaign.target,
             "status": "not_eligible",
             "statusText": "We do not believe you can have it",
-            "eligibilityCohorts": [{"cohortCode": "cohort_label1", "cohortStatus": "not_eligible"}],
-            "eligibilityCohortGroups": [
-                {
-                    "cohortCode": "cohort_group1",
-                    "cohortText": "negative_desc_1",
-                    "cohortStatus": "not_eligible",
-                }
+            "eligibilityCohorts": [
+                {"cohortCode": "cohort_label1", "cohortStatus": "not_eligible"},
+                {"cohortCode": "cohort_label4", "cohortStatus": "not_eligible"},
             ],
-            "filterRules": {"rulePriority": "10", "ruleName": "Exclude too young less than 75"},
+            "eligibilityCohortGroups": [
+                {"cohortCode": "cohort_group1", "cohortText": "negative_desc_1", "cohortStatus": "not_eligible"},
+                {"cohortCode": "cohort_group4", "cohortText": "negative_desc_4", "cohortStatus": "not_eligible"},
+            ],
+            "filterRules": [
+                {"rulePriority": "10", "ruleName": "Exclude too young less than 75"},
+                {"rulePriority": "8", "ruleName": "Excluded postcode In SW19"},
+            ],
             "suitabilityRules": None,
             "actionRule": None,
             "actions": [],
@@ -480,20 +483,19 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "conditionName": covid_campaign.target,
             "status": "not_actionable",
             "statusText": f"You should have the {covid_campaign.target} vaccine",
-            "eligibilityCohorts": [{"cohortCode": "cohort_label2", "cohortStatus": "not_actionable"}],
+            "eligibilityCohorts": [
+                {"cohortCode": "cohort_label2", "cohortStatus": "not_actionable"},
+                {"cohortCode": "cohort_label4", "cohortStatus": "not_actionable"},
+            ],
             "eligibilityCohortGroups": [
-                {
-                    "cohortCode": "cohort_group2",
-                    "cohortText": "positive_desc_2",
-                    "cohortStatus": "not_actionable",
-                }
+                {"cohortCode": "cohort_group2", "cohortText": "positive_desc_2", "cohortStatus": "not_actionable"},
+                {"cohortCode": "cohort_group4", "cohortText": "positive_desc_4", "cohortStatus": "not_actionable"},
             ],
             "filterRules": None,
-            "suitabilityRules": {
-                "rulePriority": "10",
-                "ruleName": "Exclude too young less than 75",
-                "ruleMessage": "Exclude too young less than 75",
-            },
+            "suitabilityRules": [
+                {"rulePriority": "10", "ruleName": "Exclude too young less than 75", "ruleMessage": "TOO YOUNG"},
+                {"rulePriority": "12", "ruleName": "Excluded postcode In SW19", "ruleMessage": "In SW19"},
+            ],
             "actionRule": None,
             "actions": [],
         },
@@ -505,13 +507,13 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "conditionName": flu_campaign.target,
             "status": "actionable",
             "statusText": f"You should have the {flu_campaign.target} vaccine",
-            "eligibilityCohorts": [{"cohortCode": "cohort_label3", "cohortStatus": "actionable"}],
+            "eligibilityCohorts": [
+                {"cohortCode": "cohort_label3", "cohortStatus": "actionable"},
+                {"cohortCode": "cohort_label4", "cohortStatus": "actionable"},
+            ],
             "eligibilityCohortGroups": [
-                {
-                    "cohortCode": "cohort_group3",
-                    "cohortText": "positive_desc_3",
-                    "cohortStatus": "actionable",
-                }
+                {"cohortCode": "cohort_group3", "cohortText": "positive_desc_3", "cohortStatus": "actionable"},
+                {"cohortCode": "cohort_group4", "cohortText": "positive_desc_4", "cohortStatus": "actionable"},
             ],
             "filterRules": None,
             "suitabilityRules": None,
