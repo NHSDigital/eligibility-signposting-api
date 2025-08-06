@@ -5,10 +5,10 @@ from pathlib import Path
 
 from rules_validation_api.validators.rules_validator import RulesValidation
 
-GREEN = "\033[92m"
-RESET = "\033[0m"
-YELLOW = "\033[93m"
-RED = "\033[91m"
+GREEN = "\033[92m"  # pragma: no cover
+RESET = "\033[0m"  # pragma: no cover
+YELLOW = "\033[93m"  # pragma: no cover
+RED = "\033[91m"  # pragma: no cover
 
 
 def main() -> None:  # pragma: no cover
