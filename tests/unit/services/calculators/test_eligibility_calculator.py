@@ -594,6 +594,7 @@ def test_no_active_iteration_returns_empty_conditions_with_single_active_campaig
             iterations=[
                 rule_builder.IterationFactory.build(
                     name="inactive iteration",
+                    iteration_rules=[],
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                 )
             ],
@@ -622,6 +623,7 @@ def test_returns_no_condition_data_for_campaign_without_active_iteration(faker: 
             iterations=[
                 rule_builder.IterationFactory.build(
                     name="inactive iteration",
+                    iteration_rules=[],
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                 )
             ],
@@ -631,6 +633,7 @@ def test_returns_no_condition_data_for_campaign_without_active_iteration(faker: 
             iterations=[
                 rule_builder.IterationFactory.build(
                     name="active iteration",
+                    iteration_rules=[],
                     iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                 )
             ],
