@@ -5,7 +5,13 @@ from polyfactory import Use
 from polyfactory.factories import DataclassFactory
 
 from eligibility_signposting_api.model import eligibility_status
-from eligibility_signposting_api.model.eligibility_status import RuleType, UrlLink
+from eligibility_signposting_api.model.eligibility_status import (
+    RuleDescription,
+    RuleName,
+    RulePriority,
+    RuleType,
+    UrlLink,
+)
 
 
 class SuggestedActionFactory(DataclassFactory[eligibility_status.SuggestedAction]):
@@ -14,6 +20,10 @@ class SuggestedActionFactory(DataclassFactory[eligibility_status.SuggestedAction
 
 class ReasonFactory(DataclassFactory[eligibility_status.Reason]):
     rule_type = RuleType.filter
+    rule_name = RuleName("name")
+    rule_priority = RulePriority("1")
+    rule_description = RuleDescription("description")
+    matcher_matched = False
 
 
 class CohortResultFactory(DataclassFactory[eligibility_status.CohortGroupResult]):
