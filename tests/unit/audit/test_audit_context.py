@@ -129,7 +129,9 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g(app):
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(condition_name, best_iteration_results, matched_action_detail)
+        AuditContext.append_audit_condition(
+            condition_name, best_iteration_results, matched_action_detail, [cohort_group_result]
+        )
 
         expected_audit_action = [
             AuditAction(
@@ -191,3 +193,44 @@ def test_write_to_firehose_calls_audit_service_with_correct_data_from_g(app):
         assert g.audit_log.response.last_updated == last_updated
 
         mock_audit_service.audit.assert_called_once_with(g.audit_log.model_dump(by_alias=True))
+
+
+def test_no_duplicates_returns_same_list():
+    reasons = [
+        Reason(RuleType("F"), RuleName("code1"), RulePriority("1"), RuleDescription("desc1"), matcher_matched=True),
+        Reason(RuleType("S"), RuleName("code2"), RulePriority("2"), RuleDescription("desc2"), matcher_matched=False),
+    ]
+    expected = reasons
+    assert AuditContext.deduplicate_reasons(reasons) == expected
+
+
+def test_duplicates_are_removed():
+    reasons = [
+        Reason(RuleType("F"), RuleName("code1"), RulePriority("1"), RuleDescription("desc1"), matcher_matched=True),
+        Reason(RuleType("S"), RuleName("code1"), RulePriority("2"), RuleDescription("desc2"), matcher_matched=False),
+        Reason(RuleType("R"), RuleName("code3"), RulePriority("3"), RuleDescription("desc3"), matcher_matched=True),
+    ]
+    expected = [
+        Reason(RuleType("F"), RuleName("code1"), RulePriority("1"), RuleDescription("desc1"), matcher_matched=True),
+        Reason(RuleType("R"), RuleName("code3"), RulePriority("3"), RuleDescription("desc3"), matcher_matched=True),
+    ]
+    assert AuditContext.deduplicate_reasons(reasons) == expected
+
+
+def test_empty_list_returns_empty_list():
+    reasons = []
+    expected = []
+    assert AuditContext.deduplicate_reasons(reasons) == expected
+
+
+def test_reasons_with_no_description_are_filtered_out():
+    reasons = [
+        Reason(RuleType("F"), RuleName("code1"), RulePriority("1"), RuleDescription("desc1"), matcher_matched=True),
+        Reason(RuleType("S"), RuleName("code2"), RulePriority("2"), None, matcher_matched=False),
+        Reason(RuleType("R"), RuleName("code3"), RulePriority("3"), RuleDescription("desc3"), matcher_matched=True),
+    ]
+    expected = [
+        Reason(RuleType("F"), RuleName("code1"), RulePriority("1"), RuleDescription("desc1"), matcher_matched=True),
+        Reason(RuleType("R"), RuleName("code3"), RulePriority("3"), RuleDescription("desc3"), matcher_matched=True),
+    ]
+    assert AuditContext.deduplicate_reasons(reasons) == expected
