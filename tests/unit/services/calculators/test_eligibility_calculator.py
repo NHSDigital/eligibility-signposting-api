@@ -1,4 +1,5 @@
 import datetime
+import logging
 from typing import Any
 
 import pytest
@@ -6,12 +7,10 @@ from faker import Faker
 from flask import Flask
 from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, contains_inanyorder, has_item, has_items, is_, is_in
-from pydantic import HttpUrl
 
 from eligibility_signposting_api.model import campaign_config as rules_model
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
-    AvailableAction,
     CohortLabel,
     Description,
     RuleAttributeLevel,
@@ -585,19 +584,91 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
     )
 
 
-book_nbs_comms = AvailableAction(
-    ActionType="ButtonAuthLink",
-    ExternalRoutingCode="BookNBS",
-    ActionDescription="Action description",
-    UrlLink=HttpUrl("https://www.nhs.uk/book-rsv"),
-    UrlLabel="Continue to booking",
-)
+@freeze_time("2025-04-25")
+def test_no_active_iteration_returns_empty_conditions_with_single_active_campaign(faker: Faker):
+    # Given
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()))
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    name="inactive iteration",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                )
+            ],
+        )
+    ]
+    # Need to set the iteration date to override CampaignConfigFactory.fix_iteration_date_invariants behavior
+    campaign_configs[0].iterations[0].iteration_date = datetime.date(2025, 5, 10)
 
-default_comms_detail = AvailableAction(
-    ActionType="CareCardWithText",
-    ExternalRoutingCode="BookLocal",
-    ActionDescription="You can get an RSV vaccination at your GP surgery",
-)
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    assert_that(actual, is_eligibility_status().with_conditions([]))
+
+
+@pytest.mark.usefixtures("caplog")
+@freeze_time("2025-04-25")
+def test_returns_no_condition_data_for_campaign_without_active_iteration(faker: Faker, caplog):
+    # Given
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()))
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    name="inactive iteration",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                )
+            ],
+        ),
+        rule_builder.CampaignConfigFactory.build(
+            target="COVID",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    name="active iteration",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                )
+            ],
+        ),
+    ]
+    # Need to set the iteration date to override CampaignConfigFactory.fix_iteration_date_invariants behavior
+    rsv_campaign = campaign_configs[0]
+    rsv_campaign.iterations[0].iteration_date = datetime.date(2025, 5, 10)
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    with caplog.at_level(logging.INFO):
+        actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    condition_names = [condition.condition_name for condition in actual.conditions]
+
+    assert ConditionName("RSV") not in condition_names
+    assert ConditionName("COVID") in condition_names
+    assert f"Skipping campaign ID {rsv_campaign.id} as no active iteration was found." in caplog.text
+
+
+@freeze_time("2025-04-25")
+def test_no_active_campaign(faker: Faker):
+    # Given
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()))
+    campaign_configs = [rule_builder.CampaignConfigFactory.build()]
+    # Need to set the campaign dates to override CampaignConfigFactory.fix_iteration_date_invariants behavior
+    campaign_configs[0].start_date = datetime.date(2025, 5, 10)
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    assert_that(actual, is_eligibility_status().with_conditions([]))
 
 
 class TestEligibilityResultBuilder:
