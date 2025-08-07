@@ -480,6 +480,7 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
     yield campaign
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
+
 @pytest.fixture(scope="class")
 def campaign_config_with_and_rule(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
     campaign: CampaignConfig = rule.CampaignConfigFactory.build(
@@ -487,7 +488,9 @@ def campaign_config_with_and_rule(s3_client: BaseClient, rules_bucket: BucketNam
         iterations=[
             rule.IterationFactory.build(
                 iteration_rules=[
-                    rule.PostcodeSuppressionRuleFactory.build(cohort_label="cohort2",),
+                    rule.PostcodeSuppressionRuleFactory.build(
+                        cohort_label="cohort2",
+                    ),
                     rule.PersonAgeSuppressionRuleFactory.build(),
                 ],
                 iteration_cohorts=[
@@ -502,7 +505,7 @@ def campaign_config_with_and_rule(s3_client: BaseClient, rules_bucket: BucketNam
                         cohort_group="cohort_group2",
                         positive_description="positive_description",
                         negative_description="negative_description",
-                    )
+                    ),
                 ],
             )
         ],

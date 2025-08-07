@@ -94,7 +94,9 @@ class RuleProcessor:
             if not applicable_rules:
                 continue
 
-            status, group_exclusion_reasons, rule_stop = self.evaluate_rules_priority_group(person, rule_group)
+            status, group_exclusion_reasons, rule_stop = self.evaluate_rules_priority_group(
+                person, iter(applicable_rules)
+            )
             if status.is_exclusion:
                 is_actionable = False
                 suppression_reasons.extend(group_exclusion_reasons)

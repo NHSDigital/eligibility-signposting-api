@@ -150,26 +150,17 @@ def test_general_rule_should_not_evaluate_in_isolation_without_matching_specific
     rule_processor,
 ):
     # Person is in COHORT_B
-    cohort = rule_builder.IterationCohortFactory.build(
-        cohort_label="COHORT_B",
-        positive_description="Eligible"
-    )
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_B", positive_description="Eligible")
     cohort_results = {}
 
     # Rule 1: cohort-specific to COHORT_A — should be filtered out
     rule_specific = rule_builder.IterationRuleFactory.build(
-        priority=510,
-        type=RuleType.suppression,
-        cohort_label="COHORT_A",
-        name="SPECIFIC_RULE"
+        priority=510, type=RuleType.suppression, cohort_label="COHORT_A", name="SPECIFIC_RULE"
     )
 
     # Rule 2: General rule
     rule_general = rule_builder.IterationRuleFactory.build(
-        priority=510,
-        type=RuleType.suppression,
-        cohort_label=None,
-        name="GENERAL_RULE"
+        priority=510, type=RuleType.suppression, cohort_label=None, name="GENERAL_RULE"
     )
 
     suppression_rules = [rule_specific, rule_general]
@@ -182,7 +173,6 @@ def test_general_rule_should_not_evaluate_in_isolation_without_matching_specific
 
     # Cohort remains actionable
     assert_that(cohort_results["COHORT_B"].status, is_(Status.actionable))
-
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
@@ -305,8 +295,8 @@ def test_evaluate_suppression_rules_stops_on_rule_stop(
     assert_that(cohort_results["COHORT_A"].status, is_(Status.not_actionable))
     assert_that(cohort_results["COHORT_A"].reasons, is_([mock_reason_p1]))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason_p1]))
-    mock_evaluate_rules_priority_group.assert_called_once()
-    mock_get_exclusion_rules.assert_called_once_with(cohort, suppression_rules)
+    assert_that(mock_evaluate_rules_priority_group.call_count, is_(1))
+    mock_get_exclusion_rules.assert_called_once_with(cohort, [suppression_rule_p1])
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
@@ -338,7 +328,7 @@ def test_evaluate_suppression_rules_does_not_stop_on_rule_stop_when_status_is_ac
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason_p2]))
 
     assert_that(mock_evaluate_rules_priority_group.call_count, is_(2))
-    assert_that(mock_get_exclusion_rules.call_count, is_(1))
+    assert_that(mock_get_exclusion_rules.call_count, is_(2))
 
 
 def test_is_base_eligible(mock_person_data_reader):

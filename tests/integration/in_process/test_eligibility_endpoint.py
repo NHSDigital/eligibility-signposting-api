@@ -237,7 +237,6 @@ class TestStandardResponse:
             ),
         )
 
-
     def test_actionable_with_and_rule(
         self,
         client: FlaskClient,
@@ -288,6 +287,7 @@ class TestStandardResponse:
                 )
             ),
         )
+
 
 class TestMagicCohortResponse:
     def test_not_eligible_by_rule_when_only_magic_cohort_is_present(
