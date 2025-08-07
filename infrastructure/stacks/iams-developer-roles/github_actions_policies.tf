@@ -164,6 +164,14 @@ resource "aws_iam_policy" "s3_management" {
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs/*",
         ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetAccountPublicAccessBlock",
+          "s3:PutAccountPublicAccessBlock"
+        ],
+        Resource = "*"
       }
     ]
   })
