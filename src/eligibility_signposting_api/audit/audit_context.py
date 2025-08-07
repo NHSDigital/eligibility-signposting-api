@@ -24,6 +24,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     ConditionName,
     IterationResult,
     MatchedActionDetail,
+    Reason,
     Status,
     SuggestedAction,
 )
@@ -63,9 +64,9 @@ class AuditContext:
         condition_name: ConditionName,
         best_iteration_result: BestIterationResult,
         action_detail: MatchedActionDetail,
+        cohort_results: list[CohortGroupResult],
     ) -> None:
         audit_eligibility_cohorts, audit_eligibility_cohort_groups, audit_actions = [], [], []
-        audit_filter_rule, audit_suitability_rule, audit_action_rule = None, None, None
         best_active_iteration = best_iteration_result.active_iteration
         best_candidate = best_iteration_result.iteration_result
         best_cohort_results = best_iteration_result.cohort_results
@@ -83,9 +84,15 @@ class AuditContext:
                     )
                 )
 
-                if result.audit_rules and best_candidate:
-                    audit_filter_rule = AuditContext.create_audit_filter_rule(best_candidate, result)
-                    audit_suitability_rule = AuditContext.create_audit_suitability_rule(best_candidate, result)
+        filter_audit_rules, suitability_audit_rules = [], []
+        for result in cohort_results:
+            if result.status.name == Status.not_eligible.name:
+                filter_audit_rules.extend(result.audit_rules)
+            if result.status.name == Status.not_actionable.name:
+                suitability_audit_rules.extend(result.audit_rules)
+
+        audit_filter_rule = AuditContext.create_audit_filter_rule(filter_audit_rules)
+        audit_suitability_rule = AuditContext.create_audit_suitability_rule(suitability_audit_rules)
 
         audit_action_rule = AuditContext.add_rule_name_and_priority_to_audit(best_candidate, action_detail)
 
@@ -153,24 +160,46 @@ class AuditContext:
         return audit_actions
 
     @staticmethod
-    def create_audit_suitability_rule(
-        best_candidate: IterationResult, result: CohortGroupResult
-    ) -> AuditSuitabilityRule | None:
-        audit_suitability_rule = None
-        if best_candidate.status and best_candidate.status.name == Status.not_actionable.name:
-            audit_suitability_rule = AuditSuitabilityRule(
-                rule_priority=result.audit_rules[0].rule_priority,
-                rule_name=result.audit_rules[0].rule_name,
-                rule_message=result.audit_rules[0].rule_description,
+    def create_audit_suitability_rule(reasons: list[Reason]) -> list[AuditSuitabilityRule] | None:
+        unique_reasons = AuditContext.deduplicate_reasons(reasons)
+
+        suitability_audit = [
+            AuditSuitabilityRule(
+                rule_priority=rule.rule_priority,
+                rule_name=rule.rule_name,
+                rule_message=rule.rule_description,
             )
-        return audit_suitability_rule
+            for rule in unique_reasons
+        ]
+
+        return suitability_audit if suitability_audit else None
 
     @staticmethod
-    def create_audit_filter_rule(best_candidate: IterationResult, result: CohortGroupResult) -> AuditFilterRule | None:
-        audit_filter_rule = None
-        if best_candidate.status and best_candidate.status.name == Status.not_eligible.name:
-            audit_filter_rule = AuditFilterRule(
-                rule_priority=result.audit_rules[0].rule_priority,
-                rule_name=result.audit_rules[0].rule_name,
-            )
-        return audit_filter_rule
+    def create_audit_filter_rule(reasons: list[Reason]) -> list[AuditFilterRule] | None:
+        unique_reasons = AuditContext.deduplicate_reasons(reasons)
+
+        filter_audit = [
+            AuditFilterRule(rule_priority=rule.rule_priority, rule_name=rule.rule_name) for rule in unique_reasons
+        ]
+
+        return filter_audit if len(filter_audit) > 0 else None
+
+    @staticmethod
+    def deduplicate_reasons(reasons: list[Reason]) -> list[Reason]:
+        unique_rule_codes = set()
+        deduplicated_reasons = []
+
+        for reason in reasons:
+            if reason.rule_name not in unique_rule_codes and reason.rule_description:
+                unique_rule_codes.add(reason.rule_name)
+                deduplicated_reasons.append(
+                    Reason(
+                        reason.rule_type,
+                        reason.rule_name,
+                        reason.rule_priority,
+                        reason.rule_description,
+                        reason.matcher_matched,
+                    )
+                )
+
+        return deduplicated_reasons
