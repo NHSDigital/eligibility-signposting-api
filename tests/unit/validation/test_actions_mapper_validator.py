@@ -31,6 +31,21 @@ class TestBUCValidations:
         assert isinstance(mapper, ActionsMapperValidator)
         assert len(mapper.root) == expected_action_count
 
+    @pytest.mark.parametrize(
+        "invalid_action",
+        [
+            {"action1": ""},
+            {"action1": "invalid_action"},
+            {"action3": None},
+            {"action1": "", "action3": None},
+            {"action1": "invalid_action", "action2": ""},
+        ],
+    )
+    def test_if_exception_raised_when_adding_invalid_actions_to_action_mapper(self, invalid_action):
+        data = {"": invalid_action}
+        with pytest.raises(ValidationError):
+            ActionsMapperValidator(root=data)
+
     def test_invalid_actions_mapper_empty_key(self, valid_available_action):
         data = {"": self.make_action(valid_available_action), "action2": self.make_action(valid_available_action)}
         with pytest.raises(ValidationError) as exc_info:
