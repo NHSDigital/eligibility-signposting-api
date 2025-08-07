@@ -1,7 +1,7 @@
 resource "aws_kms_key" "splunk_hec_kms" {
   description             = "KMS key for encrypting Splunk HEC SSM parameters"
   deletion_window_in_days = 7
-
+  enable_key_rotation     = true
   tags = {
     Name        = "splunk-hec-ssm-kms-key"
     Environment = var.environment
