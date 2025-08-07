@@ -1,15 +1,19 @@
 import typing
 
-from pydantic import ValidationError, field_validator, model_validator
+from pydantic import Field, ValidationError, field_validator, model_validator
 from pydantic_core import InitErrorDetails
 
 from eligibility_signposting_api.model.campaign_config import ActionsMapper, Iteration, IterationCohort, IterationRule
-from rules_validation_api.validators.actions_mapper_validator import ActionsMapperValidator
+from rules_validation_api.validators.actions_mapper_validator import ActionsMapperValidation
 from rules_validation_api.validators.iteration_cohort_validator import IterationCohortValidation
 from rules_validation_api.validators.iteration_rules_validator import IterationRuleValidation
 
 
 class IterationValidation(Iteration):
+    iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
+    iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
+    actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
+
     @classmethod
     @field_validator("iteration_rules")
     def validate_iteration_rules(cls, iteration_rules: list[IterationRule]) -> list[IterationRuleValidation]:
@@ -23,7 +27,7 @@ class IterationValidation(Iteration):
     @classmethod
     @field_validator("actions_mapper", mode="after")
     def transform_actions_mapper(cls, action_mapper: ActionsMapper) -> ActionsMapper:
-        ActionsMapperValidator.model_validate(action_mapper.model_dump())
+        ActionsMapperValidation.model_validate(action_mapper.model_dump())
         return action_mapper
 
     @model_validator(mode="after")
