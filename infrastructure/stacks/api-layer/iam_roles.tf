@@ -33,7 +33,27 @@ data "aws_iam_policy_document" "firehose_assume_role" {
   }
 }
 
-# Roles
+resource "aws_iam_role" "splunk_firehose_assume_role" {
+  name = "splunk-firehose-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = {
+        Service = "firehose.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }]
+  })
+  tags = {
+    Environment = var.environment
+    Purpose     = "firehose-service-role"
+    ManagedBy   = "terraform"
+  }
+}
+
+# Note: EventBridge IAM roles are defined in eventbridge.tf for proper separation of concerns
 
 resource "aws_iam_role" "eligibility_lambda_role" {
   name                 = "eligibility_lambda-role${terraform.workspace == "default" ? "" : "-${terraform.workspace}"}"
