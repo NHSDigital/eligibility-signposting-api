@@ -153,12 +153,13 @@ def test_general_rule_should_not_evaluate_in_isolation_without_matching_specific
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_B", positive_description="Eligible")
     cohort_results = {}
 
-    # Rule 1: cohort-specific to COHORT_A — should be filtered out
+    # Rule 1: Non-matching rule cohort-specific to COHORT_A — should not be evaluated
     rule_specific = rule_builder.IterationRuleFactory.build(
         priority=510, type=RuleType.suppression, cohort_label="COHORT_A", name="SPECIFIC_RULE"
     )
 
-    # Rule 2: General rule
+    # Rule 2: Matching general rule of the same priority as cohort-specific rule
+    # - should also not be evaluated
     rule_general = rule_builder.IterationRuleFactory.build(
         priority=510, type=RuleType.suppression, cohort_label=None, name="GENERAL_RULE"
     )
@@ -168,9 +169,8 @@ def test_general_rule_should_not_evaluate_in_isolation_without_matching_specific
     # Act
     rule_processor.is_actionable(MOCK_PERSON_DATA, cohort, cohort_results, suppression_rules)
 
-    # ❌ BUG: General rule should not be evaluated in isolation.
+    # None of the rules should be evaluated
     mock_evaluate_rules_priority_group.assert_not_called()
-
     # Cohort remains actionable
     assert_that(cohort_results["COHORT_B"].status, is_(Status.actionable))
 

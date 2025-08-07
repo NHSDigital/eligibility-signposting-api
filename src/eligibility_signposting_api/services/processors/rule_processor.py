@@ -82,20 +82,11 @@ class RuleProcessor:
 
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
             group_rules = list(rule_group)
-            cohort_specific_rules = [rule for rule in group_rules if rule.cohort_label is not None]
-            matching_specific_rules = [
-                rule for rule in cohort_specific_rules if rule.cohort_label == cohort.cohort_label
-            ]
-            if cohort_specific_rules and not matching_specific_rules:
-                continue
-
-            applicable_rules = list(self.get_exclusion_rules(cohort, group_rules))
-
-            if not applicable_rules:
+            if self._should_skip_rule_group(cohort, group_rules):
                 continue
 
             status, group_exclusion_reasons, rule_stop = self.evaluate_rules_priority_group(
-                person, iter(applicable_rules)
+                person, iter(group_rules)
             )
             if status.is_exclusion:
                 is_actionable = False
@@ -117,6 +108,14 @@ class RuleProcessor:
                     cohort.positive_description,
                     suppression_reasons,
                 )
+
+    @staticmethod
+    def _should_skip_rule_group(cohort: IterationCohort, group_rules: list[IterationRule]) -> bool:
+        cohort_specific_rules = [rule for rule in group_rules if rule.cohort_label is not None]
+        matching_specific_rules = [
+            rule for rule in cohort_specific_rules if rule.cohort_label == cohort.cohort_label
+        ]
+        return bool(cohort_specific_rules and not matching_specific_rules)
 
     def evaluate_rules_priority_group(
         self, person: Person, rules_group: Iterator[IterationRule]
