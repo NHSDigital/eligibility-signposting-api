@@ -1,5 +1,3 @@
-
-
 # KMS Key for Firehose encryption
 resource "aws_kms_key" "firehose_splunk_cmk" {
   description             = "KMS key for encrypting Kinesis Firehose delivery stream data"
