@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -30,6 +31,8 @@ if TYPE_CHECKING:
         IterationName,
     )
     from eligibility_signposting_api.model.person import Person
+
+logger = logging.getLogger(__name__)
 
 
 @service
@@ -84,6 +87,9 @@ class EligibilityCalculator:
         for condition_name, campaign_group in requested_grouped_campaigns:
             best_iteration_result = self.get_best_iteration_result(campaign_group)
 
+            if best_iteration_result is None:
+                continue
+
             matched_action_detail = self.action_rule_handler.get_actions(
                 self.person,
                 best_iteration_result.active_iteration,
@@ -107,20 +113,19 @@ class EligibilityCalculator:
         # Consolidate all the results and return
         return eligibility_status.EligibilityStatus(conditions=final_result)
 
-    def get_best_iteration_result(self, campaign_group: list[CampaignConfig]) -> BestIterationResult:
+    def get_best_iteration_result(self, campaign_group: list[CampaignConfig]) -> BestIterationResult | None:
         iteration_results = self.get_iteration_results(campaign_group)
 
-        if iteration_results:
-            (best_iteration_name, best_iteration_result) = max(
-                iteration_results.items(),
-                key=lambda item: next(iter(item[1].cohort_results.values())).status.value
-                # Below handles the case where there are no cohort results
-                if item[1].cohort_results
-                else -1,
-            )
-        else:
-            iteration_result = IterationResult(eligibility_status.Status.not_eligible, [], [])
-            best_iteration_result = BestIterationResult(iteration_result, None, None, None, {})
+        if not iteration_results:
+            return None
+
+        (best_iteration_name, best_iteration_result) = max(
+            iteration_results.items(),
+            key=lambda item: next(iter(item[1].cohort_results.values())).status.value
+            # Below handles the case where there are no cohort results
+            if item[1].cohort_results
+            else -1,
+        )
 
         return best_iteration_result
 
@@ -128,7 +133,11 @@ class EligibilityCalculator:
         iteration_results: dict[IterationName, BestIterationResult] = {}
 
         for cc in campaign_group:
-            active_iteration = cc.current_iteration
+            try:
+                active_iteration = cc.current_iteration
+            except StopIteration:
+                logger.info("Skipping campaign ID %s as no active iteration was found.", cc.id)
+                continue
             cohort_results: dict[CohortLabel, CohortGroupResult] = self.rule_processor.get_cohort_group_results(
                 self.person, active_iteration
             )
