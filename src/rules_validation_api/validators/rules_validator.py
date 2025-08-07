@@ -5,9 +5,6 @@ from rules_validation_api.validators.campaign_config_validator import CampaignCo
 
 
 class RulesValidation(Rules):
-    campaign_config: CampaignConfig = Field(..., alias="CampaignConfig")
-
-    @classmethod
     @field_validator("campaign_config")
     def validate_campaign_config(cls, campaign_config: CampaignConfig) -> CampaignConfig:
         return CampaignConfigValidation(**campaign_config.model_dump())

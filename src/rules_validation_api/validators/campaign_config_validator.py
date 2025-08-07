@@ -5,9 +5,6 @@ from rules_validation_api.validators.iteration_validator import IterationValidat
 
 
 class CampaignConfigValidation(CampaignConfig):
-    iterations: list[Iteration] = Field(..., min_length=1, alias="Iterations")
-
-    @classmethod
     @field_validator("iterations")
     def validate_iterations(cls, iterations: list[Iteration]) -> list[IterationValidation]:
         return [IterationValidation(**i.model_dump()) for i in iterations]

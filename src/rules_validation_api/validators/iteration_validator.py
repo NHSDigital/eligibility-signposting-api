@@ -14,17 +14,16 @@ class IterationValidation(Iteration):
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
     actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
 
-    @classmethod
     @field_validator("iteration_rules")
     def validate_iteration_rules(cls, iteration_rules: list[IterationRule]) -> list[IterationRuleValidation]:
         return [IterationRuleValidation(**i.model_dump()) for i in iteration_rules]
 
-    @classmethod
+
     @field_validator("iteration_cohorts")
     def validate_iteration_cohorts(cls, iteration_cohorts: list[IterationCohort]) -> list[IterationCohortValidation]:
         return [IterationCohortValidation(**i.model_dump()) for i in iteration_cohorts]
 
-    @classmethod
+
     @field_validator("actions_mapper", mode="after")
     def transform_actions_mapper(cls, action_mapper: ActionsMapper) -> ActionsMapper:
         ActionsMapperValidation.model_validate(action_mapper.model_dump())
