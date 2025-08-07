@@ -17,7 +17,10 @@ from httpx import RequestError
 from yarl import URL
 
 from eligibility_signposting_api.model import eligibility_status
-from eligibility_signposting_api.model.campaign_config import CampaignConfig, RuleType
+from eligibility_signposting_api.model.campaign_config import (
+    CampaignConfig,
+    RuleType,
+)
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
 from tests.fixtures.builders.model import rule
@@ -376,8 +379,8 @@ def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[e
         rows := person_rows_builder(
             nhs_number,
             date_of_birth=date_of_birth,
-            postcode="hp1",
-            cohorts=["cohort_label1", "cohort_label2", "cohort_label3"],
+            postcode="SW19",
+            cohorts=["cohort_label1", "cohort_label2", "cohort_label3", "cohort_label4"],
             icb="QE1",
         ).data
     ):
@@ -525,8 +528,14 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
 
     targets = ["RSV", "COVID", "FLU"]
     target_rules_map = {
-        targets[0]: [rule.PersonAgeSuppressionRuleFactory.build(type=RuleType.filter)],
-        targets[1]: [rule.PersonAgeSuppressionRuleFactory.build()],
+        targets[0]: [
+            rule.PersonAgeSuppressionRuleFactory.build(type=RuleType.filter, description="TOO YOUNG"),
+            rule.PostcodeSuppressionRuleFactory.build(type=RuleType.filter, priority=8, cohort_label="cohort_label4"),
+        ],
+        targets[1]: [
+            rule.PersonAgeSuppressionRuleFactory.build(description="TOO YOUNG"),
+            rule.PostcodeSuppressionRuleFactory.build(priority=12, cohort_label="cohort_label2"),
+        ],
         targets[2]: [rule.ICBRedirectRuleFactory.build()],
     }
 
@@ -544,7 +553,13 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
                             cohort_group=f"cohort_group{i + 1}",
                             positive_description=f"positive_desc_{i + 1}",
                             negative_description=f"negative_desc_{i + 1}",
-                        )
+                        ),
+                        rule.IterationCohortFactory.build(
+                            cohort_label="cohort_label4",
+                            cohort_group="cohort_group4",
+                            positive_description="positive_desc_4",
+                            negative_description="negative_desc_4",
+                        ),
                     ],
                 )
             ],

@@ -5,9 +5,9 @@
     "Name": "Test Config",
     "Type": "V",
     "Target": "RSV",
-    "Manager": "person@test.com",
-    "Approver": "person@test.com",
-    "Reviewer": "person@test.com",
+    "Manager": ["person@test.com"],
+    "Approver": ["person@test.com"],
+    "Reviewer": ["person@test.com"],
     "IterationFrequency": "X",
     "IterationType": "M",
     "IterationTime": "07:00:00",
@@ -20,8 +20,8 @@
         "DefaultNotEligibleRouting": "INTERNALCONTACTGP1",
         "ActionsMapper": {
           "INTERNALCONTACTGP1": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Text1 description", "ActionType":"text1"},
-          "INTERNALCONTACTGP2": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Link description", "ActionType":"link", "UrlLink": "link123", "UrlLabel": "link label"},
-          "INTERNALTESCO": {"ExternalRoutingCode": "TESCO","ActionDescription":"Tesco description", "ActionType":"link", "UrlLink": "tesco link", "UrlLabel": "link label"},
+          "INTERNALCONTACTGP2": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Link description", "ActionType":"link", "UrlLink": "https://www.link123.example", "UrlLabel": "link label"},
+          "INTERNALTESCO": {"ExternalRoutingCode": "TESCO","ActionDescription":"Tesco description", "ActionType":"link", "UrlLink": "https://www.tesco_link.example", "UrlLabel": "link label"},
           "INTERNALFINDWALKIN": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"},
 
           "XRULEID1": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"},
