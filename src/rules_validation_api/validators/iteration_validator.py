@@ -18,11 +18,9 @@ class IterationValidation(Iteration):
     def validate_iteration_rules(cls, iteration_rules: list[IterationRule]) -> list[IterationRuleValidation]:
         return [IterationRuleValidation(**i.model_dump()) for i in iteration_rules]
 
-
     @field_validator("iteration_cohorts")
     def validate_iteration_cohorts(cls, iteration_cohorts: list[IterationCohort]) -> list[IterationCohortValidation]:
         return [IterationCohortValidation(**i.model_dump()) for i in iteration_cohorts]
-
 
     @field_validator("actions_mapper", mode="after")
     def transform_actions_mapper(cls, action_mapper: ActionsMapper) -> ActionsMapper:

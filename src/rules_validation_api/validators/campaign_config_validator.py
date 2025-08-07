@@ -1,4 +1,4 @@
-from pydantic import Field, field_validator
+from pydantic import field_validator
 
 from eligibility_signposting_api.model.campaign_config import CampaignConfig, Iteration
 from rules_validation_api.validators.iteration_validator import IterationValidation
