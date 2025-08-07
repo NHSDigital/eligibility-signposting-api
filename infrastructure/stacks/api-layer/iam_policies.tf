@@ -316,7 +316,6 @@ resource "aws_iam_role_policy" "splunk_firehose_policy" {
         ],
         Resource = [module.s3_firehose_backup_bucket.storage_bucket_kms_key_arn]
       },
-      # Allow Firehose to access Splunk endpoint (no explicit IAM action needed, but you can restrict VPC/network access separately)
       # Allow logging to CloudWatch
       {
         Effect = "Allow",
