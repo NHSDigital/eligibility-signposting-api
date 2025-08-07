@@ -16,8 +16,6 @@ resource "aws_kms_alias" "firehose_splunk_cmk_alias" {
   target_key_id = aws_kms_key.firehose_splunk_cmk.key_id
 }
 
-# KMS Key Policy for Firehose
-
 resource "aws_kinesis_firehose_delivery_stream" "splunk_delivery_stream" {
   name        = "splunk-alarm-events"
   destination = "splunk"
