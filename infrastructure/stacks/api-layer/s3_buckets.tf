@@ -16,8 +16,3 @@ module "s3_audit_bucket" {
   stack_name             = local.stack_name
   workspace              = terraform.workspace
 }
-
-resource "aws_s3_account_public_access_block" "block_public_access" {
-  block_public_acls   = true
-  block_public_policy = true
-}
