@@ -163,6 +163,8 @@ resource "aws_iam_policy" "s3_management" {
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-backup",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-backup/*"
         ]
       }
     ]
@@ -196,19 +198,61 @@ resource "aws_iam_policy" "api_infrastructure" {
           # ACM for certs
           "acm:DescribeCertificate",
           "acm:GetCertificate",
-          "acm:ListCertificates",
-          # S3 for mTLS truststore
-          "s3:GetObject",
-          # CloudWatch Logs for logging
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          # IAM PassRole for logging role association (if needed)
-          "iam:PassRole"
+          "acm:ListCertificates"
 
         ],
         Resource = "*"
         #checkov:skip=CKV_AWS_289: Actions require wildcard resource
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          # CloudWatch Logs creation and management
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = [
+          # VPC Flow Logs
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/vpc/*",
+          # Lambda function logs
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/*",
+          # API Gateway logs
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/*",
+          # Kinesis Firehose logs
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          # IAM PassRole for specific service roles only
+          "iam:PassRole"
+        ],
+        Resource = [
+          # Lambda execution roles
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/eligibility_lambda-role*",
+          # API Gateway CloudWatch logging role
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*-api-gateway-*-role",
+          # VPC Flow Logs role
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/vpc-flow-logs-role*",
+          # EventBridge to Firehose role
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/eventbridge-firehose-role*",
+          # Kinesis Firehose S3 backup roles
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*firehose*role*",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/splunk-firehose-assume-role*"
+        ],
+        Condition = {
+          StringEquals = {
+            "iam:PassedToService" = [
+              "lambda.amazonaws.com",
+              "apigateway.amazonaws.com",
+              "vpc-flow-logs.amazonaws.com",
+              "events.amazonaws.com",
+              "firehose.amazonaws.com"
+            ]
+          }
+        }
       },
       {
         Effect = "Allow",

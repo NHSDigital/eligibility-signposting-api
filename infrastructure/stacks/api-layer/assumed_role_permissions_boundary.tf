@@ -6,35 +6,53 @@ data "aws_iam_policy_document" "assumed_role_permissions_boundary" {
     effect = "Allow"
 
     actions = [
-      "acm:*",
-      "application-autoscaling:*",
-      "apigateway:*",
-      "cloudtrail:*",
-      "cloudwatch:*",
-      "config:*",
-      "dynamodb:*",
-      "ec2:*",
-      "events:*",
-      "firehose:*",
-      "glue:*",
-      "health:*",
-      "iam:*",
-      "kms:*",
-      "lambda:*",
-      "logs:*",
-      "network-firewall:*",
-      "pipes:*",
-      "s3:*",
-      "schemas:*",
-      "sns:*",
-      "servicequotas:*",
-      "ssm:*",
-      "states:*",
-      "support:*",
-      "sqs:*",
-      "tag:*",
-      "trustedadvisor:*",
-      "xray:*"
+      # DynamoDB - table operations for Lambda and external write roles
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:BatchWriteItem",
+
+      # S3 - bucket and object operations for Lambda and Firehose
+      "s3:GetObject",
+      "s3:ListBucket",
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "s3:AbortMultipartUpload",
+      "s3:GetBucketLocation",
+      "s3:ListBucketMultipartUploads",
+
+      # KMS - encryption/decryption for DynamoDB and S3
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+
+      # CloudWatch Logs - Lambda execution and Firehose logging
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams",
+
+      # EC2 - VPC access for Lambda (from AWSLambdaVPCAccessExecutionRole)
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface",
+      "ec2:AttachNetworkInterface",
+      "ec2:DetachNetworkInterface",
+
+      # Kinesis Firehose - Lambda writing audit data
+      "firehose:PutRecord",
+      "firehose:PutRecordBatch",
+
+      # X-Ray - Lambda tracing
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryRecords"
     ]
 
     resources = ["*"]
