@@ -37,6 +37,25 @@ class IterationValidation(Iteration):
         return action_mapper
 
     @model_validator(mode="after")
+    def action_mapper_validation(self) -> typing.Self:
+        all_errors = []
+
+        for validator in [
+            self.validate_default_comms_routing_in_actions_mapper,
+            self.validate_default_not_eligible_routing_in_actions_mapper,
+            self.validate_default_not_actionable_routing_in_actions_mapper,
+            self.validate_iteration_rules_against_actions_mapper,
+        ]:
+            try:
+                validator()
+            except ValidationError as ve:
+                all_errors.extend(ve.errors(include_input=False))
+
+        if all_errors:
+            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=all_errors)
+
+        return self
+
     def validate_default_comms_routing_in_actions_mapper(self) -> typing.Self:
         default_routes = self.default_comms_routing
         actions_keys = list(self.actions_mapper.root.keys())
@@ -58,7 +77,6 @@ class IterationValidation(Iteration):
 
         return self
 
-    @model_validator(mode="after")
     def validate_default_not_eligible_routing_in_actions_mapper(self) -> typing.Self:
         default_not_eligibile_routes = self.default_not_eligible_routing
         actions_keys = list(self.actions_mapper.root.keys())
@@ -80,7 +98,6 @@ class IterationValidation(Iteration):
 
         return self
 
-    @model_validator(mode="after")
     def validate_default_not_actionable_routing_in_actions_mapper(self) -> typing.Self:
         default_not_actionable_routes = self.default_not_actionable_routing
         actions_keys = list(self.actions_mapper.root.keys())
@@ -104,7 +121,6 @@ class IterationValidation(Iteration):
 
         return self
 
-    @model_validator(mode="after")
     def validate_iteration_rules_against_actions_mapper(self) -> typing.Self:
         actions_keys = list(self.actions_mapper.root.keys())
         line_errors = []
