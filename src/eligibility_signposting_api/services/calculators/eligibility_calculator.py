@@ -157,8 +157,23 @@ class EligibilityCalculator:
             if iteration_result.status == cohort_result.status:
                 grouped_cohort_results[cohort_result.cohort_code].append(cohort_result)
 
-        deduplicated_cohort_results = []
+        deduplicated_cohort_results: list[CohortGroupResult] = EligibilityCalculator.deduplicate_cohort_results(
+            grouped_cohort_results
+        )
 
+        return Condition(
+            condition_name=condition_name,
+            status=iteration_result.status,
+            cohort_results=list(deduplicated_cohort_results),
+            actions=iteration_result.actions,
+            status_text=iteration_result.status.get_status_text(condition_name),
+        )
+
+    @staticmethod
+    def deduplicate_cohort_results(
+        grouped_cohort_results: dict[str, list[CohortGroupResult]],
+    ) -> list[CohortGroupResult]:
+        deduplicated_cohort_results = []
         for group_cohort_code, group in grouped_cohort_results.items():
             if group:
                 unique_reasons = set()
@@ -179,11 +194,4 @@ class EligibilityCalculator:
                     audit_rules=[],
                 )
                 deduplicated_cohort_results.append(cohort_group_result)
-
-        return Condition(
-            condition_name=condition_name,
-            status=iteration_result.status,
-            cohort_results=list(deduplicated_cohort_results),
-            actions=iteration_result.actions,
-            status_text=iteration_result.status.get_status_text(condition_name),
-        )
+        return deduplicated_cohort_results
