@@ -180,6 +180,17 @@ jobs:
       - name: "Save result"
         run: |
           echo "Nothing to save"
+  test-regression:
+    name: "Regression tests"
+    runs-on: ubuntu-latest
+    needs: environment-set-up
+    timeout-minutes: 10
+    steps:
+      - name: "Checkout code"
+        uses: ./.github/workflows/run-regression-tests.yml
+        with:
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+          VERSION_NUMBER: ''
   environment-tear-down:
     name: "Environment tear down"
     runs-on: ubuntu-latest
