@@ -37,13 +37,13 @@ class IterationValidation(Iteration):
         line_errors = []
 
         for routing in default_routes.split("|"):
-            routing = routing.strip()
-            if routing and (not actions_keys or routing not in actions_keys):
+            cleaned_routing = routing.strip()
+            if cleaned_routing and (not actions_keys or cleaned_routing not in actions_keys):
                 error = InitErrorDetails(
                     type="value_error",
                     loc=("actions_mapper",),
                     input=actions_keys,
-                    ctx={"error": f"Missing entry for DefaultCommsRouting '{routing}' in ActionsMapper"},
+                    ctx={"error": f"Missing entry for DefaultCommsRouting '{cleaned_routing}' in ActionsMapper"},
                 )
                 line_errors.append(error)
 
@@ -52,3 +52,48 @@ class IterationValidation(Iteration):
 
         return self
 
+    @model_validator(mode="after")
+    def validate_default_not_eligible_routing_in_actions_mapper(self) -> typing.Self:
+        default_not_eligibile_routes = self.default_not_eligible_routing
+        actions_keys = list(self.actions_mapper.root.keys())
+        line_errors = []
+
+        for routing in default_not_eligibile_routes.split("|"):
+            cleaned_routing = routing.strip()
+            if cleaned_routing and (not actions_keys or cleaned_routing not in actions_keys):
+                error = InitErrorDetails(
+                    type="value_error",
+                    loc=("actions_mapper",),
+                    input=actions_keys,
+                    ctx={"error": f"Missing entry for DefaultNotEligibleRouting '{cleaned_routing}' in ActionsMapper"},
+                )
+                line_errors.append(error)
+
+        if line_errors:
+            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=line_errors)
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_default_not_actionable_routing_in_actions_mapper(self) -> typing.Self:
+        default_not_actionable_routes = self.default_not_actionable_routing
+        actions_keys = list(self.actions_mapper.root.keys())
+        line_errors = []
+
+        for routing in default_not_actionable_routes.split("|"):
+            cleaned_routing = routing.strip()
+            if cleaned_routing and (not actions_keys or cleaned_routing not in actions_keys):
+                error = InitErrorDetails(
+                    type="value_error",
+                    loc=("actions_mapper",),
+                    input=actions_keys,
+                    ctx={
+                        "error": f"Missing entry for DefaultNotActionableRouting '{cleaned_routing}' in ActionsMapper"
+                    },
+                )
+                line_errors.append(error)
+
+        if line_errors:
+            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=line_errors)
+
+        return self
