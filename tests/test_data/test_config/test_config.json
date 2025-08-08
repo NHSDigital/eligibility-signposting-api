@@ -8,12 +8,24 @@
     "Manager": ["person@test.com"],
     "Approver": ["person@test.com"],
     "Reviewer": ["person@test.com"],
+    "StartDate": "20250101",
+    "EndDate": "20260101",
+    "ApprovalMinimum": 1,
+    "ApprovalMaximum": 5000000,
     "IterationFrequency": "X",
     "IterationType": "M",
     "IterationTime": "07:00:00",
     "Iterations": [
       {
         "ID": "id_100",
+        "Version": "1",
+        "Name": "Test Config",
+        "Type": "M",
+        "IterationDate": "20250101",
+        "IterationNumber": 1,
+        "CommsType": "R",
+        "ApprovalMinimum": 1,
+        "ApprovalMaximum": 5000000,
         "DefaultCommsRouting": "INTERNALCONTACTGP1",
         "DefaultNotActionableRouting": "INTERNALCONTACTGP1",
         "DefaultNotEligibleRouting": "INTERNALCONTACTGP1",
@@ -118,20 +130,8 @@
             "Comparator": "19000101",
             "CommsRouting": "YRULEID1|INTERNALTESCO"
           }
-        ],
-        "Version": "1",
-        "Name": "Test Config",
-        "Type": "M",
-        "IterationDate": "20250101",
-        "IterationNumber": 1,
-        "CommsType": "R",
-        "ApprovalMinimum": 1,
-        "ApprovalMaximum": 5000000
+        ]
       }
-    ],
-    "StartDate": "20250101",
-    "EndDate": "20260101",
-    "ApprovalMinimum": 1,
-    "ApprovalMaximum": 5000000
+    ]
   }
 }
