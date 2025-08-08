@@ -23,20 +23,12 @@ def valid_campaign_config_with_only_mandatory_fields():
                 "ApprovalMinimum": 10,
                 "ApprovalMaximum": 100,
                 "Type": "A",
-                "DefaultCommsRouting": "BOOK_NBS",
-                "DefaultNotEligibleRouting": "RouteB",
-                "DefaultNotActionableRouting": "RouteC",
+                "DefaultCommsRouting": "",
+                "DefaultNotEligibleRouting": "",
+                "DefaultNotActionableRouting": "",
                 "IterationCohorts": [],
                 "IterationRules": [],
-                "ActionsMapper": {
-                    "BOOK_NBS": {
-                        "ExternalRoutingCode": "BookNBS",
-                        "ActionDescription": "",
-                        "ActionType": "ButtonWithAuthLink",
-                        "UrlLink": "http://www.nhs.uk/book-rsv",
-                        "UrlLabel": "Continue to booking",
-                    }
-                },
+                "ActionsMapper": {},
             }
         ],
     }

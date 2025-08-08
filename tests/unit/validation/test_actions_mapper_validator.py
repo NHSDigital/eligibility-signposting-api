@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from eligibility_signposting_api.model.campaign_config import AvailableAction
-from rules_validation_api.validators.actions_mapper_validator import ActionsMapperValidator
+from rules_validation_api.validators.actions_mapper_validator import ActionsMapperValidation
 
 
 @pytest.fixture
@@ -25,16 +25,31 @@ class TestBUCValidations:
             "action1": self.make_action(valid_available_action),
             "action2": self.make_action({**valid_available_action, "ExternalRoutingCode": "AltCode"}),
         }
-        mapper = ActionsMapperValidator(root=data)
+        mapper = ActionsMapperValidation(root=data)
 
         expected_action_count = 2
-        assert isinstance(mapper, ActionsMapperValidator)
+        assert isinstance(mapper, ActionsMapperValidation)
         assert len(mapper.root) == expected_action_count
+
+    @pytest.mark.parametrize(
+        "invalid_action",
+        [
+            {"action1": ""},
+            {"action1": "invalid_action"},
+            {"action3": None},
+            {"action1": "", "action3": None},
+            {"action1": "invalid_action", "action2": ""},
+        ],
+    )
+    def test_if_exception_raised_when_adding_invalid_actions_to_action_mapper(self, invalid_action):
+        data = {"": invalid_action}
+        with pytest.raises(ValidationError):
+            ActionsMapperValidation(root=data)
 
     def test_invalid_actions_mapper_empty_key(self, valid_available_action):
         data = {"": self.make_action(valid_available_action), "action2": self.make_action(valid_available_action)}
         with pytest.raises(ValidationError) as exc_info:
-            ActionsMapperValidator(root=data)
+            ActionsMapperValidation(root=data)
         assert "Invalid keys found in ActionsMapper" in str(exc_info.value)
         assert "['']" in str(exc_info.value)
 
@@ -45,5 +60,5 @@ class TestBUCValidations:
             "valid_key": self.make_action(valid_available_action),
         }
         with pytest.raises(ValidationError) as exc_info:
-            ActionsMapperValidator(root=data)
+            ActionsMapperValidation(root=data)
         assert "Invalid keys found in ActionsMapper" in str(exc_info.value)

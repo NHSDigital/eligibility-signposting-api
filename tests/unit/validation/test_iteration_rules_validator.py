@@ -84,6 +84,7 @@ class TestMandatoryFieldsSchemaValidations:
     def test_valid_attribute_level(self, attribute_level, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["AttributeLevel"] = attribute_level
+        data["AttributeName"] = None  # Ignoring the validation constraint btw AttributeLevel and AttributeName
         result = IterationRuleValidation(**data)
         assert result.attribute_level == attribute_level
 
@@ -91,6 +92,7 @@ class TestMandatoryFieldsSchemaValidations:
     def test_invalid_attribute_level(self, attribute_level, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["AttributeLevel"] = attribute_level
+        data["AttributeName"] = None  # Ignoring the validation constraint btw AttributeLevel and AttributeName
         with pytest.raises(ValidationError):
             IterationRuleValidation(**data)
 
@@ -121,6 +123,27 @@ class TestMandatoryFieldsSchemaValidations:
         data["Comparator"] = comparator_value
         with pytest.raises(ValidationError):
             IterationRuleValidation(**data)
+
+    @pytest.mark.parametrize(
+        ("rule_stop_input", "expected_bool"),
+        [
+            (True, True),
+            (False, False),
+            ("Y", True),
+            ("N", False),
+            ("YES", False),
+            ("NO", False),
+            ("YEAH", False),
+            ("ONE", False),
+        ],
+    )
+    def test_rule_stop_boolean_resolution(
+        self, rule_stop_input, expected_bool, valid_iteration_rule_with_only_mandatory_fields
+    ):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["RuleStop"] = rule_stop_input
+        result = IterationRuleValidation(**data)
+        assert result.rule_stop is expected_bool
 
 
 class TestOptionalFieldsSchemaValidations:
@@ -201,23 +224,24 @@ class TestOptionalFieldsSchemaValidations:
 
 
 class TestBUCValidations:
-    @pytest.mark.parametrize(
-        ("rule_stop_input", "expected_bool"),
-        [
-            (True, True),
-            (False, False),
-            ("Y", True),
-            ("N", False),
-            ("YES", False),
-            ("NO", False),
-            ("YEAH", False),
-            ("ONE", False),
-        ],
-    )
-    def test_rule_stop_boolean_resolution(
-        self, rule_stop_input, expected_bool, valid_iteration_rule_with_only_mandatory_fields
+    @pytest.mark.parametrize("attribute_name", [None, "", "COHORT_LABEL"])
+    def test_valid_when_attribute_level_is_cohort_then_attribute_name_should_be_none_or_cohort_label(
+        self, attribute_name, valid_iteration_rule_with_only_mandatory_fields
     ):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
-        data["RuleStop"] = rule_stop_input
+        data["AttributeLevel"] = "COHORT"
+        data["AttributeName"] = attribute_name
         result = IterationRuleValidation(**data)
-        assert result.rule_stop is expected_bool
+        assert result.attribute_name == attribute_name
+
+    @pytest.mark.parametrize("attribute_name", ["LAST_SUCCESSFUL_DATE", "cohort_label"])
+    def test_invalid_when_attribute_level_is_cohort_but_attribute_name_is_neither_none_nor_cohort_label(
+        self, attribute_name, valid_iteration_rule_with_only_mandatory_fields
+    ):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["AttributeLevel"] = "COHORT"
+        data["AttributeName"] = attribute_name
+        with pytest.raises(ValidationError) as error:
+            IterationRuleValidation(**data)
+        msg = "When attribute_level is COHORT, attribute_name must be COHORT_LABEL or None (default:COHORT_LABEL)"
+        assert msg in str(error.value)
