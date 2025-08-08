@@ -13,6 +13,6 @@ class IterationRuleValidation(IterationRule):
             and self.attribute_name
             and self.attribute_name != RuleAttributeName("COHORT_LABEL")
         ):
-            msg = "When attribute_level is COHORT, attribute_name must be COHORT_LABEL or None (default:COHORT_LABEL"
+            msg = "When attribute_level is COHORT, attribute_name must be COHORT_LABEL or None (default:COHORT_LABEL)"
             raise ValueError(msg)
         return self
