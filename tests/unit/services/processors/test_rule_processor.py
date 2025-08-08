@@ -145,9 +145,69 @@ def test_evaluate_rules_priority_group_with_rule_stop(mock_rule_calculator_class
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
-@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+def test_general_suppression_rule_should_not_evaluate_in_isolation_without_matching_specific_rule(
+    mock_evaluate_rules_priority_group,
+    rule_processor,
+):
+    # Person is in COHORT_B
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_B", positive_description="Eligible")
+    cohort_results = {}
+
+    # Rule 1: Non-matching rule cohort-specific to COHORT_A — should not be evaluated
+    rule_specific = rule_builder.IterationRuleFactory.build(
+        priority=510, type=RuleType.suppression, cohort_label="COHORT_A", name="SPECIFIC_RULE"
+    )
+
+    # Rule 2: Matching general rule of the same priority as cohort-specific rule
+    # - should also not be evaluated
+    rule_general = rule_builder.IterationRuleFactory.build(
+        priority=510, type=RuleType.suppression, cohort_label=None, name="GENERAL_RULE"
+    )
+
+    suppression_rules = [rule_specific, rule_general]
+
+    # Act
+    rule_processor.is_actionable(MOCK_PERSON_DATA, cohort, cohort_results, suppression_rules)
+
+    # None of the rules should be evaluated
+    mock_evaluate_rules_priority_group.assert_not_called()
+    # Cohort remains actionable
+    assert_that(cohort_results["COHORT_B"].status, is_(Status.actionable))
+
+
+@patch.object(RuleProcessor, "evaluate_rules_priority_group")
+def test_general_filter_rule_should_not_evaluate_in_isolation_without_matching_specific_rule(
+    mock_evaluate_rules_priority_group,
+    rule_processor,
+):
+    # Person is in COHORT_B
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_B", positive_description="Eligible")
+    cohort_results = {}
+
+    # Rule 1: Non-matching rule cohort-specific to COHORT_A — should not be evaluated
+    rule_specific = rule_builder.IterationRuleFactory.build(
+        priority=510, type=RuleType.filter, cohort_label="COHORT_A", name="SPECIFIC_RULE"
+    )
+
+    # Rule 2: Matching general rule of the same priority as cohort-specific rule
+    # - should also not be evaluated
+    rule_general = rule_builder.IterationRuleFactory.build(
+        priority=510, type=RuleType.filter, cohort_label=None, name="GENERAL_RULE"
+    )
+
+    filter_rules = [rule_specific, rule_general]
+
+    # Act
+    rule_processor.is_eligible(MOCK_PERSON_DATA, cohort, cohort_results, filter_rules)
+
+    # None of the rules should be evaluated
+    mock_evaluate_rules_priority_group.assert_not_called()
+
+
+@patch.object(RuleProcessor, "evaluate_rules_priority_group")
+@patch.object(RuleProcessor, "_should_skip_rule_group", return_value=False)
 def test_is_eligible_by_filter_rules_eligible(
-    mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor
+    mock_should_skip_rule_group, mock_evaluate_rules_priority_group, rule_processor
 ):
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
     cohort_results = {}
@@ -160,14 +220,14 @@ def test_is_eligible_by_filter_rules_eligible(
 
     assert_that(is_eligible, is_(True))
     assert_that(cohort_results, is_({}))
-    mock_get_exclusion_rules.assert_called_once_with(cohort, filter_rules)
+    mock_should_skip_rule_group.assert_called_once_with(cohort, filter_rules)
     mock_evaluate_rules_priority_group.assert_called_once()
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
-@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+@patch.object(RuleProcessor, "_should_skip_rule_group", return_value=False)
 def test_is_eligible_by_filter_rules_not_eligible(
-    mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor
+    mock_should_skip_rule_group, mock_evaluate_rules_priority_group, rule_processor
 ):
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A", negative_description="Not Eligible")
     cohort_results = {}
@@ -184,14 +244,14 @@ def test_is_eligible_by_filter_rules_not_eligible(
     assert_that(cohort_results["COHORT_A"].status, is_(Status.not_eligible))
     assert_that(cohort_results["COHORT_A"].description, is_("Not Eligible"))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason]))
-    mock_get_exclusion_rules.assert_called_once_with(cohort, filter_rules)
+    mock_should_skip_rule_group.assert_called_once_with(cohort, filter_rules)
     mock_evaluate_rules_priority_group.assert_called_once()
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
-@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+@patch.object(RuleProcessor, "_should_skip_rule_group", return_value=False)
 def test_evaluate_suppression_rules_actionable(
-    mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor
+    mock_should_skip_rule_group, mock_evaluate_rules_priority_group, rule_processor
 ):
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A", positive_description="Actionable")
     cohort_results = {}
@@ -207,14 +267,14 @@ def test_evaluate_suppression_rules_actionable(
     assert_that(cohort_results["COHORT_A"].description, is_("Actionable"))
     assert_that(cohort_results["COHORT_A"].reasons, is_([]))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([]))
-    mock_get_exclusion_rules.assert_called_once_with(cohort, suppression_rules)
+    mock_should_skip_rule_group.assert_called_once_with(cohort, suppression_rules)
     mock_evaluate_rules_priority_group.assert_called_once()
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
-@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+@patch.object(RuleProcessor, "_should_skip_rule_group", return_value=False)
 def test_evaluate_suppression_rules_not_actionable(
-    mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor
+    mock_should_skip_rule_group, mock_evaluate_rules_priority_group, rule_processor
 ):
     cohort = rule_builder.IterationCohortFactory.build(
         cohort_label="COHORT_A", positive_description="Positive Description"
@@ -233,14 +293,14 @@ def test_evaluate_suppression_rules_not_actionable(
     assert_that(cohort_results["COHORT_A"].description, is_("Positive Description"))
     assert_that(cohort_results["COHORT_A"].reasons, is_([mock_reason]))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason]))
-    mock_get_exclusion_rules.assert_called_once_with(cohort, suppression_rules)
+    mock_should_skip_rule_group.assert_called_once_with(cohort, suppression_rules)
     mock_evaluate_rules_priority_group.assert_called_once()
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
-@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+@patch.object(RuleProcessor, "_should_skip_rule_group", return_value=False)
 def test_evaluate_suppression_rules_stops_on_rule_stop(
-    mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor
+    mock_should_skip_rule_group, mock_evaluate_rules_priority_group, rule_processor
 ):
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
     cohort_results = {}
@@ -264,14 +324,14 @@ def test_evaluate_suppression_rules_stops_on_rule_stop(
     assert_that(cohort_results["COHORT_A"].status, is_(Status.not_actionable))
     assert_that(cohort_results["COHORT_A"].reasons, is_([mock_reason_p1]))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason_p1]))
-    mock_evaluate_rules_priority_group.assert_called_once()
-    mock_get_exclusion_rules.assert_called_once_with(cohort, suppression_rules)
+    assert_that(mock_evaluate_rules_priority_group.call_count, is_(1))
+    mock_should_skip_rule_group.assert_called_once_with(cohort, [suppression_rule_p1])
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
-@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+@patch.object(RuleProcessor, "_should_skip_rule_group", return_value=False)
 def test_evaluate_suppression_rules_does_not_stop_on_rule_stop_when_status_is_actionable(
-    mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor
+    mock_should_skip_rule_group, mock_evaluate_rules_priority_group, rule_processor
 ):
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
     cohort_results = {}
@@ -297,7 +357,7 @@ def test_evaluate_suppression_rules_does_not_stop_on_rule_stop_when_status_is_ac
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason_p2]))
 
     assert_that(mock_evaluate_rules_priority_group.call_count, is_(2))
-    assert_that(mock_get_exclusion_rules.call_count, is_(1))
+    assert_that(mock_should_skip_rule_group.call_count, is_(2))
 
 
 def test_is_base_eligible(mock_person_data_reader):
@@ -364,8 +424,8 @@ def test_rules_get_group_by_types_of_rules(rule_processor):
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
-@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
-def test_is_eligible_by_filter_rules(mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor):
+@patch.object(RuleProcessor, "_should_skip_rule_group", return_value=False)
+def test_is_eligible_by_filter_rules(mock_should_skip_rule_group, mock_evaluate_rules_priority_group, rule_processor):
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
     cohort_results = {}
     filter_rule = rule_builder.IterationRuleFactory.build(priority=1, type=RuleType.filter)
@@ -377,13 +437,15 @@ def test_is_eligible_by_filter_rules(mock_get_exclusion_rules, mock_evaluate_rul
 
     assert_that(is_eligible, is_(True))
     assert_that(cohort_results, is_({}))
-    mock_get_exclusion_rules.assert_called_once_with(cohort, filter_rules)
+    mock_should_skip_rule_group.assert_called_once_with(cohort, filter_rules)
     mock_evaluate_rules_priority_group.assert_called_once()
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
-@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
-def test_is_not_eligible_by_filter_rules(mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor):
+@patch.object(RuleProcessor, "_should_skip_rule_group", return_value=False)
+def test_is_not_eligible_by_filter_rules(
+    mock_should_skip_rule_group, mock_evaluate_rules_priority_group, rule_processor
+):
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A", negative_description="Not Eligible")
     cohort_results = {}
     filter_rule = rule_builder.IterationRuleFactory.build(priority=1, type=RuleType.filter, name="F1")
@@ -409,14 +471,14 @@ def test_is_not_eligible_by_filter_rules(mock_get_exclusion_rules, mock_evaluate
     assert_that(cohort_results["COHORT_A"].status, is_(Status.not_eligible))
     assert_that(cohort_results["COHORT_A"].description, is_("Not Eligible"))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason]))
-    mock_get_exclusion_rules.assert_called_once_with(cohort, filter_rules)
+    mock_should_skip_rule_group.assert_called_once_with(cohort, filter_rules)
     mock_evaluate_rules_priority_group.assert_called_once()
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
-@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+@patch.object(RuleProcessor, "_should_skip_rule_group", return_value=False)
 def test_is_actionable_by_suppression_rules(
-    mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor
+    mock_should_skip_rule_group, mock_evaluate_rules_priority_group, rule_processor
 ):
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A", positive_description="Actionable")
     cohort_results = {}
@@ -432,14 +494,14 @@ def test_is_actionable_by_suppression_rules(
     assert_that(cohort_results["COHORT_A"].description, is_("Actionable"))
     assert_that(cohort_results["COHORT_A"].reasons, is_(empty()))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_(empty()))
-    mock_get_exclusion_rules.assert_called_once_with(cohort, suppression_rules)
+    mock_should_skip_rule_group.assert_called_once_with(cohort, suppression_rules)
     mock_evaluate_rules_priority_group.assert_called_once()
 
 
 @patch.object(RuleProcessor, "evaluate_rules_priority_group")
-@patch.object(RuleProcessor, "get_exclusion_rules", side_effect=lambda cohort, rules_to_filter: rules_to_filter)  # noqa: ARG005
+@patch.object(RuleProcessor, "_should_skip_rule_group", return_value=False)
 def test_is_not_actionable_by_suppression_rules(
-    mock_get_exclusion_rules, mock_evaluate_rules_priority_group, rule_processor
+    mock_should_skip_rule_group, mock_evaluate_rules_priority_group, rule_processor
 ):
     cohort = rule_builder.IterationCohortFactory.build(
         cohort_label="COHORT_A", positive_description="Positive Description"
@@ -468,7 +530,7 @@ def test_is_not_actionable_by_suppression_rules(
     assert_that(cohort_results["COHORT_A"].description, is_("Positive Description"))
     assert_that(cohort_results["COHORT_A"].reasons, is_([mock_reason]))
     assert_that(cohort_results["COHORT_A"].audit_rules, is_([mock_reason]))
-    mock_get_exclusion_rules.assert_called_once_with(cohort, suppression_rules)
+    mock_should_skip_rule_group.assert_called_once_with(cohort, suppression_rules)
     mock_evaluate_rules_priority_group.assert_called_once()
 
 
