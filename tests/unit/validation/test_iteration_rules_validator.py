@@ -243,4 +243,5 @@ class TestBUCValidations:
         data["AttributeName"] = attribute_name
         with pytest.raises(ValidationError) as error:
             IterationRuleValidation(**data)
-        assert "When attribute_level is COHORT, attribute_name must be COHORT_LABEL." in str(error.value)
+        assert ("When attribute_level is COHORT, attribute_name must be COHORT_LABEL or None (default:COHORT_LABEL)"
+                in str(error.value))
