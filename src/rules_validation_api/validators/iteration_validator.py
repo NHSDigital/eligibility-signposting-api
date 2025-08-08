@@ -32,16 +32,23 @@ class IterationValidation(Iteration):
 
     @model_validator(mode="after")
     def validate_default_comms_routing_in_actions_mapper(self) -> typing.Self:
-        default_routing = self.default_comms_routing
-        actions_mapper = self.actions_mapper.root.keys()
+        default_routes = self.default_comms_routing
+        actions_keys = list(self.actions_mapper.root.keys())
+        line_errors = []
 
-        if default_routing and (not actions_mapper or default_routing not in actions_mapper):
-            error = InitErrorDetails(
-                type="value_error",
-                loc=("actions_mapper",),
-                input=actions_mapper,
-                ctx={"error": f"Missing entry for DefaultCommsRouting '{default_routing}' in ActionsMapper"},
-            )
-            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=[error])
+        for routing in default_routes.split("|"):
+            routing = routing.strip()
+            if routing and (not actions_keys or routing not in actions_keys):
+                error = InitErrorDetails(
+                    type="value_error",
+                    loc=("actions_mapper",),
+                    input=actions_keys,
+                    ctx={"error": f"Missing entry for DefaultCommsRouting '{routing}' in ActionsMapper"},
+                )
+                line_errors.append(error)
+
+        if line_errors:
+            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=line_errors)
 
         return self
+

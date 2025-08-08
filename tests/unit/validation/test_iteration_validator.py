@@ -157,8 +157,8 @@ class TestIterationCohortsSchemaValidations:
     def test_valid_iteration_if_actions_mapper_has_entry_for_the_provided_default_routing_key(
         self, valid_campaign_config_with_only_mandatory_fields
     ):
-        expected_action = {
-            "ExternalRoutingCode": "BookLocal",
+        book_local_1_action = {
+            "ExternalRoutingCode": "BookLocal_1",
             "ActionDescription": "##Getting the vaccine\n"
             "You can get an RSV vaccination at your GP surgery.\n"
             "Your GP surgery may contact you about getting the RSV vaccine. "
@@ -167,12 +167,58 @@ class TestIterationCohortsSchemaValidations:
             "ActionType": "InfoText",
         }
 
+        book_local_2_action = {
+            "ExternalRoutingCode": "BookLocal_2",
+            "ActionDescription": "##Getting the vaccine\n"
+                                 "You can get an RSV vaccination at your GP surgery.\n"
+                                 "Your GP surgery may contact you about getting the RSV vaccine. "
+                                 "This may be by letter, text, phone call, email or through the NHS App. "
+                                 "You do not need to wait to be contacted before booking your vaccination.",
+            "ActionType": "InfoText",
+        }
+
         data = {
             **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
-            "DefaultCommsRouting": "BOOK_LOCAL",
-            "ActionsMapper": {"BOOK_LOCAL": expected_action},
+            "DefaultCommsRouting": "BOOK_LOCAL_1|BOOK_LOCAL_2",
+            "ActionsMapper": {"BOOK_LOCAL_1": book_local_1_action, "BOOK_LOCAL_2": book_local_2_action},
         }
         IterationValidation(**data)
+
+    def test_invalid_iteration_if_actions_mapper_has_one_one_entry_for_the_provided_multiple_default_routing_key(
+        self, valid_campaign_config_with_only_mandatory_fields
+    ):
+        book_local_1_action = {
+            "ExternalRoutingCode": "BookLocal_1",
+            "ActionDescription": "##Getting the vaccine\n"
+            "You can get an RSV vaccination at your GP surgery.\n"
+            "Your GP surgery may contact you about getting the RSV vaccine. "
+            "This may be by letter, text, phone call, email or through the NHS App. "
+            "You do not need to wait to be contacted before booking your vaccination.",
+            "ActionType": "InfoText",
+        }
+
+        book_local_2_action = {
+            "ExternalRoutingCode": "BookLocal_2",
+            "ActionDescription": "##Getting the vaccine\n"
+                                 "You can get an RSV vaccination at your GP surgery.\n"
+                                 "Your GP surgery may contact you about getting the RSV vaccine. "
+                                 "This may be by letter, text, phone call, email or through the NHS App. "
+                                 "You do not need to wait to be contacted before booking your vaccination.",
+            "ActionType": "InfoText",
+        }
+
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "DefaultCommsRouting": "BOOK_LOCAL_1|BOOK_LOCAL_2",
+            "ActionsMapper": {"BOOK_LOCAL_1": book_local_1_action},
+        }
+        with pytest.raises(ValidationError) as error:
+            IterationValidation(**data)
+
+        errors = error.value.errors()
+        assert any(e["loc"][-1] == "actions_mapper" and "BOOK_LOCAL_2" in str(e["msg"]) for e in errors), (
+            "Expected validation error for missing BOOK_LOCAL_2 entry in ActionsMapper"
+        )
 
     def test_invalid_iteration_if_actions_mapper_has_no_entry_for_the_provided_default_routing_key(
         self, valid_campaign_config_with_only_mandatory_fields
