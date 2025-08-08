@@ -22,11 +22,13 @@ class FHIRIssueCode(str, Enum):
     FORBIDDEN = "forbidden"
     PROCESSING = "processing"
     VALUE = "value"
+    INVALID = "invalid"
 
 
 class FHIRSpineErrorCode(str, Enum):
     INVALID_NHS_NUMBER = "INVALID_NHS_NUMBER"
     INVALID_PARAMETER = "INVALID_PARAMETER"
+    BAD_REQUEST = "BAD_REQUEST"
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
     REFERENCE_NOT_FOUND = "REFERENCE_NOT_FOUND"
 
@@ -144,4 +146,14 @@ NHS_NUMBER_MISMATCH_ERROR = APIErrorResponse(
     fhir_coding_system="https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
     fhir_error_code=FHIRSpineErrorCode.INVALID_NHS_NUMBER,
     fhir_display_message="The provided NHS number does not match the record.",
+)
+
+
+NHS_NUMBER_MISSING_ERROR = APIErrorResponse(
+    status_code=HTTPStatus.BAD_REQUEST,
+    fhir_issue_code=FHIRIssueCode.INVALID,
+    fhir_issue_severity=FHIRIssueSeverity.ERROR,
+    fhir_coding_system="https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+    fhir_error_code=FHIRSpineErrorCode.BAD_REQUEST,
+    fhir_display_message="Bad Request",
 )
