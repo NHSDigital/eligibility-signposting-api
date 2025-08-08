@@ -735,14 +735,14 @@ class TestEligibilityResultBuilder:
 
     def test_build_condition_results_single_condition_multiple_cohorts_same_cohort_code_same_status(self):
         reason_1 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 1"),
             RulePriority("1"),
             RuleDescription("Filter Rule Description 2"),
             matcher_matched=True,
         )
         reason_2 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 2"),
             RulePriority("2"),
             RuleDescription("Filter Rule Description 2"),
@@ -779,14 +779,14 @@ class TestEligibilityResultBuilder:
 
     def test_build_condition_results_multiple_cohorts_different_cohort_code_same_status(self):
         reason_1 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 1"),
             RulePriority("1"),
             RuleDescription("Filter Rule Description 2"),
             matcher_matched=True,
         )
         reason_2 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 2"),
             RulePriority("2"),
             RuleDescription("Filter Rule Description 2"),
@@ -820,14 +820,14 @@ class TestEligibilityResultBuilder:
 
     def test_build_condition_results_cohorts_status_not_matching_iteration_status(self):
         reason_1 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 1"),
             RulePriority("1"),
             RuleDescription("Matching"),
             matcher_matched=True,
         )
         reason_2 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 2"),
             RulePriority("2"),
             RuleDescription("Not matching"),
@@ -849,7 +849,7 @@ class TestEligibilityResultBuilder:
     @pytest.mark.parametrize(
         ("reason_2", "expected_reasons"),
         [
-            # Same rule name and priority, different description
+            # Same rule name , type, and priority, different description
             (
                 Reason(
                     RuleType.suppression,
@@ -868,7 +868,7 @@ class TestEligibilityResultBuilder:
                     )
                 ],
             ),
-            # Different rule name, same priority
+            # Different rule name, same type, same priority
             (
                 Reason(
                     RuleType.suppression,
@@ -887,7 +887,7 @@ class TestEligibilityResultBuilder:
                     )
                 ],
             ),
-            # Same rule name, different priority
+            # Same rule name, same type, different priority
             (
                 Reason(
                     RuleType.suppression,
@@ -906,6 +906,32 @@ class TestEligibilityResultBuilder:
                     ),
                     Reason(
                         RuleType.suppression,
+                        eligibility_status.RuleName("Supress Rule 1"),
+                        RulePriority("2"),
+                        RuleDescription("Matching"),
+                        matcher_matched=True,
+                    ),
+                ],
+            ),
+            # Same rule name, same priority, different type
+            (
+                Reason(
+                    RuleType.filter,
+                    eligibility_status.RuleName("Supress Rule 1"),
+                    RulePriority("2"),
+                    RuleDescription("Matching"),
+                    matcher_matched=True,
+                ),
+                [  # Both reasons expected
+                    Reason(
+                        RuleType.suppression,
+                        eligibility_status.RuleName("Supress Rule 1"),
+                        RulePriority("1"),
+                        RuleDescription("Not matching"),
+                        matcher_matched=True,
+                    ),
+                    Reason(
+                        RuleType.filter,
                         eligibility_status.RuleName("Supress Rule 1"),
                         RulePriority("2"),
                         RuleDescription("Matching"),
