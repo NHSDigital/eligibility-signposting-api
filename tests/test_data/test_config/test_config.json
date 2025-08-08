@@ -11,7 +11,6 @@
     "IterationFrequency": "X",
     "IterationType": "M",
     "IterationTime": "07:00:00",
-    "DefaultCommsRouting": "Default_Comms_1",
     "Iterations": [
       {
         "ID": "id_100",
