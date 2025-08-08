@@ -3,7 +3,13 @@ import typing
 from pydantic import Field, ValidationError, field_validator, model_validator
 from pydantic_core import InitErrorDetails
 
-from eligibility_signposting_api.model.campaign_config import ActionsMapper, Iteration, IterationCohort, IterationRule
+from eligibility_signposting_api.model.campaign_config import (
+    ActionsMapper,
+    Iteration,
+    IterationCohort,
+    IterationRule,
+    RuleType,
+)
 from rules_validation_api.validators.actions_mapper_validator import ActionsMapperValidation
 from rules_validation_api.validators.iteration_cohort_validator import IterationCohortValidation
 from rules_validation_api.validators.iteration_rules_validator import IterationRuleValidation
@@ -92,6 +98,33 @@ class IterationValidation(Iteration):
                     },
                 )
                 line_errors.append(error)
+
+        if line_errors:
+            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=line_errors)
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_iteration_rules_against_actions_mapper(self) -> typing.Self:
+        actions_keys = list(self.actions_mapper.root.keys())
+        line_errors = []
+
+        for rule in self.iteration_rules:
+            if rule.type in [
+                RuleType.redirect,
+                RuleType.not_actionable_actions,
+                RuleType.not_eligible_actions,
+            ]:
+                for routing in rule.comms_routing.split("|"):
+                    cleaned_routing = routing.strip()
+                    if cleaned_routing and (not actions_keys or cleaned_routing not in actions_keys):
+                        error = InitErrorDetails(
+                            type="value_error",
+                            loc=("iteration_rules",),
+                            input=actions_keys,
+                            ctx={"error": f"Missing entry for CommsRouting '{cleaned_routing}' in ActionsMapper"},
+                        )
+                        line_errors.append(error)
 
         if line_errors:
             raise ValidationError.from_exception_data(title="IterationValidation", line_errors=line_errors)
