@@ -110,11 +110,15 @@ class IterationValidation(Iteration):
         line_errors = []
 
         for rule in self.iteration_rules:
-            if rule.type in [
-                RuleType.redirect,
-                RuleType.not_actionable_actions,
-                RuleType.not_eligible_actions,
-            ]:
+            if (
+                rule.type
+                in [
+                    RuleType.redirect,
+                    RuleType.not_actionable_actions,
+                    RuleType.not_eligible_actions,
+                ]
+                and rule.comms_routing
+            ):
                 for routing in rule.comms_routing.split("|"):
                     cleaned_routing = routing.strip()
                     if cleaned_routing and (not actions_keys or cleaned_routing not in actions_keys):
