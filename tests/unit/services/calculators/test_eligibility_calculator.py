@@ -845,3 +845,98 @@ class TestEligibilityResultBuilder:
         assert_that(len(result.cohort_results), is_(1))
         assert_that(result.cohort_results[0].cohort_code, is_("COHORT_X"))
         assert_that(result.cohort_results[0].status, is_(Status.not_eligible))
+
+    @pytest.mark.parametrize(
+        ("reason_2", "expected_reasons"),
+        [
+            # Same rule name and priority, different description
+            (
+                Reason(
+                    RuleType.suppression,
+                    eligibility_status.RuleName("Supress Rule 1"),
+                    RulePriority("1"),
+                    RuleDescription("Matching"),
+                    matcher_matched=True,
+                ),
+                [  # Only reason_1 expected
+                    Reason(
+                        RuleType.suppression,
+                        eligibility_status.RuleName("Supress Rule 1"),
+                        RulePriority("1"),
+                        RuleDescription("Not matching"),
+                        matcher_matched=True,
+                    )
+                ],
+            ),
+            # Different rule name, same priority
+            (
+                Reason(
+                    RuleType.suppression,
+                    eligibility_status.RuleName("Supress Rule 2"),
+                    RulePriority("1"),
+                    RuleDescription("Matching"),
+                    matcher_matched=True,
+                ),
+                [  # Only reason_1 expected
+                    Reason(
+                        RuleType.suppression,
+                        eligibility_status.RuleName("Supress Rule 1"),
+                        RulePriority("1"),
+                        RuleDescription("Not matching"),
+                        matcher_matched=True,
+                    )
+                ],
+            ),
+            # Same rule name, different priority
+            (
+                Reason(
+                    RuleType.suppression,
+                    eligibility_status.RuleName("Supress Rule 1"),
+                    RulePriority("2"),
+                    RuleDescription("Matching"),
+                    matcher_matched=True,
+                ),
+                [  # Both reasons expected
+                    Reason(
+                        RuleType.suppression,
+                        eligibility_status.RuleName("Supress Rule 1"),
+                        RulePriority("1"),
+                        RuleDescription("Not matching"),
+                        matcher_matched=True,
+                    ),
+                    Reason(
+                        RuleType.suppression,
+                        eligibility_status.RuleName("Supress Rule 1"),
+                        RulePriority("2"),
+                        RuleDescription("Matching"),
+                        matcher_matched=True,
+                    ),
+                ],
+            ),
+        ],
+    )
+    def test_build_condition_results_grouping_reasons(self, reason_2, expected_reasons):
+        reason_1 = Reason(
+            RuleType.suppression,
+            eligibility_status.RuleName("Supress Rule 1"),
+            RulePriority("1"),
+            RuleDescription("Not matching"),
+            matcher_matched=True,
+        )
+
+        cohort_group_results = [
+            CohortGroupResult(
+                "COHORT_Y",
+                Status.not_actionable,
+                [reason_1, reason_2],
+                "Cohort Y Description",
+                [],
+            )
+        ]
+
+        iteration_result = IterationResult(Status.not_actionable, cohort_group_results, [])
+
+        result = EligibilityCalculator.build_condition_results(iteration_result, ConditionName("RSV"))
+
+        assert_that(len(result.cohort_results), is_(1))
+        assert_that(result.cohort_results[0].reasons, contains_inanyorder(*expected_reasons))

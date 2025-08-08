@@ -28,8 +28,8 @@ if TYPE_CHECKING:
     from eligibility_signposting_api.model.campaign_config import (
         CampaignConfig,
         CohortLabel,
-        IterationName,
-    )
+        IterationName, RuleType,
+)
     from eligibility_signposting_api.model.person import Person
 
 logger = logging.getLogger(__name__)
@@ -165,8 +165,8 @@ class EligibilityCalculator:
                 deduplicated_reasons = []
                 for cohort in group:
                     for reason in cohort.reasons:
-                        if reason.rule_name not in unique_rule_codes and reason.rule_description:
-                            unique_rule_codes.add(reason.rule_name)
+                        if reason.rule_priority not in unique_rule_codes and reason.rule_description:
+                            unique_rule_codes.add(reason.rule_priority)
                             deduplicated_reasons.append(reason)
 
                 non_empty_description = next((c.description for c in group if c.description), group[0].description)
