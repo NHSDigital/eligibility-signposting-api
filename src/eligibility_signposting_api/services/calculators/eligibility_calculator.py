@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
+from itertools import chain
 from typing import TYPE_CHECKING
 
 from wireup import service
@@ -173,25 +174,28 @@ class EligibilityCalculator:
     def deduplicate_cohort_results(
         grouped_cohort_results: dict[str, list[CohortGroupResult]],
     ) -> list[CohortGroupResult]:
-        deduplicated_cohort_results = []
-        for group_cohort_code, group in grouped_cohort_results.items():
-            if group:
-                unique_reasons = set()
-                deduplicated_reasons = []
-                for cohort in group:
-                    for reason in cohort.reasons:
-                        key = (reason.rule_type, reason.rule_priority)
-                        if key not in unique_reasons:
-                            unique_reasons.add(key)
-                            deduplicated_reasons.append(reason)
+        results = []
 
-                non_empty_description = next((c.description for c in group if c.description), group[0].description)
-                cohort_group_result = CohortGroupResult(
-                    cohort_code=group_cohort_code,
+        for cohort_code, group in grouped_cohort_results.items():
+            if not group:
+                continue
+
+            all_reasons = chain.from_iterable(cohort.reasons for cohort in group)
+            deduped = {}
+            for reason in all_reasons:
+                key = (reason.rule_type, reason.rule_priority)
+                deduped.setdefault(key, reason)
+
+            description = next((c.description for c in group if c.description), group[0].description)
+
+            results.append(
+                CohortGroupResult(
+                    cohort_code=cohort_code,
                     status=group[0].status,
-                    reasons=deduplicated_reasons,
-                    description=non_empty_description,
+                    reasons=list(deduped.values()),
+                    description=description,
                     audit_rules=[],
                 )
-                deduplicated_cohort_results.append(cohort_group_result)
-        return deduplicated_cohort_results
+            )
+
+        return results
