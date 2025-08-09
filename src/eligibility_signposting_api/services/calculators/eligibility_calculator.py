@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
+from itertools import chain
 from typing import TYPE_CHECKING
 
 from wireup import service
@@ -157,27 +158,9 @@ class EligibilityCalculator:
             if iteration_result.status == cohort_result.status:
                 grouped_cohort_results[cohort_result.cohort_code].append(cohort_result)
 
-        deduplicated_cohort_results = []
-
-        for group_cohort_code, group in grouped_cohort_results.items():
-            if group:
-                unique_rule_codes = set()
-                deduplicated_reasons = []
-                for cohort in group:
-                    for reason in cohort.reasons:
-                        if reason.rule_name not in unique_rule_codes and reason.rule_description:
-                            unique_rule_codes.add(reason.rule_name)
-                            deduplicated_reasons.append(reason)
-
-                non_empty_description = next((c.description for c in group if c.description), group[0].description)
-                cohort_group_result = CohortGroupResult(
-                    cohort_code=group_cohort_code,
-                    status=group[0].status,
-                    reasons=deduplicated_reasons,
-                    description=non_empty_description,
-                    audit_rules=[],
-                )
-                deduplicated_cohort_results.append(cohort_group_result)
+        deduplicated_cohort_results: list[CohortGroupResult] = EligibilityCalculator.deduplicate_cohort_results(
+            grouped_cohort_results
+        )
 
         return Condition(
             condition_name=condition_name,
@@ -186,3 +169,33 @@ class EligibilityCalculator:
             actions=iteration_result.actions,
             status_text=iteration_result.status.get_status_text(condition_name),
         )
+
+    @staticmethod
+    def deduplicate_cohort_results(
+        grouped_cohort_results: dict[str, list[CohortGroupResult]],
+    ) -> list[CohortGroupResult]:
+        results = []
+
+        for cohort_code, group in grouped_cohort_results.items():
+            if not group:
+                continue
+
+            all_reasons = chain.from_iterable(cohort.reasons for cohort in group)
+            deduped = {}
+            for reason in all_reasons:
+                key = (reason.rule_type, reason.rule_priority)
+                deduped.setdefault(key, reason)
+
+            description = next((c.description for c in group if c.description), group[0].description)
+
+            results.append(
+                CohortGroupResult(
+                    cohort_code=cohort_code,
+                    status=group[0].status,
+                    reasons=list(deduped.values()),
+                    description=description,
+                    audit_rules=[],
+                )
+            )
+
+        return results
