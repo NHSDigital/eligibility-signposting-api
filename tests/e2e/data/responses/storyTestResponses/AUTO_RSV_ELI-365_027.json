@@ -13,6 +13,13 @@
           "urlLink": ""
         },
         {
+          "actionCode": "BookNBS",
+          "actionType": "ButtonWithAuthLink",
+          "description": "",
+          "urlLabel": "Continue to booking",
+          "urlLink": "http://www.nhs.uk/book-rsv"
+        },
+        {
           "actionCode": "HelpSupportInfo",
           "actionType": "InfoText",
           "description": "## CONTENT TBC\n\nBlah blah blah.",
@@ -22,11 +29,6 @@
       ],
       "condition": "RSV",
       "eligibilityCohorts": [
-        {
-          "cohortCode": "rsv_age",
-          "cohortStatus": "Actionable",
-          "cohortText": "are aged 75 to 79 years old"
-        },
         {
           "cohortCode": "rsv_age_catchup",
           "cohortStatus": "Actionable",
