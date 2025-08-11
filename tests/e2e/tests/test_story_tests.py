@@ -14,7 +14,7 @@ param_list = list(all_data.items())
 id_list = [f"{filename} - {scenario.get('scenario_name', 'No Scenario')}" for filename, scenario in param_list]
 
 
-@pytest.mark.functionale2eregression
+@pytest.mark.storyregressiontests
 @pytest.mark.parametrize(("filename", "scenario"), param_list, ids=id_list)
 def test_run_story_test_cases(filename, scenario, eligibility_client, get_scenario_params):
     nhs_number, config_filenames, request_headers, query_params, expected_response_code = get_scenario_params(scenario, config_path)
