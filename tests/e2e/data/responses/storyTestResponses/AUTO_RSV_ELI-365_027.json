@@ -1,28 +1,14 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-29T16:27:41.967804+00:00"
+    "lastUpdated": "<ignored>"
   },
   "processedSuggestions": [
     {
       "actions": [
         {
-          "actionCode": "BookLocal",
+          "actionCode": "HealthcareProInfo",
           "actionType": "InfoText",
-          "description": "##Getting the vaccine\n\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
-          "urlLabel": "",
-          "urlLink": ""
-        },
-        {
-          "actionCode": "BookNBS",
-          "actionType": "ButtonWithAuthLink",
-          "description": "",
-          "urlLabel": "Continue to booking",
-          "urlLink": "http://www.nhs.uk/book-rsv"
-        },
-        {
-          "actionCode": "HelpSupportInfo",
-          "actionType": "InfoText",
-          "description": "## CONTENT TBC\n\nBlah blah blah.",
+          "description": "## If you think this is incorrect\n\nSpeak to your healthcare professional if you think you should be offered this vaccine.\n\nFor anything else, visit our help and support page. (ADD LINK)",
           "urlLabel": "",
           "urlLink": ""
         }
@@ -30,15 +16,20 @@
       "condition": "RSV",
       "eligibilityCohorts": [
         {
+          "cohortCode": "rsv_age",
+          "cohortStatus": "NotEligible",
+          "cohortText": "are not aged 75 to 79 years old"
+        },
+        {
           "cohortCode": "rsv_age_catchup",
-          "cohortStatus": "Actionable",
-          "cohortText": "turned 80 after 1st September 2024"
+          "cohortStatus": "NotEligible",
+          "cohortText": "did not turn 80 after 1 September 2024"
         }
       ],
-      "status": "Actionable",
-      "statusText": "You should have the RSV vaccine",
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
       "suitabilityRules": []
     }
   ],
-  "responseId": "ad09ee8c-ee37-4a7f-8fde-22aec6c90d89"
+  "responseId": "<ignored>"
 }

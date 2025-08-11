@@ -1,6 +1,6 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-29T16:27:41.967804+00:00"
+    "lastUpdated": "<ignored>"
   },
   "processedSuggestions": [
     {
@@ -31,7 +31,7 @@
       "eligibilityCohorts": [
         {
           "cohortCode": "rsv_age_catchup",
-          "cohortStatus": "Actionable",
+           "cohortStatus": "Actionable",
           "cohortText": "turned 80 after 1st September 2024"
         }
       ],
@@ -40,5 +40,5 @@
       "suitabilityRules": []
     }
   ],
-  "responseId": "ad09ee8c-ee37-4a7f-8fde-22aec6c90d89"
+  "responseId": "<ignored>"
 }
