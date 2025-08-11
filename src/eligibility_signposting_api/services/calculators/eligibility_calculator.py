@@ -101,8 +101,10 @@ class EligibilityCalculator:
             condition_results[condition_name] = best_iteration_result.iteration_result
             condition_results[condition_name].actions = matched_action_detail.actions
 
-            condition_result = self.build_condition_results(condition_results[condition_name], condition_name)
-            final_result.append(condition_result)
+            condition: Condition = self.build_condition(
+                iteration_result=condition_results[condition_name], condition_name=condition_name
+            )
+            final_result.append(condition)
 
             AuditContext.append_audit_condition(
                 condition_name,
@@ -151,7 +153,7 @@ class EligibilityCalculator:
         return iteration_results
 
     @staticmethod
-    def build_condition_results(iteration_result: IterationResult, condition_name: ConditionName) -> Condition:
+    def build_condition(iteration_result: IterationResult, condition_name: ConditionName) -> Condition:
         grouped_cohort_results = defaultdict(list)
 
         for cohort_result in iteration_result.cohort_results:
@@ -162,10 +164,15 @@ class EligibilityCalculator:
             grouped_cohort_results
         )
 
+        deduplicated_suitability_rules_for_condition = list(
+            {(r.rule_type, r.rule_priority): r for g in deduplicated_cohort_results for r in g.reasons}.values()
+        )
+
         return Condition(
             condition_name=condition_name,
             status=iteration_result.status,
             cohort_results=list(deduplicated_cohort_results),
+            suitability_rules=deduplicated_suitability_rules_for_condition,
             actions=iteration_result.actions,
             status_text=iteration_result.status.get_status_text(condition_name),
         )

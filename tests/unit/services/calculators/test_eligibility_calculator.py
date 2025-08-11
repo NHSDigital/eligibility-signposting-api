@@ -26,6 +26,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     ActionDescription,
     ActionType,
     CohortGroupResult,
+    Condition,
     ConditionName,
     DateOfBirth,
     InternalActionCode,
@@ -689,7 +690,7 @@ class TestEligibilityResultBuilder:
         ]
         iteration_result = IterationResult(Status.actionable, cohort_group_results, suggested_actions)
 
-        result = EligibilityCalculator.build_condition_results(iteration_result, ConditionName("RSV"))
+        result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
         assert_that(result.condition_name, is_(ConditionName("RSV")))
         assert_that(result.status, is_(Status.actionable))
@@ -703,6 +704,7 @@ class TestEligibilityResultBuilder:
         assert_that(deduplicated_cohort.reasons, is_([]))
         assert_that(deduplicated_cohort.description, is_("Cohort A Description"))
         assert_that(deduplicated_cohort.audit_rules, is_([]))
+        assert_that(result.suitability_rules, is_([]))
 
     def test_build_condition_results_single_condition_single_cohort_not_eligible_with_reasons(self):
         cohort_group_results = [CohortGroupResult("COHORT_A", Status.not_eligible, [], "Cohort A Description", [])]
@@ -718,7 +720,7 @@ class TestEligibilityResultBuilder:
         ]
         iteration_result = IterationResult(Status.not_eligible, cohort_group_results, suggested_actions)
 
-        result = EligibilityCalculator.build_condition_results(iteration_result, ConditionName("RSV"))
+        result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
         assert_that(result.condition_name, is_(ConditionName("RSV")))
         assert_that(result.status, is_(Status.not_eligible))
@@ -732,6 +734,7 @@ class TestEligibilityResultBuilder:
         assert_that(deduplicated_cohort.reasons, is_([]))
         assert_that(deduplicated_cohort.description, is_("Cohort A Description"))
         assert_that(deduplicated_cohort.audit_rules, is_([]))
+        assert_that(result.suitability_rules, is_([]))
 
     def test_build_condition_results_single_condition_multiple_cohorts_same_cohort_code_same_status(self):
         reason_1 = Reason(
@@ -766,7 +769,7 @@ class TestEligibilityResultBuilder:
         ]
         iteration_result = IterationResult(Status.not_eligible, cohort_group_results, suggested_actions)
 
-        result = EligibilityCalculator.build_condition_results(iteration_result, ConditionName("RSV"))
+        result: Condition = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
         assert_that(len(result.cohort_results), is_(1))
 
@@ -776,6 +779,7 @@ class TestEligibilityResultBuilder:
         assert_that(deduplicated_cohort.reasons, contains_inanyorder(reason_1, reason_2))
         assert_that(deduplicated_cohort.description, is_("Cohort A Description 2"))
         assert_that(deduplicated_cohort.audit_rules, is_([]))
+        assert_that(result.suitability_rules, contains_inanyorder(reason_1, reason_2))
 
     def test_build_condition_results_multiple_cohorts_different_cohort_code_same_status(self):
         reason_1 = Reason(
@@ -808,7 +812,7 @@ class TestEligibilityResultBuilder:
         ]
         iteration_result = IterationResult(Status.not_eligible, cohort_group_results, suggested_actions)
 
-        result = EligibilityCalculator.build_condition_results(iteration_result, ConditionName("RSV"))
+        result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
         assert_that(len(result.cohort_results), is_(2))
 
@@ -840,7 +844,7 @@ class TestEligibilityResultBuilder:
 
         iteration_result = IterationResult(Status.not_eligible, cohort_group_results, [])
 
-        result = EligibilityCalculator.build_condition_results(iteration_result, ConditionName("RSV"))
+        result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
         assert_that(len(result.cohort_results), is_(1))
         assert_that(result.cohort_results[0].cohort_code, is_("COHORT_X"))
@@ -962,7 +966,8 @@ class TestEligibilityResultBuilder:
 
         iteration_result = IterationResult(Status.not_actionable, cohort_group_results, [])
 
-        result = EligibilityCalculator.build_condition_results(iteration_result, ConditionName("RSV"))
+        result: Condition = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
         assert_that(len(result.cohort_results), is_(1))
         assert_that(result.cohort_results[0].reasons, contains_inanyorder(*expected_reasons))
+        assert_that(result.suitability_rules, contains_inanyorder(*expected_reasons))
