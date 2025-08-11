@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -19,7 +20,9 @@ from yarl import URL
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
     CampaignConfig,
+    EndDate,
     RuleType,
+    StartDate,
 )
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
@@ -380,7 +383,7 @@ def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[e
             nhs_number,
             date_of_birth=date_of_birth,
             postcode="SW19",
-            cohorts=["cohort_label1", "cohort_label2", "cohort_label3", "cohort_label4"],
+            cohorts=["cohort_label1", "cohort_label2", "cohort_label3", "cohort_label4", "cohort_label5"],
             icb="QE1",
         ).data
     ):
@@ -482,6 +485,48 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
     )
     yield campaign
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture(scope="class")
+def inactive_iteration_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
+    campaigns, campaign_data_keys = [], []
+
+    target_iteration_dates = {
+        "start_date": ("RSV", datetime.date(2025, 1, 1)),  # Active Iteration Date
+        "start_date_plus_one_day": ("COVID", datetime.date(2025, 1, 2)),  # Active Iteration Date
+        "today": ("FLU", datetime.date(2025, 8, 8)),  # Active Iteration Date
+        "tomorrow": ("MMR", datetime.date(2025, 8, 9)),  # Inactive Iteration Date
+    }
+
+    for target, data in target_iteration_dates.items():
+        campaign = rule.CampaignConfigFactory.build(
+            id=f"campaign_{target}",
+            target=data[0],
+            type="V",
+            iterations=[
+                rule.IterationFactory.build(
+                    iteration_rules=[rule.PersonAgeSuppressionRuleFactory.build()],
+                    iteration_cohorts=[rule.IterationCohortFactory.build(cohort_label="cohort_label1")],
+                )
+            ],
+        )
+
+        campaign.start_date = StartDate(datetime.date(2025, 1, 1))
+        campaign.end_date = EndDate(datetime.date(2026, 1, 1))
+        campaign.iterations[0].iteration_date = data[1]
+
+        campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+        key = f"{campaign.name}.json"
+        s3_client.put_object(
+            Bucket=rules_bucket, Key=key, Body=json.dumps(campaign_data), ContentType="application/json"
+        )
+        campaigns.append(campaign)
+        campaign_data_keys.append(key)
+
+    yield campaigns
+
+    for key in campaign_data_keys:
+        s3_client.delete_object(Bucket=rules_bucket, Key=key)
 
 
 @pytest.fixture(scope="class")
