@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.response import is_response
 from faker import Faker
+from freezegun import freeze_time
 from hamcrest import (
     assert_that,
     contains_exactly,
@@ -540,3 +541,40 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
     assert_that(audit_data["response"]["responseId"], is_not(equal_to("")))
     assert_that(audit_data["response"]["lastUpdated"], is_not(equal_to("")))
     assert_that(audit_data["response"]["condition"], contains_inanyorder(*expected_conditions))
+
+
+@freeze_time("2025-08-08")
+def test_no_active_iteration_returns_empty_processed_suggestions(
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person_all_cohorts: NHSNumber,
+    inactive_iteration_config: list[CampaignConfig],  # noqa:ARG001
+    api_gateway_endpoint: URL,
+):
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person_all_cohorts}"
+    response = httpx.get(
+        invoke_url,
+        headers={
+            "nhs-login-nhs-number": str(persisted_person_all_cohorts),
+            "x_request_id": "x_request_id",
+            "x_correlation_id": "x_correlation_id",
+            "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
+            "nhsd_application_id": "nhsd_application_id",
+        },
+        params={"includeActions": "Y", "category": "VACCINATIONS", "conditions": "COVID,FLU,RSV"},
+        timeout=10,
+    )
+
+    assert_that(
+        response,
+        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
+    )
+
+    body = response.json()
+    assert_that(
+        body["processedSuggestions"],
+        contains_inanyorder(
+            has_entries("condition", "COVID"),
+            has_entries("condition", "RSV"),
+            has_entries("condition", "FLU"),
+        ),
+    )
