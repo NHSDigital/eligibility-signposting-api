@@ -176,22 +176,22 @@ class EligibilityCalculator:
     ) -> list[CohortGroupResult]:
         results = []
 
-        for cohort_code, group in grouped_cohort_results.items():
-            if not group:
+        for cohort_code, group_results in grouped_cohort_results.items():
+            if not group_results:
                 continue
 
-            all_reasons = chain.from_iterable(cohort.reasons for cohort in group)
+            all_reasons = chain.from_iterable(group_result.reasons for group_result in group_results)
             deduped = {}
             for reason in all_reasons:
                 key = (reason.rule_type, reason.rule_priority)
                 deduped.setdefault(key, reason)
 
-            description = next((c.description for c in group if c.description), group[0].description)
+            description = next((c.description for c in group_results if c.description), group_results[0].description)
 
             results.append(
                 CohortGroupResult(
                     cohort_code=cohort_code,
-                    status=group[0].status,
+                    status=group_results[0].status,
                     reasons=list(deduped.values()),
                     description=description,
                     audit_rules=[],
