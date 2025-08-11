@@ -26,7 +26,7 @@ class FHIRIssueCode(str, Enum):
 
 
 class FHIRSpineErrorCode(str, Enum):
-    INVALID_NHS_NUMBER = "INVALID_NHS_NUMBER"
+    ACCESS_DENIED = "ACCESS_DENIED"
     INVALID_PARAMETER = "INVALID_PARAMETER"
     BAD_REQUEST = "BAD_REQUEST"
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
@@ -144,8 +144,8 @@ NHS_NUMBER_MISMATCH_ERROR = APIErrorResponse(
     fhir_issue_code=FHIRIssueCode.FORBIDDEN,
     fhir_issue_severity=FHIRIssueSeverity.ERROR,
     fhir_coding_system="https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
-    fhir_error_code=FHIRSpineErrorCode.INVALID_NHS_NUMBER,
-    fhir_display_message="The provided NHS number does not match the record.",
+    fhir_error_code=FHIRSpineErrorCode.ACCESS_DENIED,
+    fhir_display_message="Access has been denied to process this request.",
 )
 
 

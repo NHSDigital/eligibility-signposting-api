@@ -67,10 +67,8 @@ def validate_request_params() -> Callable:
                 )
 
             if not validate_nhs_number(path_nhs_no, header_nhs_no):
-                message = f"NHS Number {path_nhs_no or ''} does not match the header NHS Number {header_nhs_no or ''}"
-                return NHS_NUMBER_MISMATCH_ERROR.log_and_generate_response(
-                    log_message=message, diagnostics=message, location_param="id"
-                )
+                message = "You are not authorised to request information for the supplied NHS Number"
+                return NHS_NUMBER_MISMATCH_ERROR.log_and_generate_response(log_message=message, diagnostics=message)
 
             query_params = event.get("queryStringParameters")
             if query_params:
