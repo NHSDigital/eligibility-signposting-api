@@ -17,7 +17,7 @@ from eligibility_signposting_api.config.contants import NHS_NUMBER_HEADER
 
 logger = logging.getLogger(__name__)
 
-condition_pattern = re.compile(r"^\s*[a-zA-Z0-9]+\s*$", re.IGNORECASE)
+condition_pattern = re.compile(r"^\s*[a-z0-9]+\s*$", re.IGNORECASE)
 category_pattern = re.compile(r"^\s*(VACCINATIONS|SCREENING|ALL)\s*$", re.IGNORECASE)
 include_actions_pattern = re.compile(r"^\s*([YN])\s*$", re.IGNORECASE)
 
