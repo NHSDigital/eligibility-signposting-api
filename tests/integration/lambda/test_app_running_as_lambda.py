@@ -304,14 +304,13 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
                         has_entries(
                             severity="error",
                             code="forbidden",
-                            diagnostics=f"NHS Number {persisted_person} does "
-                            f"not match the header NHS Number 123{persisted_person!s}",
+                            diagnostics="You are not authorised to request information for the supplied NHS Number",
                             details={
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
-                                        "code": "INVALID_NHS_NUMBER",
-                                        "display": "The provided NHS number does not match the record.",
+                                        "code": "ACCESS_DENIED",
+                                        "display": "Access has been denied to process this request.",
                                     }
                                 ]
                             },
@@ -351,13 +350,13 @@ def test_given_nhs_number_not_present_in_headers_results_in_error_response(
                         has_entries(
                             severity="error",
                             code="forbidden",
-                            diagnostics=f"NHS Number {persisted_person} does not match the header NHS Number ",
+                            diagnostics="You are not authorised to request information for the supplied NHS Number",
                             details={
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
-                                        "code": "INVALID_NHS_NUMBER",
-                                        "display": "The provided NHS number does not match the record.",
+                                        "code": "ACCESS_DENIED",
+                                        "display": "Access has been denied to process this request.",
                                     }
                                 ]
                             },
