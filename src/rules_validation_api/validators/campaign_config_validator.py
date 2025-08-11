@@ -8,8 +8,8 @@ from rules_validation_api.validators.iteration_validator import IterationValidat
 
 
 class CampaignConfigValidation(CampaignConfig):
-    @classmethod
     @field_validator("iterations")
+    @classmethod
     def validate_iterations(cls, iterations: list[Iteration]) -> list[IterationValidation]:
         return [IterationValidation(**i.model_dump()) for i in iterations]
 
