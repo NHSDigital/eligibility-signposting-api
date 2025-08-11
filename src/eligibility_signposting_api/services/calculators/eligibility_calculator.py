@@ -17,6 +17,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     ConditionName,
     EligibilityStatus,
     IterationResult,
+    Reason,
     Status,
 )
 from eligibility_signposting_api.services.processors.action_rule_handler import ActionRuleHandler
@@ -164,15 +165,15 @@ class EligibilityCalculator:
             grouped_cohort_results
         )
 
-        deduplicated_suitability_rules_for_condition = list(
-            {(r.rule_type, r.rule_priority): r for g in deduplicated_cohort_results for r in g.reasons}.values()
+        overall_deduplicated_reasons_for_condition = EligibilityCalculator.deduplicate_reasons(
+            deduplicated_cohort_results
         )
 
         return Condition(
             condition_name=condition_name,
             status=iteration_result.status,
             cohort_results=list(deduplicated_cohort_results),
-            suitability_rules=deduplicated_suitability_rules_for_condition,
+            suitability_rules=list(overall_deduplicated_reasons_for_condition),
             actions=iteration_result.actions,
             status_text=iteration_result.status.get_status_text(condition_name),
         )
@@ -187,11 +188,7 @@ class EligibilityCalculator:
             if not group_results:
                 continue
 
-            all_reasons = chain.from_iterable(group_result.reasons for group_result in group_results)
-            deduped = {}
-            for reason in all_reasons:
-                key = (reason.rule_type, reason.rule_priority)
-                deduped.setdefault(key, reason)
+            deduped_reasons: list[Reason] = EligibilityCalculator.deduplicate_reasons(group_results)
 
             description = next((c.description for c in group_results if c.description), group_results[0].description)
 
@@ -199,10 +196,19 @@ class EligibilityCalculator:
                 CohortGroupResult(
                     cohort_code=cohort_code,
                     status=group_results[0].status,
-                    reasons=list(deduped.values()),
+                    reasons=list(deduped_reasons),
                     description=description,
                     audit_rules=[],
                 )
             )
 
         return results
+
+    @staticmethod
+    def deduplicate_reasons(group_results: list[CohortGroupResult]) -> list[Reason]:
+        all_reasons = chain.from_iterable(group_result.reasons for group_result in group_results)
+        deduped = {}
+        for reason in all_reasons:
+            key = (reason.rule_type, reason.rule_priority)
+            deduped.setdefault(key, reason)
+        return list(deduped.values())
