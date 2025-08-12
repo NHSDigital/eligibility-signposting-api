@@ -5,6 +5,7 @@ pre-commit 4.2.0
 vale 3.11.2
 poetry 2.1.4
 act 0.2.77
+nodejs 22.18.0
 
 # ==============================================================================
 # The section below is reserved for Docker image versions.

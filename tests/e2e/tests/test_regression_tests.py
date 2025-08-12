@@ -17,7 +17,9 @@ id_list = [f"{filename} - {scenario.get('scenario_name', 'No Scenario')}" for fi
 @pytest.mark.functionale2eregression
 @pytest.mark.parametrize(("filename", "scenario"), param_list, ids=id_list)
 def test_run_regression_tests(filename, scenario, eligibility_client, get_scenario_params):
-    nhs_number, config_filenames, request_headers, query_params, expected_response_code = get_scenario_params(scenario, config_path)
+    nhs_number, config_filenames, request_headers, query_params, expected_response_code = get_scenario_params(
+        scenario, config_path
+    )
 
     actual_response = eligibility_client.make_request(nhs_number, headers=request_headers, strict_ssl=False)
     expected_response = all_expected_responses.get(filename).get("response_items", {})

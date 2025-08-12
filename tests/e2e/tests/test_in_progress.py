@@ -16,7 +16,9 @@ id_list = [f"{filename} - {scenario.get('scenario_name', 'No Scenario')}" for fi
 
 @pytest.mark.parametrize(("filename", "scenario"), param_list, ids=id_list)
 def test_run_in_progress_tests(filename, scenario, eligibility_client, get_scenario_params):
-    nhs_number, config_filenames, request_headers, query_params, expected_response_code = get_scenario_params(scenario, config_path)
+    nhs_number, config_filenames, request_headers, query_params, expected_response_code = get_scenario_params(
+        scenario, config_path
+    )
 
     actual_response = eligibility_client.make_request(
         nhs_number, headers=request_headers, query_params=query_params, strict_ssl=False
