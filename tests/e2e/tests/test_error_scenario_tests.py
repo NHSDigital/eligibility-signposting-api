@@ -94,14 +94,13 @@ def test_check_for_missing_person(eligibility_client):
                         "details": {
                             "coding": [
                                 {
+                                    "code": "ACCESS_DENIED",
+                                    "display": "Access has been denied to process this request.",
                                     "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
-                                    "code": "INVALID_NHS_NUMBER",
-                                    "display": "The provided NHS number does not match the record.",
                                 }
                             ]
                         },
-                        "diagnostics": "NHS Number 9934567890 does not match the header NHS Number 99345678900",
-                        "location": ["parameters/id"],
+                        "diagnostics": "You are not authorised to request information for the supplied NHS Number",
                     }
                 ],
             },
@@ -122,14 +121,13 @@ def test_check_for_missing_person(eligibility_client):
                         "details": {
                             "coding": [
                                 {
+                                    "code": "ACCESS_DENIED",
+                                    "display": "Access has been denied to process this request.",
                                     "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
-                                    "code": "INVALID_NHS_NUMBER",
-                                    "display": "The provided NHS number does not match the record.",
                                 }
                             ]
                         },
-                        "diagnostics": "NHS Number 1234567890 does not match the header NHS Number ",
-                        "location": ["parameters/id"],
+                        "diagnostics": "You are not authorised to request information for the supplied NHS Number",
                     }
                 ],
             },
