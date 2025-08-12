@@ -1,14 +1,14 @@
 {
-  "scenario_name": "RSV - Actionable - In rsv_80_since_02_Sept_2024 - over 80 after 1st September 2024 - Local Authority",
+  "scenario_name": "RSV - Actionable - In 3 actions - under 80 - ICB",
   "request_headers": {
-    "nhs-login-nhs-number": "9900036525"
+    "nhs-login-nhs-number": "9900036527"
   },
   "config_filenames": [
     "AUTO_RSV_ELI-365.json"
   ],
   "data": [
     {
-      "NHS_NUMBER": "9900036525",
+      "NHS_NUMBER": "9900036527",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [
         {
@@ -18,9 +18,9 @@
       ]
     },
     {
-      "NHS_NUMBER": "9900036525",
+      "NHS_NUMBER": "9900036527",
       "ATTRIBUTE_TYPE": "PERSON",
-      "DATE_OF_BIRTH": "<<DATE_AGE_80>>",
+      "DATE_OF_BIRTH": "<<DATE_AGE_79>>",
       "GENDER": "0",
       "POSTCODE": "SG8 6EG",
       "POSTCODE_SECTOR": "SG86",
@@ -29,15 +29,15 @@
       "LSOA": "E01018267",
       "GP_PRACTICE_CODE": "D81046",
       "PCN": "U75549",
-      "ICB": "zz1",
-      "LOCAL_AUTHORITY": "E08000014",
+      "ICB": "QH8",
+      "LOCAL_AUTHORITY": "ZZ8000014",
       "COMMISSIONING_REGION": "Y61",
       "13Q_FLAG": "N",
       "CARE_HOME_FLAG": "N",
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "9900036525",
+      "NHS_NUMBER": "9900036527",
       "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": null,
       "BOOKED_APPOINTMENT_DATE": null,
