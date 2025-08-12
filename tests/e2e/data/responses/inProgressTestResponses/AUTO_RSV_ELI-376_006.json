@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "lastUpdated": "2025-08-12T16:39:45.770674+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "TestNotAction",
+          "actionType": "ButtonWithAuthLink",
+          "description": "TestNotAction Description",
+          "urlLabel": "",
+          "urlLink": ""
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_eli_376_cohort_group",
+          "cohortStatus": "NotActionable",
+          "cohortText": "are a member of eli_376_cohort_group_0"
+        },
+        {
+          "cohortCode": "rsv_eli_376_cohort_group_other",
+          "cohortStatus": "NotActionable",
+          "cohortText": "are a member of eli_376_cohort_group_other"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "NotActionable Reason 1",
+          "ruleText": "NotActionable Description 1",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "NotActionable Reason 2",
+          "ruleText": "NotActionable Description 2",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "NotActionable Reason 3",
+          "ruleText": "NotActionable Description 3",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "5a0da066-097d-4597-9b05-567e9eb8e00c"
+}
