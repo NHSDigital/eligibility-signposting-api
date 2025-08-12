@@ -26,8 +26,8 @@ def test_check_for_missing_person(eligibility_client):
                             "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
                             "code": "REFERENCE_NOT_FOUND",
                             "display": "The given NHS number was not found in our datasets. "
-                                       "This could be because the number is incorrect or some other reason "
-                                       "we cannot process that number.",
+                            "This could be because the number is incorrect or some other reason "
+                            "we cannot process that number.",
                         }
                     ]
                 },
@@ -67,8 +67,8 @@ def test_check_for_missing_person(eligibility_client):
                                     "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
                                     "code": "REFERENCE_NOT_FOUND",
                                     "display": "The given NHS number was not found in our datasets. "
-                                               "This could be because the number is incorrect or some other reason we "
-                                               "cannot process that number.",
+                                    "This could be because the number is incorrect or some other reason we "
+                                    "cannot process that number.",
                                 }
                             ]
                         },
@@ -91,12 +91,16 @@ def test_check_for_missing_person(eligibility_client):
                     {
                         "severity": "error",
                         "code": "forbidden",
-                        "details": {"coding": [{"code": "ACCESS_DENIED",
-                                                "display": "Access has been denied to "
-                                                           "process this request.",
-                                                "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1"}]},
-                        "diagnostics": "You are not authorised to request information for "
-                                       "the supplied NHS Number"
+                        "details": {
+                            "coding": [
+                                {
+                                    "code": "ACCESS_DENIED",
+                                    "display": "Access has been denied to process this request.",
+                                    "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                }
+                            ]
+                        },
+                        "diagnostics": "You are not authorised to request information for the supplied NHS Number",
                     }
                 ],
             },
@@ -114,12 +118,16 @@ def test_check_for_missing_person(eligibility_client):
                     {
                         "severity": "error",
                         "code": "forbidden",
-                        "details": {"coding": [{"code": "ACCESS_DENIED",
-                                                "display": "Access has been denied to "
-                                                           "process this request.",
-                                                "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1"}]},
-                        "diagnostics": "You are not authorised to request information for "
-                                       "the supplied NHS Number"
+                        "details": {
+                            "coding": [
+                                {
+                                    "code": "ACCESS_DENIED",
+                                    "display": "Access has been denied to process this request.",
+                                    "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                }
+                            ]
+                        },
+                        "diagnostics": "You are not authorised to request information for the supplied NHS Number",
                     }
                 ],
             },
@@ -164,7 +172,7 @@ def test_nhs_login_header_handling(eligibility_client, test_case):
                             ]
                         },
                         "diagnostics": "covid-rsv should be a single or comma separated list of condition strings "
-                                       "with no other punctuation or special characters",
+                        "with no other punctuation or special characters",
                         "location": ["parameters/conditions"],
                         "severity": "error",
                     }
