@@ -5,9 +5,15 @@
     "Name": "ELI-317 - Empty Actions - 9000000006",
     "Type": "V",
     "Target": "RSV",
-    "Manager": ["person1@nhs.net"],
-    "Approver": ["person1@nhs.net"],
-    "Reviewer": ["person1@nhs.net"],
+    "Manager": [
+      "person1@nhs.net"
+    ],
+    "Approver": [
+      "person1@nhs.net"
+    ],
+    "Reviewer": [
+      "person1@nhs.net"
+    ],
     "IterationFrequency": "X",
     "IterationType": "O",
     "IterationTime": "07:00:00",

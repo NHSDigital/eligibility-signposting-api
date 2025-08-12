@@ -5,9 +5,15 @@
     "Name": "Automation RSV - Smoke Test Config",
     "Type": "V",
     "Target": "RSV",
-    "Manager": ["person1@nhs.net"],
-    "Approver": ["person1@nhs.net"],
-    "Reviewer": ["person1@nhs.net"],
+    "Manager": [
+      "person1@nhs.net"
+    ],
+    "Approver": [
+      "person1@nhs.net"
+    ],
+    "Reviewer": [
+      "person1@nhs.net"
+    ],
     "IterationFrequency": "X",
     "IterationType": "O",
     "IterationTime": "07:00:00",
@@ -209,21 +215,21 @@
             "UrlLink": null,
             "UrlLabel": ""
           },
-            "BOOK_LOCAL": {
+          "BOOK_LOCAL": {
             "ExternalRoutingCode": "BookLocal",
             "ActionDescription": "##Getting the vaccine\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
             "ActionType": "InfoText",
             "UrlLink": null,
             "UrlLabel": ""
           },
-            "MANAGE_LOCAL": {
+          "MANAGE_LOCAL": {
             "ExternalRoutingCode": "ManageLocal",
             "ActionDescription": "##You have an RSV vaccination appointment\nContact your healthcare provider to change or cancel your appointment.",
             "ActionType": "CardWithText",
             "UrlLink": null,
             "UrlLabel": ""
           },
-            "CHECK_CORRECT": {
+          "CHECK_CORRECT": {
             "ExternalRoutingCode": "CheckCorrect",
             "ActionDescription": "##If you think this is incorrect\\nIf you have not had this vaccination and you think you should, speak to your healthcare professional.",
             "ActionType": "InfoText",

@@ -5,9 +5,15 @@
     "Name": "ELI-155 - cohort_label is not supported in R rules",
     "Type": "V",
     "Target": "RSV",
-    "Manager": ["person1@nhs.net"],
-    "Approver": ["person1@nhs.net"],
-    "Reviewer": ["person1@nhs.net"],
+    "Manager": [
+      "person1@nhs.net"
+    ],
+    "Approver": [
+      "person1@nhs.net"
+    ],
+    "Reviewer": [
+      "person1@nhs.net"
+    ],
     "IterationFrequency": "X",
     "IterationType": "O",
     "IterationTime": "07:00:00",

@@ -5,9 +5,15 @@
     "Name": "ELI-320 - RSV SCREENING Config",
     "Type": "S",
     "Target": "RSV",
-    "Manager": ["person1@nhs.net"],
-    "Approver": ["person1@nhs.net"],
-    "Reviewer": ["person1@nhs.net"],
+    "Manager": [
+      "person1@nhs.net"
+    ],
+    "Approver": [
+      "person1@nhs.net"
+    ],
+    "Reviewer": [
+      "person1@nhs.net"
+    ],
     "IterationFrequency": "X",
     "IterationType": "O",
     "IterationTime": "07:00:00",
@@ -51,7 +57,6 @@
             "Operator": "D>=",
             "Comparator": "0",
             "CommsRouting": "AMEND_NBS"
-
           }
         ],
         "ActionsMapper": {

@@ -5,9 +5,15 @@
     "Name": "ELI-317 - Multiple Actions - 9000000010",
     "Type": "V",
     "Target": "RSV",
-    "Manager": ["person1@nhs.net"],
-    "Approver": ["person1@nhs.net"],
-    "Reviewer": ["person1@nhs.net"],
+    "Manager": [
+      "person1@nhs.net"
+    ],
+    "Approver": [
+      "person1@nhs.net"
+    ],
+    "Reviewer": [
+      "person1@nhs.net"
+    ],
     "IterationFrequency": "X",
     "IterationType": "O",
     "IterationTime": "07:00:00",
@@ -59,7 +65,8 @@
             "ActionType": "ActionOneActionType",
             "UrlLink": "http://www.actiononeurl.com",
             "UrlLabel": "ActiononeUrlLabel"
-          },"ACTION_TWO": {
+          },
+          "ACTION_TWO": {
             "ExternalRoutingCode": "ActionTwoRoutingCode",
             "ActionDescription": "ActionTwoDescription",
             "ActionType": "ActionTwoActionType",
