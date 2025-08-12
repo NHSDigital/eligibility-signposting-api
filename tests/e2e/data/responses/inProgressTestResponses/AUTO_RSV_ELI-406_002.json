@@ -17,7 +17,7 @@
           }
         ]
       },
-      "diagnostics": "NHS Number '9686368' was not recognised by the Eligibility Signposting API",
+      "diagnostics": "NHS Number '9900406002' was not recognised by the Eligibility Signposting API",
       "location": [
         "parameters/id"
       ]
