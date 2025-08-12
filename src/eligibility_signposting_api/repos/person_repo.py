@@ -40,7 +40,9 @@ class PersonRepo:
         response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(nhs_number))
         logger.debug("response %r for %r", response, nhs_number, extra={"response": response, "nhs_number": nhs_number})
 
-        if not (items := response.get("Items")):
+        if not (items := response.get("Items")) or not next(
+            (item for item in items if item.get("ATTRIBUTE_TYPE") == "PERSON"), None
+        ):
             message = f"Person not found with nhs_number {nhs_number}"
             raise NotFoundError(message)
 

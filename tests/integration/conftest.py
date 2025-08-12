@@ -422,6 +422,25 @@ def persisted_person_pc_sw19(person_table: Any, faker: Faker) -> Generator[eligi
         person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
 
 
+@pytest.fixture
+def persisted_person_with_no_person_attribute_type(
+    person_table: Any, faker: Faker
+) -> Generator[eligibility_status.NHSNumber]:
+    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
+
+    for row in (
+        rows := person_rows_builder(nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
+    ):
+        if row["ATTRIBUTE_TYPE"] != "PERSON":
+            person_table.put_item(Item=row)
+
+    yield nhs_number
+
+    for row in rows:
+        person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
+
+
 @pytest.fixture(scope="session")
 def rules_bucket(s3_client: BaseClient) -> Generator[BucketName]:
     bucket_name = BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket"))
