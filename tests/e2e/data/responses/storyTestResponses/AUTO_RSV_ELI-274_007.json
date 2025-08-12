@@ -23,7 +23,12 @@
       "suitabilityRules": [
         {
           "ruleCode": "NotActionable Reason",
-          "ruleText": "Description 1",
+          "ruleText": "Description 4",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "NotActionable Reason",
+          "ruleText": "Description 3",
           "ruleType": "S"
         }
       ]

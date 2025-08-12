@@ -27,7 +27,12 @@
           "ruleType": "S"
         },
         {
-          "ruleCode": "NotActionable Reason 3",
+          "ruleCode": "NotActionable Reason",
+          "ruleText": "Description 2",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "NotActionable Reason",
           "ruleText": "Description 3",
           "ruleType": "S"
         }
