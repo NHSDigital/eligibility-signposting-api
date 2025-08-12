@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-29T07:38:36.598629+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "ManagedSettingInfo",
+          "actionType": "InfoText",
+          "description": "## If you think this is incorrect\n\nIf you have already had this vaccination or your personal details are wrong, visit our help and support page. (ADD LINK).",
+          "urlLabel": "",
+          "urlLink": ""
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age",
+          "cohortStatus": "NotActionable",
+          "cohortText": "are aged 75 to 79 years old"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "Other Setting with no future booking",
+          "ruleText": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "8cd0c26a-626d-4e02-9e3e-817c01fd4afa"
+}

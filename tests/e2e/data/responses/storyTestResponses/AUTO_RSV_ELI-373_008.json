@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "lastUpdated": "2025-08-11T16:34:44.019817+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "ManagedSettingInfo",
+          "actionType": "InfoText",
+          "description": "## If you think this is incorrect\n\nIf you have already had this vaccination or your personal details are wrong, visit our help and support page. (ADD LINK).",
+          "urlLabel": "",
+          "urlLink": ""
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age",
+          "cohortStatus": "NotActionable",
+          "cohortText": "are aged 75 to 79 years old"
+        },
+        {
+          "cohortCode": "rsv_age_catchup",
+          "cohortStatus": "NotActionable",
+          "cohortText": "turned 80 after 1st September 2024"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "75 to 79 - Other Setting (Care Home) with no future booking",
+          "ruleText": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "80 plus - Other Setting (Care Home) with no future booking",
+          "ruleText": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "80 plus - Other Setting (Detained Estates) with no future booking",
+          "ruleText": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "ac49dbde-9adb-49a5-a180-6503b7adcf82"
+}

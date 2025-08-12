@@ -1,0 +1,30 @@
+{
+  "responseId": "<<IGNORE_ID>>",
+  "meta": {
+    "lastUpdated": "<<IGNORE_DATE>>"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "status": "Actionable",
+      "statusText": "You should have the RSV vaccine",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "eli_317_cohort_2_group",
+          "cohortStatus": "Actionable",
+          "cohortText": "You are currently in eli_317_cohort_2"
+        }
+      ],
+      "suitabilityRules": [],
+      "actions": [
+        {
+          "actionCode": "",
+          "description": "",
+          "actionType": "",
+          "urlLabel": "",
+          "urlLink": ""
+        }
+      ]
+    }
+  ]
+}

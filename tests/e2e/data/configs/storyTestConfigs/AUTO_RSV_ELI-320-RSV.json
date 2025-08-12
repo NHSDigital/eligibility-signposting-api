@@ -1,0 +1,74 @@
+{
+  "CampaignConfig": {
+    "ID": "CC5678",
+    "Version": 1,
+    "Name": "ELI-320 - RSV Config",
+    "Type": "V",
+    "Target": "RSV",
+    "Manager": [
+      "person1@nhs.net"
+    ],
+    "Approver": [
+      "person1@nhs.net"
+    ],
+    "Reviewer": [
+      "person1@nhs.net"
+    ],
+    "IterationFrequency": "X",
+    "IterationType": "O",
+    "IterationTime": "07:00:00",
+    "DefaultCommsRouting": "AmendNBS",
+    "StartDate": "20250612",
+    "EndDate": "20260713",
+    "ApprovalMinimum": 0,
+    "ApprovalMaximum": 0,
+    "Iterations": [
+      {
+        "ID": "IC5678",
+        "DefaultCommsRouting": "AmendNBS",
+        "Version": 1,
+        "Name": "ELI-320 - RSV Iteration Config",
+        "IterationDate": "20250601",
+        "IterationNumber": 1,
+        "CommsType": "I",
+        "DefaultNotEligibleRouting": "",
+        "DefaultNotActionableRouting": "",
+        "ApprovalMinimum": 0,
+        "ApprovalMaximum": 0,
+        "Type": "O",
+        "IterationCohorts": [
+          {
+            "CohortLabel": "rsv_cohort",
+            "CohortGroup": "rsv_cohort_group",
+            "PositiveDescription": "You are currently in an RSV cohort",
+            "NegativeDescription": "You are not currently in an RSV cohort",
+            "Priority": 0
+          }
+        ],
+        "IterationRules": [
+          {
+            "Type": "R",
+            "Name": "Actionable Future Booked Appointment",
+            "Description": "Actionable Future Booked Appointment",
+            "Priority": 1000,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "BOOKED_APPOINTMENT_DATE",
+            "Operator": "D>=",
+            "Comparator": "0",
+            "CommsRouting": "AMEND_NBS"
+          }
+        ],
+        "ActionsMapper": {
+          "AMEND_NBS": {
+            "ExternalRoutingCode": "AmendNBS",
+            "ActionDescription": "##You have an RSV vaccination appointment\nYou can view, change or cancel your appointment below.",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Manage your appointment"
+          }
+        }
+      }
+    ]
+  }
+}

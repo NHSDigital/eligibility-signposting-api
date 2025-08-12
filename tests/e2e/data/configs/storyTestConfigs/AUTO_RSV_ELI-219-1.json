@@ -1,0 +1,110 @@
+{
+  "CampaignConfig": {
+    "ID": "<<RANDOM_GUID>>",
+    "Version": 1,
+    "Name": "ELI-219 - Support Actions R Rules - 9000000002",
+    "Type": "V",
+    "Target": "RSV",
+    "Manager": [
+      "person1@nhs.net"
+    ],
+    "Approver": [
+      "person1@nhs.net"
+    ],
+    "Reviewer": [
+      "person1@nhs.net"
+    ],
+    "IterationFrequency": "X",
+    "IterationType": "O",
+    "IterationTime": "07:00:00",
+    "DefaultCommsRouting": "DEFAULT_ACTION",
+    "StartDate": "20250601",
+    "EndDate": "20260601",
+    "ApprovalMinimum": 0,
+    "ApprovalMaximum": 0,
+    "Iterations": [
+      {
+        "ID": ",<<RANDOM_GUID>>",
+        "DefaultCommsRouting": "DEFAULT_ACTION",
+        "Version": 1,
+        "Name": "ELI-155 - Support Actions R Rules",
+        "IterationDate": "20250601",
+        "IterationNumber": 1,
+        "CommsType": "I",
+        "DefaultNotEligibleRouting": "",
+        "DefaultNotActionableRouting": "",
+        "ApprovalMinimum": 0,
+        "ApprovalMaximum": 0,
+        "Type": "O",
+        "IterationCohorts": [
+          {
+            "CohortLabel": "eli_291_cohort_1",
+            "CohortGroup": "eli_291_cohort_1_group",
+            "PositiveDescription": "You are currently in eli_291_cohort_1",
+            "NegativeDescription": "You are not in eli_291_cohort_1",
+            "Priority": 0
+          }
+        ],
+        "IterationRules": [
+          {
+            "Type": "R",
+            "Name": "Actionable if future appointment is booked with ACC",
+            "Description": "Book An Appointment",
+            "Priority": 1000,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "BOOKED_APPOINTMENT_DATE",
+            "Operator": "D>=",
+            "Comparator": "0",
+            "CommsRouting": "ACTION_ONE"
+          },
+          {
+            "Type": "R",
+            "Name": "Actionable if future appointment is booked with ACC",
+            "Description": "Book An Appointment",
+            "Priority": 1000,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "Operator": "is_not_null",
+            "Comparator": "",
+            "CommsRouting": "ACTION_ONE"
+          },
+          {
+            "Type": "R",
+            "Name": "Actionable if future appointment is booked with ACC",
+            "Description": "Book An Appointment",
+            "Priority": 1000,
+            "AttributeLevel": "COHORT",
+            "Operator": "in",
+            "Comparator": "eli_291_cohort_2",
+            "CommsRouting": "ACTION_ONE"
+          }
+        ],
+        "ActionsMapper": {
+          "ACTION_ONE": {
+            "ExternalRoutingCode": "ActionOneRoutingCode",
+            "ActionDescription": "ActionOneDescription",
+            "ActionType": "ActionOneActionType",
+            "UrlLink": "http://www.actiononeurl.com",
+            "UrlLabel": "ActionOneUrlLabel"
+          },
+          "ACTION_TWO": {
+            "ExternalRoutingCode": "ActionTwoRoutingCode",
+            "ActionDescription": "ActionTwoDescription",
+            "ActionType": "ActionTwoActionType",
+            "UrlLink": "http://www.actiontwourl.com",
+            "UrlLabel": "ActionTwoUrlLabel"
+          },
+          "DEFAULT_ACTION": {
+            "ExternalRoutingCode": "DefaultAction",
+            "ActionDescription": "DefaultActionDescription",
+            "ActionType": "DefaultActionType",
+            "UrlLink": "https://www.defaultactionurl.com/",
+            "UrlLabel": "DefaultActionLabel"
+          }
+        }
+      }
+    ]
+  }
+}
