@@ -22,13 +22,11 @@ class FHIRIssueCode(str, Enum):
     FORBIDDEN = "forbidden"
     PROCESSING = "processing"
     VALUE = "value"
-    INVALID = "invalid"
 
 
 class FHIRSpineErrorCode(str, Enum):
     ACCESS_DENIED = "ACCESS_DENIED"
     INVALID_PARAMETER = "INVALID_PARAMETER"
-    BAD_REQUEST = "BAD_REQUEST"
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
     REFERENCE_NOT_FOUND = "REFERENCE_NOT_FOUND"
 
@@ -139,13 +137,4 @@ NHS_NUMBER_MISMATCH_ERROR = APIErrorResponse(
     fhir_issue_severity=FHIRIssueSeverity.ERROR,
     fhir_error_code=FHIRSpineErrorCode.ACCESS_DENIED,
     fhir_display_message="Access has been denied to process this request.",
-)
-
-
-NHS_NUMBER_MISSING_ERROR = APIErrorResponse(
-    status_code=HTTPStatus.BAD_REQUEST,
-    fhir_issue_code=FHIRIssueCode.INVALID,
-    fhir_issue_severity=FHIRIssueSeverity.ERROR,
-    fhir_error_code=FHIRSpineErrorCode.BAD_REQUEST,
-    fhir_display_message="Bad Request",
 )
