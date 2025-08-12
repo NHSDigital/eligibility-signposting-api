@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-15T14:52:52.785698+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [],
+      "condition": "COVID",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "covid_cohort_group",
+          "cohortStatus": "NotActionable",
+          "cohortText": "You are currently in a covid cohort"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the COVID vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "AlreadyVaccinated",
+          "ruleText": "##You've had your COVID vaccination\nWe believe you already had your COVID vaccination.",
+          "ruleType": "S"
+        }
+      ]
+    },
+    {
+      "actions": [],
+      "condition": "MMR",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "mmr_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an mmr cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "5c8d1cb3-8326-40b1-93ad-1b7fa24c2595"
+}
