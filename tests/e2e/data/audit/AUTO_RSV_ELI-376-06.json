@@ -1,0 +1,101 @@
+{
+  "request": {
+    "requestTimestamp": "2025-08-12 16:39:13.450614+00:00",
+    "headers": {
+      "xRequestId": null,
+      "xCorrelationId": null,
+      "nhsdEndUserOrganisationOds": null,
+      "nhsdApplicationId": null
+    },
+    "queryParams": {
+      "category": null,
+      "conditions": null,
+      "includeActions": null
+    },
+    "nhsNumber": "9900376006"
+  },
+  "response": {
+    "responseId": "45e06a70-139f-4500-b1c8-4f91d27919e7",
+    "lastUpdated": "2025-08-12 16:39:13.814537+00:00",
+    "condition": [
+      {
+        "campaignId": "AUTO_RSV_ELI-376-06-Campaign-ID",
+        "campaignVersion": 1,
+        "iterationId": "AUTO_RSV_ELI-376-06-Iteration-ID",
+        "iterationVersion": 1,
+        "conditionName": "RSV",
+        "status": "not_actionable",
+        "statusText": "You should have the RSV vaccine",
+        "eligibilityCohorts": [
+          {
+            "cohortCode": "rsv_eli_376_cohort_1",
+            "cohortStatus": "not_actionable"
+          },
+          {
+            "cohortCode": "rsv_eli_376_cohort_2",
+            "cohortStatus": "not_actionable"
+          },
+          {
+            "cohortCode": "rsv_eli_376_cohort_3",
+            "cohortStatus": "not_actionable"
+          },
+          {
+            "cohortCode": "rsv_eli_376_cohort_4",
+            "cohortStatus": "not_actionable"
+          }
+        ],
+        "eligibilityCohortGroups": [
+          {
+            "cohortCode": "rsv_eli_376_cohort_group",
+            "cohortText": "are a member of eli_376_cohort_group_0",
+            "cohortStatus": "not_actionable"
+          },
+          {
+            "cohortCode": "rsv_eli_376_cohort_group",
+            "cohortText": "are a member of eli_376_cohort_group_10",
+            "cohortStatus": "not_actionable"
+          },
+          {
+            "cohortCode": "rsv_eli_376_cohort_group",
+            "cohortText": "are a member of eli_376_cohort_group_20",
+            "cohortStatus": "not_actionable"
+          },
+          {
+            "cohortCode": "rsv_eli_376_cohort_group_other",
+            "cohortText": "are a member of eli_376_cohort_group_other",
+            "cohortStatus": "not_actionable"
+          }
+        ],
+        "filterRules": null,
+        "suitabilityRules": [
+          {
+            "rulePriority": "200",
+            "ruleName": "NotActionable Reason 1",
+            "ruleMessage": "NotActionable Description 1"
+          },
+          {
+            "rulePriority": "210",
+            "ruleName": "NotActionable Reason 2",
+            "ruleMessage": "NotActionable Description 2"
+          },
+          {
+            "rulePriority": "220",
+            "ruleName": "NotActionable Reason 3",
+            "ruleMessage": "NotActionable Description 3"
+          }
+        ],
+        "actionRule": null,
+        "actions": [
+          {
+            "internalActionCode": "TEST_NOT_ACTION",
+            "actionType": "ButtonWithAuthLink",
+            "actionCode": "TestNotAction",
+            "actionDescription": "TestNotAction Description",
+            "actionUrl": null,
+            "actionUrlLabel": null
+          }
+        ]
+      }
+    ]
+  }
+}
