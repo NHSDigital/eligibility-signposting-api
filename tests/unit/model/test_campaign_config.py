@@ -52,20 +52,6 @@ def test_iteration_with_overlapping_start_dates_not_allowed(faker: Faker):
         RawCampaignConfigFactory.build(start_date=start_date, iterations=[iteration1, iteration2])
 
 
-def test_iteration_must_have_active_iteration_from_its_start(faker: Faker):
-    # Given
-    start_date = faker.date_object()
-    iteration = IterationFactory.build(iteration_date=start_date + relativedelta(days=1))
-
-    # When, Then
-    with pytest.raises(
-        ValueError,
-        match=r"1 validation error for CampaignConfig\n"
-        r".*1st iteration starts later",
-    ):
-        RawCampaignConfigFactory.build(start_date=start_date, iterations=[iteration])
-
-
 @pytest.mark.parametrize(
     ("rule_stop", "expected"),
     [

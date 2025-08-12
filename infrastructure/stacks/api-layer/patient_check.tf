@@ -1,4 +1,3 @@
-
 resource "aws_api_gateway_request_validator" "patient_check_validator" {
   rest_api_id                 = module.eligibility_signposting_api_gateway.rest_api_id
   name                        = "validate-path-params"
@@ -27,12 +26,12 @@ resource "aws_api_gateway_method" "get_patient_check" {
 }
 
 resource "aws_api_gateway_integration" "get_patient_check" {
-  rest_api_id             = module.eligibility_signposting_api_gateway.rest_api_id
-  resource_id             = aws_api_gateway_resource.patient.id
-  http_method             = aws_api_gateway_method.get_patient_check.http_method
+  rest_api_id = module.eligibility_signposting_api_gateway.rest_api_id
+  resource_id = aws_api_gateway_resource.patient.id
+  http_method = aws_api_gateway_method.get_patient_check.http_method
   integration_http_method = "POST" # Needed for lambda proxy integration
-  type                    = "AWS_PROXY"
-  uri                     = module.eligibility_signposting_lambda_function.aws_lambda_invoke_arn
+  type        = "AWS_PROXY"
+  uri         = module.eligibility_signposting_lambda_function.aws_lambda_invoke_arn
 
   depends_on = [
     aws_api_gateway_method.get_patient_check
@@ -46,4 +45,44 @@ resource "aws_lambda_permission" "get_patient_check" {
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${module.eligibility_signposting_api_gateway.execution_arn}/*/*"
+}
+
+resource "aws_api_gateway_gateway_response" "bad_request_parameters" {
+  rest_api_id   = module.eligibility_signposting_api_gateway.rest_api_id
+  response_type = "BAD_REQUEST_PARAMETERS"
+  status_code   = "400"
+
+  response_templates = {
+    "application/fhir+json" = jsonencode({
+      resourceType = "OperationOutcome"
+      id           = "$context.requestId"
+      meta = {
+        lastUpdated = "$context.requestTime"
+      }
+      issue = [
+        {
+          severity = "error"
+          code     = "invalid"
+          details = {
+            coding = [
+              {
+                system  = "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                code    = "BAD_REQUEST",
+                display = "Bad Request"
+              }
+            ]
+          }
+          diagnostics = "Missing required NHS Number from path parameters",
+          location = [
+            "parameters/id"
+          ]
+        }
+      ]
+    })
+  }
+
+  response_parameters = {
+    "gatewayresponse.header.Access-Control-Allow-Origin" = "'*'"
+    "gatewayresponse.header.Content-Type"                = "'application/fhir+json'"
+  }
 }

@@ -33,6 +33,7 @@ class CohortResultFactory(DataclassFactory[eligibility_status.CohortGroupResult]
 class ConditionFactory(DataclassFactory[eligibility_status.Condition]):
     actions = Use(SuggestedActionFactory.batch, size=2)
     cohort_results = Use(CohortResultFactory.batch, size=2)
+    suitability_rules = Use(ReasonFactory.batch, size=2)
 
 
 class EligibilityStatusFactory(DataclassFactory[eligibility_status.EligibilityStatus]):

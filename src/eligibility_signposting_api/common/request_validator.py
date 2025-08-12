@@ -16,7 +16,7 @@ from eligibility_signposting_api.config.contants import NHS_NUMBER_HEADER
 
 logger = logging.getLogger(__name__)
 
-condition_pattern = re.compile(r"^\s*[a-zA-Z0-9]+\s*$", re.IGNORECASE)
+condition_pattern = re.compile(r"^\s*[a-z0-9]+\s*$", re.IGNORECASE)
 category_pattern = re.compile(r"^\s*(VACCINATIONS|SCREENING|ALL)\s*$", re.IGNORECASE)
 include_actions_pattern = re.compile(r"^\s*([YN])\s*$", re.IGNORECASE)
 
@@ -60,10 +60,8 @@ def validate_request_params() -> Callable:
             header_nhs_no = event.get("headers", {}).get(NHS_NUMBER_HEADER)
 
             if not validate_nhs_number(path_nhs_no, header_nhs_no):
-                message = f"NHS Number {path_nhs_no or ''} does not match the header NHS Number {header_nhs_no or ''}"
-                return NHS_NUMBER_MISMATCH_ERROR.log_and_generate_response(
-                    log_message=message, diagnostics=message, location_param="id"
-                )
+                message = "You are not authorised to request information for the supplied NHS Number"
+                return NHS_NUMBER_MISMATCH_ERROR.log_and_generate_response(log_message=message, diagnostics=message)
 
             query_params = event.get("queryStringParameters")
             if query_params:

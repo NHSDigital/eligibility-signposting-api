@@ -158,22 +158,15 @@ def build_eligibility_cohorts(condition: Condition) -> list[eligibility_response
 
 
 def build_suitability_results(condition: Condition) -> list[eligibility_response.SuitabilityRule]:
-    """Make only one entry if there are duplicate rules"""
     if condition.status != Status.not_actionable:
         return []
 
-    suitability_results = []
-
-    for cohort_result in condition.cohort_results:
-        if cohort_result.status == Status.not_actionable:
-            suitability_results.extend(
-                eligibility_response.SuitabilityRule(
-                    ruleType=eligibility_response.RuleType(reason.rule_type.value),
-                    ruleCode=eligibility_response.RuleCode(reason.rule_name),
-                    ruleText=eligibility_response.RuleText(reason.rule_description),
-                )
-                for reason in cohort_result.reasons
-                if reason.rule_description
-            )
-
-    return suitability_results
+    return [
+        eligibility_response.SuitabilityRule(
+            ruleType=eligibility_response.RuleType(reason.rule_type.value),
+            ruleCode=eligibility_response.RuleCode(reason.rule_name),
+            ruleText=eligibility_response.RuleText(reason.rule_description),
+        )
+        for reason in condition.suitability_rules
+        if reason.rule_description
+    ]
