@@ -5,6 +5,7 @@ from typing import Any, Literal, get_args
 
 from faker import Faker
 
+from eligibility_signposting_api.model.person import Person
 from tests.conftest import PersonDetailProvider
 
 Gender = Literal["0", "1", "2", "9"]  # 0 - Not known, 1- Male, 2 - Female, 9 - Not specified. I know, right?
@@ -27,7 +28,7 @@ def person_rows_builder(  # noqa:PLR0913
     de: bool | None = ...,
     msoa: str | None = ...,
     lsoa: str | None = ...,
-) -> list[dict[str, Any]]:
+) -> Person:
     faker = Faker("en_UK")
     faker.add_provider(PersonDetailProvider)
 
@@ -66,13 +67,9 @@ def person_rows_builder(  # noqa:PLR0913
         {
             "NHS_NUMBER": key,
             "ATTRIBUTE_TYPE": "COHORTS",
-            "COHORT_MAP": {
-                "cohorts": {
-                    "M": {
-                        cohort: {"M": {"dateJoined": {"S": faker.past_date().strftime("%Y%m%d")}}} for cohort in cohorts
-                    }
-                }
-            },
+            "COHORT_MEMBERSHIPS": [
+                {"COHORT_LABEL": cohort, "DATE_JOINED": faker.past_date().strftime("%Y%m%d")} for cohort in cohorts
+            ],
         },
     ]
     rows.extend(
@@ -89,4 +86,5 @@ def person_rows_builder(  # noqa:PLR0913
     )
 
     shuffle(rows)
-    return rows
+
+    return Person(data=rows)

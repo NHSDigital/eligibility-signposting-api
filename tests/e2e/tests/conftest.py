@@ -1,9 +1,7 @@
-import json
 import logging
 import os
 from pathlib import Path
 
-import boto3
 import pytest
 from dotenv import load_dotenv
 
@@ -24,6 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DYNAMO_DATA_PATH = BASE_DIR / "data" / "dynamoDB" / "test_data.json"
 
 logger = logging.getLogger(__name__)
+
 
 @pytest.fixture(scope="session")
 def eligibility_client():

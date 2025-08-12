@@ -1,7 +1,7 @@
 # Read-only policy for DynamoDB
 data "aws_iam_policy_document" "dynamodb_read_policy_doc" {
   statement {
-    actions   = ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"]
+    actions = ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"]
     resources = [module.eligibility_status_table.arn]
   }
 }
@@ -16,7 +16,7 @@ resource "aws_iam_role_policy" "lambda_dynamodb_read_policy" {
 # Write-only policy for DynamoDB
 data "aws_iam_policy_document" "dynamodb_write_policy_doc" {
   statement {
-    actions   = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:BatchWriteItem"]
+    actions = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:BatchWriteItem"]
     resources = [module.eligibility_status_table.arn]
   }
 }
@@ -37,7 +37,7 @@ data "aws_iam_policy_document" "dynamo_kms_access_policy_doc" {
 
 # Attach dynamoDB write policy to external write role
 resource "aws_iam_role_policy" "external_dynamodb_write_policy" {
-  count  = length(aws_iam_role.write_access_role)
+  count = length(aws_iam_role.write_access_role)
   name   = "DynamoDBWriteAccess"
   role   = aws_iam_role.write_access_role[count.index].id
   policy = data.aws_iam_policy_document.dynamodb_write_policy_doc.json
@@ -45,7 +45,7 @@ resource "aws_iam_role_policy" "external_dynamodb_write_policy" {
 
 # Attach dynamo KMS policy to external write role
 resource "aws_iam_role_policy" "external_kms_access_policy" {
-  count  = length(aws_iam_role.write_access_role)
+  count = length(aws_iam_role.write_access_role)
   name   = "KMSAccessForDynamoDB"
   role   = aws_iam_role.write_access_role[count.index].id
   policy = data.aws_iam_policy_document.dynamo_kms_access_policy_doc.json
@@ -65,7 +65,7 @@ data "aws_iam_policy_document" "s3_rules_bucket_policy" {
     ]
     condition {
       test     = "Bool"
-      values   = ["true"]
+      values = ["true"]
       variable = "aws:SecureTransport"
     }
   }
@@ -90,7 +90,7 @@ data "aws_iam_policy_document" "rules_s3_bucket_policy" {
       "${module.s3_rules_bucket.storage_bucket_arn}/*",
     ]
     principals {
-      type        = "*"
+      type = "*"
       identifiers = ["*"]
     }
     condition {
@@ -121,7 +121,7 @@ data "aws_iam_policy_document" "audit_s3_bucket_policy" {
       "${module.s3_audit_bucket.storage_bucket_arn}/*",
     ]
     principals {
-      type        = "*"
+      type = "*"
       identifiers = ["*"]
     }
     condition {
@@ -192,7 +192,7 @@ resource "aws_iam_role_policy_attachment" "lambda_logs_policy_attachment" {
 # Policy doc for S3 Audit bucket
 data "aws_iam_policy_document" "s3_audit_bucket_policy" {
   statement {
-    sid     = "AllowSSLRequestsOnly"
+    sid = "AllowSSLRequestsOnly"
     actions = ["s3:*"]
     resources = [
       module.s3_audit_bucket.storage_bucket_arn,
@@ -200,7 +200,7 @@ data "aws_iam_policy_document" "s3_audit_bucket_policy" {
     ]
     condition {
       test     = "Bool"
-      values   = ["true"]
+      values = ["true"]
       variable = "aws:SecureTransport"
     }
   }
@@ -222,10 +222,10 @@ data "aws_iam_policy_document" "dynamodb_kms_key_policy" {
     sid    = "EnableIamUserPermissions"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-    actions   = ["kms:*"]
+    actions = ["kms:*"]
     resources = ["*"]
   }
 
@@ -233,7 +233,7 @@ data "aws_iam_policy_document" "dynamodb_kms_key_policy" {
     sid    = "AllowLambdaDecrypt"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [aws_iam_role.eligibility_lambda_role.arn]
     }
     actions = [
@@ -260,10 +260,10 @@ data "aws_iam_policy_document" "s3_rules_kms_key_policy" {
     sid    = "EnableIamUserPermissions"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-    actions   = ["kms:*"]
+    actions = ["kms:*"]
     resources = ["*"]
   }
 
@@ -271,10 +271,10 @@ data "aws_iam_policy_document" "s3_rules_kms_key_policy" {
     sid    = "AllowLambdaDecrypt"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [aws_iam_role.eligibility_lambda_role.arn]
     }
-    actions   = ["kms:Decrypt"]
+    actions = ["kms:Decrypt"]
     resources = ["*"]
   }
 }
@@ -293,17 +293,17 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
     sid    = "EnableIamUserPermissions"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-    actions   = ["kms:*"]
+    actions = ["kms:*"]
     resources = ["*"]
   }
   statement {
     sid    = "AllowLambdaFullWrite"
     effect = "Allow"
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [aws_iam_role.eligibility_lambda_role.arn, aws_iam_role.eligibility_audit_firehose_role.arn]
     }
     actions = [
@@ -339,4 +339,71 @@ resource "aws_iam_role_policy" "lambda_firehose_policy" {
   name   = "LambdaFirehoseWritePolicy"
   role   = aws_iam_role.eligibility_lambda_role.id
   policy = data.aws_iam_policy_document.lambda_firehose_write_policy.json
+}
+
+data "aws_iam_policy_document" "lambda_xray_tracing_permissions_policy" {
+  statement {
+    sid    = "AllowLambdaToPutToXRay"
+    effect = "Allow"
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryRecords"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_xray_tracing_policy" {
+  name   = "LambdaXRayWritePolicy"
+  role   = aws_iam_role.eligibility_lambda_role.id
+  policy = data.aws_iam_policy_document.lambda_xray_tracing_permissions_policy.json
+}
+
+# KMS Key Policy for SNS encryption
+resource "aws_kms_key_policy" "sns_encryption_key_policy" {
+  key_id = aws_kms_key.sns_encryption_key.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "EnableIAMRootPermissions"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowCloudWatchAlarmsAccess"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudwatch.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowSNSServiceAccess"
+        Effect = "Allow"
+        Principal = {
+          Service = "sns.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }

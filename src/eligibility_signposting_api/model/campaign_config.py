@@ -17,10 +17,10 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     from pydantic import SerializationInfo
 
 CampaignName = NewType("CampaignName", str)
-CampaignVersion = NewType("CampaignVersion", str)
+CampaignVersion = NewType("CampaignVersion", int)
 CampaignID = NewType("CampaignID", str)
 IterationName = NewType("IterationName", str)
-IterationVersion = NewType("IterationVersion", str)
+IterationVersion = NewType("IterationVersion", int)
 IterationID = NewType("IterationID", str)
 IterationDate = NewType("IterationDate", date)
 RuleName = NewType("RuleName", str)
@@ -42,6 +42,8 @@ class RuleType(StrEnum):
     filter = "F"
     suppression = "S"
     redirect = "R"
+    not_eligible_actions = "X"
+    not_actionable_actions = "Y"
 
 
 class RuleOperator(StrEnum):
@@ -153,6 +155,8 @@ class Iteration(BaseModel):
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
     type: Literal["A", "M", "S", "O"] = Field(..., alias="Type")
     default_comms_routing: str = Field(..., alias="DefaultCommsRouting")
+    default_not_eligible_routing: str = Field(..., alias="DefaultNotEligibleRouting")
+    default_not_actionable_routing: str = Field(..., alias="DefaultNotActionableRouting")
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
     actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
@@ -181,9 +185,9 @@ class CampaignConfig(BaseModel):
     name: CampaignName = Field(..., alias="Name")
     type: Literal["V", "S"] = Field(..., alias="Type")
     target: Literal["COVID", "FLU", "MMR", "RSV"] = Field(..., alias="Target")
-    manager: str | None = Field(None, alias="Manager")
-    approver: str | None = Field(None, alias="Approver")
-    reviewer: str | None = Field(None, alias="Reviewer")
+    manager: list[str] | None = Field(None, alias="Manager")
+    approver: list[str] | None = Field(None, alias="Approver")
+    reviewer: list[str] | None = Field(None, alias="Reviewer")
     iteration_frequency: Literal["X", "D", "W", "M", "Q", "A"] = Field(..., alias="IterationFrequency")
     iteration_type: Literal["A", "M", "S", "O"] = Field(..., alias="IterationType")
     iteration_time: str | None = Field(None, alias="IterationTime")
@@ -223,21 +227,6 @@ class CampaignConfig(BaseModel):
             message = f"{count} iterations with iteration date {iteration_date} in campaign {self.id}"
             raise ValueError(message)
         return self
-
-    @model_validator(mode="after")
-    def check_has_iteration_from_start(self) -> typing.Self:
-        iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_date"))
-        if first_iteration := next(iter(iterations_by_date), None):
-            if first_iteration.iteration_date > self.start_date:
-                message = (
-                    f"campaign {self.id} starts on {self.start_date}, "
-                    f"1st iteration starts later - {first_iteration.iteration_date}"
-                )
-                raise ValueError(message)
-            return self
-        # Should never happen, since we are constraining self.iterations with a min_length of 1
-        message = f"campaign {self.id} has no iterations."
-        raise ValueError(message)
 
     @cached_property
     def campaign_live(self) -> bool:

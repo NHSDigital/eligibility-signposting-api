@@ -18,14 +18,16 @@ from eligibility_signposting_api.audit.audit_models import (
     RequestAuditQueryParams,
 )
 from eligibility_signposting_api.audit.audit_service import AuditService
-from eligibility_signposting_api.model.eligibility import (
+from eligibility_signposting_api.model.eligibility_status import (
+    BestIterationResult,
     CohortGroupResult,
     ConditionName,
     IterationResult,
+    MatchedActionDetail,
+    Reason,
     Status,
     SuggestedAction,
 )
-from eligibility_signposting_api.model.rules import CampaignID, CampaignVersion, Iteration, RuleName, RulePriority
 
 logger = logging.getLogger(__name__)
 
@@ -59,17 +61,15 @@ class AuditContext:
 
     @staticmethod
     def append_audit_condition(
-        suggested_actions: list[SuggestedAction] | None,
         condition_name: ConditionName,
-        best_results: tuple[Iteration | None, IterationResult | None, dict[str, CohortGroupResult] | None],
-        campaign_details: tuple[CampaignID | None, CampaignVersion | None],
-        redirect_rule_details: tuple[RulePriority | None, RuleName | None],
+        best_iteration_result: BestIterationResult,
+        action_detail: MatchedActionDetail,
+        cohort_results: list[CohortGroupResult],
     ) -> None:
-        audit_eligibility_cohorts, audit_eligibility_cohort_groups = [], []
-        audit_filter_rule, audit_suitability_rule, audit_redirect_rule = None, None, None
-        best_active_iteration = best_results[0]
-        best_candidate = best_results[1]
-        best_cohort_results = best_results[2]
+        audit_eligibility_cohorts, audit_eligibility_cohort_groups, audit_actions = [], [], []
+        best_active_iteration = best_iteration_result.active_iteration
+        best_candidate = best_iteration_result.iteration_result
+        best_cohort_results = best_iteration_result.cohort_results
 
         if best_cohort_results:
             for cohort_label, result in sorted(best_cohort_results.items(), key=lambda item: item[1].cohort_code):
@@ -84,34 +84,52 @@ class AuditContext:
                     )
                 )
 
-                if result.audit_rules and best_candidate:
-                    audit_filter_rule = AuditContext.create_audit_filter_rule(best_candidate, result)
-                    audit_suitability_rule = AuditContext.create_audit_suitability_rule(best_candidate, result)
+        filter_audit_rules, suitability_audit_rules = [], []
+        for result in cohort_results:
+            if result.status.name == Status.not_eligible.name:
+                filter_audit_rules.extend(result.audit_rules)
+            if result.status.name == Status.not_actionable.name:
+                suitability_audit_rules.extend(result.audit_rules)
 
-        if best_candidate and best_candidate.status and best_candidate.status.name == Status.actionable.name:
-            audit_redirect_rule = AuditRedirectRule(
-                rule_priority=str(redirect_rule_details[0]), rule_name=redirect_rule_details[1]
-            )
+        audit_filter_rule = AuditContext.create_audit_filter_rule(filter_audit_rules)
+        audit_suitability_rule = AuditContext.create_audit_suitability_rule(suitability_audit_rules)
 
-        audit_actions = AuditContext.create_audit_actions(suggested_actions)
+        audit_action_rule = AuditContext.add_rule_name_and_priority_to_audit(best_candidate, action_detail)
+
+        audit_actions = AuditContext.create_audit_actions(action_detail.actions)
 
         audit_condition = AuditCondition(
-            campaign_id=campaign_details[0],
-            campaign_version=campaign_details[1],
+            campaign_id=best_iteration_result.campaign_id,
+            campaign_version=best_iteration_result.campaign_version,
             iteration_id=best_active_iteration.id if best_active_iteration else None,
             iteration_version=best_active_iteration.version if best_active_iteration else None,
             condition_name=condition_name,
             status=best_candidate.status.name if best_candidate and best_candidate.status else None,
-            status_text=best_candidate.status.name if best_candidate and best_candidate.status else None,
+            status_text=best_candidate.status.get_status_text(condition_name) if best_candidate else None,
             eligibility_cohorts=audit_eligibility_cohorts,
             eligibility_cohort_groups=audit_eligibility_cohort_groups,
             filter_rules=audit_filter_rule,
             suitability_rules=audit_suitability_rule,
-            action_rule=audit_redirect_rule,
+            action_rule=audit_action_rule,
             actions=audit_actions,
         )
 
         g.audit_log.response.condition.append(audit_condition)
+
+    @staticmethod
+    def add_rule_name_and_priority_to_audit(
+        best_candidate: IterationResult | None,
+        action_detail: MatchedActionDetail,
+    ) -> AuditRedirectRule | None:
+        audit_action_rule = None
+        if best_candidate and best_candidate.status:
+            if action_detail.rule_priority is None and action_detail.rule_name is None:
+                audit_action_rule = None
+            else:
+                audit_action_rule = AuditRedirectRule(
+                    rule_priority=str(action_detail.rule_priority), rule_name=action_detail.rule_name
+                )
+        return audit_action_rule
 
     @staticmethod
     def add_response_details(response_id: UUID, last_updated: datetime) -> None:
@@ -142,24 +160,46 @@ class AuditContext:
         return audit_actions
 
     @staticmethod
-    def create_audit_suitability_rule(
-        best_candidate: IterationResult, result: CohortGroupResult
-    ) -> AuditSuitabilityRule | None:
-        audit_suitability_rule = None
-        if best_candidate.status and best_candidate.status.name == Status.not_actionable.name:
-            audit_suitability_rule = AuditSuitabilityRule(
-                rule_priority=result.audit_rules[0].rule_priority,
-                rule_name=result.audit_rules[0].rule_name,
-                rule_message=result.audit_rules[0].rule_description,
+    def create_audit_suitability_rule(reasons: list[Reason]) -> list[AuditSuitabilityRule] | None:
+        unique_reasons = AuditContext.deduplicate_reasons(reasons)
+
+        suitability_audit = [
+            AuditSuitabilityRule(
+                rule_priority=rule.rule_priority,
+                rule_name=rule.rule_name,
+                rule_message=rule.rule_description,
             )
-        return audit_suitability_rule
+            for rule in unique_reasons
+        ]
+
+        return suitability_audit if suitability_audit else None
 
     @staticmethod
-    def create_audit_filter_rule(best_candidate: IterationResult, result: CohortGroupResult) -> AuditFilterRule | None:
-        audit_filter_rule = None
-        if best_candidate.status and best_candidate.status.name == Status.not_eligible.name:
-            audit_filter_rule = AuditFilterRule(
-                rule_priority=result.audit_rules[0].rule_priority,
-                rule_name=result.audit_rules[0].rule_name,
-            )
-        return audit_filter_rule
+    def create_audit_filter_rule(reasons: list[Reason]) -> list[AuditFilterRule] | None:
+        unique_reasons = AuditContext.deduplicate_reasons(reasons)
+
+        filter_audit = [
+            AuditFilterRule(rule_priority=rule.rule_priority, rule_name=rule.rule_name) for rule in unique_reasons
+        ]
+
+        return filter_audit if len(filter_audit) > 0 else None
+
+    @staticmethod
+    def deduplicate_reasons(reasons: list[Reason]) -> list[Reason]:
+        unique_rule_codes = set()
+        deduplicated_reasons = []
+
+        for reason in reasons:
+            if reason.rule_name not in unique_rule_codes and reason.rule_description:
+                unique_rule_codes.add(reason.rule_name)
+                deduplicated_reasons.append(
+                    Reason(
+                        reason.rule_type,
+                        reason.rule_name,
+                        reason.rule_priority,
+                        reason.rule_description,
+                        reason.matcher_matched,
+                    )
+                )
+
+        return deduplicated_reasons

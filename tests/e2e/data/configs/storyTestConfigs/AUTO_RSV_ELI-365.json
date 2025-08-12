@@ -303,6 +303,17 @@
 					},
 					{
 						"Type": "R",
+						"Name": "Within CP Expansion ICB not 80 plus",
+						"Description": "Book an appointment on NBS as within CP expansion",
+						"Priority": 1200,
+						"AttributeLevel": "PERSON",
+						"AttributeName": "DATE_OF_BIRTH",
+						"Operator": "Y>",
+						"Comparator": "-80",
+						"CommsRouting": "BOOK_LOCAL|BOOK_NBS|HELP_SUPPORT"
+					},
+					{
+						"Type": "R",
 						"Name": "Within CP Expansion Local Authority",
 						"Description": "Book an appointment on NBS as within CP expansion",
 						"Priority": 1300,
@@ -310,6 +321,17 @@
 						"Comparator": "E08000028,E08000031,E08000025,E06000016,E06000008,E07000117,E07000120,E08000011,E08000012,E07000122,E07000123,E08000014,E07000126,E08000013,E07000127,E08000015,E07000128",
 						"AttributeLevel": "PERSON",
 						"AttributeName": "LOCAL_AUTHORITY",
+						"CommsRouting": "BOOK_LOCAL|BOOK_NBS|HELP_SUPPORT"
+					},
+					{
+						"Type": "R",
+						"Name": "Within CP Expansion ICB not 80 plus",
+						"Description": "Book an appointment on NBS as within CP expansion",
+						"Priority": 1300,
+						"AttributeLevel": "PERSON",
+						"AttributeName": "DATE_OF_BIRTH",
+						"Operator": "Y>",
+						"Comparator": "-80",
 						"CommsRouting": "BOOK_LOCAL|BOOK_NBS|HELP_SUPPORT"
 					},
 					{
