@@ -28,7 +28,7 @@ def test_person_found(person_table: Any, persisted_person: NHSNumber):
     )
 
 
-def test_person_not_found(person_table: Any, faker: Faker):
+def test_items_not_found_raises_error(person_table: Any, faker: Faker):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
     repo = PersonRepo(person_table)
@@ -36,3 +36,14 @@ def test_person_not_found(person_table: Any, faker: Faker):
     # When, Then
     with pytest.raises(NotFoundError):
         repo.get_eligibility_data(nhs_number)
+
+
+def test_items_found_but_person_attribute_type_not_found_raises_error(
+    person_table: Any, persisted_person_with_no_person_attribute_type: NHSNumber
+):
+    # Given
+    repo = PersonRepo(person_table)
+
+    ## When, Then
+    with pytest.raises(NotFoundError):
+        repo.get_eligibility_data(persisted_person_with_no_person_attribute_type)
