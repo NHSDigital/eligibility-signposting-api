@@ -3,7 +3,9 @@
   "request_headers": {
     "nhs-login-nhs-number": "9900036523"
   },
-  "config_filenames": ["AUTO_RSV_ELI-365.json"],
+  "config_filenames": [
+    "AUTO_RSV_ELI-365.json"
+  ],
   "data": [
     {
       "NHS_NUMBER": "9900036523",
@@ -11,6 +13,10 @@
       "COHORT_MEMBERSHIPS": [
         {
           "COHORT_LABEL": "rsv_80_since_02_Sept_2024",
+          "DATE_JOINED": "20231020"
+        },
+        {
+          "COHORT_LABEL": "rsv_75to79",
           "DATE_JOINED": "20231020"
         }
       ]
@@ -38,7 +44,7 @@
       "NHS_NUMBER": "9900036523",
       "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": null,
-      "BOOKED_APPOINTMENT_DATE" : null,
+      "BOOKED_APPOINTMENT_DATE": null,
       "BOOKED_APPOINTMENT_PROVIDER": null
     }
   ]

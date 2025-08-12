@@ -22,6 +22,8 @@ locals {
     sts               = "com.amazonaws.${local.region}.sts"
     sqs               = "com.amazonaws.${local.region}.sqs"
     kinesis-firehose  = "com.amazonaws.${local.region}.kinesis-firehose"
+    xray              = "com.amazonaws.${local.region}.xray"
+
   }
 
   # VPC Gateway Endpoints

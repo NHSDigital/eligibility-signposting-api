@@ -5,22 +5,38 @@
     "Name": "Test Config",
     "Type": "V",
     "Target": "RSV",
-    "Manager": "person@test.com",
-    "Approver": "person@test.com",
-    "Reviewer": "person@test.com",
+    "Manager": ["person@test.com"],
+    "Approver": ["person@test.com"],
+    "Reviewer": ["person@test.com"],
+    "StartDate": "20250101",
+    "EndDate": "20260101",
+    "ApprovalMinimum": 1,
+    "ApprovalMaximum": 5000000,
     "IterationFrequency": "X",
     "IterationType": "M",
     "IterationTime": "07:00:00",
-    "DefaultCommsRouting": "Default_Comms_1",
     "Iterations": [
       {
         "ID": "id_100",
+        "Version": "1",
+        "Name": "Test Config",
+        "Type": "M",
+        "IterationDate": "20250101",
+        "IterationNumber": 1,
+        "CommsType": "R",
+        "ApprovalMinimum": 1,
+        "ApprovalMaximum": 5000000,
         "DefaultCommsRouting": "INTERNALCONTACTGP1",
+        "DefaultNotActionableRouting": "INTERNALCONTACTGP1",
+        "DefaultNotEligibleRouting": "INTERNALCONTACTGP1",
         "ActionsMapper": {
           "INTERNALCONTACTGP1": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Text1 description", "ActionType":"text1"},
-          "INTERNALCONTACTGP2": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Link description", "ActionType":"link", "UrlLink": "link123", "UrlLabel": "link label"},
-          "INTERNALTESCO": {"ExternalRoutingCode": "TESCO","ActionDescription":"Tesco description", "ActionType":"link", "UrlLink": "tesco link", "UrlLabel": "link label"},
-          "INTERNALFINDWALKIN": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"}
+          "INTERNALCONTACTGP2": {"ExternalRoutingCode": "CONTACTGP","ActionDescription":"Contact GP Link description", "ActionType":"link", "UrlLink": "https://www.link123.example", "UrlLabel": "link label"},
+          "INTERNALTESCO": {"ExternalRoutingCode": "TESCO","ActionDescription":"Tesco description", "ActionType":"link", "UrlLink": "https://www.tesco_link.example", "UrlLabel": "link label"},
+          "INTERNALFINDWALKIN": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"},
+
+          "XRULEID1": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"},
+          "YRULEID1": {"ExternalRoutingCode": "FINDWALKIN","ActionDescription":"Find walkin description", "ActionType":"button"}
         },
         "IterationCohorts": [
           {
@@ -91,21 +107,31 @@
             "Operator": ">",
             "Comparator": "19000101",
             "CommsRouting": "INTERNALCONTACTGP1|INTERNALTESCO"
+          },
+          {
+            "Type": "X",
+            "Name": "Test X Rule for not eligible",
+            "Description": "Test X Rule Desc",
+            "Priority": 20,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": ">",
+            "Comparator": "19000101",
+            "CommsRouting": "XRULEID1|INTERNALTESCO"
+          },
+          {
+            "Type": "Y",
+            "Name": "Test Y Rule for not actionable",
+            "Description": "Test Y Rule Desc",
+            "Priority": 20,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": ">",
+            "Comparator": "19000101",
+            "CommsRouting": "YRULEID1|INTERNALTESCO"
           }
-        ],
-        "Version": "1",
-        "Name": "Test Config",
-        "Type": "M",
-        "IterationDate": "20250101",
-        "IterationNumber": 1,
-        "CommsType": "R",
-        "ApprovalMinimum": 1,
-        "ApprovalMaximum": 5000000
+        ]
       }
-    ],
-    "StartDate": "20250101",
-    "EndDate": "20260101",
-    "ApprovalMinimum": 1,
-    "ApprovalMaximum": 5000000
+    ]
   }
 }

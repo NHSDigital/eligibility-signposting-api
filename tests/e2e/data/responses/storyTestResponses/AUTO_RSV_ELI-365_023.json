@@ -23,6 +23,11 @@
       "condition": "RSV",
       "eligibilityCohorts": [
         {
+          "cohortCode": "rsv_age",
+          "cohortStatus": "Actionable",
+          "cohortText": "are aged 75 to 79 years old"
+        },
+        {
           "cohortCode": "rsv_age_catchup",
           "cohortStatus": "Actionable",
           "cohortText": "turned 80 after 1st September 2024"

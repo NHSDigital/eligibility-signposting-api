@@ -105,6 +105,49 @@ data "aws_iam_policy_document" "access_logs_s3_bucket_policy" {
       variable = "aws:SecureTransport"
     }
   }
+
+  # Allow S3 Log Delivery service to write access logs
+  statement {
+    sid    = "S3ServerAccessLogsPolicy"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["logging.s3.amazonaws.com"]
+    }
+    actions = [
+      "s3:PutObject"
+    ]
+    resources = [
+      "${aws_s3_bucket.storage_bucket_access_logs.arn}/*"
+    ]
+    condition {
+      test     = "ArnEquals"
+      variable = "aws:SourceArn"
+      values   = [aws_s3_bucket.storage_bucket.arn]
+    }
+  }
+
+  # Allow S3 Log Delivery service to check bucket location and get bucket ACL
+  statement {
+    sid    = "S3ServerAccessLogsDeliveryRootAccess"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["logging.s3.amazonaws.com"]
+    }
+    actions = [
+      "s3:GetBucketAcl",
+      "s3:ListBucket"
+    ]
+    resources = [
+      aws_s3_bucket.storage_bucket_access_logs.arn
+    ]
+    condition {
+      test     = "ArnEquals"
+      variable = "aws:SourceArn"
+      values   = [aws_s3_bucket.storage_bucket.arn]
+    }
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "storage_bucket_access_logs_server_side_encryption_config" {
@@ -112,7 +155,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "storage_bucket_ac
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "aws:kms"
+      sse_algorithm     = "aws:kms"
       kms_master_key_id = aws_kms_key.storage_bucket_cmk.arn
     }
   }

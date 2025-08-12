@@ -4,9 +4,13 @@ from dataclasses import dataclass
 from datetime import date
 from enum import Enum, StrEnum, auto
 from functools import total_ordering
-from typing import NewType, Self
+from typing import TYPE_CHECKING, NewType, Self
 
 from pydantic import HttpUrl
+
+if TYPE_CHECKING:
+    from eligibility_signposting_api.model import campaign_config
+    from eligibility_signposting_api.model.campaign_config import CampaignID, CampaignVersion, CohortLabel, Iteration
 
 NHSNumber = NewType("NHSNumber", str)
 DateOfBirth = NewType("DateOfBirth", date)
@@ -24,11 +28,15 @@ ActionDescription = NewType("ActionDescription", str)
 UrlLink = NewType("UrlLink", HttpUrl)
 UrlLabel = NewType("UrlLabel", str)
 
+StatusText = NewType("StatusText", str)
+
 
 class RuleType(StrEnum):
     filter = "F"
     suppression = "S"
     redirect = "R"
+    not_eligible_actions = "X"
+    not_actionable_actions = "Y"
 
 
 @total_ordering
@@ -65,6 +73,21 @@ class Status(Enum):
         """
         return max(statuses)
 
+    def get_status_text(self, condition_name: ConditionName) -> StatusText:
+        status_to_text_mapping = {
+            self.not_eligible: lambda: StatusText("We do not believe you can have it"),
+            self.not_actionable: lambda: StatusText(f"You should have the {condition_name} vaccine"),
+            self.actionable: lambda: StatusText(f"You should have the {condition_name} vaccine"),
+        }
+        return status_to_text_mapping.get(self, lambda: StatusText("Unknown status provided"))()
+
+    def get_action_rule_type(self) -> RuleType:
+        return {
+            self.not_eligible: RuleType.not_eligible_actions,
+            self.not_actionable: RuleType.not_actionable_actions,
+            self.actionable: RuleType.redirect,
+        }[self]
+
 
 @dataclass
 class Reason:
@@ -90,6 +113,8 @@ class Condition:
     condition_name: ConditionName
     status: Status
     cohort_results: list[CohortGroupResult]
+    suitability_rules: list[Reason]
+    status_text: StatusText
     actions: list[SuggestedAction] | None = None
 
 
@@ -107,6 +132,22 @@ class IterationResult:
     status: Status
     cohort_results: list[CohortGroupResult]
     actions: list[SuggestedAction] | None
+
+
+@dataclass
+class BestIterationResult:
+    iteration_result: IterationResult
+    active_iteration: Iteration | None = None
+    campaign_id: CampaignID | None = None
+    campaign_version: CampaignVersion | None = None
+    cohort_results: dict[CohortLabel, CohortGroupResult] | None = None
+
+
+@dataclass
+class MatchedActionDetail:
+    rule_name: campaign_config.RuleName | None = None
+    rule_priority: campaign_config.RulePriority | None = None
+    actions: list[SuggestedAction] | None = None
 
 
 @dataclass

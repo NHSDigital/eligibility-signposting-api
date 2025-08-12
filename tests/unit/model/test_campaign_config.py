@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from faker import Faker
 from hamcrest import assert_that
 
-from eligibility_signposting_api.model.rules import IterationRule
+from eligibility_signposting_api.model.campaign_config import IterationRule
 from tests.fixtures.builders.model.rule import IterationFactory, RawCampaignConfigFactory
 from tests.fixtures.matchers.rules import is_iteration_rule
 
@@ -52,20 +52,6 @@ def test_iteration_with_overlapping_start_dates_not_allowed(faker: Faker):
         RawCampaignConfigFactory.build(start_date=start_date, iterations=[iteration1, iteration2])
 
 
-def test_iteration_must_have_active_iteration_from_its_start(faker: Faker):
-    # Given
-    start_date = faker.date_object()
-    iteration = IterationFactory.build(iteration_date=start_date + relativedelta(days=1))
-
-    # When, Then
-    with pytest.raises(
-        ValueError,
-        match=r"1 validation error for CampaignConfig\n"
-        r".*1st iteration starts later",
-    ):
-        RawCampaignConfigFactory.build(start_date=start_date, iterations=[iteration])
-
-
 @pytest.mark.parametrize(
     ("rule_stop", "expected"),
     [
@@ -92,3 +78,23 @@ def test_iteration_rule_deserialisation(rule_stop: str, expected):
 
     # Then
     assert_that(actual, is_iteration_rule().with_rule_stop(expected))
+
+
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("manager", "manager@test.com"),
+        ("approver", "approver@test.com"),
+        ("reviewer", "reviewer@test.com"),
+    ],
+)
+def test_campaign_should_accept_list_of_strings_for_different_role_emails(field_name: str, value: str):
+    # Given
+    kwargs = {field_name: value}
+
+    # When, Then
+    with pytest.raises(
+        ValueError,
+        match=rf"1 validation error for CampaignConfig\n{field_name}\n\s+Input should be a valid list.*",
+    ):
+        RawCampaignConfigFactory.build(**kwargs)

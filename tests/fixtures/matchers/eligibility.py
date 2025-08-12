@@ -1,7 +1,11 @@
 from hamcrest.core.matcher import Matcher
 
-from eligibility_signposting_api.model.eligibility import CohortGroupResult, Condition, EligibilityStatus, Reason
-from eligibility_signposting_api.views.response_model.eligibility import Action, EligibilityCohort, SuitabilityRule
+from eligibility_signposting_api.model.eligibility_status import CohortGroupResult, Condition, EligibilityStatus, Reason
+from eligibility_signposting_api.views.response_model.eligibility_response import (
+    Action,
+    EligibilityCohort,
+    SuitabilityRule,
+)
 
 from .meta import BaseAutoMatcher
 

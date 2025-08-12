@@ -14,7 +14,7 @@ from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.audit.audit_service import AuditService
-from eligibility_signposting_api.model.eligibility import (
+from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
     ActionDescription,
     ActionType,
@@ -22,11 +22,6 @@ from eligibility_signposting_api.model.eligibility import (
     Condition,
     EligibilityStatus,
     NHSNumber,
-    Reason,
-    RuleDescription,
-    RuleName,
-    RulePriority,
-    RuleType,
     Status,
     SuggestedAction,
     UrlLabel,
@@ -39,13 +34,13 @@ from eligibility_signposting_api.views.eligibility import (
     build_suitability_results,
     get_or_default_query_params,
 )
-from eligibility_signposting_api.views.response_model import eligibility
+from eligibility_signposting_api.views.response_model import eligibility_response
 from tests.fixtures.builders.model.eligibility import (
     CohortResultFactory,
     ConditionFactory,
     EligibilityStatusFactory,
 )
-from tests.fixtures.matchers.eligibility import is_eligibility_cohort, is_suitability_rule
+from tests.fixtures.matchers.eligibility import is_eligibility_cohort
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +116,7 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
         response,
         is_response()
         .with_status_code(HTTPStatus.NOT_FOUND)
+        .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
         .and_text(
             is_json_that(
                 has_entries(
@@ -158,6 +154,7 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
             response,
             is_response()
             .with_status_code(HTTPStatus.INTERNAL_SERVER_ERROR)
+            .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
             .and_text(
                 is_json_that(
                     has_entries(
@@ -251,166 +248,6 @@ def test_build_eligibility_cohorts_results_consider_only_cohorts_groups_that_has
     )
 
 
-def test_build_suitability_results_with_deduplication():
-    condition: Condition = ConditionFactory.build(
-        status=Status.not_actionable,
-        cohort_results=[
-            CohortResultFactory.build(
-                cohort_code="cohort_group1",
-                status=Status.not_actionable,
-                reasons=[
-                    Reason(
-                        rule_type=RuleType.suppression,
-                        rule_name=RuleName("Exclude too young less than 75"),
-                        rule_description=RuleDescription("your age is greater than 75"),
-                        matcher_matched=False,
-                        rule_priority=RulePriority(1),
-                    ),
-                    Reason(
-                        rule_type=RuleType.suppression,
-                        rule_name=RuleName("Exclude too young less than 75"),
-                        rule_description=RuleDescription("your age is greater than 75"),
-                        matcher_matched=False,
-                        rule_priority=RulePriority(1),
-                    ),
-                    Reason(
-                        rule_type=RuleType.suppression,
-                        rule_name=RuleName("Exclude more than 100"),
-                        rule_description=RuleDescription("your age is greater than 100"),
-                        matcher_matched=False,
-                        rule_priority=RulePriority(1),
-                    ),
-                ],
-            ),
-            CohortResultFactory.build(
-                cohort_code="cohort_group2",
-                status=Status.not_actionable,
-                reasons=[
-                    Reason(
-                        rule_type=RuleType.suppression,
-                        rule_name=RuleName("Exclude too young less than 75"),
-                        rule_description=RuleDescription("your age is greater than 75"),
-                        matcher_matched=False,
-                        rule_priority=RulePriority(1),
-                    )
-                ],
-            ),
-            CohortResultFactory.build(
-                cohort_code="cohort_group3",
-                status=Status.not_eligible,
-                reasons=[
-                    Reason(
-                        rule_type=RuleType.filter,
-                        rule_name=RuleName("Exclude is present in sw1"),
-                        rule_description=RuleDescription("your a member of sw1"),
-                        matcher_matched=False,
-                        rule_priority=RulePriority(1),
-                    )
-                ],
-            ),
-            CohortResultFactory.build(
-                cohort_code="cohort_group4",
-                description="",
-                status=Status.not_actionable,
-                reasons=[
-                    Reason(
-                        rule_type=RuleType.filter,
-                        rule_name=RuleName("Already vaccinated"),
-                        rule_description=RuleDescription("you have already vaccinated"),
-                        matcher_matched=False,
-                        rule_priority=RulePriority(1),
-                    )
-                ],
-            ),
-        ],
-    )
-
-    results = build_suitability_results(condition)
-
-    assert_that(
-        results,
-        contains_exactly(
-            is_suitability_rule()
-            .with_rule_code("Exclude too young less than 75")
-            .and_rule_text("your age is greater than 75"),
-            is_suitability_rule().with_rule_code("Exclude more than 100").and_rule_text("your age is greater than 100"),
-            is_suitability_rule().with_rule_code("Already vaccinated").and_rule_text("you have already vaccinated"),
-        ),
-    )
-
-
-def test_build_suitability_results_when_rule_text_is_empty_or_null():
-    condition: Condition = ConditionFactory.build(
-        status=Status.not_actionable,
-        cohort_results=[
-            CohortResultFactory.build(
-                cohort_code="cohort_group1",
-                status=Status.not_actionable,
-                reasons=[
-                    Reason(
-                        rule_type=RuleType.suppression,
-                        rule_name=RuleName("Exclude too young less than 75"),
-                        rule_description=RuleDescription("your age is greater than 75"),
-                        matcher_matched=False,
-                        rule_priority=RulePriority(1),
-                    ),
-                    Reason(
-                        rule_type=RuleType.suppression,
-                        rule_name=RuleName("Exclude more than 100"),
-                        rule_description=RuleDescription(""),
-                        matcher_matched=False,
-                        rule_priority=RulePriority(1),
-                    ),
-                    Reason(
-                        rule_type=RuleType.suppression,
-                        rule_name=RuleName("Exclude more than 100"),
-                        matcher_matched=False,
-                        rule_description=None,
-                        rule_priority=RulePriority(1),
-                    ),
-                ],
-            ),
-            CohortResultFactory.build(
-                cohort_code="cohort_group2",
-                status=Status.not_actionable,
-                reasons=[
-                    Reason(
-                        rule_type=RuleType.filter,
-                        rule_name=RuleName("Exclude is present in sw1"),
-                        rule_description=RuleDescription(""),
-                        matcher_matched=False,
-                        rule_priority=RulePriority(1),
-                    )
-                ],
-            ),
-            CohortResultFactory.build(
-                cohort_code="cohort_group3",
-                status=Status.not_actionable,
-                reasons=[
-                    Reason(
-                        rule_type=RuleType.filter,
-                        rule_name=RuleName("Exclude is present in sw1"),
-                        rule_description=None,
-                        matcher_matched=False,
-                        rule_priority=RulePriority(1),
-                    )
-                ],
-            ),
-        ],
-    )
-
-    results = build_suitability_results(condition)
-
-    assert_that(
-        results,
-        contains_exactly(
-            is_suitability_rule()
-            .with_rule_code("Exclude too young less than 75")
-            .and_rule_text("your age is greater than 75")
-        ),
-    )
-
-
 def test_no_suitability_rules_for_actionable():
     condition = ConditionFactory.build(status=Status.actionable, cohort_results=[])
 
@@ -433,12 +270,12 @@ def test_no_suitability_rules_for_actionable():
                 )
             ],
             [
-                eligibility.Action(
-                    actionType=eligibility.ActionType("TYPE_A"),
-                    actionCode=eligibility.ActionCode("CODE123"),
-                    description=eligibility.Description("Some description"),
-                    urlLink=eligibility.UrlLink("https://example.com"),
-                    urlLabel=eligibility.UrlLabel("Learn more"),
+                eligibility_response.Action(
+                    actionType=eligibility_response.ActionType("TYPE_A"),
+                    actionCode=eligibility_response.ActionCode("CODE123"),
+                    description=eligibility_response.Description("Some description"),
+                    urlLink=eligibility_response.UrlLink("https://example.com"),
+                    urlLabel=eligibility_response.UrlLabel("Learn more"),
                 )
             ],
         ),
@@ -453,9 +290,9 @@ def test_no_suitability_rules_for_actionable():
                 )
             ],
             [
-                eligibility.Action(
-                    actionType=eligibility.ActionType("TYPE_B"),
-                    actionCode=eligibility.ActionCode("CODE123"),
+                eligibility_response.Action(
+                    actionType=eligibility_response.ActionType("TYPE_B"),
+                    actionCode=eligibility_response.ActionCode("CODE123"),
                     description="",
                     urlLink="",
                     urlLabel="",
@@ -481,23 +318,23 @@ def test_build_actions(suggested_actions, expected):
 
 
 def test_excludes_nulls_via_build_response(client: FlaskClient):
-    mocked_response = eligibility.EligibilityResponse(
+    mocked_response = eligibility_response.EligibilityResponse(
         responseId=uuid4(),
-        meta=eligibility.Meta(lastUpdated=eligibility.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
+        meta=eligibility_response.Meta(lastUpdated=eligibility_response.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
         processedSuggestions=[
-            eligibility.ProcessedSuggestion(
-                condition=eligibility.ConditionName("ConditionA"),
-                status=eligibility.Status.actionable,
-                statusText=eligibility.StatusText("Go ahead"),
+            eligibility_response.ProcessedSuggestion(
+                condition=eligibility_response.ConditionName("ConditionA"),
+                status=eligibility_response.Status.actionable,
+                statusText=eligibility_response.StatusText("Go ahead"),
                 eligibilityCohorts=[],
                 suitabilityRules=[],
                 actions=[
-                    eligibility.Action(
-                        actionType=eligibility.ActionType("TYPE_A"),
-                        actionCode=eligibility.ActionCode("CODE123"),
-                        description=eligibility.Description(""),  # Should be an empty string
-                        urlLink=eligibility.UrlLink(""),  # Should be an empty string
-                        urlLabel=eligibility.UrlLabel(""),  # Should be an empty string
+                    eligibility_response.Action(
+                        actionType=eligibility_response.ActionType("TYPE_A"),
+                        actionCode=eligibility_response.ActionCode("CODE123"),
+                        description=eligibility_response.Description(""),  # Should be an empty string
+                        urlLink=eligibility_response.UrlLink(""),  # Should be an empty string
+                        urlLabel=eligibility_response.UrlLabel(""),  # Should be an empty string
                     )
                 ],
             )
@@ -533,23 +370,23 @@ def test_excludes_nulls_via_build_response(client: FlaskClient):
 
 
 def test_build_response_include_values_that_are_not_null(client: FlaskClient):
-    mocked_response = eligibility.EligibilityResponse(
+    mocked_response = eligibility_response.EligibilityResponse(
         responseId=uuid4(),
-        meta=eligibility.Meta(lastUpdated=eligibility.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
+        meta=eligibility_response.Meta(lastUpdated=eligibility_response.LastUpdated(datetime(2023, 1, 1, tzinfo=UTC))),
         processedSuggestions=[
-            eligibility.ProcessedSuggestion(
-                condition=eligibility.ConditionName("ConditionA"),
-                status=eligibility.Status.actionable,
-                statusText=eligibility.StatusText("Go ahead"),
+            eligibility_response.ProcessedSuggestion(
+                condition=eligibility_response.ConditionName("ConditionA"),
+                status=eligibility_response.Status.actionable,
+                statusText=eligibility_response.StatusText("Go ahead"),
                 eligibilityCohorts=[],
                 suitabilityRules=[],
                 actions=[
-                    eligibility.Action(
-                        actionType=eligibility.ActionType("TYPE_A"),
-                        actionCode=eligibility.ActionCode("CODE123"),
-                        description=eligibility.Description("Contact GP"),
-                        urlLink=eligibility.UrlLink("https://example.dummy/"),
-                        urlLabel=eligibility.UrlLabel("GP contact"),
+                    eligibility_response.Action(
+                        actionType=eligibility_response.ActionType("TYPE_A"),
+                        actionCode=eligibility_response.ActionCode("CODE123"),
+                        description=eligibility_response.Description("Contact GP"),
+                        urlLink=eligibility_response.UrlLink("https://example.dummy/"),
+                        urlLabel=eligibility_response.UrlLabel("GP contact"),
                     )
                 ],
             )
@@ -582,46 +419,6 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
         assert action["description"] == "Contact GP"
         assert action["urlLink"] == "https://example.dummy/"
         assert action["urlLabel"] == "GP contact"
-
-
-@pytest.mark.parametrize(
-    ("headers", "expected_request_id"),
-    [
-        ({"X-Request-ID": "test-request-id-123"}, "test-request-id-123"),
-        (
-            {"X-Request-ID": ""},
-            "",
-        ),
-        (
-            {},  # No headers provided
-            None,
-        ),
-    ],
-)
-def test_request_id_from_header_logging_variants(
-    app: Flask, client: FlaskClient, caplog, headers: dict[str, str], expected_request_id: str
-):
-    """
-    This test checks that the x-request-ID is logged so that it can be used to correlate logs
-    with that of the logs from api-gateway
-    """
-    with (
-        get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()),
-        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
-    ):
-        with caplog.at_level(logging.INFO):
-            response = client.get("/patient-check/12345", headers=headers)
-
-        request_id_logged = False
-        for record in caplog.records:
-            request_id = getattr(record, "X-Request-ID", None)
-
-            if request_id == expected_request_id:
-                request_id_logged = True
-                break
-
-        assert request_id_logged
-        assert response.status_code == HTTPStatus.OK
 
 
 def test_get_or_default_query_params_with_no_args(app: Flask):

@@ -22,6 +22,7 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
       KINESIS_AUDIT_STREAM_TO_S3 = var.kinesis_audit_stream_to_s3_name
       ENV                        = var.environment
       LOG_LEVEL                  = var.log_level
+      ENABLE_XRAY_PATCHING       = var.enable_xray_patching
     }
   }
 
