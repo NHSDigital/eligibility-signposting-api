@@ -11,10 +11,10 @@ from hamcrest import (
     has_key,
 )
 
-from eligibility_signposting_api.model.eligibility import (
+from eligibility_signposting_api.model.campaign_config import CampaignConfig
+from eligibility_signposting_api.model.eligibility_status import (
     NHSNumber,
 )
-from eligibility_signposting_api.model.rules import CampaignConfig
 
 
 class TestBaseLine:
@@ -85,7 +85,7 @@ class TestStandardResponse:
                                     ],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -128,7 +128,7 @@ class TestStandardResponse:
                                     ],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -177,7 +177,7 @@ class TestStandardResponse:
                                             "ruleType": "S",
                                         }
                                     ],
-                                    "statusText": "Status.not_actionable",
+                                    "statusText": "You should have the RSV vaccine",
                                 }
                             ]
                         ),
@@ -228,7 +228,58 @@ class TestStandardResponse:
                                         }
                                     ],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the RSV vaccine",
+                                }
+                            ]
+                        ),
+                    )
+                )
+            ),
+        )
+
+    def test_actionable_with_and_rule(
+        self,
+        client: FlaskClient,
+        persisted_person: NHSNumber,
+        campaign_config_with_and_rule: CampaignConfig,  # noqa: ARG002
+    ):
+        # Given
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y")
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(
+                is_json_that(
+                    has_entry(
+                        "processedSuggestions",
+                        equal_to(
+                            [
+                                {
+                                    "condition": "RSV",
+                                    "status": "Actionable",
+                                    "eligibilityCohorts": [
+                                        {
+                                            "cohortCode": "cohort_group1",
+                                            "cohortStatus": "Actionable",
+                                            "cohortText": "positive_description",
+                                        }
+                                    ],
+                                    "actions": [
+                                        {
+                                            "actionCode": "action_code",
+                                            "actionType": "defaultcomms",
+                                            "description": "",
+                                            "urlLabel": "",
+                                            "urlLink": "",
+                                        }
+                                    ],
+                                    "suitabilityRules": [],
+                                    "statusText": "You should have the RSV vaccine",
                                 }
                             ]
                         ),
@@ -273,7 +324,7 @@ class TestMagicCohortResponse:
                                     ],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -322,7 +373,7 @@ class TestMagicCohortResponse:
                                             "ruleType": "S",
                                         }
                                     ],
-                                    "statusText": "Status.not_actionable",
+                                    "statusText": "You should have the COVID vaccine",
                                 }
                             ]
                         ),
@@ -373,7 +424,7 @@ class TestMagicCohortResponse:
                                         }
                                     ],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the COVID vaccine",
                                 }
                             ]
                         ),
@@ -412,7 +463,7 @@ class TestResponseOnMissingAttributes:
                                     "eligibilityCohorts": [],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -449,7 +500,7 @@ class TestResponseOnMissingAttributes:
                                     "eligibilityCohorts": [],
                                     "actions": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.not_eligible",
+                                    "statusText": "We do not believe you can have it",
                                 }
                             ]
                         ),
@@ -492,7 +543,7 @@ class TestResponseOnMissingAttributes:
                                             "ruleType": "S",
                                         }
                                     ],
-                                    "statusText": "Status.not_actionable",
+                                    "statusText": "You should have the FLU vaccine",
                                 }
                             ]
                         ),
@@ -537,7 +588,7 @@ class TestResponseOnMissingAttributes:
                                         }
                                     ],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the FLU vaccine",
                                 }
                             ]
                         ),
@@ -573,7 +624,7 @@ class TestResponseOnMissingAttributes:
                                     "status": "Actionable",
                                     "eligibilityCohorts": [],
                                     "suitabilityRules": [],
-                                    "statusText": "Status.actionable",
+                                    "statusText": "You should have the FLU vaccine",
                                 }
                             ]
                         ),

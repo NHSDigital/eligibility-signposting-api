@@ -70,23 +70,23 @@ class AuditAction(CamelCaseBaseModel):
 
 class AuditCondition(CamelCaseBaseModel):
     campaign_id: str | None = None
-    campaign_version: str | None = None
+    campaign_version: int | None = None
     iteration_id: str | None = None
-    iteration_version: str | None = None
+    iteration_version: int | None = None
     condition_name: str | None = None
     status: str | None = None
     status_text: str | None = None
     eligibility_cohorts: list[AuditEligibilityCohorts] | None = None
     eligibility_cohort_groups: list[AuditEligibilityCohortGroups] | None = None
-    filter_rules: AuditFilterRule | None = None
-    suitability_rules: AuditSuitabilityRule | None = None
+    filter_rules: list[AuditFilterRule] | None = None
+    suitability_rules: list[AuditSuitabilityRule] | None = None
     action_rule: AuditRedirectRule | None = None
     actions: list[AuditAction] | None = Field(default_factory=list)
 
 
 class ResponseAuditData(CamelCaseBaseModel):
     response_id: UUID | None = None
-    last_updated: str | None = None
+    last_updated: datetime | None = None
     condition: list[AuditCondition] = Field(default_factory=list)
 
 

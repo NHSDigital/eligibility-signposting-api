@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 from hamcrest import assert_that, empty
 
-from eligibility_signposting_api.model.eligibility import NHSNumber
+from eligibility_signposting_api.model.eligibility_status import NHSNumber
 from eligibility_signposting_api.repos import CampaignRepo, NotFoundError, PersonRepo
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculatorFactory

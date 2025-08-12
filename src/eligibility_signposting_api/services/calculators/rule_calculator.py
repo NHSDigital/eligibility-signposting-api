@@ -1,31 +1,37 @@
 from __future__ import annotations
 
-from collections.abc import Collection, Mapping
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from hamcrest.core.string_description import StringDescription
 
-from eligibility_signposting_api.model import eligibility, rules
-from eligibility_signposting_api.services.rules.operators import OperatorRegistry
+from eligibility_signposting_api.model import eligibility_status
+from eligibility_signposting_api.model.campaign_config import IterationRule, RuleAttributeLevel, RuleType
+from eligibility_signposting_api.services.operators.operators import OperatorRegistry
+from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
 
-Row = Collection[Mapping[str, Any]]
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from eligibility_signposting_api.model.person import Person
 
 
 @dataclass
 class RuleCalculator:
-    person_data: Row
-    rule: rules.IterationRule
+    person: Person
+    rule: IterationRule
 
-    def evaluate_exclusion(self) -> tuple[eligibility.Status, eligibility.Reason]:
+    person_data_reader: PersonDataReader = field(default_factory=PersonDataReader)
+
+    def evaluate_exclusion(self) -> tuple[eligibility_status.Status, eligibility_status.Reason]:
         """Evaluate if a particular rule excludes this person. Return the result, and the reason for the result."""
         attribute_value = self.get_attribute_value()
         status, reason, matcher_matched = self.evaluate_rule(attribute_value)
-        reason = eligibility.Reason(
-            rule_name=eligibility.RuleName(self.rule.name),
-            rule_type=eligibility.RuleType(self.rule.type),
-            rule_priority=eligibility.RulePriority(str(self.rule.priority)),
-            rule_description=eligibility.RuleDescription(self.rule.description),
+        reason = eligibility_status.Reason(
+            rule_name=eligibility_status.RuleName(self.rule.name),
+            rule_type=eligibility_status.RuleType(self.rule.type),
+            rule_priority=eligibility_status.RulePriority(str(self.rule.priority)),
+            rule_description=eligibility_status.RuleDescription(self.rule.description),
             matcher_matched=matcher_matched,
         )
         return status, reason
@@ -33,32 +39,24 @@ class RuleCalculator:
     def get_attribute_value(self) -> str | None:
         """Pull out the correct attribute for a rule from the person's data."""
         match self.rule.attribute_level:
-            case rules.RuleAttributeLevel.PERSON:
+            case RuleAttributeLevel.PERSON:
                 person: Mapping[str, str | None] | None = next(
-                    (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == "PERSON"), None
+                    (r for r in self.person.data if r.get("ATTRIBUTE_TYPE", "") == "PERSON"), None
                 )
                 attribute_value = person.get(str(self.rule.attribute_name)) if person else None
-            case rules.RuleAttributeLevel.COHORT:
+            case RuleAttributeLevel.COHORT:
                 cohorts: Mapping[str, str | None] | None = next(
-                    (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"), None
+                    (r for r in self.person.data if r.get("ATTRIBUTE_TYPE", "") == "COHORTS"), None
                 )
                 if cohorts:
-                    attr_name = (
-                        "COHORT_MAP"
-                        if not self.rule.attribute_name or self.rule.attribute_name == "COHORT_LABEL"
-                        else self.rule.attribute_name
-                    )
-                    cohort_map = self.get_value(cohorts, attr_name)
-                    cohorts_dict = self.get_value(cohort_map, "cohorts")
-                    m_dict = self.get_value(cohorts_dict, "M")
-                    person_cohorts: set[str] = set(m_dict.keys())
+                    person_cohorts = self.person_data_reader.get_person_cohorts(self.person)
                     attribute_value = ",".join(person_cohorts)
                 else:
                     attribute_value = None
 
-            case rules.RuleAttributeLevel.TARGET:
+            case RuleAttributeLevel.TARGET:
                 target: Mapping[str, str | None] | None = next(
-                    (r for r in self.person_data if r.get("ATTRIBUTE_TYPE", "") == self.rule.attribute_target), None
+                    (r for r in self.person.data if r.get("ATTRIBUTE_TYPE", "") == self.rule.attribute_target), None
                 )
                 attribute_value = target.get(str(self.rule.attribute_name)) if target else None
             case _:  # pragma: no cover
@@ -66,12 +64,7 @@ class RuleCalculator:
                 raise NotImplementedError(msg)
         return attribute_value
 
-    @staticmethod
-    def get_value(dictionary: Mapping[str, Any] | None, key: str) -> dict:
-        v = dictionary.get(key, {}) if isinstance(dictionary, dict) else {}
-        return v if isinstance(v, dict) else {}
-
-    def evaluate_rule(self, attribute_value: str | None) -> tuple[eligibility.Status, str, bool]:
+    def evaluate_rule(self, attribute_value: str | None) -> tuple[eligibility_status.Status, str, bool]:
         """Evaluate a rule against a person data attribute. Return the result, and the reason for the result."""
         matcher_class = OperatorRegistry.get(self.rule.operator)
         matcher = matcher_class(rule_value=self.rule.comparator)
@@ -81,10 +74,12 @@ class RuleCalculator:
         if matcher_matched:
             matcher.describe_match(attribute_value, reason)
             status = {
-                rules.RuleType.filter: eligibility.Status.not_eligible,
-                rules.RuleType.suppression: eligibility.Status.not_actionable,
-                rules.RuleType.redirect: eligibility.Status.actionable,
+                RuleType.filter: eligibility_status.Status.not_eligible,
+                RuleType.suppression: eligibility_status.Status.not_actionable,
+                RuleType.redirect: eligibility_status.Status.actionable,
+                RuleType.not_eligible_actions: eligibility_status.Status.not_eligible,
+                RuleType.not_actionable_actions: eligibility_status.Status.not_actionable,
             }[self.rule.type]
             return status, str(reason), matcher_matched
         matcher.describe_mismatch(attribute_value, reason)
-        return eligibility.Status.actionable, str(reason), matcher_matched
+        return eligibility_status.Status.actionable, str(reason), matcher_matched

@@ -4,7 +4,7 @@ import pytest
 from faker import Faker
 from hamcrest import assert_that, contains_inanyorder, has_entries
 
-from eligibility_signposting_api.model.eligibility import NHSNumber
+from eligibility_signposting_api.model.eligibility_status import NHSNumber
 from eligibility_signposting_api.repos import NotFoundError
 from eligibility_signposting_api.repos.person_repo import PersonRepo
 
@@ -18,7 +18,7 @@ def test_person_found(person_table: Any, persisted_person: NHSNumber):
 
     # Then
     assert_that(
-        actual,
+        actual.data,
         contains_inanyorder(
             has_entries({"NHS_NUMBER": persisted_person, "ATTRIBUTE_TYPE": "PERSON"}),
             has_entries({"NHS_NUMBER": persisted_person, "ATTRIBUTE_TYPE": "COHORTS"}),

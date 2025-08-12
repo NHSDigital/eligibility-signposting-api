@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -16,7 +17,13 @@ from faker import Faker
 from httpx import RequestError
 from yarl import URL
 
-from eligibility_signposting_api.model import eligibility, rules
+from eligibility_signposting_api.model import eligibility_status
+from eligibility_signposting_api.model.campaign_config import (
+    CampaignConfig,
+    EndDate,
+    RuleType,
+    StartDate,
+)
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
 from tests.fixtures.builders.model import rule
@@ -330,12 +337,12 @@ def person_table(dynamodb_resource: ServiceResource) -> Generator[Any]:
 
 
 @pytest.fixture
-def persisted_person(person_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
-    nhs_number = eligibility.NHSNumber(faker.nhs_number())
-    date_of_birth = eligibility.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
+def persisted_person(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
+    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
 
     for row in (
-        rows := person_rows_builder(nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"])
+        rows := person_rows_builder(nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
     ):
         person_table.put_item(Item=row)
 
@@ -346,9 +353,9 @@ def persisted_person(person_table: Any, faker: Faker) -> Generator[eligibility.N
 
 
 @pytest.fixture
-def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
-    nhs_number = eligibility.NHSNumber(faker.nhs_number())
-    date_of_birth = eligibility.DateOfBirth(faker.date_of_birth(minimum_age=77, maximum_age=77))
+def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
+    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=77, maximum_age=77))
 
     for row in (
         rows := person_rows_builder(
@@ -356,7 +363,7 @@ def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibil
             date_of_birth=date_of_birth,
             postcode="hp1",
             cohorts=["cohort1", "cohort2"],
-        )
+        ).data
     ):
         person_table.put_item(Item=row)
 
@@ -367,18 +374,18 @@ def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibil
 
 
 @pytest.fixture
-def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
-    nhs_number = eligibility.NHSNumber(faker.nhs_number())
-    date_of_birth = eligibility.DateOfBirth(faker.date_of_birth(minimum_age=74, maximum_age=74))
+def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
+    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=74, maximum_age=74))
 
     for row in (
         rows := person_rows_builder(
             nhs_number,
             date_of_birth=date_of_birth,
-            postcode="hp1",
-            cohorts=["cohort_label1", "cohort_label2", "cohort_label3"],
+            postcode="SW19",
+            cohorts=["cohort_label1", "cohort_label2", "cohort_label3", "cohort_label4", "cohort_label5"],
             icb="QE1",
-        )
+        ).data
     ):
         person_table.put_item(Item=row)
 
@@ -389,10 +396,10 @@ def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[e
 
 
 @pytest.fixture
-def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
-    nhs_number = eligibility.NHSNumber(faker.nhs_number())
+def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
+    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
 
-    for row in (rows := person_rows_builder(nhs_number)):
+    for row in (rows := person_rows_builder(nhs_number).data):
         person_table.put_item(Item=row)
 
     yield nhs_number
@@ -402,11 +409,11 @@ def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[el
 
 
 @pytest.fixture
-def persisted_person_pc_sw19(person_table: Any, faker: Faker) -> Generator[eligibility.NHSNumber]:
-    nhs_number = eligibility.NHSNumber(
+def persisted_person_pc_sw19(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
+    nhs_number = eligibility_status.NHSNumber(
         faker.nhs_number(),
     )
-    for row in (rows := person_rows_builder(nhs_number, postcode="SW19", cohorts=["cohort1"])):
+    for row in (rows := person_rows_builder(nhs_number, postcode="SW19", cohorts=["cohort1"]).data):
         person_table.put_item(Item=row)
 
     yield nhs_number
@@ -452,13 +459,13 @@ def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketNa
 
 
 @pytest.fixture(scope="class")
-def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[rules.CampaignConfig]:
-    campaign: rules.CampaignConfig = rule.CampaignConfigFactory.build(
+def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
         target="RSV",
         iterations=[
             rule.IterationFactory.build(
                 iteration_rules=[
-                    rule.PostcodeSuppressionRuleFactory.build(type=rules.RuleType.filter),
+                    rule.PostcodeSuppressionRuleFactory.build(type=RuleType.filter),
                     rule.PersonAgeSuppressionRuleFactory.build(),
                 ],
                 iteration_cohorts=[
@@ -481,14 +488,99 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
 
 
 @pytest.fixture(scope="class")
-def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[rules.CampaignConfig]]:
+def inactive_iteration_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
+    campaigns, campaign_data_keys = [], []
+
+    target_iteration_dates = {
+        "start_date": ("RSV", datetime.date(2025, 1, 1)),  # Active Iteration Date
+        "start_date_plus_one_day": ("COVID", datetime.date(2025, 1, 2)),  # Active Iteration Date
+        "today": ("FLU", datetime.date(2025, 8, 8)),  # Active Iteration Date
+        "tomorrow": ("MMR", datetime.date(2025, 8, 9)),  # Inactive Iteration Date
+    }
+
+    for target, data in target_iteration_dates.items():
+        campaign = rule.CampaignConfigFactory.build(
+            id=f"campaign_{target}",
+            target=data[0],
+            type="V",
+            iterations=[
+                rule.IterationFactory.build(
+                    iteration_rules=[rule.PersonAgeSuppressionRuleFactory.build()],
+                    iteration_cohorts=[rule.IterationCohortFactory.build(cohort_label="cohort_label1")],
+                )
+            ],
+        )
+
+        campaign.start_date = StartDate(datetime.date(2025, 1, 1))
+        campaign.end_date = EndDate(datetime.date(2026, 1, 1))
+        campaign.iterations[0].iteration_date = data[1]
+
+        campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+        key = f"{campaign.name}.json"
+        s3_client.put_object(
+            Bucket=rules_bucket, Key=key, Body=json.dumps(campaign_data), ContentType="application/json"
+        )
+        campaigns.append(campaign)
+        campaign_data_keys.append(key)
+
+    yield campaigns
+
+    for key in campaign_data_keys:
+        s3_client.delete_object(Bucket=rules_bucket, Key=key)
+
+
+@pytest.fixture(scope="class")
+def campaign_config_with_and_rule(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="RSV",
+        iterations=[
+            rule.IterationFactory.build(
+                iteration_rules=[
+                    rule.PostcodeSuppressionRuleFactory.build(
+                        cohort_label="cohort2",
+                    ),
+                    rule.PersonAgeSuppressionRuleFactory.build(),
+                ],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort1",
+                        cohort_group="cohort_group1",
+                        positive_description="positive_description",
+                        negative_description="negative_description",
+                    ),
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort2",
+                        cohort_group="cohort_group2",
+                        positive_description="positive_description",
+                        negative_description="negative_description",
+                    ),
+                ],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture(scope="class")
+def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
     campaigns, campaign_data_keys = [], []
 
     targets = ["RSV", "COVID", "FLU"]
     target_rules_map = {
-        targets[0]: [rule.PersonAgeSuppressionRuleFactory.build(type=rules.RuleType.filter)],
-        targets[1]: [rule.PersonAgeSuppressionRuleFactory.build()],
+        targets[0]: [
+            rule.PersonAgeSuppressionRuleFactory.build(type=RuleType.filter, description="TOO YOUNG"),
+            rule.PostcodeSuppressionRuleFactory.build(type=RuleType.filter, priority=8, cohort_label="cohort_label4"),
+        ],
+        targets[1]: [
+            rule.PersonAgeSuppressionRuleFactory.build(description="TOO YOUNG"),
+            rule.PostcodeSuppressionRuleFactory.build(priority=12, cohort_label="cohort_label2"),
+        ],
         targets[2]: [rule.ICBRedirectRuleFactory.build()],
     }
 
@@ -506,7 +598,13 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
                             cohort_group=f"cohort_group{i + 1}",
                             positive_description=f"positive_desc_{i + 1}",
                             negative_description=f"negative_desc_{i + 1}",
-                        )
+                        ),
+                        rule.IterationCohortFactory.build(
+                            cohort_label="cohort_label4",
+                            cohort_group="cohort_group4",
+                            positive_description="positive_desc_4",
+                            negative_description="negative_desc_4",
+                        ),
                     ],
                 )
             ],
@@ -526,15 +624,13 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
 
 
 @pytest.fixture(scope="class")
-def campaign_config_with_magic_cohort(
-    s3_client: BaseClient, rules_bucket: BucketName
-) -> Generator[rules.CampaignConfig]:
-    campaign: rules.CampaignConfig = rule.CampaignConfigFactory.build(
+def campaign_config_with_magic_cohort(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
         target="COVID",
         iterations=[
             rule.IterationFactory.build(
                 iteration_rules=[
-                    rule.PostcodeSuppressionRuleFactory.build(type=rules.RuleType.filter),
+                    rule.PostcodeSuppressionRuleFactory.build(type=RuleType.filter),
                     rule.PersonAgeSuppressionRuleFactory.build(),
                 ],
                 iteration_cohorts=[rule.MagicCohortFactory.build(cohort_label="elid_all_people")],
@@ -552,13 +648,13 @@ def campaign_config_with_magic_cohort(
 @pytest.fixture(scope="class")
 def campaign_config_with_missing_descriptions_missing_rule_text(
     s3_client: BaseClient, rules_bucket: BucketName
-) -> Generator[rules.CampaignConfig]:
-    campaign: rules.CampaignConfig = rule.CampaignConfigFactory.build(
+) -> Generator[CampaignConfig]:
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
         target="FLU",
         iterations=[
             rule.IterationFactory.build(
                 iteration_rules=[
-                    rule.PostcodeSuppressionRuleFactory.build(type=rules.RuleType.filter),
+                    rule.PostcodeSuppressionRuleFactory.build(type=RuleType.filter),
                     rule.PersonAgeSuppressionRuleFactory.build(),
                     rule.PersonAgeSuppressionRuleFactory.build(name="Exclude 76 rolling", description=""),
                 ],
