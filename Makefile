@@ -26,6 +26,8 @@ format: ## Format and fix code
 	poetry run ruff format .
 	poetry run ruff check . --fix-only
 
+format_lint: format lint
+
 #Files to loop over in release
 _dist_include="pytest.ini poetry.lock poetry.toml pyproject.toml Makefile build/. tests"
 
