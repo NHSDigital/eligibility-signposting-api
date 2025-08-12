@@ -83,36 +83,6 @@ class TestValidateRequestParams:
         assert issue["details"]["coding"][0]["display"] == "Access has been denied to process this request."
         assert issue["diagnostics"] == "You are not authorised to request information for the supplied NHS Number"
 
-    def test_validate_request_params_nhs_missing_in_path(self, caplog):
-        mock_handler = MagicMock()
-        mock_context = {}
-        event = {
-            "headers": {"nhs-login-nhs-number": "1234567890"},
-        }
-
-        decorator = request_validator.validate_request_params()
-        wrapped_handler = decorator(mock_handler)
-
-        with caplog.at_level(logging.ERROR):
-            response = wrapped_handler(event, mock_context)
-
-        mock_handler.assert_not_called()
-
-        assert response is not None
-        assert response["statusCode"] == HTTPStatus.BAD_REQUEST
-        response_body = json.loads(response["body"])
-        issue = response_body["issue"][0]
-        assert issue["code"] == "invalid"
-        assert issue["severity"] == "error"
-        assert issue["details"]["coding"][0]["code"] == "BAD_REQUEST"
-        assert issue["details"]["coding"][0]["display"] == "Bad Request"
-        assert issue["diagnostics"] == "Missing required NHS Number from path parameters"
-        assert issue["location"][0] == "parameters/id"
-        assert any(
-            (record.levelname == "ERROR" and "Missing required NHS Number from path parameters" in record.message)
-            for record in caplog.records
-        )
-
 
 class TestValidateQueryParameters:
     @pytest.mark.parametrize(

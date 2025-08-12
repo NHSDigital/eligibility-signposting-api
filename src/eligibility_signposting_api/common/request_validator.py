@@ -11,7 +11,6 @@ from eligibility_signposting_api.common.api_error_response import (
     INVALID_CONDITION_FORMAT_ERROR,
     INVALID_INCLUDE_ACTIONS_ERROR,
     NHS_NUMBER_MISMATCH_ERROR,
-    NHS_NUMBER_MISSING_ERROR,
 )
 from eligibility_signposting_api.config.contants import NHS_NUMBER_HEADER
 
@@ -59,12 +58,6 @@ def validate_request_params() -> Callable:
         def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any] | None:
             path_nhs_no = event.get("pathParameters", {}).get("id")
             header_nhs_no = event.get("headers", {}).get(NHS_NUMBER_HEADER)
-
-            if not path_nhs_no:
-                message = "Missing required NHS Number from path parameters"
-                return NHS_NUMBER_MISSING_ERROR.log_and_generate_response(
-                    log_message=message, diagnostics=message, location_param="id"
-                )
 
             if not validate_nhs_number(path_nhs_no, header_nhs_no):
                 message = "You are not authorised to request information for the supplied NHS Number"
