@@ -79,7 +79,9 @@ class TestValidateRequestParams:
         response_body = json.loads(response["body"])
         issue = response_body["issue"][0]
         assert issue["code"] == "forbidden"
-        assert issue["diagnostics"] == ("NHS Number 0987654321 does not match the header NHS Number 1234567890")
+        assert issue["details"]["coding"][0]["code"] == "ACCESS_DENIED"
+        assert issue["details"]["coding"][0]["display"] == "Access has been denied to process this request."
+        assert issue["diagnostics"] == "You are not authorised to request information for the supplied NHS Number"
 
     def test_validate_request_params_nhs_missing_in_path(self, caplog):
         mock_handler = MagicMock()
