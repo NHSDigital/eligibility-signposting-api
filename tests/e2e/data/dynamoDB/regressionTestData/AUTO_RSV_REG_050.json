@@ -1,7 +1,11 @@
 {
   "scenario_name": "RSV - Regression - NotActionable, Rule Stop Suppression",
-  "request_headers": {"nhs-login-nhs-number": "1000000050"},
-  "config_filenames": ["AUTO_RSV_REG_001.json"],
+  "request_headers": {
+    "nhs-login-nhs-number": "1000000050"
+  },
+  "config_filenames": [
+    "AUTO_RSV_REG_001.json"
+  ],
   "data": [
     {
       "NHS_NUMBER": "1000000050",

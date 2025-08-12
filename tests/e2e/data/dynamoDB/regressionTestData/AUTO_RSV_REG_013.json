@@ -1,7 +1,11 @@
 {
   "scenario_name": "RSV - Regression - Eligible, In Magic Cohort",
-  "request_headers": {"nhs-login-nhs-number": "1000000013"},
-  "config_filenames": ["AUTO_RSV_REG_001.json"],
+  "request_headers": {
+    "nhs-login-nhs-number": "1000000013"
+  },
+  "config_filenames": [
+    "AUTO_RSV_REG_001.json"
+  ],
   "data": [
     {
       "NHS_NUMBER": "1000000013",

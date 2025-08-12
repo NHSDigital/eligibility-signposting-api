@@ -3,9 +3,11 @@
   "request_headers": {
     "nhs-login-nhs-number": "9658218873"
   },
-  "config_filenames": ["vita_integration_test_config.json"],
+  "config_filenames": [
+    "vita_integration_test_config.json"
+  ],
   "data": [
-   {
+    {
       "NHS_NUMBER": "9658218873",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [

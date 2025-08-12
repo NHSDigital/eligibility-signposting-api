@@ -90,7 +90,7 @@
           }
         ],
         "ActionsMapper": {
-         "TEST_ACTION": {
+          "TEST_ACTION": {
             "ExternalRoutingCode": "TestAction",
             "ActionDescription": "TestAction Description",
             "ActionType": "ButtonWithAuthLink",

@@ -6,7 +6,11 @@
   "query_params": {
     "conditions": "covid"
   },
-  "config_filenames": ["AUTO_RSV_ELI-320-COVID.json","AUTO_RSV_ELI-320-RSV.json", "AUTO_RSV_ELI-320-MMR.json"],
+  "config_filenames": [
+    "AUTO_RSV_ELI-320-COVID.json",
+    "AUTO_RSV_ELI-320-RSV.json",
+    "AUTO_RSV_ELI-320-MMR.json"
+  ],
   "data": [
     {
       "NHS_NUMBER": "9990032030",

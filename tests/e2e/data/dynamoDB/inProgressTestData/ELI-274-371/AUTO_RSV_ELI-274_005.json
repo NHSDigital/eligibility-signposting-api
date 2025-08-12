@@ -3,7 +3,9 @@
   "request_headers": {
     "nhs-login-nhs-number": "9900247005"
   },
-  "config_filenames": ["AUTO_RSV_ELI-274-05.json"],
+  "config_filenames": [
+    "AUTO_RSV_ELI-274-05.json"
+  ],
   "data": [
     {
       "NHS_NUMBER": "9900247005",
@@ -12,10 +14,12 @@
         {
           "COHORT_LABEL": "rsv_eli_274_cohort_1",
           "DATE_JOINED": "20231020"
-        },{
+        },
+        {
           "COHORT_LABEL": "rsv_eli_274_cohort_2",
           "DATE_JOINED": "20231020"
-        },{
+        },
+        {
           "COHORT_LABEL": "rsv_eli_274_cohort_3",
           "DATE_JOINED": "20231020"
         }
@@ -43,7 +47,7 @@
       "NHS_NUMBER": "9900247005",
       "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": null,
-      "BOOKED_APPOINTMENT_DATE" : "<<DATE_DAY_5>>",
+      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_5>>",
       "BOOKED_APPOINTMENT_PROVIDER": "NBS"
     }
   ]

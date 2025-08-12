@@ -3,7 +3,9 @@
   "request_headers": {
     "nhs-login-nhs-number": "9686368906"
   },
-  "config_filenames": ["vita_integration_test_config.json"],
+  "config_filenames": [
+    "vita_integration_test_config.json"
+  ],
   "data": [
     {
       "NHS_NUMBER": "9686368906",

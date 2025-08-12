@@ -7,7 +7,7 @@
     "nhs-login-nhs-number": "9900021903"
   },
   "data": [
-{
+    {
       "NHS_NUMBER": "9900021903",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [

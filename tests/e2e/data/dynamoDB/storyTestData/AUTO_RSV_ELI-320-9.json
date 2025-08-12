@@ -6,7 +6,12 @@
   "query_params": {
     "category": "VACCINATIONS"
   },
-  "config_filenames": ["AUTO_RSV_ELI-320-COVID.json","AUTO_RSV_ELI-320-MMR.json", "AUTO_RSV_ELI-320-SCREENING-1.json", "AUTO_RSV_ELI-320-SCREENING-2.json"],
+  "config_filenames": [
+    "AUTO_RSV_ELI-320-COVID.json",
+    "AUTO_RSV_ELI-320-MMR.json",
+    "AUTO_RSV_ELI-320-SCREENING-1.json",
+    "AUTO_RSV_ELI-320-SCREENING-2.json"
+  ],
   "data": [
     {
       "NHS_NUMBER": "9900032090",

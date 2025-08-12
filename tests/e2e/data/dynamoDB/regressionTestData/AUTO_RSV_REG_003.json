@@ -1,9 +1,13 @@
 {
   "scenario_name": "RSV - Regression - Actionable, Two Eligible Cohorts, Same Group",
-  "request_headers": {"nhs-login-nhs-number": "1000000003"},
-  "config_filenames": ["AUTO_RSV_REG_001.json"],
+  "request_headers": {
+    "nhs-login-nhs-number": "1000000003"
+  },
+  "config_filenames": [
+    "AUTO_RSV_REG_001.json"
+  ],
   "data": [
-   {
+    {
       "NHS_NUMBER": "1000000003",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [
@@ -11,7 +15,7 @@
           "COHORT_LABEL": "rsv_cohort_2",
           "DATE_JOINED": "20231020"
         },
-         {
+        {
           "COHORT_LABEL": "rsv_cohort_1",
           "DATE_JOINED": "20231020"
         }

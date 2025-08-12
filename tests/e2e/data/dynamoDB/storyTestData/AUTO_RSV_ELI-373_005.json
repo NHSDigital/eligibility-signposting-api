@@ -39,7 +39,7 @@
       "NHS_NUMBER": "9900373005",
       "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": null,
-      "BOOKED_APPOINTMENT_DATE":null,
+      "BOOKED_APPOINTMENT_DATE": null,
       "BOOKED_APPOINTMENT_PROVIDER": null
     }
   ]

@@ -6,9 +6,11 @@
   "query_params": {
     "includeActions": "N"
   },
-  "config_filenames": ["AUTO_RSV_ELI-295-2.json"],
+  "config_filenames": [
+    "AUTO_RSV_ELI-295-2.json"
+  ],
   "data": [
-     {
+    {
       "NHS_NUMBER": "9900029510",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [

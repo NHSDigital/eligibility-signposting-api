@@ -7,7 +7,7 @@
     "AUTO_RSV_ELI-295-2.json"
   ],
   "data": [
-     {
+    {
       "NHS_NUMBER": "9900029509",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [

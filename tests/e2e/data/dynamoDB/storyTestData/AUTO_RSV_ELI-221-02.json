@@ -3,9 +3,11 @@
   "request_headers": {
     "nhs-login-nhs-number": "9900022102"
   },
-  "config_filenames": ["AUTO_RSV_ELI-221-02.json"],
+  "config_filenames": [
+    "AUTO_RSV_ELI-221-02.json"
+  ],
   "data": [
-   {
+    {
       "NHS_NUMBER": "9900022102",
       "ATTRIBUTE_TYPE": "COHORTS",
       "COHORT_MEMBERSHIPS": [

@@ -3,7 +3,9 @@
   "request_headers": {
     "nhs-login-nhs-number": "9900036511"
   },
-  "config_filenames": ["AUTO_RSV_ELI-365.json"],
+  "config_filenames": [
+    "AUTO_RSV_ELI-365.json"
+  ],
   "data": [
     {
       "NHS_NUMBER": "9900036511",
@@ -37,7 +39,7 @@
       "NHS_NUMBER": "9900036511",
       "ATTRIBUTE_TYPE": "RSV",
       "LAST_SUCCESSFUL_DATE": null,
-      "BOOKED_APPOINTMENT_DATE" : null,
+      "BOOKED_APPOINTMENT_DATE": null,
       "BOOKED_APPOINTMENT_PROVIDER": null
     }
   ]

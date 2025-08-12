@@ -3,7 +3,9 @@
   "request_headers": {
     "nhs-login-nhs-number": "9900022201"
   },
-  "config_filenames": ["AUTO_RSV_ELI-222.json"],
+  "config_filenames": [
+    "AUTO_RSV_ELI-222.json"
+  ],
   "data": [
     {
       "NHS_NUMBER": "9900022201",
