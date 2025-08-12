@@ -53,7 +53,7 @@ resource "aws_api_gateway_gateway_response" "bad_request_parameters" {
   status_code   = "400"
 
   response_templates = {
-    "application/json" = jsonencode({
+    "application/fhir+json" = jsonencode({
       resourceType = "OperationOutcome"
       id           = "$context.requestId"
       meta = {
