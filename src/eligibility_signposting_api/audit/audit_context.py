@@ -25,7 +25,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     IterationResult,
     MatchedActionDetail,
     Reason,
-    Status,
+    RuleType,
     SuggestedAction,
 )
 
@@ -86,14 +86,14 @@ class AuditContext:
 
         filter_audit_rules, suitability_audit_rules = [], []
         for result in cohort_results:
-            if result.status.name == Status.not_eligible.name:
-                filter_audit_rules.extend(result.audit_rules)
-            if result.status.name == Status.not_actionable.name:
-                suitability_audit_rules.extend(result.audit_rules)
+            for rule in result.audit_rules:
+                if rule.rule_type == RuleType.filter:
+                    filter_audit_rules.append(rule)
+                if rule.rule_type == RuleType.suppression:
+                    suitability_audit_rules.append(rule)
 
         audit_filter_rule = AuditContext.create_audit_filter_rule(filter_audit_rules)
         audit_suitability_rule = AuditContext.create_audit_suitability_rule(suitability_audit_rules)
-
         audit_action_rule = AuditContext.add_rule_name_and_priority_to_audit(best_candidate, action_detail)
 
         audit_actions = AuditContext.create_audit_actions(action_detail.actions)
@@ -186,20 +186,8 @@ class AuditContext:
 
     @staticmethod
     def deduplicate_reasons(reasons: list[Reason]) -> list[Reason]:
-        unique_rule_codes = set()
-        deduplicated_reasons = []
-
+        deduped = {}
         for reason in reasons:
-            if reason.rule_name not in unique_rule_codes and reason.rule_description:
-                unique_rule_codes.add(reason.rule_name)
-                deduplicated_reasons.append(
-                    Reason(
-                        reason.rule_type,
-                        reason.rule_name,
-                        reason.rule_priority,
-                        reason.rule_description,
-                        reason.matcher_matched,
-                    )
-                )
-
-        return deduplicated_reasons
+            key = (reason.rule_type, reason.rule_priority)
+            deduped.setdefault(key, reason)
+        return list(deduped.values())
