@@ -1,4 +1,5 @@
 import datetime
+import logging
 from typing import Any
 
 import pytest
@@ -6,12 +7,10 @@ from faker import Faker
 from flask import Flask
 from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, contains_inanyorder, has_item, has_items, is_, is_in
-from pydantic import HttpUrl
 
 from eligibility_signposting_api.model import campaign_config as rules_model
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
-    AvailableAction,
     CohortLabel,
     Description,
     RuleAttributeLevel,
@@ -27,6 +26,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     ActionDescription,
     ActionType,
     CohortGroupResult,
+    Condition,
     ConditionName,
     DateOfBirth,
     InternalActionCode,
@@ -41,6 +41,7 @@ from eligibility_signposting_api.model.eligibility_status import (
 )
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
 from tests.fixtures.builders.model import rule as rule_builder
+from tests.fixtures.builders.model.eligibility import ReasonFactory
 from tests.fixtures.builders.repos.person import person_rows_builder
 from tests.fixtures.matchers.eligibility import (
     is_cohort_result,
@@ -585,27 +586,97 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
     )
 
 
-book_nbs_comms = AvailableAction(
-    ActionType="ButtonAuthLink",
-    ExternalRoutingCode="BookNBS",
-    ActionDescription="Action description",
-    UrlLink=HttpUrl("https://www.nhs.uk/book-rsv"),
-    UrlLabel="Continue to booking",
-)
+@freeze_time("2025-04-25")
+def test_no_active_iteration_returns_empty_conditions_with_single_active_campaign(faker: Faker):
+    # Given
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()))
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    name="inactive iteration",
+                    iteration_rules=[],
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                )
+            ],
+        )
+    ]
+    # Need to set the iteration date to override CampaignConfigFactory.fix_iteration_date_invariants behavior
+    campaign_configs[0].iterations[0].iteration_date = datetime.date(2025, 5, 10)
 
-default_comms_detail = AvailableAction(
-    ActionType="CareCardWithText",
-    ExternalRoutingCode="BookLocal",
-    ActionDescription="You can get an RSV vaccination at your GP surgery",
-)
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    assert_that(actual, is_eligibility_status().with_conditions([]))
+
+
+@pytest.mark.usefixtures("caplog")
+@freeze_time("2025-04-25")
+def test_returns_no_condition_data_for_campaign_without_active_iteration(faker: Faker, caplog):
+    # Given
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()))
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    name="inactive iteration",
+                    iteration_rules=[],
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                )
+            ],
+        ),
+        rule_builder.CampaignConfigFactory.build(
+            target="COVID",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    name="active iteration",
+                    iteration_rules=[],
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                )
+            ],
+        ),
+    ]
+    # Need to set the iteration date to override CampaignConfigFactory.fix_iteration_date_invariants behavior
+    rsv_campaign = campaign_configs[0]
+    rsv_campaign.iterations[0].iteration_date = datetime.date(2025, 5, 10)
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    with caplog.at_level(logging.INFO):
+        actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    condition_names = [condition.condition_name for condition in actual.conditions]
+
+    assert ConditionName("RSV") not in condition_names
+    assert ConditionName("COVID") in condition_names
+    assert f"Skipping campaign ID {rsv_campaign.id} as no active iteration was found." in caplog.text
+
+
+@freeze_time("2025-04-25")
+def test_no_active_campaign(faker: Faker):
+    # Given
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()))
+    campaign_configs = [rule_builder.CampaignConfigFactory.build()]
+    # Need to set the campaign dates to override CampaignConfigFactory.fix_iteration_date_invariants behavior
+    campaign_configs[0].start_date = datetime.date(2025, 5, 10)
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    assert_that(actual, is_eligibility_status().with_conditions([]))
 
 
 class TestEligibilityResultBuilder:
-    def test_build_condition_results_empty_input(self):
-        condition_results = {}
-        result = EligibilityCalculator.build_condition_results(condition_results)
-        assert_that(result, is_([]))
-
     def test_build_condition_results_single_condition_single_cohort_actionable(self):
         cohort_group_results = [CohortGroupResult("COHORT_A", Status.actionable, [], "Cohort A Description", [])]
         suggested_actions = [
@@ -620,23 +691,21 @@ class TestEligibilityResultBuilder:
         ]
         iteration_result = IterationResult(Status.actionable, cohort_group_results, suggested_actions)
 
-        condition_results = {ConditionName("RSV"): iteration_result}
+        result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
-        result = EligibilityCalculator.build_condition_results(condition_results)
+        assert_that(result.condition_name, is_(ConditionName("RSV")))
+        assert_that(result.status, is_(Status.actionable))
+        assert_that(result.actions, is_(suggested_actions))
+        assert_that(result.status_text, is_(Status.actionable.get_status_text(ConditionName("RSV"))))
 
-        assert_that(len(result), is_(1))
-        assert_that(result[0].condition_name, is_(ConditionName("RSV")))
-        assert_that(result[0].status, is_(Status.actionable))
-        assert_that(result[0].actions, is_(suggested_actions))
-        assert_that(result[0].status_text, is_(Status.actionable.get_status_text(ConditionName("RSV"))))
-
-        assert_that(len(result[0].cohort_results), is_(1))
-        deduplicated_cohort = result[0].cohort_results[0]
+        assert_that(len(result.cohort_results), is_(1))
+        deduplicated_cohort = result.cohort_results[0]
         assert_that(deduplicated_cohort.cohort_code, is_("COHORT_A"))
         assert_that(deduplicated_cohort.status, is_(Status.actionable))
         assert_that(deduplicated_cohort.reasons, is_([]))
         assert_that(deduplicated_cohort.description, is_("Cohort A Description"))
         assert_that(deduplicated_cohort.audit_rules, is_([]))
+        assert_that(result.suitability_rules, is_([]))
 
     def test_build_condition_results_single_condition_single_cohort_not_eligible_with_reasons(self):
         cohort_group_results = [CohortGroupResult("COHORT_A", Status.not_eligible, [], "Cohort A Description", [])]
@@ -652,34 +721,32 @@ class TestEligibilityResultBuilder:
         ]
         iteration_result = IterationResult(Status.not_eligible, cohort_group_results, suggested_actions)
 
-        condition_results = {ConditionName("RSV"): iteration_result}
+        result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
-        result = EligibilityCalculator.build_condition_results(condition_results)
+        assert_that(result.condition_name, is_(ConditionName("RSV")))
+        assert_that(result.status, is_(Status.not_eligible))
+        assert_that(result.actions, is_(suggested_actions))
+        assert_that(result.status_text, is_(Status.not_eligible.get_status_text(ConditionName("RSV"))))
 
-        assert_that(len(result), is_(1))
-        assert_that(result[0].condition_name, is_(ConditionName("RSV")))
-        assert_that(result[0].status, is_(Status.not_eligible))
-        assert_that(result[0].actions, is_(suggested_actions))
-        assert_that(result[0].status_text, is_(Status.not_eligible.get_status_text(ConditionName("RSV"))))
-
-        assert_that(len(result[0].cohort_results), is_(1))
-        deduplicated_cohort = result[0].cohort_results[0]
+        assert_that(len(result.cohort_results), is_(1))
+        deduplicated_cohort = result.cohort_results[0]
         assert_that(deduplicated_cohort.cohort_code, is_("COHORT_A"))
         assert_that(deduplicated_cohort.status, is_(Status.not_eligible))
         assert_that(deduplicated_cohort.reasons, is_([]))
         assert_that(deduplicated_cohort.description, is_("Cohort A Description"))
         assert_that(deduplicated_cohort.audit_rules, is_([]))
+        assert_that(result.suitability_rules, is_([]))
 
     def test_build_condition_results_single_condition_multiple_cohorts_same_cohort_code_same_status(self):
         reason_1 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 1"),
             RulePriority("1"),
             RuleDescription("Filter Rule Description 2"),
             matcher_matched=True,
         )
         reason_2 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 2"),
             RulePriority("2"),
             RuleDescription("Filter Rule Description 2"),
@@ -703,31 +770,28 @@ class TestEligibilityResultBuilder:
         ]
         iteration_result = IterationResult(Status.not_eligible, cohort_group_results, suggested_actions)
 
-        condition_results = {ConditionName("RSV"): iteration_result}
+        result: Condition = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
-        result = EligibilityCalculator.build_condition_results(condition_results)
+        assert_that(len(result.cohort_results), is_(1))
 
-        assert_that(len(result), is_(1))
-        condition = result[0]
-        assert_that(len(condition.cohort_results), is_(1))
-
-        deduplicated_cohort = condition.cohort_results[0]
+        deduplicated_cohort = result.cohort_results[0]
         assert_that(deduplicated_cohort.cohort_code, is_("COHORT_A"))
         assert_that(deduplicated_cohort.status, is_(Status.not_eligible))
         assert_that(deduplicated_cohort.reasons, contains_inanyorder(reason_1, reason_2))
         assert_that(deduplicated_cohort.description, is_("Cohort A Description 2"))
         assert_that(deduplicated_cohort.audit_rules, is_([]))
+        assert_that(result.suitability_rules, contains_inanyorder(reason_1, reason_2))
 
     def test_build_condition_results_multiple_cohorts_different_cohort_code_same_status(self):
         reason_1 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 1"),
             RulePriority("1"),
             RuleDescription("Filter Rule Description 2"),
             matcher_matched=True,
         )
         reason_2 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 2"),
             RulePriority("2"),
             RuleDescription("Filter Rule Description 2"),
@@ -749,30 +813,26 @@ class TestEligibilityResultBuilder:
         ]
         iteration_result = IterationResult(Status.not_eligible, cohort_group_results, suggested_actions)
 
-        condition_results = {ConditionName("RSV"): iteration_result}
+        result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
-        result = EligibilityCalculator.build_condition_results(condition_results)
-
-        assert_that(len(result), is_(1))
-        condition = result[0]
-        assert_that(len(condition.cohort_results), is_(2))
+        assert_that(len(result.cohort_results), is_(2))
 
         expected_deduplicated_cohorts = [
             CohortGroupResult("COHORT_X", Status.not_eligible, [reason_1], "Cohort X Description", []),
             CohortGroupResult("COHORT_Y", Status.not_eligible, [reason_2], "Cohort Y Description", []),
         ]
-        assert_that(condition.cohort_results, contains_inanyorder(*expected_deduplicated_cohorts))
+        assert_that(result.cohort_results, contains_inanyorder(*expected_deduplicated_cohorts))
 
     def test_build_condition_results_cohorts_status_not_matching_iteration_status(self):
         reason_1 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 1"),
             RulePriority("1"),
             RuleDescription("Matching"),
             matcher_matched=True,
         )
         reason_2 = Reason(
-            RuleType.filter,
+            RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 2"),
             RulePriority("2"),
             RuleDescription("Not matching"),
@@ -785,53 +845,189 @@ class TestEligibilityResultBuilder:
 
         iteration_result = IterationResult(Status.not_eligible, cohort_group_results, [])
 
-        condition_results = {ConditionName("RSV"): iteration_result}
+        result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
-        result = EligibilityCalculator.build_condition_results(condition_results)
+        assert_that(len(result.cohort_results), is_(1))
+        assert_that(result.cohort_results[0].cohort_code, is_("COHORT_X"))
+        assert_that(result.cohort_results[0].status, is_(Status.not_eligible))
 
-        assert_that(len(result), is_(1))
-        condition = result[0]
-        assert_that(len(condition.cohort_results), is_(1))
-        assert_that(condition.cohort_results[0].cohort_code, is_("COHORT_X"))
-        assert_that(condition.cohort_results[0].status, is_(Status.not_eligible))
 
-    def test_build_condition_results_multiple_conditions(self):
-        reason_1 = Reason(
-            RuleType.filter,
-            eligibility_status.RuleName("Filter Rule 1"),
-            RulePriority("1"),
-            RuleDescription("Filter Rule Description 2"),
-            matcher_matched=True,
-        )
-        reason_2 = Reason(
-            RuleType.filter,
-            eligibility_status.RuleName("Filter Rule 2"),
-            RulePriority("2"),
-            RuleDescription("Filter Rule Description 2"),
-            matcher_matched=True,
-        )
-        cohort_group_result1 = [CohortGroupResult("RSV_COHORT", Status.not_eligible, [reason_1], "RSV Desc", [])]
-        cohort_group_result2 = [CohortGroupResult("COVID_COHORT", Status.not_actionable, [reason_2], "Covid Desc", [])]
+@pytest.mark.parametrize(
+    ("reason_1", "reason_2", "reason_3", "expected_reasons"),
+    [
+        # Same rule name, type, and priority, different description
+        (
+            ReasonFactory.build(rule_description="description1", matcher_matched=True),
+            ReasonFactory.build(rule_description="description2", matcher_matched=True),
+            ReasonFactory.build(rule_description="description3", matcher_matched=True),
+            [ReasonFactory.build(rule_description="description1", matcher_matched=True)],
+        ),
+        # Different rule name, same type, same priority
+        (
+            ReasonFactory.build(rule_name="Supress Rule 1", rule_description="description1", matcher_matched=True),
+            ReasonFactory.build(rule_name="Supress Rule 2", rule_description="description2", matcher_matched=True),
+            ReasonFactory.build(rule_name="Supress Rule 1", rule_description="description3", matcher_matched=True),
+            [ReasonFactory.build(rule_name="Supress Rule 1", rule_description="description1", matcher_matched=True)],
+        ),
+        # Same rule name, same type, different priority
+        (
+            ReasonFactory.build(rule_priority="1", rule_description="description1", matcher_matched=True),
+            ReasonFactory.build(rule_priority="2", rule_description="description2", matcher_matched=True),
+            ReasonFactory.build(rule_priority="1", rule_description="description3", matcher_matched=True),
+            [
+                ReasonFactory.build(rule_priority="1", rule_description="description1", matcher_matched=True),
+                ReasonFactory.build(rule_priority="2", rule_description="description2", matcher_matched=True),
+            ],
+        ),
+        # Same rule name, same priority, different type
+        (
+            ReasonFactory.build(rule_type=RuleType.suppression, rule_description="description1", matcher_matched=True),
+            ReasonFactory.build(rule_type=RuleType.filter, rule_description="description2", matcher_matched=True),
+            ReasonFactory.build(rule_type=RuleType.suppression, rule_description="description3", matcher_matched=True),
+            [
+                ReasonFactory.build(
+                    rule_type=RuleType.suppression, rule_description="description1", matcher_matched=True
+                ),
+                ReasonFactory.build(rule_type=RuleType.filter, rule_description="description2", matcher_matched=True),
+            ],
+        ),
+    ],
+)
+def test_build_condition_results_grouping_reasons(reason_1, reason_2, reason_3, expected_reasons):
+    cohort_group_results = [
+        CohortGroupResult(
+            "COHORT_X",
+            Status.not_actionable,
+            [reason_1, reason_3],
+            "Cohort X Description",
+            [],
+        ),
+        CohortGroupResult(
+            "COHORT_Y",
+            Status.not_actionable,
+            [reason_2, reason_3],
+            "Cohort Y Description",
+            [],
+        ),
+    ]
 
-        iteration_result1 = IterationResult(Status.not_eligible, cohort_group_result1, [])
+    iteration_result = IterationResult(Status.not_actionable, cohort_group_results, [])
 
-        iteration_result2 = IterationResult(Status.not_actionable, cohort_group_result2, [])
+    result: Condition = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
-        condition_results = {
-            ConditionName("RSV"): iteration_result1,
-            ConditionName("COVID"): iteration_result2,
-        }
+    assert_that(result.suitability_rules, contains_inanyorder(*expected_reasons))
 
-        result = EligibilityCalculator.build_condition_results(condition_results)
 
-        rsv = next((c for c in result if c.condition_name == ConditionName("RSV")), None)
-        assert_that(rsv.status, is_(Status.not_eligible))
-        assert_that(len(rsv.cohort_results), is_(1))
-        assert_that(rsv.cohort_results[0].cohort_code, is_("RSV_COHORT"))
-        assert_that(rsv.cohort_results[0].reasons, is_([reason_1]))
+@pytest.mark.parametrize(
+    ("reason_2", "expected_reasons"),
+    [
+        # Same rule name, type, and priority, different description
+        (
+            ReasonFactory.build(
+                rule_type=RuleType.suppression,
+                rule_description="Matching",
+                rule_name="Supress Rule 1",
+                rule_priority="1",
+                matcher_matched=True,
+            ),
+            [
+                ReasonFactory.build(
+                    rule_type=RuleType.suppression,
+                    rule_description="Not matching",
+                    rule_name="Supress Rule 1",
+                    rule_priority="1",
+                    matcher_matched=True,
+                )
+            ],
+        ),
+        # Different rule name
+        (
+            ReasonFactory.build(
+                rule_type=RuleType.suppression,
+                rule_description="Matching",
+                rule_name="Supress Rule 2",
+                rule_priority="1",
+                matcher_matched=True,
+            ),
+            [
+                ReasonFactory.build(
+                    rule_type=RuleType.suppression,
+                    rule_description="Not matching",
+                    rule_name="Supress Rule 1",
+                    rule_priority="1",
+                    matcher_matched=True,
+                )
+            ],
+        ),
+        # Different priority
+        (
+            ReasonFactory.build(
+                rule_type=RuleType.suppression,
+                rule_description="Matching",
+                rule_name="Supress Rule 1",
+                rule_priority="2",
+                matcher_matched=True,
+            ),
+            [
+                ReasonFactory.build(
+                    rule_type=RuleType.suppression,
+                    rule_description="Not matching",
+                    rule_name="Supress Rule 1",
+                    rule_priority="1",
+                    matcher_matched=True,
+                ),
+                ReasonFactory.build(
+                    rule_type=RuleType.suppression,
+                    rule_description="Matching",
+                    rule_name="Supress Rule 1",
+                    rule_priority="2",
+                    matcher_matched=True,
+                ),
+            ],
+        ),
+        # Different type
+        (
+            ReasonFactory.build(
+                rule_type=RuleType.filter,
+                rule_description="Matching",
+                rule_name="Supress Rule 1",
+                rule_priority="2",
+                matcher_matched=True,
+            ),
+            [
+                ReasonFactory.build(
+                    rule_type=RuleType.suppression,
+                    rule_description="Not matching",
+                    rule_name="Supress Rule 1",
+                    rule_priority="1",
+                    matcher_matched=True,
+                ),
+                ReasonFactory.build(
+                    rule_type=RuleType.filter,
+                    rule_description="Matching",
+                    rule_name="Supress Rule 1",
+                    rule_priority="2",
+                    matcher_matched=True,
+                ),
+            ],
+        ),
+    ],
+)
+def test_build_condition_results_single_cohort(reason_2, expected_reasons):
+    reason_1 = ReasonFactory.build(
+        rule_type=RuleType.suppression,
+        rule_description="Not matching",
+        rule_name="Supress Rule 1",
+        rule_priority="1",
+        matcher_matched=True,
+    )
 
-        covid = next((c for c in result if c.condition_name == ConditionName("COVID")), None)
-        assert_that(covid.status, is_(Status.not_actionable))
-        assert_that(len(covid.cohort_results), is_(1))
-        assert_that(covid.cohort_results[0].cohort_code, is_("COVID_COHORT"))
-        assert_that(covid.cohort_results[0].reasons, is_([reason_2]))
+    cohort_group_results = [
+        CohortGroupResult("COHORT_Y", Status.not_actionable, [reason_1, reason_2], "Cohort Y Description", [])
+    ]
+
+    iteration_result = IterationResult(Status.not_actionable, cohort_group_results, [])
+    result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
+
+    assert_that(len(result.cohort_results), is_(1))
+    assert_that(result.cohort_results[0].reasons, contains_inanyorder(*expected_reasons))

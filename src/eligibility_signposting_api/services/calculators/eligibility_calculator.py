@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
+from itertools import chain
 from typing import TYPE_CHECKING
 
 from wireup import service
@@ -15,6 +17,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     ConditionName,
     EligibilityStatus,
     IterationResult,
+    Reason,
     Status,
 )
 from eligibility_signposting_api.services.processors.action_rule_handler import ActionRuleHandler
@@ -30,6 +33,8 @@ if TYPE_CHECKING:
         IterationName,
     )
     from eligibility_signposting_api.model.person import Person
+
+logger = logging.getLogger(__name__)
 
 
 @service
@@ -76,12 +81,16 @@ class EligibilityCalculator:
     def get_eligibility_status(self, include_actions: str, conditions: list[str], category: str) -> EligibilityStatus:
         include_actions_flag = include_actions.upper() == "Y"
         condition_results: dict[ConditionName, IterationResult] = {}
+        final_result = []
 
         requested_grouped_campaigns = self.campaign_evaluator.get_requested_grouped_campaigns(
             self.campaign_configs, conditions, category
         )
         for condition_name, campaign_group in requested_grouped_campaigns:
             best_iteration_result = self.get_best_iteration_result(campaign_group)
+
+            if best_iteration_result is None:
+                continue
 
             matched_action_detail = self.action_rule_handler.get_actions(
                 self.person,
@@ -93,26 +102,34 @@ class EligibilityCalculator:
             condition_results[condition_name] = best_iteration_result.iteration_result
             condition_results[condition_name].actions = matched_action_detail.actions
 
-            AuditContext.append_audit_condition(condition_name, best_iteration_result, matched_action_detail)
+            condition: Condition = self.build_condition(
+                iteration_result=condition_results[condition_name], condition_name=condition_name
+            )
+            final_result.append(condition)
+
+            AuditContext.append_audit_condition(
+                condition_name,
+                best_iteration_result,
+                matched_action_detail,
+                condition_results[condition_name].cohort_results,
+            )
 
         # Consolidate all the results and return
-        final_result = self.build_condition_results(condition_results)
         return eligibility_status.EligibilityStatus(conditions=final_result)
 
-    def get_best_iteration_result(self, campaign_group: list[CampaignConfig]) -> BestIterationResult:
+    def get_best_iteration_result(self, campaign_group: list[CampaignConfig]) -> BestIterationResult | None:
         iteration_results = self.get_iteration_results(campaign_group)
 
-        if iteration_results:
-            (best_iteration_name, best_iteration_result) = max(
-                iteration_results.items(),
-                key=lambda item: next(iter(item[1].cohort_results.values())).status.value
-                # Below handles the case where there are no cohort results
-                if item[1].cohort_results
-                else -1,
-            )
-        else:
-            iteration_result = IterationResult(eligibility_status.Status.not_eligible, [], [])
-            best_iteration_result = BestIterationResult(iteration_result, None, None, None, {})
+        if not iteration_results:
+            return None
+
+        (best_iteration_name, best_iteration_result) = max(
+            iteration_results.items(),
+            key=lambda item: next(iter(item[1].cohort_results.values())).status.value
+            # Below handles the case where there are no cohort results
+            if item[1].cohort_results
+            else -1,
+        )
 
         return best_iteration_result
 
@@ -120,7 +137,11 @@ class EligibilityCalculator:
         iteration_results: dict[IterationName, BestIterationResult] = {}
 
         for cc in campaign_group:
-            active_iteration = cc.current_iteration
+            try:
+                active_iteration = cc.current_iteration
+            except StopIteration:
+                logger.info("Skipping campaign ID %s as no active iteration was found.", cc.id)
+                continue
             cohort_results: dict[CohortLabel, CohortGroupResult] = self.rule_processor.get_cohort_group_results(
                 self.person, active_iteration
             )
@@ -133,39 +154,61 @@ class EligibilityCalculator:
         return iteration_results
 
     @staticmethod
-    def build_condition_results(condition_results: dict[ConditionName, IterationResult]) -> list[Condition]:
-        conditions: list[Condition] = []
-        # iterate over conditions
-        for condition_name, active_iteration_result in condition_results.items():
-            grouped_cohort_results = defaultdict(list)
-            # iterate over cohorts and group them by status and cohort_group
-            for cohort_result in active_iteration_result.cohort_results:
-                if active_iteration_result.status == cohort_result.status:
-                    grouped_cohort_results[cohort_result.cohort_code].append(cohort_result)
+    def build_condition(iteration_result: IterationResult, condition_name: ConditionName) -> Condition:
+        grouped_cohort_results = defaultdict(list)
 
-            # deduplicate grouped cohort results by cohort_code
-            deduplicated_cohort_results = [
+        for cohort_result in iteration_result.cohort_results:
+            if iteration_result.status == cohort_result.status:
+                grouped_cohort_results[cohort_result.cohort_code].append(cohort_result)
+
+        deduplicated_cohort_results: list[CohortGroupResult] = EligibilityCalculator.deduplicate_cohort_results(
+            grouped_cohort_results
+        )
+
+        overall_deduplicated_reasons_for_condition = EligibilityCalculator.deduplicate_reasons(
+            deduplicated_cohort_results
+        )
+
+        return Condition(
+            condition_name=condition_name,
+            status=iteration_result.status,
+            cohort_results=list(deduplicated_cohort_results),
+            suitability_rules=list(overall_deduplicated_reasons_for_condition),
+            actions=iteration_result.actions,
+            status_text=iteration_result.status.get_status_text(condition_name),
+        )
+
+    @staticmethod
+    def deduplicate_cohort_results(
+        grouped_cohort_results: dict[str, list[CohortGroupResult]],
+    ) -> list[CohortGroupResult]:
+        results = []
+
+        for cohort_code, group_results in grouped_cohort_results.items():
+            if not group_results:
+                continue
+
+            deduped_reasons: list[Reason] = EligibilityCalculator.deduplicate_reasons(group_results)
+
+            description = next((c.description for c in group_results if c.description), group_results[0].description)
+
+            results.append(
                 CohortGroupResult(
-                    cohort_code=group_cohort_code,
-                    status=group[0].status,
-                    # Flatten all reasons from the group
-                    reasons=[reason for cohort in group for reason in cohort.reasons],
-                    # get the first nonempty description
-                    description=next((c.description for c in group if c.description), group[0].description),
+                    cohort_code=cohort_code,
+                    status=group_results[0].status,
+                    reasons=list(deduped_reasons),
+                    description=description,
                     audit_rules=[],
                 )
-                for group_cohort_code, group in grouped_cohort_results.items()
-                if group
-            ]
-
-            # return condition with cohort results
-            conditions.append(
-                Condition(
-                    condition_name=condition_name,
-                    status=active_iteration_result.status,
-                    cohort_results=list(deduplicated_cohort_results),
-                    actions=condition_results[condition_name].actions,
-                    status_text=active_iteration_result.status.get_status_text(condition_name),
-                )
             )
-        return conditions
+
+        return results
+
+    @staticmethod
+    def deduplicate_reasons(group_results: list[CohortGroupResult]) -> list[Reason]:
+        all_reasons = chain.from_iterable(group_result.reasons for group_result in group_results)
+        deduped = {}
+        for reason in all_reasons:
+            key = (reason.rule_type, reason.rule_priority)
+            deduped.setdefault(key, reason)
+        return list(deduped.values())

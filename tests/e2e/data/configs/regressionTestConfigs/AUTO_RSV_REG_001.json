@@ -1,0 +1,304 @@
+{
+  "CampaignConfig": {
+    "ID": "Automation RSV - Regression Test Config - Camp ID",
+    "Version": 1,
+    "Name": "Automation RSV - Regression Test Config",
+    "Type": "V",
+    "Target": "RSV",
+    "Manager": [
+      "person1@nhs.net"
+    ],
+    "Approver": [
+      "person1@nhs.net"
+    ],
+    "Reviewer": [
+      "person1@nhs.net"
+    ],
+    "IterationFrequency": "X",
+    "IterationType": "O",
+    "IterationTime": "07:00:00",
+    "DefaultCommsRouting": "DEFAULT_ACTION",
+    "StartDate": "20250601",
+    "EndDate": "20260601",
+    "ApprovalMinimum": 0,
+    "ApprovalMaximum": 0,
+    "Iterations": [
+      {
+        "ID": "Automation RSV - Regression Test Config - It ID",
+        "DefaultCommsRouting": "DEFAULT_ACTION",
+        "Version": 1,
+        "Name": "Automation RSV - Regression Test Config Iteration",
+        "IterationDate": "20250601",
+        "IterationNumber": 1,
+        "CommsType": "I",
+        "DefaultNotEligibleRouting": "",
+        "DefaultNotActionableRouting": "",
+        "ApprovalMinimum": 0,
+        "ApprovalMaximum": 0,
+        "Type": "M",
+        "IterationCohorts": [
+          {
+            "CohortLabel": "rsv_cohort_1",
+            "CohortGroup": "rsv_age_group",
+            "PositiveDescription": "You are in an age group 1.",
+            "NegativeDescription": "You are not in an age group 1.",
+            "Priority": 10
+          },
+          {
+            "CohortLabel": "rsv_cohort_2",
+            "CohortGroup": "rsv_age_group",
+            "PositiveDescription": "You are in an age group 2.",
+            "NegativeDescription": "You are not in an age group 2.",
+            "Priority": 0
+          },
+          {
+            "CohortLabel": "rsv_cohort_3",
+            "CohortGroup": "rsv_other_group",
+            "PositiveDescription": "You are in an another group.",
+            "NegativeDescription": "You are not in an other group.",
+            "Priority": 20
+          },
+          {
+            "CohortLabel": "elid_all_people",
+            "CohortGroup": "elid_all_people",
+            "PositiveDescription": "",
+            "NegativeDescription": "",
+            "Priority": 30
+          },
+          {
+            "CohortLabel": "no_group_description",
+            "CohortGroup": "",
+            "PositiveDescription": "",
+            "NegativeDescription": "",
+            "Priority": 40
+          }
+        ],
+        "IterationRules": [
+          {
+            "Type": "F",
+            "Name": "Assure only already vaccinated taken from magic cohort",
+            "Description": "Exclude anyone who has NOT been given a dose of RSV Vaccination from the magic cohort",
+            "Operator": "is_empty",
+            "Comparator": "",
+            "AttributeTarget": "RSV",
+            "AttributeLevel": "TARGET",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "CohortLabel": "elid_all_people",
+            "Priority": 100
+          },
+          {
+            "Type": "F",
+            "Name": "Under Age - Under 75 Years on day of execution",
+            "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 75 years is filtered out.",
+            "Priority": 110,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "Y>",
+            "Comparator": "-75",
+            "CohortLabel": "rsv_cohort_1"
+          },
+          {
+            "Type": "F",
+            "Name": "Exclude Too OLD",
+            "Description": "Exclude anyone over 80",
+            "Priority": 111,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "<",
+            "Comparator": "-80",
+            "CohortLabel": "rsv_cohort_1"
+          },
+          {
+            "Type": "F",
+            "Name": "Under Age - Under 75 Years on day of execution",
+            "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 75 years is filtered out.",
+            "Priority": 112,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "Y>",
+            "Comparator": "-75",
+            "CohortLabel": "rsv_cohort_2"
+          },
+          {
+            "Type": "F",
+            "Name": "Exclude Too OLD",
+            "Description": "Exclude anyone over 80",
+            "Priority": 113,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "<",
+            "Comparator": "-80",
+            "CohortLabel": "rsv_cohort_2"
+          },
+          {
+            "Type": "F",
+            "Name": "Under Age - Under 75 Years on day of execution",
+            "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 75 years is filtered out.",
+            "Priority": 114,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "Y>",
+            "Comparator": "-75",
+            "CohortLabel": "rsv_cohort_3"
+          },
+          {
+            "Type": "F",
+            "Name": "Exclude Too OLD",
+            "Description": "Exclude anyone over 80",
+            "Priority": 115,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "<",
+            "Comparator": "-80",
+            "CohortLabel": "rsv_cohort_3"
+          },
+          {
+            "Type": "F",
+            "Name": "Under Age - Under 75 Years on day of execution",
+            "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 75 years is filtered out.",
+            "Priority": 116,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "Y>",
+            "Comparator": "-75",
+            "CohortLabel": "no_group_description"
+          },
+          {
+            "Type": "F",
+            "Name": "Exclude Too OLD",
+            "Description": "Exclude anyone over 80",
+            "Priority": 117,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "<",
+            "Comparator": "-80",
+            "CohortLabel": "no_group_description"
+          },
+          {
+            "Type": "S",
+            "Name": "AlreadyVaccinated",
+            "Description": "##You've had your RSV vaccination\nWe believe you had your vaccination on <<LAST_SUCCESSFUL_DATE>>.",
+            "Priority": 500,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "Operator": "Y>=",
+            "Comparator": "-25",
+            "RuleStop": "Y"
+          },
+          {
+            "Type": "S",
+            "Name": "NotAvailable",
+            "Description": "NotAvailable|Vaccinations are not currently available.",
+            "Priority": 510,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "ICB",
+            "Operator": "=",
+            "Comparator": "SUPPRESSED_ICB"
+          },
+          {
+            "Type": "R",
+            "Name": "Actionable Not Vaccinated",
+            "Description": "Book An Appointment",
+            "Priority": 1010,
+            "Operator": "is_empty",
+            "Comparator": "",
+            "AttributeTarget": "RSV",
+            "AttributeLevel": "TARGET",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "CommsRouting": "BOOK_NBS"
+          },
+          {
+            "Type": "R",
+            "Name": "Actionable Not Vaccinated",
+            "Description": "Book An Appointment",
+            "Priority": 1010,
+            "Operator": "=",
+            "Comparator": "LS2",
+            "AttributeLevel": "PERSON",
+            "AttributeName": "POSTCODE_SECTOR",
+            "CommsRouting": "BOOK_NBS"
+          },
+          {
+            "Type": "R",
+            "Name": "Actionable Future Booked Appointment",
+            "Description": "Actionable Future Booked Appointment",
+            "Priority": 1020,
+            "Operator": ">=",
+            "Comparator": "0",
+            "AttributeTarget": "RSV",
+            "AttributeLevel": "TARGET",
+            "AttributeName": "BOOKED_APPOINTMENT_DATE",
+            "CommsRouting": "AMEND_NBS"
+          },
+          {
+            "Type": "R",
+            "Name": "Actionable Future Booked Appointment",
+            "Description": "Actionable Future Booked Appointment",
+            "Priority": 1020,
+            "Operator": "=",
+            "Comparator": "NBS",
+            "AttributeTarget": "RSV",
+            "AttributeLevel": "TARGET",
+            "AttributeName": "BOOKED_APPOINTMENT_PROVIDER",
+            "CommsRouting": "AMEND_NBS"
+          },
+          {
+            "Type": "R",
+            "Name": "Actionable Future Booked Appointment",
+            "Description": "Actionable Future Booked Appointment",
+            "Priority": 1030,
+            "Operator": ">=",
+            "Comparator": "0",
+            "AttributeTarget": "RSV",
+            "AttributeLevel": "TARGET",
+            "AttributeName": "BOOKED_APPOINTMENT_DATE",
+            "CommsRouting": "MANAGE_LOCAL"
+          },
+          {
+            "Type": "R",
+            "Name": "Actionable Future Booked Appointment",
+            "Description": "Actionable Future Booked Appointment",
+            "Priority": 1050,
+            "Operator": "!=",
+            "Comparator": "NBS",
+            "AttributeTarget": "RSV",
+            "AttributeLevel": "TARGET",
+            "AttributeName": "BOOKED_APPOINTMENT_PROVIDER",
+            "CommsRouting": "MANAGE_LOCAL"
+          }
+        ],
+        "ActionsMapper": {
+          "DEFAULT_ACTION": {
+            "ExternalRoutingCode": "DefaultAction",
+            "ActionDescription": "DefaultActionDescription",
+            "ActionType": "DefaultActionType",
+            "UrlLink": "https://www.defaultaction.com",
+            "UrlLabel": "DefaultLabel"
+          },
+          "ANOTHER_ACTION": {
+            "ExternalRoutingCode": "AnotherAction",
+            "ActionDescription": "AnotherActionDescription",
+            "ActionType": "AnotherActionType",
+            "UrlLink": "https://www.anoteraction.com",
+            "UrlLabel": "AnotherLabel"
+          },
+          "DEFAULT_X": {
+            "ExternalRoutingCode": "DefaultX",
+            "ActionDescription": "DefaultXDescription",
+            "ActionType": "DefaultXType",
+            "UrlLink": "https://www.defaultxaction.com",
+            "UrlLabel": "DefaultXLabel"
+          },
+          "DEFAULT_Y": {
+            "ExternalRoutingCode": "DefaultY",
+            "ActionDescription": "DefaultYDescription",
+            "ActionType": "DefaultYType",
+            "UrlLink": "https://www.defaultyaction.com",
+            "UrlLabel": "DefaultYLabel"
+          }
+        }
+      }
+    ]
+  }
+}

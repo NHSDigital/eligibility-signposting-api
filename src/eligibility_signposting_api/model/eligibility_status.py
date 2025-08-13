@@ -113,6 +113,7 @@ class Condition:
     condition_name: ConditionName
     status: Status
     cohort_results: list[CohortGroupResult]
+    suitability_rules: list[Reason]
     status_text: StatusText
     actions: list[SuggestedAction] | None = None
 

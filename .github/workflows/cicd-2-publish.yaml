@@ -28,7 +28,7 @@ jobs:
       version: ${{ steps.variables.outputs.version }}
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: "Set CI/CD variables"
         id: variables
@@ -68,7 +68,7 @@ jobs:
           python-version: '3.13'
 
       - name: "Checkout Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: "Build lambda artefact"
         run: |
@@ -82,7 +82,7 @@ jobs:
           path: dist/lambda.zip
 
       - name: "Download Built Lambdas"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: lambda
           path: ./build

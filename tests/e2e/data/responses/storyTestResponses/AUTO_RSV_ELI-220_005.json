@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "lastUpdated": "2025-08-08T06:57:31.196189+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_eli_220_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "are not a member of eli_220_cohort_group_0"
+        },
+        {
+          "cohortCode": "rsv_eli_220_cohort_group_other",
+          "cohortStatus": "NotEligible",
+          "cohortText": "are not a member of eli_220_cohort_group_other"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "331c56ff-9c97-47be-8781-34cea44d400b"
+}

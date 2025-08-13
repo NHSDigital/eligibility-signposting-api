@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-22T07:29:26.220684+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "eli_221_group",
+          "cohortStatus": "NotActionable",
+          "cohortText": "You are currently in eli_221_cohort"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "Already Vaccinated",
+          "ruleText": "Already Vaccinated|We believe that you Are Already Vaccinated",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "Other Setting Care",
+          "ruleText": "Other Setting|We believe that you will get the vaccination where you are located",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "47a0b0cb-a5b4-457c-966f-294321f5c1c7"
+}

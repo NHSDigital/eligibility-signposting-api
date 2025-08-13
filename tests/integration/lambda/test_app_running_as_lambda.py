@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.response import is_response
 from faker import Faker
+from freezegun import freeze_time
 from hamcrest import (
     assert_that,
     contains_exactly,
@@ -242,11 +243,13 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
                 }
             ],
             "filterRules": None,
-            "suitabilityRules": {
-                "rulePriority": "10",
-                "ruleName": "Exclude too young less than 75",
-                "ruleMessage": "Exclude too young less than 75",
-            },
+            "suitabilityRules": [
+                {
+                    "rulePriority": "10",
+                    "ruleName": "Exclude too young less than 75",
+                    "ruleMessage": "Exclude too young less than 75",
+                }
+            ],
             "actionRule": None,
             "actions": [],
         }
@@ -301,14 +304,13 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
                         has_entries(
                             severity="error",
                             code="forbidden",
-                            diagnostics=f"NHS Number {persisted_person} does "
-                            f"not match the header NHS Number 123{persisted_person!s}",
+                            diagnostics="You are not authorised to request information for the supplied NHS Number",
                             details={
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
-                                        "code": "INVALID_NHS_NUMBER",
-                                        "display": "The provided NHS number does not match the record.",
+                                        "code": "ACCESS_DENIED",
+                                        "display": "Access has been denied to process this request.",
                                     }
                                 ]
                             },
@@ -348,13 +350,13 @@ def test_given_nhs_number_not_present_in_headers_results_in_error_response(
                         has_entries(
                             severity="error",
                             code="forbidden",
-                            diagnostics=f"NHS Number {persisted_person} does not match the header NHS Number ",
+                            diagnostics="You are not authorised to request information for the supplied NHS Number",
                             details={
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
-                                        "code": "INVALID_NHS_NUMBER",
-                                        "display": "The provided NHS number does not match the record.",
+                                        "code": "ACCESS_DENIED",
+                                        "display": "Access has been denied to process this request.",
                                     }
                                 ]
                             },
@@ -459,15 +461,18 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "conditionName": rsv_campaign.target,
             "status": "not_eligible",
             "statusText": "We do not believe you can have it",
-            "eligibilityCohorts": [{"cohortCode": "cohort_label1", "cohortStatus": "not_eligible"}],
-            "eligibilityCohortGroups": [
-                {
-                    "cohortCode": "cohort_group1",
-                    "cohortText": "negative_desc_1",
-                    "cohortStatus": "not_eligible",
-                }
+            "eligibilityCohorts": [
+                {"cohortCode": "cohort_label1", "cohortStatus": "not_eligible"},
+                {"cohortCode": "cohort_label4", "cohortStatus": "not_eligible"},
             ],
-            "filterRules": {"rulePriority": "10", "ruleName": "Exclude too young less than 75"},
+            "eligibilityCohortGroups": [
+                {"cohortCode": "cohort_group1", "cohortText": "negative_desc_1", "cohortStatus": "not_eligible"},
+                {"cohortCode": "cohort_group4", "cohortText": "negative_desc_4", "cohortStatus": "not_eligible"},
+            ],
+            "filterRules": [
+                {"rulePriority": "10", "ruleName": "Exclude too young less than 75"},
+                {"rulePriority": "8", "ruleName": "Excluded postcode In SW19"},
+            ],
             "suitabilityRules": None,
             "actionRule": None,
             "actions": [],
@@ -480,20 +485,19 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "conditionName": covid_campaign.target,
             "status": "not_actionable",
             "statusText": f"You should have the {covid_campaign.target} vaccine",
-            "eligibilityCohorts": [{"cohortCode": "cohort_label2", "cohortStatus": "not_actionable"}],
+            "eligibilityCohorts": [
+                {"cohortCode": "cohort_label2", "cohortStatus": "not_actionable"},
+                {"cohortCode": "cohort_label4", "cohortStatus": "not_actionable"},
+            ],
             "eligibilityCohortGroups": [
-                {
-                    "cohortCode": "cohort_group2",
-                    "cohortText": "positive_desc_2",
-                    "cohortStatus": "not_actionable",
-                }
+                {"cohortCode": "cohort_group2", "cohortText": "positive_desc_2", "cohortStatus": "not_actionable"},
+                {"cohortCode": "cohort_group4", "cohortText": "positive_desc_4", "cohortStatus": "not_actionable"},
             ],
             "filterRules": None,
-            "suitabilityRules": {
-                "rulePriority": "10",
-                "ruleName": "Exclude too young less than 75",
-                "ruleMessage": "Exclude too young less than 75",
-            },
+            "suitabilityRules": [
+                {"rulePriority": "10", "ruleName": "Exclude too young less than 75", "ruleMessage": "TOO YOUNG"},
+                {"rulePriority": "12", "ruleName": "Excluded postcode In SW19", "ruleMessage": "In SW19"},
+            ],
             "actionRule": None,
             "actions": [],
         },
@@ -505,13 +509,13 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "conditionName": flu_campaign.target,
             "status": "actionable",
             "statusText": f"You should have the {flu_campaign.target} vaccine",
-            "eligibilityCohorts": [{"cohortCode": "cohort_label3", "cohortStatus": "actionable"}],
+            "eligibilityCohorts": [
+                {"cohortCode": "cohort_label3", "cohortStatus": "actionable"},
+                {"cohortCode": "cohort_label4", "cohortStatus": "actionable"},
+            ],
             "eligibilityCohortGroups": [
-                {
-                    "cohortCode": "cohort_group3",
-                    "cohortText": "positive_desc_3",
-                    "cohortStatus": "actionable",
-                }
+                {"cohortCode": "cohort_group3", "cohortText": "positive_desc_3", "cohortStatus": "actionable"},
+                {"cohortCode": "cohort_group4", "cohortText": "positive_desc_4", "cohortStatus": "actionable"},
             ],
             "filterRules": None,
             "suitabilityRules": None,
@@ -536,3 +540,40 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
     assert_that(audit_data["response"]["responseId"], is_not(equal_to("")))
     assert_that(audit_data["response"]["lastUpdated"], is_not(equal_to("")))
     assert_that(audit_data["response"]["condition"], contains_inanyorder(*expected_conditions))
+
+
+@freeze_time("2025-08-08")
+def test_no_active_iteration_returns_empty_processed_suggestions(
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person_all_cohorts: NHSNumber,
+    inactive_iteration_config: list[CampaignConfig],  # noqa:ARG001
+    api_gateway_endpoint: URL,
+):
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person_all_cohorts}"
+    response = httpx.get(
+        invoke_url,
+        headers={
+            "nhs-login-nhs-number": str(persisted_person_all_cohorts),
+            "x_request_id": "x_request_id",
+            "x_correlation_id": "x_correlation_id",
+            "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
+            "nhsd_application_id": "nhsd_application_id",
+        },
+        params={"includeActions": "Y", "category": "VACCINATIONS", "conditions": "COVID,FLU,RSV"},
+        timeout=10,
+    )
+
+    assert_that(
+        response,
+        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
+    )
+
+    body = response.json()
+    assert_that(
+        body["processedSuggestions"],
+        contains_inanyorder(
+            has_entries("condition", "COVID"),
+            has_entries("condition", "RSV"),
+            has_entries("condition", "FLU"),
+        ),
+    )

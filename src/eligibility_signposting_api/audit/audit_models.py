@@ -78,8 +78,8 @@ class AuditCondition(CamelCaseBaseModel):
     status_text: str | None = None
     eligibility_cohorts: list[AuditEligibilityCohorts] | None = None
     eligibility_cohort_groups: list[AuditEligibilityCohortGroups] | None = None
-    filter_rules: AuditFilterRule | None = None
-    suitability_rules: AuditSuitabilityRule | None = None
+    filter_rules: list[AuditFilterRule] | None = None
+    suitability_rules: list[AuditSuitabilityRule] | None = None
     action_rule: AuditRedirectRule | None = None
     actions: list[AuditAction] | None = Field(default_factory=list)
 
