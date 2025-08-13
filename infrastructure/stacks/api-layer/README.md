@@ -49,12 +49,13 @@ This stack depends on:
 
 ### Splunk Integration Setup
 
-Before deploying this stack, you must manually create the required SSM parameters for Splunk integration:
+Before deploying this stack, you must manually create the required SSM parameters for Splunk integration. Create them initially with AWS managed encryption, then Terraform will automatically migrate them to use the customer-managed KMS key during deployment.
 
 #### 1. Create SSM Parameters Manually
 
 ```bash
 # Create the HEC token parameter with your actual Splunk HEC token
+# Use AWS managed encryption initially since customer KMS key doesn't exist yet
 aws ssm put-parameter \
   --name "/splunk/hec/token" \
   --value "YOUR_ACTUAL_HEC_TOKEN" \
@@ -85,12 +86,28 @@ terraform import aws_ssm_parameter.splunk_hec_endpoint "/splunk/hec/endpoint"
 #### 3. Deploy the Stack
 
 ```bash
-# Plan the deployment to verify no changes to parameter values
-make terraform env=<env> workspace=default stack=api-layer tf-command=plan
+# Plan the deployment - this will show the KMS key migration
+terraform plan
 
-# Apply the changes
-make terraform env=<env> workspace=default stack=api-layer tf-command=apply
+# Apply the changes - this will create the KMS key and migrate the SSM parameters
+terraform apply
 ```
+
+**Note**: During the `terraform apply`, the SSM parameters will be automatically updated to use the customer-managed KMS key while preserving their values.
+
+### Getting Splunk HEC Credentials
+
+To obtain the required Splunk HEC token and endpoint:
+
+1. **Access Splunk Instance**: Log into your Splunk deployment
+2. **Navigate to Data Inputs**: Go to Settings > Data Inputs > HTTP Event Collector
+3. **Create/Configure HEC Token**:
+   - Create a new token or use an existing one
+   - Ensure the token is enabled and has appropriate permissions
+   - Note the token value for the SSM parameter
+4. **Get HEC Endpoint**: The endpoint typically follows the format:
+   - `https://your-splunk-instance.com:8088/services/collector/event`
+   - Replace with your actual Splunk instance URL and port
 
 ## Environment Variables
 
