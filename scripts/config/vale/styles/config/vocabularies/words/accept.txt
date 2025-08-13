@@ -17,6 +17,7 @@ README
 Redocly
 sed
 subnet
+Splunk
 Syft
 Terraform
 toolchain

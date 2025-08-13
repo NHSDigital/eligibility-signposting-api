@@ -113,6 +113,6 @@ To obtain the required Splunk HEC token and endpoint:
 
 The stack uses the following key variables:
 
-- `environment`: Deployment environment (dev, staging, prod)
+- `environment`: Deployment environment ("dev", "test", "preprod", "prod")
 - `project_name`: Project identifier for resource naming
 - `default_aws_region`: AWS region for resource deployment
