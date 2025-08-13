@@ -1,3 +1,18 @@
+# In order to allow deployment, we need to:
+# 1. Manually deploy the SSM parameters using the AWS CLI or console
+#
+# aws ssm put-parameter \
+#   --name "/splunk/hec/token" \
+#   --value "ACTUAL_HEC_TOKEN" \
+#   --type "SecureString" \
+#   --tier "Advanced" \
+#   --description "Splunk HEC token"
+#
+# 2. Import the existing parameters into Terraform state:
+# terraform import aws_ssm_parameter.splunk_hec_token "/splunk/hec/token"
+# terraform import aws_ssm_parameter.splunk_hec_endpoint "/splunk/hec/endpoint"
+# 3. Deploy the Terraform
+
 resource "aws_kms_key" "splunk_hec_kms" {
   description             = "KMS key for encrypting Splunk HEC SSM parameters"
   deletion_window_in_days = 7
@@ -58,9 +73,8 @@ resource "aws_ssm_parameter" "splunk_hec_token" {
   description = "Splunk HEC token"
   type        = "SecureString"
   key_id      = aws_kms_key.splunk_hec_kms.id
-  value       = "REPLACE_ME" # Set a placeholder value
+  value       = "PLACEHOLDER" # This will be ignored due to lifecycle rule
   tier        = "Advanced"
-  overwrite   = true # Allow overwriting existing parameter
 
   tags = {
     Environment = var.environment
@@ -70,7 +84,7 @@ resource "aws_ssm_parameter" "splunk_hec_token" {
   }
 
   lifecycle {
-    ignore_changes = [value]
+    ignore_changes = [value, key_id] # Ignore value and key_id changes to preserve existing setup
   }
 }
 
@@ -79,9 +93,8 @@ resource "aws_ssm_parameter" "splunk_hec_endpoint" {
   description = "Splunk HEC endpoint"
   type        = "SecureString"
   key_id      = aws_kms_key.splunk_hec_kms.id
-  value       = "REPLACE_ME" # Set a placeholder value
+  value       = "PLACEHOLDER" # This will be ignored due to lifecycle rule
   tier        = "Advanced"
-  overwrite   = true # Allow overwriting existing parameter
 
   tags = {
     Environment = var.environment
@@ -91,6 +104,6 @@ resource "aws_ssm_parameter" "splunk_hec_endpoint" {
   }
 
   lifecycle {
-    ignore_changes = [value]
+    ignore_changes = [value, key_id] # Ignore value and key_id changes to preserve existing setup
   }
 }
