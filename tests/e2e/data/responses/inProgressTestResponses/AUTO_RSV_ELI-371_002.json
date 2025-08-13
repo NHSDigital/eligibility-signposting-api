@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "lastUpdated": "<ignored>"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age",
+          "cohortStatus": "NotActionable",
+          "cohortText": "are aged 75 to 79 years old"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "Testing of AND rules where names are different",
+          "ruleText": "Testing of AND rules where names are different",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "<ignored>"
+}
