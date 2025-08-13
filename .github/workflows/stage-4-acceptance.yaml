@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Create infractructure"
         run: |
           echo "Creating infractructure..."
@@ -56,7 +56,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Run contract test"
         run: |
           make test-contract
@@ -70,7 +70,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Run security test"
         run: |
           make test-security
@@ -84,7 +84,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Run UI test"
         run: |
           make test-ui
@@ -98,7 +98,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Run UI performance test"
         run: |
           make test-ui-performance
@@ -114,7 +114,7 @@ jobs:
       LOCALSTACK_INTERNAL_ENDPOINT: http://localstack:4566/
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
@@ -159,7 +159,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Run accessibility test"
         run: |
           make test-accessibility
@@ -173,7 +173,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Run load tests"
         run: |
           make test-load
@@ -197,7 +197,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: "Tear down environment"
         run: |
           echo "Tearing down environment..."
