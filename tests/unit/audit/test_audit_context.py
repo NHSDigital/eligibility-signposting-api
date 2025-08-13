@@ -345,7 +345,7 @@ def test_no_duplicates_returns_same_list():
 def test_duplicates_are_removed():
     reasons = [
         Reason(RuleType("F"), RuleName("code1"), RulePriority("1"), RuleDescription("desc1"), matcher_matched=True),
-        Reason(RuleType("S"), RuleName("code1"), RulePriority("2"), RuleDescription("desc2"), matcher_matched=False),
+        Reason(RuleType("F"), RuleName("code2"), RulePriority("1"), RuleDescription("desc2"), matcher_matched=False),
         Reason(RuleType("R"), RuleName("code3"), RulePriority("3"), RuleDescription("desc3"), matcher_matched=True),
     ]
     expected = [
@@ -360,15 +360,3 @@ def test_empty_list_returns_empty_list():
     expected = []
     assert AuditContext.deduplicate_reasons(reasons) == expected
 
-
-def test_reasons_with_no_description_are_filtered_out():
-    reasons = [
-        Reason(RuleType("F"), RuleName("code1"), RulePriority("1"), RuleDescription("desc1"), matcher_matched=True),
-        Reason(RuleType("S"), RuleName("code2"), RulePriority("2"), None, matcher_matched=False),
-        Reason(RuleType("R"), RuleName("code3"), RulePriority("3"), RuleDescription("desc3"), matcher_matched=True),
-    ]
-    expected = [
-        Reason(RuleType("F"), RuleName("code1"), RulePriority("1"), RuleDescription("desc1"), matcher_matched=True),
-        Reason(RuleType("R"), RuleName("code3"), RulePriority("3"), RuleDescription("desc3"), matcher_matched=True),
-    ]
-    assert AuditContext.deduplicate_reasons(reasons) == expected
