@@ -343,24 +343,22 @@ resource "aws_iam_policy" "kms_creation" {
       {
         Effect = "Allow",
         Action = [
+          # Key creation and listing actions require wildcard resource
           "kms:CreateKey",
-          "kms:DescribeKey",
           "kms:CreateAlias",
           "kms:List*",
-          "kms:ListAliases",
-          "kms:Decrypt",
-          "kms:Encrypt",
-          "kms:ReEncrypt*",
+          "kms:ListAliases"
         ],
         Resource = "*"
       },
       {
         Effect = "Allow",
         Action = [
+          # Key management actions on account-specific keys only
+          "kms:DescribeKey",
           "kms:Describe*",
           "kms:GetKeyPolicy*",
           "kms:GetKeyRotationStatus",
-          "kms:Decrypt*",
           "kms:DeleteAlias",
           "kms:UpdateKeyDescription",
           "kms:CreateGrant",
@@ -369,8 +367,9 @@ resource "aws_iam_policy" "kms_creation" {
           "kms:ScheduleKeyDeletion",
           "kms:PutKeyPolicy",
           "kms:Encrypt",
-          "kms:TagResource",
-          "kms:GenerateDataKey",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey"
         ],
         Resource = [
           "arn:aws:kms:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:key/*",
