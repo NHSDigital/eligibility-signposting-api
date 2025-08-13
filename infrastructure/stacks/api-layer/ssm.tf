@@ -60,6 +60,7 @@ resource "aws_ssm_parameter" "splunk_hec_token" {
   key_id      = aws_kms_key.splunk_hec_kms.id
   value       = "REPLACE_ME" # Set a placeholder value
   tier        = "Advanced"
+  overwrite   = true # Allow overwriting existing parameter
 
   tags = {
     Environment = var.environment
@@ -80,6 +81,7 @@ resource "aws_ssm_parameter" "splunk_hec_endpoint" {
   key_id      = aws_kms_key.splunk_hec_kms.id
   value       = "REPLACE_ME" # Set a placeholder value
   tier        = "Advanced"
+  overwrite   = true # Allow overwriting existing parameter
 
   tags = {
     Environment = var.environment
