@@ -1,18 +1,3 @@
-# In order to allow deployment, we need to:
-# 1. Manually deploy the SSM parameters using the AWS CLI or console
-#
-# aws ssm put-parameter \
-#   --name "/splunk/hec/token" \
-#   --value "ACTUAL_HEC_TOKEN" \
-#   --type "SecureString" \
-#   --tier "Advanced" \
-#   --description "Splunk HEC token"
-#
-# 2. Import the existing parameters into Terraform state:
-# terraform import aws_ssm_parameter.splunk_hec_token "/splunk/hec/token"
-# terraform import aws_ssm_parameter.splunk_hec_endpoint "/splunk/hec/endpoint"
-# 3. Deploy the Terraform
-
 resource "aws_kms_key" "splunk_hec_kms" {
   description             = "KMS key for encrypting Splunk HEC SSM parameters"
   deletion_window_in_days = 7
