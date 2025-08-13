@@ -120,7 +120,7 @@ jobs:
         with:
           python-version: '3.13'
       - name: "Get lambda artefact"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: lambda
           path: dist
@@ -138,7 +138,7 @@ jobs:
           path: integration-test-results.xml
       - name: Gather Integration Test Summaries
         if: always()
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: summary
           pattern: ci-summary-*
