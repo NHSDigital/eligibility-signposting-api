@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-28T15:53:59.174715+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "AlreadyVaccinatedInfo",
+          "actionType": "InfoText",
+          "description": "## If you think this is incorrect\n\nIf you believe you've not been vaccinated against RSV, speak to your healthcare professional.\n\nFor anything else please see our help and support page. (ADD LINK).",
+          "urlLabel": "",
+          "urlLink": ""
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "Already Vaccinated",
+          "ruleText": "## You've had your RSV vaccination\n\nWe believe you had your vaccination.",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "54f1841a-93e5-4da1-916b-6ed1cff5903f"
+}

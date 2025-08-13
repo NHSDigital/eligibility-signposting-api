@@ -42,3 +42,5 @@ assets/
 # Logs
 *.log
 /helpers/output/
+/.hypothesis/unicode_data/15.1.0/charmap.json.gz
+/tests/.hypothesis/unicode_data/15.1.0/charmap.json.gz

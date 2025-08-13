@@ -1,0 +1,35 @@
+{
+  "scenario_name": "RSV - Vita Integration - Actionable - You should have the RSV vaccine ( existing non-NBS booking ) - empty cohorts - ManageLocal",
+  "request_headers": {
+    "nhs-login-nhs-number": "9658218903"
+  },
+  "config_filenames": [
+    "vita_integration_test_config.json"
+  ],
+  "data": [
+    {
+      "NHS_NUMBER": "9658218903",
+      "ATTRIBUTE_TYPE": "PERSON",
+      "DATE_OF_BIRTH": "19500601",
+      "GENDER": "2",
+      "POSTCODE": "CB3 8DX",
+      "POSTCODE_SECTOR": "CB38",
+      "POSTCODE_OUTCODE": "CB3",
+      "MSOA": "E02007085",
+      "LSOA": "E01018223",
+      "GP_PRACTICE_CODE": "D81046",
+      "PCN": "U75549",
+      "ICB": "QUE",
+      "COMMISSIONING_REGION": "Y61",
+      "13Q_FLAG": "N",
+      "CARE_HOME_FLAG": "N",
+      "DE_FLAG": "N"
+    },
+    {
+      "NHS_NUMBER": "9658218903",
+      "ATTRIBUTE_TYPE": "RSV",
+      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_+720>>",
+      "BOOKED_APPOINTMENT_PROVIDER": "ACC"
+    }
+  ]
+}

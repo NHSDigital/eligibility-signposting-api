@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-14T20:34:22.263070+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [],
+      "condition": "MMR",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "mmr_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an mmr cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "d5255fb5-ec34-46c0-8177-d54c3bcbb5d1"
+}

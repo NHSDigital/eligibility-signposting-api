@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "lastUpdated": "2025-08-11T16:08:19.685910+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "AmendNBS",
+          "actionType": "ButtonWithAuthLink",
+          "description": "##You have an RSV vaccination appointment\nYou can view, change or cancel your appointment below.",
+          "urlLabel": "Manage your appointment",
+          "urlLink": "http://www.nhs.uk/book-rsv"
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age",
+          "cohortStatus": "Actionable",
+          "cohortText": "are aged 75 to 79 years old"
+        },
+        {
+          "cohortCode": "rsv_age_catchup",
+          "cohortStatus": "Actionable",
+          "cohortText": "turned 80 after 1st September 2024"
+        }
+      ],
+      "status": "Actionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "bc3da5e2-b3b6-4979-b0fe-e40c48dd9e1c"
+}

@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "lastUpdated": "2025-08-01T07:56:59.488641+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age",
+          "cohortStatus": "NotActionable",
+          "cohortText": "are aged 75 to 79 years old"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "NotYetDue",
+          "ruleText": "##Your RSV vaccination is not yet due\\n\\nYour next dose will be due in 3 months.",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "7399cb75-afd1-4861-94d4-63c8f615db61"
+}

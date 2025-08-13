@@ -1,0 +1,192 @@
+{
+  "CampaignConfig": {
+    "ID": "8fcb742b-45fa-4e0d-8f2f-9c2efb1f46d0",
+    "Version": 1,
+    "Name": "ELI-399-03-Iteration-Config",
+    "Type": "V",
+    "Target": "RSV",
+    "Manager": [
+      "person1@nhs.net"
+    ],
+    "Approver": [
+      "person1@nhs.net"
+    ],
+    "Reviewer": [
+      "person1@nhs.net"
+    ],
+    "IterationFrequency": "X",
+    "IterationType": "O",
+    "IterationTime": "07:00:00",
+    "StartDate": "<<DATE_YEAR_-1>>",
+    "EndDate": "<<DATE_YEAR_1>>",
+    "ApprovalMinimum": 0,
+    "ApprovalMaximum": 0,
+    "DefaultCommsRouting": "PLACEHOLDER_COMMS_ROUTING",
+    "Iterations": [
+      {
+        "ID": "older-past-iteration-id",
+        "DefaultCommsRouting": "",
+        "DefaultNotActionableRouting": "",
+        "DefaultNotEligibleRouting": "",
+        "Version": 1,
+        "Name": "older-past-iteration",
+        "IterationDate": "<<DATE_MONTH_-9>>",
+        "IterationNumber": 2,
+        "CommsType": "I",
+        "ApprovalMinimum": 0,
+        "ApprovalMaximum": 0,
+        "Type": "O",
+        "IterationCohorts": [
+          {
+            "CohortLabel": "rsv_eli_399_inactive_cohort_1",
+            "CohortGroup": "rsv_eli_399_inactive_cohort_group",
+            "PositiveDescription": "are a member of eli_399_inactive_cohort_group",
+            "NegativeDescription": "are not a member of eli_399_inactive_cohort_group",
+            "Priority": 0
+          },
+          {
+            "CohortLabel": "rsv_eli_399_inactive_cohort_2",
+            "CohortGroup": "rsv_eli_399_inactive_cohort_group",
+            "PositiveDescription": "are a member of eli_399_inactive_cohort_group",
+            "NegativeDescription": "are not a member of eli_399_inactive_cohort_group",
+            "Priority": 10
+          },
+          {
+            "CohortLabel": "rsv_eli_399_inactive_cohort_3",
+            "CohortGroup": "rsv_eli_399_inactive_cohort_group_other",
+            "PositiveDescription": "are a member of eli_399_inactive_cohort_group_other",
+            "NegativeDescription": "are not a member of eli_399_inactive_cohort_group_other",
+            "Priority": 20
+          }
+        ],
+        "IterationRules": [
+          {
+            "Type": "S",
+            "Name": "NotActionable Reason",
+            "Description": "",
+            "Operator": "Y>",
+            "Comparator": "-75",
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "CohortLabel": "rsv_eli_399_inactive_cohort_1",
+            "Priority": 100,
+            "RuleStop:": "Y"
+          },
+          {
+            "Type": "S",
+            "Name": "NotActionable Reason",
+            "Description": "Description 4",
+            "Operator": "=",
+            "Comparator": "AAB",
+            "AttributeLevel": "PERSON",
+            "AttributeName": "ICB",
+            "CohortLabel": "rsv_eli_399_inactive_cohort_2",
+            "Priority": 110
+          },
+          {
+            "Type": "S",
+            "Name": "NotActionable Reason",
+            "Description": "Description 3",
+            "Operator": "=",
+            "Comparator": "ZZY",
+            "AttributeLevel": "PERSON",
+            "AttributeName": "COMMISSIONING_REGION",
+            "CohortLabel": "rsv_eli_399_inactive_cohort_3",
+            "Priority": 120
+          }
+        ],
+        "ActionsMapper": {
+          "BOOK_NBS": {
+            "ExternalRoutingCode": "BookNBS",
+            "ActionDescription": "",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Continue to booking"
+          }
+        }
+      },
+      {
+        "ID": "active-current-iteration-id",
+        "DefaultCommsRouting": "",
+        "DefaultNotActionableRouting": "",
+        "DefaultNotEligibleRouting": "",
+        "Version": 1,
+        "Name": "active-current-iteration",
+        "IterationDate": "<<DATE_DAY_-1>>",
+        "IterationNumber": 1,
+        "CommsType": "I",
+        "ApprovalMinimum": 0,
+        "ApprovalMaximum": 0,
+        "Type": "O",
+        "IterationCohorts": [
+          {
+            "CohortLabel": "rsv_eli_399_active_cohort_1",
+            "CohortGroup": "rsv_eli_399_active_cohort_group",
+            "PositiveDescription": "are a member of eli_399_active_cohort_group",
+            "NegativeDescription": "are not a member of eli_399_active_cohort_group",
+            "Priority": 0
+          },
+          {
+            "CohortLabel": "rsv_eli_399_active_cohort_2",
+            "CohortGroup": "rsv_eli_399_active_cohort_group",
+            "PositiveDescription": "are a member of eli_399_active_cohort_group",
+            "NegativeDescription": "are not a member of eli_399_active_cohort_group",
+            "Priority": 10
+          },
+          {
+            "CohortLabel": "rsv_eli_399_active_cohort_3",
+            "CohortGroup": "rsv_eli_399_active_cohort_group_other",
+            "PositiveDescription": "are a member of eli_399_active_cohort_group_other",
+            "NegativeDescription": "are not a member of eli_399_active_cohort_group_other",
+            "Priority": 20
+          }
+        ],
+        "IterationRules": [
+          {
+            "Type": "S",
+            "Name": "NotActionable Reason",
+            "Description": "",
+            "Operator": "Y>",
+            "Comparator": "-75",
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "CohortLabel": "rsv_eli_399_active_cohort_1",
+            "Priority": 100,
+            "RuleStop:": "Y"
+          },
+          {
+            "Type": "S",
+            "Name": "NotActionable Reason",
+            "Description": "Description 4",
+            "Operator": "=",
+            "Comparator": "AAB",
+            "AttributeLevel": "PERSON",
+            "AttributeName": "ICB",
+            "CohortLabel": "rsv_eli_399_active_cohort_2",
+            "Priority": 110
+          },
+          {
+            "Type": "S",
+            "Name": "NotActionable Reason",
+            "Description": "Description 3",
+            "Operator": "=",
+            "Comparator": "ZZY",
+            "AttributeLevel": "PERSON",
+            "AttributeName": "COMMISSIONING_REGION",
+            "CohortLabel": "rsv_eli_399_active_cohort_3",
+            "Priority": 120
+          }
+        ],
+        "ActionsMapper": {
+          "BOOK_NBS": {
+            "ExternalRoutingCode": "BookNBS",
+            "ActionDescription": "",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Continue to booking"
+          }
+        }
+      }
+    ]
+  }
+}
