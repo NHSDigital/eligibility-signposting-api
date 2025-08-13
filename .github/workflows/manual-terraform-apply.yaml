@@ -45,7 +45,7 @@ jobs:
           path: dist/lambda.zip
 
       - name: "Download Built Lambdas"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: lambda
           path: ./build
