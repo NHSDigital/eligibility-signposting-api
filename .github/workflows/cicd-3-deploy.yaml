@@ -48,7 +48,7 @@ jobs:
       tag: ${{ steps.variables.outputs.tag }}
     steps:
       - name: "Checkout tag"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.tag }}
 
@@ -97,7 +97,7 @@ jobs:
           python-version: "3.13"
 
       - name: "Checkout Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: "Build lambda artefact"
         run: |
