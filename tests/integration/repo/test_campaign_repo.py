@@ -26,10 +26,11 @@ def test_get_campaign_config(s3_client: BaseClient, rules_bucket: BucketName, ca
     # Given
     repo = CampaignRepo(s3_client, rules_bucket)
 
-    # When
-    actual = list(repo.get_campaign_configs())
+    # Ensure we start with a fresh cache for this test
+    repo.clear_campaign_cache()
 
-    # Then
+    # When
+    actual = list(repo.get_campaign_configs())  # Then
     assert_that(
         actual,
         has_item(

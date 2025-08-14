@@ -17,6 +17,7 @@ from faker import Faker
 from httpx import RequestError
 from yarl import URL
 
+from eligibility_signposting_api.common.cache_manager import clear_all_caches
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
     CampaignConfig,
@@ -475,6 +476,19 @@ def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketNa
             "CompressionFormat": "UNCOMPRESSED",
         },
     )
+
+
+@pytest.fixture(scope="class", autouse=True)
+def clear_performance_caches():
+    """Clear all performance caches before each test class.
+
+    This ensures test isolation when using the performance-optimized
+    Flask app and campaign configuration caching.
+    """
+    clear_all_caches()
+    yield
+    # Optionally clear again after tests complete
+    clear_all_caches()
 
 
 @pytest.fixture(scope="class")
