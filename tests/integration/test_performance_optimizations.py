@@ -6,7 +6,9 @@ from eligibility_signposting_api.app import get_or_create_app
 from eligibility_signposting_api.common.cache_manager import (
     FLASK_APP_CACHE_KEY,
     clear_all_caches,
+    clear_cache,
     get_cache_info,
+    set_cache,
 )
 
 
@@ -71,3 +73,42 @@ class TestPerformanceOptimizations:
         # Verify Flask app is now cached
         cache_info_after = get_cache_info()
         assert FLASK_APP_CACHE_KEY in cache_info_after
+
+    def test_clear_cache_specific_key(self):
+        """Test clearing a specific cache key and logging."""
+        # Set up test data
+        test_key = "test_cache_key"
+        test_value = "test_value"
+        set_cache(test_key, test_value)
+
+        # Verify key exists
+        cache_info_before = get_cache_info()
+        assert test_key in cache_info_before
+
+        # Clear specific key (this covers lines 28-29)
+        clear_cache(test_key)
+
+        # Verify key is removed
+        cache_info_after = get_cache_info()
+        assert test_key not in cache_info_after
+
+        # Clearing non-existent key should not cause error
+        clear_cache("non_existent_key")
+
+    def test_cache_info_with_non_len_objects(self):
+        """Test get_cache_info with objects that don't have __len__ method."""
+
+        # Set up object that raises TypeError on len() (covers lines 44-45)
+        class NoLenObject:
+            def __len__(self):
+                msg = "This object doesn't support len()"
+                raise TypeError(msg)
+
+        test_key = "no_len_object"
+        no_len_obj = NoLenObject()
+        set_cache(test_key, no_len_obj)
+
+        # This should handle the TypeError gracefully
+        cache_info = get_cache_info()
+        assert test_key in cache_info
+        assert cache_info[test_key] == 1  # Should default to 1
