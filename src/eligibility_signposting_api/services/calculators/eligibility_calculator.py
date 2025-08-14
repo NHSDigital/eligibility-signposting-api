@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from itertools import chain
 from typing import TYPE_CHECKING
 
 from wireup import service
 
+import eligibility_signposting_api.model.eligibility_status
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.eligibility_status import (
@@ -33,6 +34,8 @@ if TYPE_CHECKING:
         IterationName,
     )
     from eligibility_signposting_api.model.person import Person
+
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -212,3 +215,33 @@ class EligibilityCalculator:
             key = (reason.rule_type, reason.rule_priority)
             deduped.setdefault(key, reason)
         return list(deduped.values())
+
+    @staticmethod
+    def find_and_replace_tokens(person: Person, condition: Condition) -> Condition:
+        #pattern = r"\[\[.*?\]\]"
+        pattern =  r"\[\[(.*?)\]\]"
+        all_fields = fields(condition)
+
+        for field in all_fields:
+            if field.type == "StatusText":
+                value = getattr(condition, field.name)
+                all_search = re.findall(pattern, value)
+
+                for item in all_search:
+                    #middle = item[2:-2]
+                    middle = item
+                    attribute_type = middle.split(".")[0]
+                    attribute_name = middle.split(".")[1]
+
+                    person_attribute_value = person.data[0].get(attribute_name)
+
+                    #re.replace(pattern, value, person_attribute_value)
+                    sub = re.sub(pattern, person_attribute_value, value)
+
+                    setattr(condition, field.name, sub)
+                    pass
+                pass
+
+        return condition
+
+
