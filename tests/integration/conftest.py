@@ -206,6 +206,7 @@ def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -
                     "FIREHOSE_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "AWS_REGION": AWS_REGION,
                     "LOG_LEVEL": "DEBUG",
+                    "DISABLE_CAMPAIGN_CACHE": "true",  # Disable caching for integration tests
                 }
             },
         )
@@ -489,6 +490,21 @@ def clear_performance_caches():
     yield
     # Optionally clear again after tests complete
     clear_all_caches()
+
+
+@pytest.fixture
+def clear_campaign_cache_for_test():
+    """Clear campaign cache before each test function that needs fresh campaign data.
+
+    This fixture should be used by tests that create specific campaign configurations
+    and expect them to be loaded fresh from S3, not from cache.
+    """
+    from eligibility_signposting_api.common.cache_manager import CAMPAIGN_CONFIGS_CACHE_KEY, clear_cache
+
+    clear_cache(CAMPAIGN_CONFIGS_CACHE_KEY)
+    yield
+    # Optionally clear again after test completes
+    clear_cache(CAMPAIGN_CONFIGS_CACHE_KEY)
 
 
 @pytest.fixture(scope="class")

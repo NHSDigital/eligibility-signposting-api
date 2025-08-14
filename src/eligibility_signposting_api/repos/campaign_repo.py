@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from collections.abc import Generator
 from typing import Annotated, NewType
 
@@ -38,8 +39,14 @@ class CampaignRepo:
         """Get campaign configurations, using cached data if available.
 
         Campaign rules are loaded once per Lambda container and cached globally
-        to improve performance by avoiding repeated S3 reads.
+        to improve performance by avoiding repeated S3 reads, unless caching is disabled for testing.
         """
+        # Check if caching is disabled for tests
+        if os.getenv("DISABLE_CAMPAIGN_CACHE", "").lower() in ("true", "1", "yes"):
+            logger.debug("Campaign caching disabled for testing")
+            yield from self._load_campaign_configs_from_s3()
+            return
+
         cached_configs = get_cache(CAMPAIGN_CONFIGS_CACHE_KEY)
 
         if cached_configs is None:
