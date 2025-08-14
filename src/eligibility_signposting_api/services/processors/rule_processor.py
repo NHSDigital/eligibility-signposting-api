@@ -50,10 +50,13 @@ class RuleProcessor:
     ) -> bool:
         is_eligible = True
         priority_getter = attrgetter("priority")
-        sorted_rules_by_priority = sorted(self.get_exclusion_rules(cohort, filter_rules), key=priority_getter)
+        sorted_rules_by_priority = sorted(filter_rules, key=priority_getter)
 
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
-            status, group_exclusion_reasons, _ = self.evaluate_rules_priority_group(person, rule_group)
+            group_rules = list(rule_group)
+            if self._should_skip_rule_group(cohort, group_rules):
+                continue
+            status, group_exclusion_reasons, _ = self.evaluate_rules_priority_group(person, iter(group_rules))
             if status.is_exclusion:
                 if cohort.cohort_label is not None:
                     cohort_results[cohort.cohort_label] = CohortGroupResult(
@@ -65,6 +68,7 @@ class RuleProcessor:
                     )
                 is_eligible = False
                 break
+
         return is_eligible
 
     def is_actionable(
@@ -78,10 +82,14 @@ class RuleProcessor:
         priority_getter = attrgetter("priority")
         suppression_reasons = []
 
-        sorted_rules_by_priority = sorted(self.get_exclusion_rules(cohort, suppression_rules), key=priority_getter)
+        sorted_rules_by_priority = sorted(suppression_rules, key=priority_getter)
 
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
-            status, group_exclusion_reasons, rule_stop = self.evaluate_rules_priority_group(person, rule_group)
+            group_rules = list(rule_group)
+            if self._should_skip_rule_group(cohort, group_rules):
+                continue
+
+            status, group_exclusion_reasons, rule_stop = self.evaluate_rules_priority_group(person, iter(group_rules))
             if status.is_exclusion:
                 is_actionable = False
                 suppression_reasons.extend(group_exclusion_reasons)
@@ -102,6 +110,12 @@ class RuleProcessor:
                     cohort.positive_description,
                     suppression_reasons,
                 )
+
+    @staticmethod
+    def _should_skip_rule_group(cohort: IterationCohort, group_rules: list[IterationRule]) -> bool:
+        cohort_specific_rules = [rule for rule in group_rules if rule.cohort_label is not None]
+        matching_specific_rules = [rule for rule in cohort_specific_rules if rule.cohort_label == cohort.cohort_label]
+        return bool(cohort_specific_rules and not matching_specific_rules)
 
     def evaluate_rules_priority_group(
         self, person: Person, rules_group: Iterator[IterationRule]

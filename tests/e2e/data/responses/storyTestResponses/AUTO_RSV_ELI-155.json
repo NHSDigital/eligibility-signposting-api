@@ -1,0 +1,30 @@
+{
+  "responseId": "<<IGNORE_ID>>",
+  "meta": {
+    "lastUpdated": "<<IGNORE_DATE>>"
+  },
+  "processedSuggestions": [
+    {
+      "condition": "RSV",
+      "status": "Actionable",
+      "statusText": "You should have the RSV vaccine",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "eli_155_in_group",
+          "cohortStatus": "Actionable",
+          "cohortText": "You are currently in eli_155_in"
+        }
+      ],
+      "suitabilityRules": [],
+      "actions": [
+        {
+          "actionCode": "AmendNBS",
+          "description": "##You have an RSV vaccination appointment\\nYou can view, change or cancel your appointment below.",
+          "actionType": "ButtonWithAuthLink",
+          "urlLink": "http://www.nhs.uk/book-rsv",
+          "urlLabel": "Manage your appointment"
+        }
+      ]
+    }
+  ]
+}

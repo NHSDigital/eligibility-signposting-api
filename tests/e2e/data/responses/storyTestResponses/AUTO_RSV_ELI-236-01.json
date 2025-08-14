@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-22T21:07:51.351855+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "eli_236_group",
+          "cohortStatus": "NotActionable",
+          "cohortText": "You are currently in eli_236"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "13Q Flag NVL equal Test",
+          "ruleText": "13Q Flag NVL Test|13Q Flag NVL Test",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "CARE_HOME_FLAG not equal NVL Test",
+          "ruleText": "CARE_HOME_FLAG not equal NVL Test",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "COMMISSIONING_REGION greater than NVL Test",
+          "ruleText": "COMMISSIONING_REGION greater than NVL Test",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "DATE_OF_BIRTH less than NVL Test",
+          "ruleText": "DATE_OF_BIRTH less than NVL Test",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "GENDER greater than or equal to NVL Test",
+          "ruleText": "GENDER greater than or equal to NVL Test",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "GP_PRACTICE_CODE less or equal to NVL Test",
+          "ruleText": "GP_PRACTICE_CODE less than or equal to NVL Test",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "BOOKED_APPOINTMENT_DATE D<= NVL Test",
+          "ruleText": "BOOKED_APPOINTMENT_DATE D<= NVL Test",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "LAST_INVITE_DATE W> NVL Test",
+          "ruleText": "LAST_INVITE_DATE W> NVL Test",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "LAST_VALID_DOSE_DATE Y< NVL Test",
+          "ruleText": "LAST_VALID_DOSE_DATE Y< NVL Test",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "edb0e191-897e-41c0-b632-eef98d484867"
+}

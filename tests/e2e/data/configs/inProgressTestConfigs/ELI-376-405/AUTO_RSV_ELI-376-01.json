@@ -1,0 +1,119 @@
+{
+  "CampaignConfig": {
+    "ID": "AUTO_RSV_ELI-376-01-Campaign-ID",
+    "Version": 1,
+    "Name": "ELI-376-01-Iteration-Config-Name",
+    "Type": "V",
+    "Target": "RSV",
+    "Manager": [
+      "person1@nhs.net"
+    ],
+    "Approver": [
+      "person1@nhs.net"
+    ],
+    "Reviewer": [
+      "person1@nhs.net"
+    ],
+    "IterationFrequency": "X",
+    "IterationType": "O",
+    "IterationTime": "07:00:00",
+    "StartDate": "20250717",
+    "EndDate": "20350717",
+    "ApprovalMinimum": 0,
+    "ApprovalMaximum": 0,
+    "DefaultCommsRouting": "BOOK_NBS",
+    "Iterations": [
+      {
+        "ID": "AUTO_RSV_ELI-376-01-Iteration-ID",
+        "DefaultCommsRouting": "TEST_ACTION",
+        "DefaultNotActionableRouting": "TEST_NOT_ACTION",
+        "DefaultNotEligibleRouting": "TEST_NOT_ELI",
+        "Version": 1,
+        "Name": "ELI-376-01-Iteration-Config-Name",
+        "IterationDate": "20240808",
+        "IterationNumber": 1,
+        "CommsType": "I",
+        "ApprovalMinimum": 0,
+        "ApprovalMaximum": 0,
+        "Type": "O",
+        "IterationCohorts": [
+          {
+            "CohortLabel": "rsv_eli_376_cohort_1",
+            "CohortGroup": "rsv_eli_376_cohort_group",
+            "PositiveDescription": "are a member of eli_376_cohort_group_0",
+            "NegativeDescription": "are not a member of eli_376_cohort_group_0",
+            "Priority": 0
+          },
+          {
+            "CohortLabel": "rsv_eli_376_cohort_2",
+            "CohortGroup": "rsv_eli_376_cohort_group",
+            "PositiveDescription": "are a member of eli_376_cohort_group_10",
+            "NegativeDescription": "are not a member of eli_376_cohort_group_10",
+            "Priority": 10
+          },
+          {
+            "CohortLabel": "rsv_eli_376_cohort_3",
+            "CohortGroup": "rsv_eli_376_cohort_group",
+            "PositiveDescription": "are a member of eli_376_cohort_group_20",
+            "NegativeDescription": "are not a member of eli_376_cohort_group_20",
+            "Priority": 20
+          },
+          {
+            "CohortLabel": "rsv_eli_376_cohort_4",
+            "CohortGroup": "rsv_eli_376_cohort_group_other",
+            "PositiveDescription": "are a member of eli_376_cohort_group_other",
+            "NegativeDescription": "are not a member of eli_376_cohort_group_other",
+            "Priority": 30
+          }
+        ],
+        "IterationRules": [
+          {
+            "Type": "F",
+            "Name": "NotEligible Reason 1",
+            "Description": "NotEligible Description 1",
+            "Operator": "Y<=",
+            "Comparator": "-80",
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "CohortLabel": "rsv_eli_376_cohort_1",
+            "Priority": 100
+          },
+          {
+            "Type": "S",
+            "Name": "NotActionable Reason 1",
+            "Description": "NotActionable Description 1",
+            "Operator": "Y>",
+            "Comparator": "-75",
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "CohortLabel": "rsv_eli_376_cohort_1",
+            "Priority": 200
+          }
+        ],
+        "ActionsMapper": {
+          "TEST_ACTION": {
+            "ExternalRoutingCode": "TestAction",
+            "ActionDescription": "TestAction Description",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Continue to booking"
+          },
+          "TEST_NOT_ACTION": {
+            "ExternalRoutingCode": "TestNotAction",
+            "ActionDescription": "TestNotAction Description",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": null,
+            "UrlLabel": ""
+          },
+          "TEST_NOT_ELI": {
+            "ExternalRoutingCode": "TestNotEli",
+            "ActionDescription": "TestNotEli Description",
+            "ActionType": "",
+            "UrlLink": null,
+            "UrlLabel": ""
+          }
+        }
+      }
+    ]
+  }
+}

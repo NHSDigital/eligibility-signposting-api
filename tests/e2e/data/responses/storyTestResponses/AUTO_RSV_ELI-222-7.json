@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-25T15:00:10.943057+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_age",
+          "cohortStatus": "NotEligible",
+          "cohortText": "are not aged 75 to 79 years old."
+        },
+        {
+          "cohortCode": "rsv_age_catchup",
+          "cohortStatus": "NotEligible",
+          "cohortText": "did not turn 80 after 1 September 2024"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "526cbf5b-7049-4870-85c5-23c58b48973d"
+}

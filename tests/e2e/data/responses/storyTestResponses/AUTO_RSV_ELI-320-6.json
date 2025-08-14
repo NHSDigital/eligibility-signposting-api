@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-15T13:05:26.936847+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [],
+      "condition": "COVID",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "covid_cohort_group",
+          "cohortStatus": "NotActionable",
+          "cohortText": "You are currently in a covid cohort"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the COVID vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "AlreadyVaccinated",
+          "ruleText": "##You've had your COVID vaccination\nWe believe you already had your COVID vaccination.",
+          "ruleType": "S"
+        }
+      ]
+    },
+    {
+      "actions": [
+        {
+          "actionCode": "AmendNBS",
+          "actionType": "ButtonWithAuthLink",
+          "description": "##You have an flu screening appointment\nYou can view, change or cancel your appointment below.",
+          "urlLabel": "Manage your appointment",
+          "urlLink": "http://www.nhs.uk/book-bs"
+        }
+      ],
+      "condition": "FLU",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "FLU_screening_cohort_group",
+          "cohortStatus": "Actionable",
+          "cohortText": "You are currently in an flu SCREENING cohort"
+        }
+      ],
+      "status": "Actionable",
+      "statusText": "You should have the FLU vaccine",
+      "suitabilityRules": []
+    },
+    {
+      "actions": [],
+      "condition": "MMR",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "mmr_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an mmr cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
+      "suitabilityRules": []
+    },
+    {
+      "actions": [],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_screening_cohort_group",
+          "cohortStatus": "NotEligible",
+          "cohortText": "You are not currently in an RSV SCREENING cohort"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "2e40b120-6f59-4418-9c80-363137e6386e"
+}

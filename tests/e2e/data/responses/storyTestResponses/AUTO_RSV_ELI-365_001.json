@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "lastUpdated": "2025-07-16T10:32:10.803638+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "AmendNBS",
+          "actionType": "ButtonWithAuthLink",
+          "description": "##You have an RSV vaccination appointment\nYou can view, change or cancel your appointment below.",
+          "urlLabel": "Manage your appointment",
+          "urlLink": "http://www.nhs.uk/book-rsv"
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [],
+      "status": "Actionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "9b11bdb0-afa8-4ff7-994c-ee7738313d76"
+}
