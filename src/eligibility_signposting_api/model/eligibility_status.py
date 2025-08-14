@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from datetime import date
 from enum import Enum, StrEnum, auto
 from functools import total_ordering
@@ -116,8 +116,6 @@ class Condition:
     suitability_rules: list[Reason]
     status_text: StatusText
     actions: list[SuggestedAction] | None = None
-
-all_condition_fields = fields(Condition)
 
 
 @dataclass

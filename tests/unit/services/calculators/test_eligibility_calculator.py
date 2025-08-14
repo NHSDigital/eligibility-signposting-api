@@ -37,7 +37,8 @@ from eligibility_signposting_api.model.eligibility_status import (
     RuleDescription,
     RulePriority,
     Status,
-    SuggestedAction, StatusText,
+    StatusText,
+    SuggestedAction,
 )
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
@@ -852,7 +853,6 @@ class TestEligibilityResultBuilder:
         assert_that(result.cohort_results[0].cohort_code, is_("COHORT_X"))
         assert_that(result.cohort_results[0].status, is_(Status.not_eligible))
 
-
     @pytest.mark.parametrize(
         ("reason_1", "reason_2", "reason_3", "expected_reasons"),
         [
@@ -868,7 +868,11 @@ class TestEligibilityResultBuilder:
                 ReasonFactory.build(rule_name="Supress Rule 1", rule_description="description1", matcher_matched=True),
                 ReasonFactory.build(rule_name="Supress Rule 2", rule_description="description2", matcher_matched=True),
                 ReasonFactory.build(rule_name="Supress Rule 1", rule_description="description3", matcher_matched=True),
-                [ReasonFactory.build(rule_name="Supress Rule 1", rule_description="description1", matcher_matched=True)],
+                [
+                    ReasonFactory.build(
+                        rule_name="Supress Rule 1", rule_description="description1", matcher_matched=True
+                    )
+                ],
             ),
             # Same rule name, same type, different priority
             (
@@ -882,14 +886,20 @@ class TestEligibilityResultBuilder:
             ),
             # Same rule name, same priority, different type
             (
-                ReasonFactory.build(rule_type=RuleType.suppression, rule_description="description1", matcher_matched=True),
+                ReasonFactory.build(
+                    rule_type=RuleType.suppression, rule_description="description1", matcher_matched=True
+                ),
                 ReasonFactory.build(rule_type=RuleType.filter, rule_description="description2", matcher_matched=True),
-                ReasonFactory.build(rule_type=RuleType.suppression, rule_description="description3", matcher_matched=True),
+                ReasonFactory.build(
+                    rule_type=RuleType.suppression, rule_description="description3", matcher_matched=True
+                ),
                 [
                     ReasonFactory.build(
                         rule_type=RuleType.suppression, rule_description="description1", matcher_matched=True
                     ),
-                    ReasonFactory.build(rule_type=RuleType.filter, rule_description="description2", matcher_matched=True),
+                    ReasonFactory.build(
+                        rule_type=RuleType.filter, rule_description="description2", matcher_matched=True
+                    ),
                 ],
             ),
         ],
@@ -917,7 +927,6 @@ class TestEligibilityResultBuilder:
         result: Condition = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
         assert_that(result.suitability_rules, contains_inanyorder(*expected_reasons))
-
 
     @pytest.mark.parametrize(
         ("reason_2", "expected_reasons"),
@@ -1033,11 +1042,9 @@ class TestEligibilityResultBuilder:
         assert_that(len(result.cohort_results), is_(1))
         assert_that(result.cohort_results[0].reasons, contains_inanyorder(*expected_reasons))
 
-# Condition token placement
 
 class TestTokenReplacement:
     def test_simple_string(self):
-
         person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
 
         condition = Condition(
@@ -1046,7 +1053,7 @@ class TestTokenReplacement:
             status_text=StatusText("Your age is [[PERSON.AGE]]."),
             cohort_results=[],
             suitability_rules=[],
-            actions=[]
+            actions=[],
         )
 
         expected = Condition(
@@ -1055,50 +1062,77 @@ class TestTokenReplacement:
             status_text=StatusText("Your age is 30."),
             cohort_results=[],
             suitability_rules=[],
-            actions=[]
+            actions=[],
         )
 
-        assert_that(EligibilityCalculator.find_and_replace_tokens(person, condition), expected)
+        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
 
+        assert actual == expected
+
+    def test_simple_string_with_multiple_tokens(self):
+        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DEGREE": "DOCTOR", "QUALITY": "NICE"}])
+
+        condition = Condition(
+            condition_name=ConditionName("RSV"),
+            status=Status.actionable,
+            status_text=StatusText(
+                "You are a [[PERSON.QUALITY]] [[PERSON.QUALITY]] [[PERSON.DEGREE]] and your age is [[PERSON.AGE]]."
+            ),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        expected = Condition(
+            condition_name=ConditionName("RSV"),
+            status=Status.actionable,
+            status_text=StatusText("You are a NICE NICE DOCTOR and your age is 30."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+        assert actual == expected
 
     def test_deep_nesting(self):
+        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DEGREE": "DOCTOR", "QUALITY": "NICE"}])
 
-        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
-
-        reason1 = Reason(RuleType.suppression, eligibility_status.RuleName("Rule1"), RulePriority("1"),
-                         RuleDescription("This is a rule."), False)
-        reason2 = Reason(RuleType.filter, eligibility_status.RuleName("Rule2"), RulePriority("1"),
-                         RuleDescription("Rule [[PERSON.AGE]] here."), True)
+        reason1 = Reason(
+            RuleType.suppression,
+            eligibility_status.RuleName("Rule1"),
+            RulePriority("1"),
+            RuleDescription("This is a rule."),
+            matcher_matched=False,
+        )
+        reason2 = Reason(
+            RuleType.filter,
+            eligibility_status.RuleName("Rule2"),
+            RulePriority("1"),
+            RuleDescription("Rule [[PERSON.AGE]] here."),
+            matcher_matched=True,
+        )
 
         cohort_result = CohortGroupResult(
-            cohort_code="C1",
+            cohort_code="CohortCode",
             status=Status.actionable,
             reasons=[reason1, reason2],
             description="Results for cohort [[PERSON.AGE]].",
-            audit_rules=[]
+            audit_rules=[],
         )
 
         condition = Condition(
-            condition_name=ConditionName("C2"),
+            condition_name=ConditionName("ConditionName"),
             status=Status.not_actionable,
-            status_text=StatusText("Everything is fine."),
+            status_text=StatusText("Everything is [[PERSON.QUALITY]]."),
             cohort_results=[cohort_result],
             suitability_rules=[],
-            actions=[]
+            actions=[],
         )
 
-        actual = EligibilityCalculator.find_and_replace_tokens(person, condition)
+        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
 
-        cohort_result.description = "Results for cohort 30."
-        cohort_result.reasons[1].rule_description = "Rule 30 here."
-
-        expected =  Condition(
-            condition_name=ConditionName("C2"),
-            status=Status.not_actionable,
-            status_text=StatusText("Everything is fine."),
-            cohort_results=[cohort_result],
-            suitability_rules=[],
-            actions=[]
-        )
-
-        assert_that(actual, expected)
+        assert actual.cohort_results[0].description == "Results for cohort 30."
+        assert actual.cohort_results[0].reasons[1].rule_description == "Rule 30 here."
+        assert actual.status_text == StatusText("Everything is NICE.")

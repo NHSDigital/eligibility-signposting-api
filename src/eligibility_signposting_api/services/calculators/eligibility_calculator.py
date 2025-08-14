@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections import defaultdict
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, is_dataclass
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from wireup import service
 
-import eligibility_signposting_api.model.eligibility_status
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.eligibility_status import (
@@ -35,9 +35,9 @@ if TYPE_CHECKING:
     )
     from eligibility_signposting_api.model.person import Person
 
-import re
 
 logger = logging.getLogger(__name__)
+T = TypeVar("T")
 
 
 @service
@@ -217,31 +217,47 @@ class EligibilityCalculator:
         return list(deduped.values())
 
     @staticmethod
-    def find_and_replace_tokens(person: Person, condition: Condition) -> Condition:
-        #pattern = r"\[\[.*?\]\]"
-        pattern =  r"\[\[(.*?)\]\]"
-        all_fields = fields(condition)
+    def find_and_replace_tokens_recursive(person: Person, data_class: T) -> T:
+        if not is_dataclass(data_class):
+            return data_class
 
-        for field in all_fields:
-            if field.type == "StatusText":
-                value = getattr(condition, field.name)
-                all_search = re.findall(pattern, value)
+        for class_field in fields(data_class):
+            value = getattr(data_class, class_field.name)
 
-                for item in all_search:
-                    #middle = item[2:-2]
-                    middle = item
-                    attribute_type = middle.split(".")[0]
-                    attribute_name = middle.split(".")[1]
+            if isinstance(value, str):
+                setattr(data_class, class_field.name, EligibilityCalculator.replace_tokens_in_string(value, person))
 
-                    person_attribute_value = person.data[0].get(attribute_name)
+            elif isinstance(value, list):
+                for i, item in enumerate(value):
+                    if is_dataclass(item):
+                        value[i] = EligibilityCalculator.find_and_replace_tokens_recursive(person, item)
+                    elif isinstance(item, str):
+                        value[i] = EligibilityCalculator.replace_tokens_in_string(item, person)
 
-                    #re.replace(pattern, value, person_attribute_value)
-                    sub = re.sub(pattern, person_attribute_value, value)
+            elif is_dataclass(value):
+                setattr(
+                    data_class, class_field.name, EligibilityCalculator.find_and_replace_tokens_recursive(person, value)
+                )
 
-                    setattr(condition, field.name, sub)
-                    pass
+        return data_class
+
+    @staticmethod
+    def replace_tokens_in_string(text: str, person: Person) -> str:
+        if not isinstance(text, str):
+            return text
+
+        pattern = r"\[\[.*?\]\]"
+        all_tokens = re.findall(pattern, text)
+
+        for token in all_tokens:
+            middle = token[2:-2]
+            try:
+                attribute_name = middle.split(".")[1]
+                person_attribute_value = person.data[0].get(attribute_name, token)
+
+                if person_attribute_value is not None:
+                    text = text.replace(token, str(person_attribute_value))
+            except IndexError:
                 pass
 
-        return condition
-
-
+        return text
