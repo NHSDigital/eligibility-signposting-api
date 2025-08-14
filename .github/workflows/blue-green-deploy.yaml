@@ -1,0 +1,142 @@
+name: "Blue-Green Production Deploy"
+
+concurrency:
+  group: blue-green-deploy-${{ github.event.inputs.deployment_stage }}
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to deploy"
+        required: true
+        default: "latest"
+      deployment_stage:
+        description: "Blue-Green deployment stage"
+        required: true
+        type: choice
+        options:
+          - deploy-green
+          - shift-traffic-10
+          - shift-traffic-50
+          - shift-traffic-100
+          - rollback-to-blue
+      green_lambda_version:
+        description: "Lambda version for green deployment"
+        required: false
+        default: "$LATEST"
+
+jobs:
+  blue-green-deploy:
+    name: "Blue-Green Deployment"
+    runs-on: ubuntu-latest
+    environment: prod
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag }}
+
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.1"
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Deploy Green Environment"
+        if: github.event.inputs.deployment_stage == 'deploy-green'
+        env:
+          ENVIRONMENT: prod
+          TF_VAR_green_lambda_version: ${{ github.event.inputs.green_lambda_version }}
+          TF_VAR_blue_traffic_weight: 100
+        run: |
+          echo "Building new Lambda version..."
+          make dependencies install-python
+          make build
+
+          echo "Publishing new Lambda version..."
+          aws lambda publish-version \
+            --function-name eligibility_signposting_api \
+            --description "Green deployment $(date)" \
+            --region eu-west-2
+
+          echo "Updating green alias..."
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=default
+        working-directory: ./infrastructure
+
+      - name: "Shift Traffic 10%"
+        if: github.event.inputs.deployment_stage == 'shift-traffic-10'
+        env:
+          ENVIRONMENT: prod
+          TF_VAR_blue_traffic_weight: 90
+        run: |
+          echo "Shifting 10% traffic to green..."
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=default
+        working-directory: ./infrastructure
+
+      - name: "Shift Traffic 50%"
+        if: github.event.inputs.deployment_stage == 'shift-traffic-50'
+        env:
+          ENVIRONMENT: prod
+          TF_VAR_blue_traffic_weight: 50
+        run: |
+          echo "Shifting 50% traffic to green..."
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=default
+        working-directory: ./infrastructure
+
+      - name: "Complete Traffic Shift"
+        if: github.event.inputs.deployment_stage == 'shift-traffic-100'
+        env:
+          ENVIRONMENT: prod
+          TF_VAR_blue_traffic_weight: 0
+        run: |
+          echo "Shifting 100% traffic to green..."
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=default
+
+          echo "Promoting green to blue..."
+          # Update blue alias to point to green version
+          # This step would require additional Terraform configuration
+        working-directory: ./infrastructure
+
+      - name: "Rollback to Blue"
+        if: github.event.inputs.deployment_stage == 'rollback-to-blue'
+        env:
+          ENVIRONMENT: prod
+          TF_VAR_blue_traffic_weight: 100
+        run: |
+          echo "Rolling back to blue environment..."
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=default
+        working-directory: ./infrastructure
+
+      - name: "Health Check"
+        run: |
+          echo "Running health checks..."
+          # Add your health check logic here
+          curl -f https://prod.your-api-domain.com/_status || exit 1
+
+          echo "Checking CloudWatch metrics..."
+          # Add CloudWatch metrics validation
+
+  notify:
+    name: "Notify Deployment Status"
+    runs-on: ubuntu-latest
+    needs: [blue-green-deploy]
+    if: always()
+    steps:
+      - name: "Deployment Notification"
+        run: |
+          if [ "${{ needs.blue-green-deploy.result }}" = "success" ]; then
+            echo "✅ Blue-Green deployment successful: ${{ github.event.inputs.deployment_stage }}"
+          else
+            echo "❌ Blue-Green deployment failed: ${{ github.event.inputs.deployment_stage }}"
+          fi

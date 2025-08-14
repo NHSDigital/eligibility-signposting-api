@@ -1,0 +1,48 @@
+# Blue-Green Deployment Makefile Targets
+# Add these targets to your existing Makefile
+
+.PHONY: blue-green-deploy blue-green-canary blue-green-rollback blue-green-status
+
+# Deploy new version to green environment (0% traffic)
+blue-green-deploy:
+	@echo "🚀 Deploying to green environment..."
+	@./scripts/blue-green-deploy.sh deploy-green
+
+# Perform gradual canary deployment
+blue-green-canary:
+	@echo "🐦 Starting canary deployment..."
+	@read -p "Enter green version: " version; \
+	./scripts/blue-green-deploy.sh canary $$version
+
+# Promote green to blue
+blue-green-promote:
+	@echo "🔄 Promoting green to blue..."
+	@read -p "Enter green version to promote: " version; \
+	./scripts/blue-green-deploy.sh promote $$version
+
+# Emergency rollback to blue
+blue-green-rollback:
+	@echo "🔙 Rolling back to blue environment..."
+	@./scripts/blue-green-deploy.sh rollback
+
+# Show current deployment status
+blue-green-status:
+	@echo "📊 Current Blue-Green Status:"
+	@echo "Blue alias version:"
+	@aws lambda get-alias --function-name eligibility_signposting_api --name blue --query 'FunctionVersion' --output text 2>/dev/null || echo "Not configured"
+	@echo "Green alias version:"
+	@aws lambda get-alias --function-name eligibility_signposting_api --name green --query 'FunctionVersion' --output text 2>/dev/null || echo "Not configured"
+	@echo "Production alias configuration:"
+	@aws lambda get-alias --function-name eligibility_signposting_api --name production --query '{Version:FunctionVersion,Weights:RoutingConfig.AdditionalVersionWeights}' --output table 2>/dev/null || echo "Not configured"
+
+# Manual traffic shift
+blue-green-shift:
+	@echo "🔀 Manual traffic shift..."
+	@read -p "Enter blue traffic percentage (0-100): " blue_weight; \
+	read -p "Enter green version: " green_version; \
+	./scripts/blue-green-deploy.sh shift-traffic $$blue_weight $$green_version
+
+# Health check
+blue-green-health:
+	@echo "🏥 Running health checks..."
+	@curl -f -s https://prod.your-api-domain.com/_status && echo "✅ Health check passed" || echo "❌ Health check failed"
