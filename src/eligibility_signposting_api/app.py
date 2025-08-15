@@ -10,7 +10,7 @@ from mangum import Mangum
 from mangum.types import LambdaContext, LambdaEvent
 
 from eligibility_signposting_api import audit, repos, services
-from eligibility_signposting_api.common.cache_manager import FLASK_APP_CACHE_KEY, get_cache, set_cache
+from eligibility_signposting_api.common.cache_manager import FLASK_APP_CACHE_KEY, cache_manager
 from eligibility_signposting_api.common.error_handler import handle_exception
 from eligibility_signposting_api.common.request_validator import validate_request_params
 from eligibility_signposting_api.config.config import config
@@ -38,10 +38,10 @@ def get_or_create_app() -> Flask:
     This ensures the Flask app is initialized only once per Lambda container,
     improving performance by avoiding repeated initialization.
     """
-    app = get_cache(FLASK_APP_CACHE_KEY)
+    app = cache_manager.get(FLASK_APP_CACHE_KEY)
     if app is None:
         app = create_app()
-        set_cache(FLASK_APP_CACHE_KEY, app)
+        cache_manager.set(FLASK_APP_CACHE_KEY, app)
         logger.info("Flask app initialized and cached for container reuse")
     return app  # type: ignore[return-value]
 
