@@ -3,7 +3,7 @@
 import json
 from unittest.mock import MagicMock, Mock
 
-from eligibility_signposting_api.common.cache_manager import clear_all_caches
+from eligibility_signposting_api.common.cache_manager import cache_manager
 from eligibility_signposting_api.model.campaign_config import CampaignConfig
 from eligibility_signposting_api.repos.campaign_repo import BucketName, CampaignRepo
 from tests.fixtures.builders.model.rule import CampaignConfigFactory
@@ -14,7 +14,7 @@ class TestCampaignRepoUnitTests:
 
     def setup_method(self):
         """Set up test environment before each test."""
-        clear_all_caches()
+        cache_manager.clear_all()
 
     def test_get_campaign_configs_cache_miss_loads_from_s3(self):
         """Test that when cache is empty, configurations are loaded from S3 and cached."""

@@ -17,7 +17,7 @@ from faker import Faker
 from httpx import RequestError
 from yarl import URL
 
-from eligibility_signposting_api.common.cache_manager import clear_all_caches
+from eligibility_signposting_api.common.cache_manager import cache_manager
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
     CampaignConfig,
@@ -486,10 +486,10 @@ def clear_performance_caches():
     This ensures test isolation when using the performance-optimized
     Flask app and campaign configuration caching.
     """
-    clear_all_caches()
+    cache_manager.clear_all()
     yield
     # Optionally clear again after tests complete
-    clear_all_caches()
+    cache_manager.clear_all()
 
 
 @pytest.fixture
@@ -499,12 +499,12 @@ def clear_campaign_cache_for_test():
     This fixture should be used by tests that create specific campaign configurations
     and expect them to be loaded fresh from S3, not from cache.
     """
-    from eligibility_signposting_api.common.cache_manager import CAMPAIGN_CONFIGS_CACHE_KEY, clear_cache
+    from eligibility_signposting_api.common.cache_manager import CAMPAIGN_CONFIGS_CACHE_KEY
 
-    clear_cache(CAMPAIGN_CONFIGS_CACHE_KEY)
+    cache_manager.clear(CAMPAIGN_CONFIGS_CACHE_KEY)
     yield
     # Optionally clear again after test completes
-    clear_cache(CAMPAIGN_CONFIGS_CACHE_KEY)
+    cache_manager.clear(CAMPAIGN_CONFIGS_CACHE_KEY)
 
 
 @pytest.fixture(scope="class")

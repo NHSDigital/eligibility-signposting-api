@@ -9,9 +9,7 @@ from wireup import Inject, service
 
 from eligibility_signposting_api.common.cache_manager import (
     CAMPAIGN_CONFIGS_CACHE_KEY,
-    clear_cache,
-    get_cache,
-    set_cache,
+    cache_manager,
 )
 from eligibility_signposting_api.model.campaign_config import CampaignConfig, Rules
 
@@ -47,12 +45,12 @@ class CampaignRepo:
             yield from self._load_campaign_configs_from_s3()
             return
 
-        cached_configs = get_cache(CAMPAIGN_CONFIGS_CACHE_KEY)
+        cached_configs = cache_manager.get(CAMPAIGN_CONFIGS_CACHE_KEY)
 
         if cached_configs is None:
             logger.info("Loading campaign configurations from S3 and caching for container reuse")
             configs = self._load_campaign_configs_from_s3()
-            set_cache(CAMPAIGN_CONFIGS_CACHE_KEY, configs)
+            cache_manager.set(CAMPAIGN_CONFIGS_CACHE_KEY, configs)
             logger.info("Cached campaign configurations", extra={"campaign_count": len(configs)})
             yield from configs
         else:
@@ -78,5 +76,5 @@ class CampaignRepo:
         This forces the next call to get_campaign_configs() to reload from S3.
         Useful for testing or when you need to refresh the data.
         """
-        clear_cache(CAMPAIGN_CONFIGS_CACHE_KEY)
+        cache_manager.clear(CAMPAIGN_CONFIGS_CACHE_KEY)
         logger.info("Campaign configurations cache cleared")

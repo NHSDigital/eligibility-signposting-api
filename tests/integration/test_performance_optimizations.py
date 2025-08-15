@@ -5,10 +5,7 @@ Test to verify the performance optimization caching is working correctly.
 from eligibility_signposting_api.app import get_or_create_app
 from eligibility_signposting_api.common.cache_manager import (
     FLASK_APP_CACHE_KEY,
-    clear_all_caches,
-    clear_cache,
-    get_cache_info,
-    set_cache,
+    cache_manager,
 )
 
 
@@ -18,15 +15,15 @@ class TestPerformanceOptimizations:
     def test_flask_app_caching(self):
         """Test that Flask app is cached and reused."""
         # Clear all caches first
-        clear_all_caches()
+        cache_manager.clear_all()
 
         # First call should create and cache the app
         app1 = get_or_create_app()
-        cache_info_after_first = get_cache_info()
+        cache_info_after_first = cache_manager.get_cache_info()
 
         # Second call should reuse the cached app
         app2 = get_or_create_app()
-        cache_info_after_second = get_cache_info()
+        cache_info_after_second = cache_manager.get_cache_info()
 
         # Verify same instance is returned
         assert app1 is app2, "Flask app should be reused from cache"
@@ -42,14 +39,14 @@ class TestPerformanceOptimizations:
         """Test that cache clearing functionality works."""
         # Set up some cached data
         app1 = get_or_create_app()
-        cache_info_before = get_cache_info()
+        cache_info_before = cache_manager.get_cache_info()
 
         # Verify cache has data
         assert len(cache_info_before) > 0, "Cache should contain Flask app"
 
         # Clear all caches
-        clear_all_caches()
-        cache_info_after = get_cache_info()
+        cache_manager.clear_all()
+        cache_info_after = cache_manager.get_cache_info()
 
         # Verify cache is empty
         assert len(cache_info_after) == 0, "Cache should be empty after clearing"
@@ -71,7 +68,7 @@ class TestPerformanceOptimizations:
         assert app is not None
 
         # Verify Flask app is now cached
-        cache_info_after = get_cache_info()
+        cache_info_after = cache_manager.get_cache_info()
         assert FLASK_APP_CACHE_KEY in cache_info_after
 
     def test_clear_cache_specific_key(self):
@@ -79,21 +76,23 @@ class TestPerformanceOptimizations:
         # Set up test data
         test_key = "test_cache_key"
         test_value = "test_value"
-        set_cache(test_key, test_value)
+        cache_manager.set(test_key, test_value)
 
         # Verify key exists
-        cache_info_before = get_cache_info()
+        cache_info_before = cache_manager.get_cache_info()
         assert test_key in cache_info_before
 
         # Clear specific key (this covers lines 28-29)
-        clear_cache(test_key)
+        result = cache_manager.clear(test_key)
+        assert result is True  # Should return True for existing key
 
         # Verify key is removed
-        cache_info_after = get_cache_info()
+        cache_info_after = cache_manager.get_cache_info()
         assert test_key not in cache_info_after
 
         # Clearing non-existent key should not cause error
-        clear_cache("non_existent_key")
+        result = cache_manager.clear("non_existent_key")
+        assert result is False  # Should return False for non-existent key
 
     def test_cache_info_with_non_len_objects(self):
         """Test get_cache_info with objects that don't have __len__ method."""
@@ -106,9 +105,9 @@ class TestPerformanceOptimizations:
 
         test_key = "no_len_object"
         no_len_obj = NoLenObject()
-        set_cache(test_key, no_len_obj)
+        cache_manager.set(test_key, no_len_obj)
 
         # This should handle the TypeError gracefully
-        cache_info = get_cache_info()
+        cache_info = cache_manager.get_cache_info()
         assert test_key in cache_info
         assert cache_info[test_key] == 1  # Should default to 1
