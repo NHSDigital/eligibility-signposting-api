@@ -242,7 +242,6 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config_with_and_rule: CampaignConfig,  # noqa: ARG002
-        clear_campaign_cache_for_test,  # noqa: ARG002
     ):
         # Given
 

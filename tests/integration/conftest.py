@@ -17,7 +17,6 @@ from faker import Faker
 from httpx import RequestError
 from yarl import URL
 
-from eligibility_signposting_api.common.cache_manager import cache_manager
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
     CampaignConfig,
@@ -206,7 +205,6 @@ def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -
                     "FIREHOSE_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "AWS_REGION": AWS_REGION,
                     "LOG_LEVEL": "DEBUG",
-                    "DISABLE_CAMPAIGN_CACHE": "true",  # Disable caching for integration tests
                 }
             },
         )
@@ -477,34 +475,6 @@ def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketNa
             "CompressionFormat": "UNCOMPRESSED",
         },
     )
-
-
-@pytest.fixture(scope="class", autouse=True)
-def clear_performance_caches():
-    """Clear all performance caches before each test class.
-
-    This ensures test isolation when using the performance-optimized
-    Flask app and campaign configuration caching.
-    """
-    cache_manager.clear_all()
-    yield
-    # Optionally clear again after tests complete
-    cache_manager.clear_all()
-
-
-@pytest.fixture
-def clear_campaign_cache_for_test():
-    """Clear campaign cache before each test function that needs fresh campaign data.
-
-    This fixture should be used by tests that create specific campaign configurations
-    and expect them to be loaded fresh from S3, not from cache.
-    """
-    from eligibility_signposting_api.common.cache_manager import CAMPAIGN_CONFIGS_CACHE_KEY
-
-    cache_manager.clear(CAMPAIGN_CONFIGS_CACHE_KEY)
-    yield
-    # Optionally clear again after test completes
-    cache_manager.clear(CAMPAIGN_CONFIGS_CACHE_KEY)
 
 
 @pytest.fixture(scope="class")
