@@ -4,6 +4,7 @@ import logging
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field, fields, is_dataclass
+from datetime import datetime
 from itertools import chain
 from typing import TYPE_CHECKING, TypeVar
 
@@ -225,14 +226,14 @@ class EligibilityCalculator:
             value = getattr(data_class, class_field.name)
 
             if isinstance(value, str):
-                setattr(data_class, class_field.name, EligibilityCalculator.replace_tokens_in_string(value, person))
+                setattr(data_class, class_field.name, EligibilityCalculator.replace_token(value, person))
 
             elif isinstance(value, list):
                 for i, item in enumerate(value):
                     if is_dataclass(item):
                         value[i] = EligibilityCalculator.find_and_replace_tokens_recursive(person, item)
                     elif isinstance(item, str):
-                        value[i] = EligibilityCalculator.replace_tokens_in_string(item, person)
+                        value[i] = EligibilityCalculator.replace_token(item, person)
 
             elif is_dataclass(value):
                 setattr(
@@ -242,22 +243,57 @@ class EligibilityCalculator:
         return data_class
 
     @staticmethod
-    def replace_tokens_in_string(text: str, person: Person) -> str:
+    def replace_token(text: str, person: Person) -> str:
         if not isinstance(text, str):
             return text
 
         pattern = r"\[\[.*?\]\]"
+        date_pattern = r"\DATE\((.*?)\)"
         all_tokens = re.findall(pattern, text)
 
         for token in all_tokens:
             middle = token[2:-2]
             try:
+                attribute_level = middle.split(".")[0]
                 attribute_name = middle.split(".")[1]
-                person_attribute_value = person.data[0].get(attribute_name, token)
+                replace_with = ""
+                valid_person_keys = EligibilityCalculator.get_all_valid_person_keys(person)
 
-                if person_attribute_value is not None:
-                    text = text.replace(token, str(person_attribute_value))
-            except IndexError:
-                pass
+                for attribute in person.data:
+                    if attribute_level == "PERSON" and attribute.get("ATTRIBUTE_TYPE") == "PERSON":
+                        if attribute_name in valid_person_keys:
+                            replace_with = attribute.get(attribute_name) if attribute.get(attribute_name) else ""
+                        else:
+                            raise ValueError(f"Invalid attribute name '{attribute_name}' in token '{token}'.")
+
+                    if attribute_level == "TARGET":
+                        if attribute.get("ATTRIBUTE_TYPE") == attribute_name:
+                            attribute_value = middle.split(".")[2]
+                            if attribute_value in valid_person_keys:
+                                if len(attribute_value.split(":")) > 1:
+                                    token_format_type = attribute_value.split(":")[1]
+                                    token_date_format = re.search(date_pattern, token_format_type).group(1)
+                                    unformatted_replace_with = attribute.get(attribute_value.split(":")[0])
+                                    if unformatted_replace_with is not None:
+                                        replace_with_date_object = datetime.strptime(str(unformatted_replace_with), '%Y%m%d')
+                                        replace_with = replace_with_date_object.strftime(str(token_date_format))
+                                else:
+                                    replace_with = attribute.get(attribute_value) if attribute.get(attribute_name) else ""
+                            else:
+                                raise ValueError(f"Invalid target attribute name '{attribute_value}' in token '{token}'.")
+
+                text = text.replace(token, str(replace_with))
+
+
+            except ValueError as e:
+                raise ValueError(e)
 
         return text
+
+
+    @staticmethod
+    def get_all_valid_person_keys(person: Person) -> set[str]:
+        all_keys = set()
+        for item in person.data:
+            all_keys.update(item.keys())
+        return all_keys

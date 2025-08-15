@@ -1043,6 +1043,7 @@ class TestEligibilityResultBuilder:
         assert_that(result.cohort_results[0].reasons, contains_inanyorder(*expected_reasons))
 
 
+# TODO: Rename test cases
 class TestTokenReplacement:
     def test_simple_string(self):
         person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
@@ -1068,6 +1069,50 @@ class TestTokenReplacement:
         actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
 
         assert actual == expected
+
+    def test_simple_string_with_invalid_person_attribute_name(self):
+        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
+
+        condition = Condition(
+            condition_name=ConditionName("RSV"),
+            status=Status.actionable,
+            status_text=StatusText("Your age is [[PERSON.ICECREAM]]."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+        with pytest.raises(ValueError):
+            EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+    def test_simple_string_with_invalid_target_attribute_name(self):
+        person = Person([{"ATTRIBUTE_TYPE": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"}])
+
+        condition = Condition(
+            condition_name=ConditionName("Condition name is [[TARGET.RSV.CONDITION_NAME]]"),
+            status=Status.actionable,
+            status_text=StatusText("Some status"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        with pytest.raises(ValueError):
+            EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+
+    def test_simple_string_when_target_attribute_name_does_not_have_value(self):
+        person = Person([{"ATTRIBUTE_TYPE": "RSV", "LAST_SUCCESSFUL_DATE": None}])
+
+        condition = Condition(
+            condition_name=ConditionName("Condition name is [[TARGET.RSV.LAST_SUCCESSFUL_DATE]]"),
+            status=Status.actionable,
+            status_text=StatusText("Some status"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        assert EligibilityCalculator.find_and_replace_tokens_recursive(person, condition).condition_name == "Condition name is "
 
     def test_simple_string_with_multiple_tokens(self):
         person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DEGREE": "DOCTOR", "QUALITY": "NICE"}])
@@ -1136,3 +1181,139 @@ class TestTokenReplacement:
         assert actual.cohort_results[0].description == "Results for cohort 30."
         assert actual.cohort_results[0].reasons[1].rule_description == "Rule 30 here."
         assert actual.status_text == StatusText("Everything is NICE.")
+
+
+    def test_simple_string_with_different_attribute_types(self):
+        person = Person([
+            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
+            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"},
+            {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
+        ])
+
+        condition = Condition(
+            condition_name=ConditionName("Condition name is [[TARGET.RSV.CONDITION_NAME]]"),
+            status=Status.actionable,
+            status_text=StatusText("Your age is: [[PERSON.AGE]]."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        expected = Condition(
+            condition_name=ConditionName("Condition name is RSV"),
+            status=Status.actionable,
+            status_text=StatusText("Your age is: 30."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+        assert actual.status_text == expected.status_text
+        assert actual.condition_name == expected.condition_name
+
+
+
+    def test_simple_string_with_token_and_format_for_dates(self):
+        person = Person([
+            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
+            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"},
+            {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
+        ])
+
+        condition = Condition(
+            condition_name=ConditionName("You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"),
+            status=Status.actionable,
+            status_text=StatusText("You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%-d %B %Y)]]"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        expected = Condition(
+            condition_name=ConditionName("You had your RSV vaccine on 01 January 2025"),
+            status=Status.actionable,
+            status_text=StatusText("You had your RSV vaccine on 1 January 2025"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+        assert actual.status_text == expected.status_text
+        assert actual.condition_name == expected.condition_name
+
+
+    def test_simple_string_where_person_data_is_missing(self):
+        person = Person([
+            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
+            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV"},
+            {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
+        ])
+
+        condition = Condition(
+            condition_name=ConditionName("You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"),
+            status=Status.actionable,
+            status_text=StatusText("You are from [[PERSON.POSTCODE]]."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        expected = Condition(
+            condition_name=ConditionName("You had your RSV vaccine on "),
+            status=Status.actionable,
+            status_text=StatusText("You are from ."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+        assert actual.status_text == expected.status_text
+        assert actual.condition_name == expected.condition_name
+
+    def test_get_all_person_keys(self):
+        person = Person([
+            {
+                "NHS_NUMBER": "5000000009",
+                "ATTRIBUTE_TYPE": "COHORTS",
+                "COHORT_MEMBERSHIPS": [
+                    {
+                        "COHORT_LABEL": "rsv_75_rolling",
+                        "DATE_JOINED": "20231020"
+                    }
+                ]
+            },
+            {
+                "NHS_NUMBER": "5000000009",
+                "ATTRIBUTE_TYPE": "PERSON",
+                "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
+                "GENDER": "0",
+                "POSTCODE": "LS1 1AB",
+                "POSTCODE_SECTOR": "LS1",
+                "POSTCODE_OUTCODE": "1AB",
+                "MSOA": "E02001111",
+                "LSOA": "E01005348",
+                "GP_PRACTICE_CODE": "B87008",
+                "PCN": "U43084",
+                "ICB": "QWO",
+                "COMMISSIONING_REGION": "Y63",
+                "13Q_FLAG": "N",
+                "CARE_HOME_FLAG": "N",
+                "DE_FLAG": "N"
+            },
+            {
+                "NHS_NUMBER": "5000000009",
+                "ATTRIBUTE_TYPE": "RSV",
+                "LAST_SUCCESSFUL_DATE": "20250326"
+            }
+        ])
+        keys = EligibilityCalculator.get_all_valid_person_keys(person)
+
+        assert keys == {'13Q_FLAG', 'ATTRIBUTE_TYPE', 'CARE_HOME_FLAG', 'COHORT_MEMBERSHIPS', 'COMMISSIONING_REGION',
+                        'DATE_OF_BIRTH', 'DE_FLAG', 'GENDER', 'GP_PRACTICE_CODE', 'ICB', 'LAST_SUCCESSFUL_DATE', 'LSOA',
+                        'MSOA', 'NHS_NUMBER', 'PCN', 'POSTCODE', 'POSTCODE_OUTCODE', 'POSTCODE_SECTOR'}
