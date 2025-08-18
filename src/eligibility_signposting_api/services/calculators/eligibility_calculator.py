@@ -269,7 +269,7 @@ class EligibilityCalculator:
                     if attribute_level == "TARGET":
                         if attribute.get("ATTRIBUTE_TYPE") == attribute_name:
                             attribute_value = middle.split(".")[2]
-                            if attribute_value in valid_person_keys:
+                            if attribute_value.split(":")[0] in valid_person_keys:
                                 if len(attribute_value.split(":")) > 1:
                                     token_format_type = attribute_value.split(":")[1]
                                     token_date_format = re.search(date_pattern, token_format_type).group(1)
@@ -278,7 +278,7 @@ class EligibilityCalculator:
                                         replace_with_date_object = datetime.strptime(str(unformatted_replace_with), '%Y%m%d')
                                         replace_with = replace_with_date_object.strftime(str(token_date_format))
                                 else:
-                                    replace_with = attribute.get(attribute_value) if attribute.get(attribute_name) else ""
+                                    replace_with = attribute.get(attribute_value) if attribute.get(attribute_value) else ""
                             else:
                                 raise ValueError(f"Invalid target attribute name '{attribute_value}' in token '{token}'.")
 

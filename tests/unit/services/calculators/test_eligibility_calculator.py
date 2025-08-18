@@ -1248,8 +1248,8 @@ class TestTokenReplacement:
 
     def test_simple_string_where_person_data_is_missing(self):
         person = Person([
-            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
-            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV"},
+            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "POSTCODE": None},
+            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": None},
             {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
         ])
 
