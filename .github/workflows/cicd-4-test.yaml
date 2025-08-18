@@ -15,7 +15,7 @@ on:
         required: true
         default: "latest"
       environment:
-        description: "Target environment (e.g., test, preprod or prod)"
+        description: "Target environment (test only)
         required: true
         default: "test"
         type: choice
