@@ -261,8 +261,9 @@ class EligibilityCalculator:
 
                 for attribute in person.data:
                     if attribute_level == "PERSON" and attribute.get("ATTRIBUTE_TYPE") == "PERSON":
-                        if attribute_name in valid_person_keys:
-                            replace_with = attribute.get(attribute_name) if attribute.get(attribute_name) else ""
+                        if attribute_name.split(":")[0] in valid_person_keys:
+                            replace_with = EligibilityCalculator.replace_with_formatting(attribute, attribute_name,
+                                                                                         date_pattern, replace_with)
                         else:
                             raise ValueError(f"Invalid attribute name '{attribute_name}' in token '{token}'.")
 
@@ -270,15 +271,8 @@ class EligibilityCalculator:
                         if attribute.get("ATTRIBUTE_TYPE") == attribute_name:
                             attribute_value = middle.split(".")[2]
                             if attribute_value.split(":")[0] in valid_person_keys:
-                                if len(attribute_value.split(":")) > 1:
-                                    token_format_type = attribute_value.split(":")[1]
-                                    token_date_format = re.search(date_pattern, token_format_type).group(1)
-                                    unformatted_replace_with = attribute.get(attribute_value.split(":")[0])
-                                    if unformatted_replace_with is not None:
-                                        replace_with_date_object = datetime.strptime(str(unformatted_replace_with), '%Y%m%d')
-                                        replace_with = replace_with_date_object.strftime(str(token_date_format))
-                                else:
-                                    replace_with = attribute.get(attribute_value) if attribute.get(attribute_value) else ""
+                                replace_with = EligibilityCalculator.replace_with_formatting(attribute, attribute_value,
+                                                                                             date_pattern, replace_with)
                             else:
                                 raise ValueError(f"Invalid target attribute name '{attribute_value}' in token '{token}'.")
 
@@ -290,6 +284,18 @@ class EligibilityCalculator:
 
         return text
 
+    @staticmethod
+    def replace_with_formatting(attribute, attribute_value, date_pattern, replace_with):
+        if len(attribute_value.split(":")) > 1:
+            token_format_type = attribute_value.split(":")[1]
+            token_date_format = re.search(date_pattern, token_format_type).group(1)
+            unformatted_replace_with = attribute.get(attribute_value.split(":")[0])
+            if unformatted_replace_with is not None:
+                replace_with_date_object = datetime.strptime(str(unformatted_replace_with), '%Y%m%d')
+                replace_with = replace_with_date_object.strftime(str(token_date_format))
+        else:
+            replace_with = attribute.get(attribute_value) if attribute.get(attribute_value) else ""
+        return replace_with
 
     @staticmethod
     def get_all_valid_person_keys(person: Person) -> set[str]:

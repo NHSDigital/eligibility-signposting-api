@@ -1043,9 +1043,8 @@ class TestEligibilityResultBuilder:
         assert_that(result.cohort_results[0].reasons, contains_inanyorder(*expected_reasons))
 
 
-# TODO: Rename test cases
 class TestTokenReplacement:
-    def test_simple_string(self):
+    def test_simple_token_replacement(self):
         person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
 
         condition = Condition(
@@ -1070,78 +1069,7 @@ class TestTokenReplacement:
 
         assert actual == expected
 
-    def test_simple_string_with_invalid_person_attribute_name(self):
-        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
-
-        condition = Condition(
-            condition_name=ConditionName("RSV"),
-            status=Status.actionable,
-            status_text=StatusText("Your age is [[PERSON.ICECREAM]]."),
-            cohort_results=[],
-            suitability_rules=[],
-            actions=[],
-        )
-        with pytest.raises(ValueError):
-            EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
-
-    def test_simple_string_with_invalid_target_attribute_name(self):
-        person = Person([{"ATTRIBUTE_TYPE": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"}])
-
-        condition = Condition(
-            condition_name=ConditionName("Condition name is [[TARGET.RSV.CONDITION_NAME]]"),
-            status=Status.actionable,
-            status_text=StatusText("Some status"),
-            cohort_results=[],
-            suitability_rules=[],
-            actions=[],
-        )
-
-        with pytest.raises(ValueError):
-            EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
-
-
-    def test_simple_string_when_target_attribute_name_does_not_have_value(self):
-        person = Person([{"ATTRIBUTE_TYPE": "RSV", "LAST_SUCCESSFUL_DATE": None}])
-
-        condition = Condition(
-            condition_name=ConditionName("Condition name is [[TARGET.RSV.LAST_SUCCESSFUL_DATE]]"),
-            status=Status.actionable,
-            status_text=StatusText("Some status"),
-            cohort_results=[],
-            suitability_rules=[],
-            actions=[],
-        )
-
-        assert EligibilityCalculator.find_and_replace_tokens_recursive(person, condition).condition_name == "Condition name is "
-
-    def test_simple_string_with_multiple_tokens(self):
-        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DEGREE": "DOCTOR", "QUALITY": "NICE"}])
-
-        condition = Condition(
-            condition_name=ConditionName("RSV"),
-            status=Status.actionable,
-            status_text=StatusText(
-                "You are a [[PERSON.QUALITY]] [[PERSON.QUALITY]] [[PERSON.DEGREE]] and your age is [[PERSON.AGE]]."
-            ),
-            cohort_results=[],
-            suitability_rules=[],
-            actions=[],
-        )
-
-        expected = Condition(
-            condition_name=ConditionName("RSV"),
-            status=Status.actionable,
-            status_text=StatusText("You are a NICE NICE DOCTOR and your age is 30."),
-            cohort_results=[],
-            suitability_rules=[],
-            actions=[],
-        )
-
-        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
-
-        assert actual == expected
-
-    def test_deep_nesting(self):
+    def test_deep_nesting_token_replacement(self):
         person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DEGREE": "DOCTOR", "QUALITY": "NICE"}])
 
         reason1 = Reason(
@@ -1181,100 +1109,6 @@ class TestTokenReplacement:
         assert actual.cohort_results[0].description == "Results for cohort 30."
         assert actual.cohort_results[0].reasons[1].rule_description == "Rule 30 here."
         assert actual.status_text == StatusText("Everything is NICE.")
-
-
-    def test_simple_string_with_different_attribute_types(self):
-        person = Person([
-            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
-            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"},
-            {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
-        ])
-
-        condition = Condition(
-            condition_name=ConditionName("Condition name is [[TARGET.RSV.CONDITION_NAME]]"),
-            status=Status.actionable,
-            status_text=StatusText("Your age is: [[PERSON.AGE]]."),
-            cohort_results=[],
-            suitability_rules=[],
-            actions=[],
-        )
-
-        expected = Condition(
-            condition_name=ConditionName("Condition name is RSV"),
-            status=Status.actionable,
-            status_text=StatusText("Your age is: 30."),
-            cohort_results=[],
-            suitability_rules=[],
-            actions=[],
-        )
-
-        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
-
-        assert actual.status_text == expected.status_text
-        assert actual.condition_name == expected.condition_name
-
-
-
-    def test_simple_string_with_token_and_format_for_dates(self):
-        person = Person([
-            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
-            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"},
-            {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
-        ])
-
-        condition = Condition(
-            condition_name=ConditionName("You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"),
-            status=Status.actionable,
-            status_text=StatusText("You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%-d %B %Y)]]"),
-            cohort_results=[],
-            suitability_rules=[],
-            actions=[],
-        )
-
-        expected = Condition(
-            condition_name=ConditionName("You had your RSV vaccine on 01 January 2025"),
-            status=Status.actionable,
-            status_text=StatusText("You had your RSV vaccine on 1 January 2025"),
-            cohort_results=[],
-            suitability_rules=[],
-            actions=[],
-        )
-
-        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
-
-        assert actual.status_text == expected.status_text
-        assert actual.condition_name == expected.condition_name
-
-
-    def test_simple_string_where_person_data_is_missing(self):
-        person = Person([
-            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "POSTCODE": None},
-            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": None},
-            {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
-        ])
-
-        condition = Condition(
-            condition_name=ConditionName("You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"),
-            status=Status.actionable,
-            status_text=StatusText("You are from [[PERSON.POSTCODE]]."),
-            cohort_results=[],
-            suitability_rules=[],
-            actions=[],
-        )
-
-        expected = Condition(
-            condition_name=ConditionName("You had your RSV vaccine on "),
-            status=Status.actionable,
-            status_text=StatusText("You are from ."),
-            cohort_results=[],
-            suitability_rules=[],
-            actions=[],
-        )
-
-        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
-
-        assert actual.status_text == expected.status_text
-        assert actual.condition_name == expected.condition_name
 
     def test_get_all_person_keys(self):
         person = Person([
@@ -1317,3 +1151,125 @@ class TestTokenReplacement:
         assert keys == {'13Q_FLAG', 'ATTRIBUTE_TYPE', 'CARE_HOME_FLAG', 'COHORT_MEMBERSHIPS', 'COMMISSIONING_REGION',
                         'DATE_OF_BIRTH', 'DE_FLAG', 'GENDER', 'GP_PRACTICE_CODE', 'ICB', 'LAST_SUCCESSFUL_DATE', 'LSOA',
                         'MSOA', 'NHS_NUMBER', 'PCN', 'POSTCODE', 'POSTCODE_OUTCODE', 'POSTCODE_SECTOR'}
+
+    def test_invalid_token_on_person_attribute_should_raise_error(self):
+        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
+
+        condition = Condition(
+            condition_name=ConditionName("RSV"),
+            status=Status.actionable,
+            status_text=StatusText("Your age is [[PERSON.ICECREAM]]."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+        with pytest.raises(ValueError):
+            EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+    def test_invalid_token_on_target_attribute_should_raise_error(self):
+        person = Person([{"ATTRIBUTE_TYPE": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"}])
+
+        condition = Condition(
+            condition_name=ConditionName("Condition name is [[TARGET.RSV.CONDITION_NAME]]"),
+            status=Status.actionable,
+            status_text=StatusText("Some status"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        with pytest.raises(ValueError):
+            EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+    def test_valid_token_but_missing_attribute_data_to_replace(self):
+        person = Person([
+            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "POSTCODE": None},
+            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": None},
+            {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
+        ])
+
+        condition = Condition(
+            condition_name=ConditionName("You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"),
+            status=Status.actionable,
+            status_text=StatusText("You are from [[PERSON.POSTCODE]]."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        expected = Condition(
+            condition_name=ConditionName("You had your RSV vaccine on "),
+            status=Status.actionable,
+            status_text=StatusText("You are from ."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+        assert actual.status_text == expected.status_text
+        assert actual.condition_name == expected.condition_name
+
+    def test_simple_string_with_multiple_tokens(self):
+        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DEGREE": "DOCTOR", "QUALITY": "NICE"}])
+
+        condition = Condition(
+            condition_name=ConditionName("RSV"),
+            status=Status.actionable,
+            status_text=StatusText(
+                "You are a [[PERSON.QUALITY]] [[PERSON.QUALITY]] [[PERSON.DEGREE]] and your age is [[PERSON.AGE]]."
+            ),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        expected = Condition(
+            condition_name=ConditionName("RSV"),
+            status=Status.actionable,
+            status_text=StatusText("You are a NICE NICE DOCTOR and your age is 30."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+        assert actual == expected
+
+    def test_valid_token_valid_format_should_replace_with_date_formatting(self):
+        person = Person([
+            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DATE_OF_BIRTH": "19900327"},
+            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"},
+            {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
+        ])
+
+        condition = Condition(
+            condition_name=ConditionName("You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"),
+            status=Status.actionable,
+            status_text=StatusText("Your birthday is on [[PERSON.DATE_OF_BIRTH:DATE(%-d %B %Y)]]"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        expected = Condition(
+            condition_name=ConditionName("You had your RSV vaccine on 01 January 2025"),
+            status=Status.actionable,
+            status_text=StatusText("Your birthday is on 27 March 1990"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+        assert actual.condition_name == expected.condition_name
+        assert actual.status_text == expected.status_text
+
+    def test_valid_token_invalid_format_should_raise_error(self):
+        pass
+
+    def test_valid_token_missing_format_should_replace_without_any_formatting(self):
+        pass
