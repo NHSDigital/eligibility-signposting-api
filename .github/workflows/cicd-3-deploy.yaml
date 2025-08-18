@@ -19,7 +19,6 @@ on:
         required: true
         type: choice
         options:
-          - test
           - preprod
           - prod
       release_type:
