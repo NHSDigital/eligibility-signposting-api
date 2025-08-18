@@ -1269,7 +1269,24 @@ class TestTokenReplacement:
         assert actual.status_text == expected.status_text
 
     def test_valid_token_invalid_format_should_raise_error(self):
-        pass
+        person = Person([
+            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DATE_OF_BIRTH": "19900327"}
+        ])
+
+        condition = Condition(
+            condition_name=ConditionName("You had your RSV vaccine"),
+            status=Status.actionable,
+            status_text=StatusText("Your birthday is on [[PERSON.DATE_OF_BIRTH:INVALIDDATEFORMATTER(%ABC)]]"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        with pytest.raises(Exception) as excinfo:
+            EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+        #assert "INVALIDDATEFORMATTER" in str(excinfo.value)
+
 
     def test_valid_token_missing_format_should_replace_without_any_formatting(self):
         pass
