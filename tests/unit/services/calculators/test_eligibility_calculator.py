@@ -1111,46 +1111,56 @@ class TestTokenReplacement:
         assert actual.status_text == StatusText("Everything is NICE.")
 
     def test_get_all_person_keys(self):
-        person = Person([
-            {
-                "NHS_NUMBER": "5000000009",
-                "ATTRIBUTE_TYPE": "COHORTS",
-                "COHORT_MEMBERSHIPS": [
-                    {
-                        "COHORT_LABEL": "rsv_75_rolling",
-                        "DATE_JOINED": "20231020"
-                    }
-                ]
-            },
-            {
-                "NHS_NUMBER": "5000000009",
-                "ATTRIBUTE_TYPE": "PERSON",
-                "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
-                "GENDER": "0",
-                "POSTCODE": "LS1 1AB",
-                "POSTCODE_SECTOR": "LS1",
-                "POSTCODE_OUTCODE": "1AB",
-                "MSOA": "E02001111",
-                "LSOA": "E01005348",
-                "GP_PRACTICE_CODE": "B87008",
-                "PCN": "U43084",
-                "ICB": "QWO",
-                "COMMISSIONING_REGION": "Y63",
-                "13Q_FLAG": "N",
-                "CARE_HOME_FLAG": "N",
-                "DE_FLAG": "N"
-            },
-            {
-                "NHS_NUMBER": "5000000009",
-                "ATTRIBUTE_TYPE": "RSV",
-                "LAST_SUCCESSFUL_DATE": "20250326"
-            }
-        ])
+        person = Person(
+            [
+                {
+                    "NHS_NUMBER": "5000000009",
+                    "ATTRIBUTE_TYPE": "COHORTS",
+                    "COHORT_MEMBERSHIPS": [{"COHORT_LABEL": "rsv_75_rolling", "DATE_JOINED": "20231020"}],
+                },
+                {
+                    "NHS_NUMBER": "5000000009",
+                    "ATTRIBUTE_TYPE": "PERSON",
+                    "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
+                    "GENDER": "0",
+                    "POSTCODE": "LS1 1AB",
+                    "POSTCODE_SECTOR": "LS1",
+                    "POSTCODE_OUTCODE": "1AB",
+                    "MSOA": "E02001111",
+                    "LSOA": "E01005348",
+                    "GP_PRACTICE_CODE": "B87008",
+                    "PCN": "U43084",
+                    "ICB": "QWO",
+                    "COMMISSIONING_REGION": "Y63",
+                    "13Q_FLAG": "N",
+                    "CARE_HOME_FLAG": "N",
+                    "DE_FLAG": "N",
+                },
+                {"NHS_NUMBER": "5000000009", "ATTRIBUTE_TYPE": "RSV", "LAST_SUCCESSFUL_DATE": "20250326"},
+            ]
+        )
         keys = EligibilityCalculator.get_all_valid_person_keys(person)
 
-        assert keys == {'13Q_FLAG', 'ATTRIBUTE_TYPE', 'CARE_HOME_FLAG', 'COHORT_MEMBERSHIPS', 'COMMISSIONING_REGION',
-                        'DATE_OF_BIRTH', 'DE_FLAG', 'GENDER', 'GP_PRACTICE_CODE', 'ICB', 'LAST_SUCCESSFUL_DATE', 'LSOA',
-                        'MSOA', 'NHS_NUMBER', 'PCN', 'POSTCODE', 'POSTCODE_OUTCODE', 'POSTCODE_SECTOR'}
+        assert keys == {
+            "13Q_FLAG",
+            "ATTRIBUTE_TYPE",
+            "CARE_HOME_FLAG",
+            "COHORT_MEMBERSHIPS",
+            "COMMISSIONING_REGION",
+            "DATE_OF_BIRTH",
+            "DE_FLAG",
+            "GENDER",
+            "GP_PRACTICE_CODE",
+            "ICB",
+            "LAST_SUCCESSFUL_DATE",
+            "LSOA",
+            "MSOA",
+            "NHS_NUMBER",
+            "PCN",
+            "POSTCODE",
+            "POSTCODE_OUTCODE",
+            "POSTCODE_SECTOR",
+        }
 
     def test_invalid_token_on_person_attribute_should_raise_error(self):
         person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
@@ -1182,14 +1192,18 @@ class TestTokenReplacement:
             EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
 
     def test_valid_token_but_missing_attribute_data_to_replace(self):
-        person = Person([
-            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "POSTCODE": None},
-            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": None},
-            {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
-        ])
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "POSTCODE": None},
+                {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": None},
+                {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
+            ]
+        )
 
         condition = Condition(
-            condition_name=ConditionName("You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"),
+            condition_name=ConditionName(
+                "You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"
+            ),
             status=Status.actionable,
             status_text=StatusText("You are from [[PERSON.POSTCODE]]."),
             cohort_results=[],
@@ -1239,14 +1253,18 @@ class TestTokenReplacement:
         assert actual == expected
 
     def test_valid_token_valid_format_should_replace_with_date_formatting(self):
-        person = Person([
-            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DATE_OF_BIRTH": "19900327"},
-            {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"},
-            {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
-        ])
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DATE_OF_BIRTH": "19900327"},
+                {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"},
+                {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
+            ]
+        )
 
         condition = Condition(
-            condition_name=ConditionName("You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"),
+            condition_name=ConditionName(
+                "You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"
+            ),
             status=Status.actionable,
             status_text=StatusText("Your birthday is on [[PERSON.DATE_OF_BIRTH:DATE(%-d %B %Y)]]"),
             cohort_results=[],
@@ -1268,25 +1286,60 @@ class TestTokenReplacement:
         assert actual.condition_name == expected.condition_name
         assert actual.status_text == expected.status_text
 
-    def test_valid_token_invalid_format_should_raise_error(self):
-        person = Person([
-            {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DATE_OF_BIRTH": "19900327"}
-        ])
+    @pytest.mark.parametrize(
+        "token_format",
+        [
+            ":INVALID_DATE_FORMATTER(%ABC)",
+            ":INVALID_DATE_FORMATTER(19900327)",
+            ":()",
+            ":FORMAT(DATE)",
+            ":DATE[%d %B %Y]",
+        ],
+    )
+    def test_valid_token_invalid_format_should_raise_error(self, token_format: str):
+        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DATE_OF_BIRTH": "19900327"}])
 
         condition = Condition(
             condition_name=ConditionName("You had your RSV vaccine"),
             status=Status.actionable,
-            status_text=StatusText("Your birthday is on [[PERSON.DATE_OF_BIRTH:INVALIDDATEFORMATTER(%ABC)]]"),
+            status_text=StatusText(f"Your birthday is on [[PERSON.DATE_OF_BIRTH{token_format}]]"),
             cohort_results=[],
             suitability_rules=[],
             actions=[],
         )
 
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(AttributeError):
             EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
 
-        #assert "INVALIDDATEFORMATTER" in str(excinfo.value)
+    @pytest.mark.parametrize(
+        ("token_format", "expected"),
+        [
+            (":DATE(%d %B %Y)", "27 March 1990"),
+            (":DATE(%d %b %Y)", "27 Mar 1990"),
+            (":DATE()", ""),
+            ("", "19900327"),
+            (":DATE(random_value)", "random_value"),
+            (":DATE(%A, %d %B %Y)", "Tuesday, 27 March 1990"),
+            (":DATE(%A, (%d) %B %Y)", "Tuesday, (27"),
+            (":DATE(%A, {%d} %B %Y)", "Tuesday, {27} March 1990"),
+        ],
+    )
+    def test_valid_date_format(self, token_format: str, expected: str, faker: Faker):
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "19900327"},
+            ]
+        )
 
+        condition = Condition(
+            condition_name=ConditionName(f"Date: [[TARGET.RSV.LAST_SUCCESSFUL_DATE{token_format}]]"),
+            status=Status.actionable,
+            status_text=StatusText("Some text"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
 
-    def test_valid_token_missing_format_should_replace_without_any_formatting(self):
-        pass
+        actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+        assert actual.condition_name == f"Date: {expected}"
