@@ -597,8 +597,10 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
             rule.PostcodeSuppressionRuleFactory.build(type=RuleType.filter, priority=8, cohort_label="cohort_label4"),
         ],
         targets[1]: [
-            rule.PersonAgeSuppressionRuleFactory.build(description="TOO YOUNG"),
-            rule.PostcodeSuppressionRuleFactory.build(priority=12, cohort_label="cohort_label2"),
+            rule.PersonAgeSuppressionRuleFactory.build(description="TOO YOUNG, your icb is: [[PERSON.ICB]]"),
+            rule.PostcodeSuppressionRuleFactory.build(
+                priority=12, cohort_label="cohort_label2", description="Your postcode is: [[PERSON.POSTCODE]]"
+            ),
         ],
         targets[2]: [rule.ICBRedirectRuleFactory.build()],
     }

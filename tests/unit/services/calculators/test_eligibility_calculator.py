@@ -1472,7 +1472,7 @@ class TestTokenReplacement:
             (":date(%A, {%d} %B %Y)", "Tuesday, {27} March 1990"),
         ],
     )
-    def test_valid_date_format(self, token_format: str, expected: str, faker: Faker):
+    def test_valid_date_format(self, token_format: str, expected: str):
         person = Person(
             [
                 {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "19900327"},
@@ -1505,7 +1505,7 @@ class TestTokenReplacement:
             ("[[TARGET.RSV.last_successful_date:date(%-d %B %Y)]]", "1 January 2025"),
         ],
     )
-    def test_token_replace_is_case_insensitive(self, token: str, expected: str, faker: Faker):
+    def test_token_replace_is_case_insensitive(self, token: str, expected: str):
         person = Person(
             [
                 {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DATE_OF_BIRTH": "19900327"},

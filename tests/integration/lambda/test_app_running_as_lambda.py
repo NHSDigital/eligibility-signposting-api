@@ -495,8 +495,16 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             ],
             "filterRules": None,
             "suitabilityRules": [
-                {"rulePriority": "10", "ruleName": "Exclude too young less than 75", "ruleMessage": "TOO YOUNG"},
-                {"rulePriority": "12", "ruleName": "Excluded postcode In SW19", "ruleMessage": "In SW19"},
+                {
+                    "rulePriority": "10",
+                    "ruleName": "Exclude too young less than 75",
+                    "ruleMessage": "TOO YOUNG, your icb is: QE1",
+                },
+                {
+                    "rulePriority": "12",
+                    "ruleName": "Excluded postcode In SW19",
+                    "ruleMessage": "Your postcode is: SW19",
+                },
             ],
             "actionRule": None,
             "actions": [],

@@ -103,17 +103,17 @@ class EligibilityCalculator:
                 include_actions_flag=include_actions_flag,
             )
 
+            best_iteration_result = self.find_and_replace_tokens_recursive(self.person, best_iteration_result)
+            matched_action_detail = self.find_and_replace_tokens_recursive(self.person, matched_action_detail)
+
             condition_results[condition_name] = best_iteration_result.iteration_result
             condition_results[condition_name].actions = matched_action_detail.actions
 
             condition: Condition = self.build_condition(
                 iteration_result=condition_results[condition_name], condition_name=condition_name
             )
-            condition_with_replaced_tokens = EligibilityCalculator.find_and_replace_tokens_recursive(
-                self.person, condition
-            )
 
-            final_result.append(condition_with_replaced_tokens)
+            final_result.append(condition)
 
             AuditContext.append_audit_condition(
                 condition_name,
@@ -296,7 +296,9 @@ class EligibilityCalculator:
         return text
 
     @staticmethod
-    def replace_with_formatting(attribute, attribute_value, date_pattern, replace_with):
+    def replace_with_formatting(
+        attribute: dict[str, T], attribute_value: T, date_pattern: str, replace_with: str
+    ) -> str:
         try:
             if len(attribute_value.split(":")) > 1:
                 token_format_type = attribute_value.split(":")[1]
