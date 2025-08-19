@@ -17,7 +17,7 @@ The software will only be used for signposting an individual to an appropriate s
     - [Prerequisites](#prerequisites)
     - [Configuration](#configuration)
       - [Environment variables - Local](#environment-variables---local)
-      - [Environment variables - DEV, PROD or PRE-PROD](#environment-variables---dev-prod-or-pre-prod)
+      - [Environment variables - Dev, Prod or Preprod](#environment-variables---dev-prod-or-pre-prod)
   - [Usage](#usage)
     - [Testing](#testing)
   - [Sandbox and Specification](#sandbox-and-specification)
@@ -82,7 +82,7 @@ The following software packages, or their equivalents, are expected to be instal
 | `LOG_LEVEL`             | `WARNING`                    | Logging level. Must be one of `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL` as per [Logging Levels](https://docs.python.org/3/library/logging.html#logging-levels) |
 | `RULES_BUCKET_NAME`     | `test-rules-bucket`          | AWS S3 bucket from which to read rules.                                                                                                                                |
 
-#### Environment variables - DEV, PROD or PRE-PROD
+#### Environment variables - Dev, Prod or Preprod
 
 | Variable                | Default                      | Description                                                                                                                                                            | Comments                                                                                                                       |
 |-------------------------|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
