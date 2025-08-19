@@ -26,4 +26,5 @@ module "eligibility_signposting_lambda_function" {
   log_level                       = "INFO"
   enable_xray_patching            = "true"
   stack_name                      = local.stack_name
+  provisioned_concurrency_count   = 5
 }

@@ -37,3 +37,17 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
     mode = "Active"
   }
 }
+
+# provisioned concurrency - number of pre-warmed lambda containers
+resource "aws_lambda_alias" "campaign_alias" {
+  name             = "live"
+  function_name    = aws_lambda_function.eligibility_signposting_lambda.function_name
+  function_version = aws_lambda_function.eligibility_signposting_lambda.version
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "campaign_pc" {
+  count                             = var.environment == "prod" ? 1 : 0
+  function_name                     = aws_lambda_function.eligibility_signposting_lambda.function_name
+  qualifier                         = aws_lambda_alias.campaign_alias.name
+  provisioned_concurrent_executions = var.provisioned_concurrency_count
+}

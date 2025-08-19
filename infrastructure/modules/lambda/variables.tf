@@ -52,3 +52,8 @@ variable "enable_xray_patching"{
   description = "flag to enable xray tracing, which puts an entry for dynamodb, s3 and firehose in trace map"
   type        = string
 }
+
+variable "provisioned_concurrency_count" {
+  description = "Number of prewarmed Lambda instances"
+  type        = number
+}
