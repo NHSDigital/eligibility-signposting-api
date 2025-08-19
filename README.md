@@ -17,7 +17,7 @@ The software will only be used for signposting an individual to an appropriate s
     - [Prerequisites](#prerequisites)
     - [Configuration](#configuration)
       - [Environment variables - Local](#environment-variables---local)
-      - [Environment variables - Dev, Prod or Preprod](#environment-variables---dev-prod-or-pre-prod)
+      - [Environment variables - Dev, Prod or Preprod](#environment-variables---dev-prod-or-preprod)
   - [Usage](#usage)
     - [Testing](#testing)
   - [Sandbox and Specification](#sandbox-and-specification)
