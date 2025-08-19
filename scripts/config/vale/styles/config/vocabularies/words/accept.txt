@@ -30,9 +30,6 @@ Pydantic
 yanai
 Portman
 repo
-dev
 Preprod
 Dev
 auditable
-DEV
-preprod
