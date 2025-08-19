@@ -26,6 +26,7 @@ The software will only be used for signposting an individual to an appropriate s
   - [Design](#design)
     - [Diagrams](#diagrams)
   - [Contributing](#contributing)
+  - [Deployment](#deployment)
   - [Contacts](#contacts)
   - [Licence](#licence)
 
@@ -253,6 +254,10 @@ Describe or link templates on how to raise an issue, feature request or make a c
 - Release process, versioning, changelog
 - Backlog, board, roadmap, ways of working
 - High-level requirements, guiding principles, decision records, etc.
+
+## Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for details on how to cut release candidates and promote them to production.
 
 ## Contacts
 

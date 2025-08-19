@@ -1,0 +1,259 @@
+name: Base Deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target environment (preprod | prod)"
+        required: true
+        type: string
+      ref:
+        description: "Git ref to deploy (branch/tag/SHA). For prod, supply the RC tag to promote."
+        required: true
+        type: string
+      release_type:
+        description: "Version bump for base version (preprod only: patch|minor|major)"
+        required: false
+        default: "patch"
+        type: string
+    secrets: {}
+
+jobs:
+  metadata:
+    name: "Set CI/CD metadata"
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      build_datetime: ${{ steps.variables.outputs.build_datetime }}
+      build_timestamp: ${{ steps.variables.outputs.build_timestamp }}
+      build_epoch: ${{ steps.variables.outputs.build_epoch }}
+      nodejs_version: ${{ steps.variables.outputs.nodejs_version }}
+      python_version: ${{ steps.variables.outputs.python_version }}
+      terraform_version: ${{ steps.variables.outputs.terraform_version }}
+      ref: ${{ steps.variables.outputs.ref }}
+      environment: ${{ steps.variables.outputs.environment }}
+    steps:
+      - name: "Checkout ref"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0  # get full history + tags
+
+      - name: "Set CI/CD variables"
+        id: variables
+        shell: bash
+        run: |
+          set -euo pipefail
+          datetime=$(date -u +'%Y-%m-%dT%H:%M:%S%z')
+          echo "build_datetime=$datetime" >> $GITHUB_OUTPUT
+          echo "build_timestamp=$(date --date=$datetime -u +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+          echo "build_epoch=$(date --date=$datetime -u +'%s')" >> $GITHUB_OUTPUT
+          echo "nodejs_version=$(grep -E '^nodejs' .tool-versions 2>/dev/null | cut -d' ' -f2 | head -n1)" >> $GITHUB_OUTPUT
+          echo "python_version=$(grep -E '^python' .tool-versions 2>/dev/null | cut -d' ' -f2 | head -n1)" >> $GITHUB_OUTPUT
+          echo "terraform_version=$(grep -E '^terraform' .tool-versions 2>/dev/null | cut -d' ' -f2 | head -n1)" >> $GITHUB_OUTPUT
+          echo "ref=${{ inputs.ref }}" >> $GITHUB_OUTPUT
+          echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+
+      - name: "List variables"
+        shell: bash
+        run: |
+          export BUILD_DATETIME="${{ steps.variables.outputs.build_datetime }}"
+          export BUILD_TIMESTAMP="${{ steps.variables.outputs.build_timestamp }}"
+          export BUILD_EPOCH="${{ steps.variables.outputs.build_epoch }}"
+          export NODEJS_VERSION="${{ steps.variables.outputs.nodejs_version }}"
+          export PYTHON_VERSION="${{ steps.variables.outputs.python_version }}"
+          export TERRAFORM_VERSION="${{ steps.variables.outputs.terraform_version }}"
+          export REF="${{ steps.variables.outputs.ref }}"
+          export ENVIRONMENT="${{ steps.variables.outputs.environment }}"
+          echo "build_datetime=$BUILD_DATETIME"
+          echo "build_timestamp=$BUILD_TIMESTAMP"
+          echo "build_epoch=$BUILD_EPOCH"
+          echo "nodejs_version=$NODEJS_VERSION"
+          echo "python_version=$PYTHON_VERSION"
+          echo "terraform_version=$TERRAFORM_VERSION"
+          echo "ref=$REF"
+          echo "environment=$ENVIRONMENT"
+
+  deploy:
+    name: "Deploy to ${{ needs.metadata.outputs.environment }}"
+    runs-on: ubuntu-latest
+    needs: [metadata]
+    timeout-minutes: 45
+    permissions:
+      id-token: write
+      contents: write
+    environment: ${{ needs.metadata.outputs.environment }}
+    steps:
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: "Checkout repository at ref"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.metadata.outputs.ref }}
+          fetch-depth: 0
+
+      - name: "Build lambda artefact"
+        shell: bash
+        run: |
+          make dependencies install-python
+          make build
+
+      - name: "Upload lambda artefact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda
+          path: dist/lambda.zip
+
+      - name: "Download Built Lambdas"
+        uses: actions/download-artifact@v5
+        with:
+          name: lambda
+          path: ./build
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Terraform Apply"
+        env:
+          ENVIRONMENT: ${{ needs.metadata.outputs.environment }}
+          WORKSPACE: "default"
+          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
+          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
+          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+        working-directory: ./infrastructure
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ./build
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=apply"
+          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
+
+      # ---------- Preprod path: create RC tag + pre-release ----------
+      - name: "Create/Push RC tag for preprod"
+        if: ${{ needs.metadata.outputs.environment == 'preprod' }}
+        id: rc_tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags
+
+          # Helper: get latest final and latest RC (across all bases)
+          latest_final="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || true)"
+          latest_any_rc="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*-rc.*' \
+            | sort -V | tail -n1 || true)"
+
+          # Determine the base version (vX.Y.Z) we will use for the next RC.
+          # If release_type=rc and we already have RCs, keep the SAME base as the latest RC.
+          # Otherwise, derive base from latest FINAL and bump per release_type.
+          if [[ "${{ inputs.release_type }}" == "rc" && -n "${latest_any_rc}" ]]; then
+            base="${latest_any_rc%-rc.*}"   # strip '-rc.N' → vX.Y.Z
+          else
+            # Start from latest FINAL (or 0.0.0 if none)
+            if [[ -z "${latest_final}" ]]; then
+              base_major=0; base_minor=0; base_patch=0
+            else
+              IFS='.' read -r base_major base_minor base_patch <<< "${latest_final#v}"
+            fi
+
+            case "${{ inputs.release_type }}" in
+              major) base_major=$((base_major+1)); base_minor=0; base_patch=0 ;;
+              minor) base_minor=$((base_minor+1)); base_patch=0 ;;
+              patch|rc|*) base_patch=$((base_patch+1)) ;;  # 'rc' with no prior RCs → default to patch bump
+            esac
+
+            base="v${base_major}.${base_minor}.${base_patch}"
+          fi
+
+          # Compute next RC number for this base
+          last_rc_for_base="$(git tag -l "${base}-rc.*" | sort -V | tail -n1 || true)"
+          if [[ -z "${last_rc_for_base}" ]]; then
+            next_rc="${base}-rc.1"
+          else
+            n="${last_rc_for_base##*-rc.}"
+            next_rc="${base}-rc.$((n+1))"
+          fi
+
+          # Tag current commit (whatever ref was checked out)
+          sha="$(git rev-parse HEAD)"
+          echo "Tagging ${sha} as ${next_rc}"
+          git tag -a "${next_rc}" "${sha}" -m "Release candidate ${next_rc}"
+          git push origin "${next_rc}"
+
+          echo "rc=${next_rc}" >> "$GITHUB_OUTPUT"
+
+      - name: "Create GitHub Pre-release (preprod)"
+        if: ${{ needs.metadata.outputs.environment == 'preprod' }}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.rc_tag.outputs.rc }}
+          release_name: "Pre-release ${{ steps.rc_tag.outputs.rc }}"
+          body: |
+            Auto pre-release created during preprod deployment.
+          draft: false
+          prerelease: true
+
+      # ---------- Prod path: promote RC to final ----------
+      - name: "Validate input is an RC tag (prod)"
+        if: ${{ needs.metadata.outputs.environment == 'prod' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ref="${{ needs.metadata.outputs.ref }}"
+          if [[ ! "$ref" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$ ]]; then
+            echo "ERROR: For prod, 'ref' must be an RC tag like v1.4.0-rc.2 (got: $ref)"
+            exit 1
+          fi
+          git fetch --tags --quiet
+          if ! git rev-parse -q --verify "refs/tags/$ref" >/dev/null; then
+            echo "ERROR: Tag '$ref' does not exist on origin."
+            exit 1
+          fi
+
+      - name: "Create final tag from RC (prod)"
+        if: ${{ needs.metadata.outputs.environment == 'prod' }}
+        id: final_tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          rc="${{ needs.metadata.outputs.ref }}"
+          final="${rc%-rc.*}"  # strip '-rc.N'
+          sha=$(git rev-list -n 1 "$rc")
+
+          if git rev-parse -q --verify "refs/tags/${final}" >/dev/null; then
+            echo "ERROR: Final tag ${final} already exists."
+            exit 1
+          fi
+
+          echo "Promoting $rc ($sha) to final $final"
+          git tag -a "${final}" "${sha}" -m "Release ${final}"
+          git push origin "${final}"
+          echo "final=${final}" >> $GITHUB_OUTPUT
+
+      - name: "Create GitHub Release (prod)"
+        if: ${{ needs.metadata.outputs.environment == 'prod' }}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.final_tag.outputs.final }}
+          release_name: "Release ${{ steps.final_tag.outputs.final }}"
+          body: |
+            Auto-release created during production deployment.
+          draft: false
+          prerelease: false

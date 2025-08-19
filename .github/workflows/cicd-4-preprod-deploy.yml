@@ -1,0 +1,32 @@
+name: Preprod Deploy
+
+concurrency:
+  group: terraform-deploy-preprod
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch/Tag/SHA to deploy to preprod (dev tag)"
+        required: true
+        default: "main"
+      release_type:
+        description: "Version bump type (use 'rc' to keep the same base and just increment RC)"
+        required: true
+        default: "rc"
+        type: choice
+        options:
+          - rc
+          - patch
+          - minor
+          - major
+
+jobs:
+  call:
+    uses: ./.github/workflows/base-deploy.yml
+    with:
+      environment: preprod
+      ref: ${{ inputs.ref }}
+      release_type: ${{ inputs.release_type }}
+    secrets: inherit
