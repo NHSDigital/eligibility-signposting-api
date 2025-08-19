@@ -7,10 +7,12 @@ from faker import Faker
 from flask import Flask
 from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, contains_inanyorder, has_item, has_items, is_, is_in
+from pydantic import HttpUrl
 
 from eligibility_signposting_api.model import campaign_config as rules_model
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
+    AvailableAction,
     CohortLabel,
     Description,
     RuleAttributeLevel,
@@ -678,6 +680,136 @@ def test_no_active_campaign(faker: Faker):
     assert_that(actual, is_eligibility_status().with_conditions([]))
 
 
+def test_eligibility_status_replaces_tokens_with_attribute_data(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    date_of_birth = DateOfBirth(datetime.date(2025, 5, 10))
+
+    person_rows = person_rows_builder(
+        nhs_number,
+        date_of_birth=date_of_birth,
+        cohorts=["cohort_1", "cohort_2", "cohort_3"],
+        vaccines=[("RSV", datetime.date(2024, 1, 3))],
+        icb="QE1",
+        gp_practice=None,
+    )
+
+    person_attribute_token = "DOB: [[PERSON.DATE_OF_BIRTH]]"
+    target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"
+    available_action = AvailableAction(
+        ActionType="ButtonAuthLink",
+        ExternalRoutingCode="BookNBS",
+        ActionDescription="## Get vaccinated at your GP surgery in [[PERSON.ICB]].",
+        UrlLink=HttpUrl("https://www.nhs.uk/book-rsv"),
+        UrlLabel="Your GP practice code is [[PERSON.GP_PRACTICE]].",
+    )
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="cohort_1", positive_description=person_attribute_token
+                        ),
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="cohort_2", positive_description=target_attribute_token
+                        ),
+                    ],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(),
+                        rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing="TOKEN_TEST"),
+                    ],
+                    actions_mapper=rule_builder.ActionsMapperFactory.build(root={"TOKEN_TEST": available_action}),
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_actionable))
+        ),
+    )
+
+    assert actual.conditions[0].cohort_results[0].description == "DOB: 20250510"
+    assert actual.conditions[0].cohort_results[1].description == "LAST_SUCCESSFUL_DATE: 03 January 2024"
+    assert actual.conditions[0].actions[0].action_description == "## Get vaccinated at your GP surgery in QE1."
+    assert actual.conditions[0].actions[0].url_label == "Your GP practice code is ."
+
+
+def test_eligibility_status_with_invalid_tokens_raises_attribute_error(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    date_of_birth = DateOfBirth(datetime.date(2025, 5, 10))
+
+    person_rows = person_rows_builder(
+        nhs_number, date_of_birth=date_of_birth, cohorts=["cohort_1"], vaccines=[("RSV", datetime.date(2024, 1, 3))]
+    )
+
+    target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE:INVALID_DATE_FORMAT(%d %B %Y)]]"
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="cohort_1", positive_description=target_attribute_token
+                        ),
+                    ],
+                    iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    with pytest.raises(AttributeError):
+        calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+
+def test_eligibility_status_with_invalid_person_attribute_name_raises_value_error(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    date_of_birth = DateOfBirth(datetime.date(2025, 5, 10))
+
+    person_rows = person_rows_builder(
+        nhs_number, date_of_birth=date_of_birth, cohorts=["cohort_1"], vaccines=[("RSV", datetime.date(2024, 1, 3))]
+    )
+
+    target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.ICECREAM]]"
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="cohort_1", positive_description=target_attribute_token
+                        ),
+                    ],
+                    iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    with pytest.raises(ValueError):
+        calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+
 class TestEligibilityResultBuilder:
     def test_build_condition_results_single_condition_single_cohort_actionable(self):
         cohort_group_results = [CohortGroupResult("COHORT_A", Status.actionable, [], "Cohort A Description", [])]
@@ -1176,11 +1308,25 @@ class TestTokenReplacement:
         with pytest.raises(ValueError):
             EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
 
+    def test_invalid_token_should_raise_error(self):
+        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
+
+        condition = Condition(
+            condition_name=ConditionName("RSV"),
+            status=Status.actionable,
+            status_text=StatusText("Your favourite flavor is: [[ICECREAM.FLAVOR]]."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+        with pytest.raises(ValueError):
+            EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
     def test_invalid_token_on_target_attribute_should_raise_error(self):
         person = Person([{"ATTRIBUTE_TYPE": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"}])
 
         condition = Condition(
-            condition_name=ConditionName("Condition name is [[TARGET.RSV.CONDITION_NAME]]"),
+            condition_name=ConditionName("Condition name is [[TARGET.RSV.ICECREAM]]"),
             status=Status.actionable,
             status_text=StatusText("Some status"),
             cohort_results=[],
@@ -1232,7 +1378,7 @@ class TestTokenReplacement:
             condition_name=ConditionName("RSV"),
             status=Status.actionable,
             status_text=StatusText(
-                "You are a [[PERSON.QUALITY]] [[PERSON.QUALITY]] [[PERSON.DEGREE]] and your age is [[PERSON.AGE]]."
+                "You are a [[PERSON.QUALITY]] [[person.QUALITY]] [[PERSON.DEGREE]] and your age is [[PERSON.AGE]]."
             ),
             cohort_results=[],
             suitability_rules=[],
@@ -1322,6 +1468,8 @@ class TestTokenReplacement:
             (":DATE(%A, %d %B %Y)", "Tuesday, 27 March 1990"),
             (":DATE(%A, (%d) %B %Y)", "Tuesday, (27"),
             (":DATE(%A, {%d} %B %Y)", "Tuesday, {27} March 1990"),
+            (":dATE(%A, {%d} %B %Y)", "Tuesday, {27} March 1990"),
+            (":date(%A, {%d} %B %Y)", "Tuesday, {27} March 1990"),
         ],
     )
     def test_valid_date_format(self, token_format: str, expected: str, faker: Faker):
@@ -1343,3 +1491,38 @@ class TestTokenReplacement:
         actual = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
 
         assert actual.condition_name == f"Date: {expected}"
+
+    @pytest.mark.parametrize(
+        ("token", "expected"),
+        [
+            ("[[person.DATE_OF_BIRTH:DATE(%d %B %Y)]]", "27 March 1990"),
+            ("[[PERSON.date_of_birth:DATE(%d %B %Y)]]", "27 March 1990"),
+            ("[[PERSON.DATE_OF_BIRTH:date(%d %B %Y)]]", "27 March 1990"),
+            ("[[pErSoN.DATE_OF_BIRTH:DATE(%d %B %Y)]]", "27 March 1990"),
+            ("[[target.RSV.LAST_SUCCESSFUL_DATE:DATE(%-d %B %Y)]]", "1 January 2025"),
+            ("[[TARGET.rsv.LAST_SUCCESSFUL_DATE:DATE(%-d %B %Y)]]", "1 January 2025"),
+            ("[[TARGET.RSV.last_successful_date:DATE(%-d %B %Y)]]", "1 January 2025"),
+            ("[[TARGET.RSV.last_successful_date:date(%-d %B %Y)]]", "1 January 2025"),
+        ],
+    )
+    def test_token_replace_is_case_insensitive(self, token: str, expected: str, faker: Faker):
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DATE_OF_BIRTH": "19900327"},
+                {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName(f"RSV vaccine on: {token}."),
+            status=Status.actionable,
+            status_text=StatusText(f"Your DOB is: {token}."),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        result = EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
+
+        assert result.status_text == f"Your DOB is: {expected}."
+        assert result.condition_name == f"RSV vaccine on: {expected}."
