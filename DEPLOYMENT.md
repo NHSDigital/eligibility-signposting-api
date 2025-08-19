@@ -8,6 +8,7 @@ This repo uses GitHub Actions to deploy through four environments:
 - **prod** – manual promotion of a specific RC to a **final SemVer tag** (`vX.Y.Z`) and a **GitHub Release**.
 
 Releases are immutable and auditable:
+
 - **RC tags** live only in preprod.
 - **Final tags** (`vX.Y.Z`) live only in prod and point to the exact commit that shipped.
 
@@ -30,8 +31,8 @@ Releases are immutable and auditable:
 ## Pull Request Workflow (CI)
 
 **File:** `CI/CD pull request`
+**Trigger:** PR events (not drafts)
 
-- Triggers on PR events (not drafts).
 - Runs stages: **commit → test → build → acceptance** via reusable stage files:
   - `stage-1-commit.yaml`
   - `stage-2-test.yaml`
@@ -59,15 +60,18 @@ Releases are immutable and auditable:
 **File:** `CI/CD deploy to TEST`
 **Trigger:** manual (`workflow_dispatch`)
 
-**Inputs**
+### Inputs
+
 - `tag`: the ref to deploy (e.g., a **dev** tag created by the dev workflow).
 - `environment`: fixed to `test`.
 
-**Behavior**
+### Behavior
+
 - Checks out the provided tag, builds, and deploys to **test**.
 - **No new tags** created. **No GitHub Releases** created.
 
-**Recommended usage**
+### Recommended usage
+
 - Deploy the **same commit** that was verified in dev by supplying the `dev-<timestamp>` tag here.
 
 ---
@@ -78,19 +82,22 @@ Releases are immutable and auditable:
 **Trigger:** manual (`workflow_dispatch`)
 
 ### Inputs
+
 - **`ref`**: branch/tag/SHA to deploy (`dev-<timestamp>` tag).
 - **`release_type`**: one of:
-- `patch` – start a new **patch** series → `vX.Y.(Z+1)-rc.1`
-- `minor` – start a new **minor** series → `vX.(Y+1).0-rc.1`
-- `major` – start a new **major** series → `v(X+1).0.0-rc.1`
-- `rc` – **keep the same base** version and cut the **next RC** (e.g. `-rc.1` → `-rc.2`)
+  - `patch` – start a new **patch** series → `vX.Y.(Z+1)-rc.1`
+  - `minor` – start a new **minor** series → `vX.(Y+1).0-rc.1`
+  - `major` – start a new **major** series → `v(X+1).0.0-rc.1`
+  - `rc` – **keep the same base** version and cut the **next RC** (e.g. `-rc.1` → `-rc.2`)
 
 ### Behavior
+
 - Tags the **checked-out commit** as the next **RC** (`vX.Y.Z-rc.N`) and pushes it.
 - Deploys to **preprod**.
 - Creates a **GitHub pre-release** for that RC.
 
 ### When to use which `release_type`
+
 - Use **`patch`/`minor`/`major`** when starting a **new base version** (first RC becomes `-rc.1`).
 - Use **`rc`** when you need another candidate for the **same base** (`-rc.N+1`).
 
@@ -102,9 +109,11 @@ Releases are immutable and auditable:
 **Trigger:** manual (`workflow_dispatch`)
 
 ### Inputs
+
 - **`ref`**: the **RC tag** to promote (e.g. `v1.4.0-rc.2`).
 
 ### Behavior
+
 - Validates the RC tag exists.
 - Creates the corresponding **final tag** (e.g. `v1.4.0`) at the **same commit**.
 - Deploys to **prod**.
@@ -132,7 +141,8 @@ Releases are immutable and auditable:
 - **RC tags**: `vX.Y.Z-rc.N` (preprod only; immutable; one per candidate).
 - **Final tags**: `vX.Y.Z` (prod only; immutable; exactly what shipped).
 
-**Promotion path**
+### Promotion path
+
 - Choose a commit (often via a **dev tag**) → cut RC(s) in **preprod** → promote the selected RC to **prod**.
 
 ---
@@ -155,14 +165,15 @@ Fix, then cut a new RC (`-rc.N+1`). Only promote to prod when ready.
 
 ## Quick Examples
 
-**New minor release**
+### New minor release
+
 1. Dev (auto) → creates `dev-20250818…`.
 2. Preprod (manual) → `ref=dev-20250818…`, `release_type=minor` → `v1.4.0-rc.1`.
 3. Preprod (manual) → `release_type=rc` → `v1.4.0-rc.2`.
 4. Prod (manual) → `ref=v1.4.0-rc.2` → final `v1.4.0`.
 
-**Same release, more candidates**
+### Same release, more candidates
+
 - Already at `v1.3.3-rc.1`.
 - Preprod → `release_type=rc` → `v1.3.3-rc.2`, test, repeat as needed.
 - Prod → promote the stable RC to `v1.3.3`.
-
