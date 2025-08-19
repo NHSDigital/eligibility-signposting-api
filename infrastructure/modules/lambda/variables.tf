@@ -1,5 +1,10 @@
 variable "eligibility_lambda_role_arn" {
-  description = "lambda read role arn for dynamodb"
+  description = "lambda role arn"
+  type        = string
+}
+
+variable "eligibility_lambda_role_name" {
+  description = "lambda role name"
   type        = string
 }
 

@@ -33,9 +33,14 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
     security_group_ids = var.security_group_ids
   }
 
+  dead_letter_config {
+    target_arn = aws_sqs_queue.lambda_dlq.arn
+  }
+
   tracing_config {
     mode = "Active"
   }
+
 }
 
 # provisioned concurrency - number of pre-warmed lambda containers

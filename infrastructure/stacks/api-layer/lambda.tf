@@ -13,6 +13,7 @@ data "aws_subnet" "private_subnets" {
 module "eligibility_signposting_lambda_function" {
   source                          = "../../modules/lambda"
   eligibility_lambda_role_arn     = aws_iam_role.eligibility_lambda_role.arn
+  eligibility_lambda_role_name    = aws_iam_role.eligibility_lambda_role.name
   workspace                       = local.workspace
   environment                     = var.environment
   lambda_func_name                = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}eligibility_signposting_api"
