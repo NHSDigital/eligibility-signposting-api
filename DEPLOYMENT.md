@@ -15,13 +15,13 @@ Releases are immutable and auditable:
 
 ## Workflow Map
 
-| Stage | Workflow file                                                           | Trigger | What it does | Tags / Releases |
-|------|-------------------------------------------------------------------------|---------|--------------|-----------------|
-| **Pull Request** | `.github/workflows/cicd-1-pull-request.yml`                             | `pull_request` (opened/sync/reopened) | Commit/Test/Build/Acceptance stages | No tags/releases |
-| **Dev** | `.github/workflows/cicd-2-publish.yml`                                  | `push` to `main` | Builds & deploys to dev | Creates and pushes `dev-YYYYMMDDHHMMSS` tag |
-| **Test** | `.github/workflows/cicd-3-test.yml`                                     | Manual (`workflow_dispatch`) | Deploys the chosen tag to test | No tags, no releases |
-| **Preprod** | `.github/workflows/cicd-4-preprod-deploy.yml` → calls `base-deploy.yml` | Manual (`workflow_dispatch`) | Deploys chosen ref and **creates/bumps an RC tag**; pre-release | `vX.Y.Z-rc.N` + GitHub **pre-release** |
-| **Prod** | `.github/workflows/cicd-5-prod-deploy.yml` → calls `base-deploy.yml`    | Manual (`workflow_dispatch`) | Promotes a specific RC to final | `vX.Y.Z` + GitHub **Release** |
+| Stage            | Workflow file                                                           | Trigger                               | What it does                                                    | Tags / Releases                             |
+|------------------|-------------------------------------------------------------------------|---------------------------------------|-----------------------------------------------------------------|---------------------------------------------|
+| **Pull Request** | `.github/workflows/cicd-1-pull-request.yml`                             | `pull_request` (opened/sync/reopened) | Commit/Test/Build/Acceptance stages                             | No tags/releases                            |
+| **Dev**          | `.github/workflows/cicd-2-publish.yml`                                  | `push` to `main`                      | Builds & deploys to dev                                         | Creates and pushes `dev-YYYYMMDDHHMMSS` tag |
+| **Test**         | `.github/workflows/cicd-3-test.yml`                                     | Manual (`workflow_dispatch`)          | Deploys the chosen tag to test                                  | No tags, no releases                        |
+| **Preprod**      | `.github/workflows/cicd-4-preprod-deploy.yml` → calls `base-deploy.yml` | Manual (`workflow_dispatch`)          | Deploys chosen ref and **creates/bumps an RC tag**; pre-release | `vX.Y.Z-rc.N` + GitHub **pre-release**      |
+| **Prod**         | `.github/workflows/cicd-5-prod-deploy.yml` → calls `base-deploy.yml`    | Manual (`workflow_dispatch`)          | Promotes a specific RC to final                                 | `vX.Y.Z` + GitHub **Release**               |
 
 > **Note:** The preprod/prod entry workflows are thin wrappers around a **reusable** workflow (`base-deploy.yml`).
 
@@ -114,15 +114,15 @@ Releases are immutable and auditable:
 
 ## Decision Guide (what to pick, when)
 
-| Situation | Workflow | Input: `ref` | Input: `release_type` | Result |
-|-----------|----------|--------------|------------------------|--------|
-| Deploy automatically after merge to main | **Dev** (auto) | `main` (implicit) | n/a | Deploys to dev, creates `dev-YYYYMMDDHHMMSS` |
-| Deploy an existing build to test | **Test** (manual) | a tag (e.g. `dev-20250817…`) | n/a | Deploys to test (no tags/releases) |
-| Start a **new patch release** into preprod | **Preprod** (manual) | branch/tag/SHA | `patch` | `vX.Y.(Z+1)-rc.1` + pre-release |
-| Start a **new minor release** into preprod | **Preprod** | branch/tag/SHA | `minor` | `vX.(Y+1).0-rc.1` + pre-release |
-| Start a **new major release** into preprod | **Preprod** | branch/tag/SHA | `major` | `v(X+1).0.0-rc.1` + pre-release |
-| Cut **another candidate** for the **same base** | **Preprod** | branch/tag/SHA (same train) | `rc` | `vX.Y.Z-rc.N+1` + pre-release |
-| Promote a **tested RC** to production | **Prod** (manual) | RC tag (e.g. `v1.4.0-rc.2`) | n/a | `v1.4.0` + GitHub Release |
+| Situation                                       | Workflow             | Input: `ref`                 | Input: `release_type` | Result                                       |
+|-------------------------------------------------|----------------------|------------------------------|-----------------------|----------------------------------------------|
+| Deploy automatically after merge to main        | **Dev** (auto)       | `main` (implicit)            | n/a                   | Deploys to dev, creates `dev-YYYYMMDDHHMMSS` |
+| Deploy an existing build to test                | **Test** (manual)    | a tag (e.g. `dev-20250817…`) | n/a                   | Deploys to test (no tags/releases)           |
+| Start a **new patch release** into preprod      | **Preprod** (manual) | branch/tag/SHA               | `patch`               | `vX.Y.(Z+1)-rc.1` + pre-release              |
+| Start a **new minor release** into preprod      | **Preprod**          | branch/tag/SHA               | `minor`               | `vX.(Y+1).0-rc.1` + pre-release              |
+| Start a **new major release** into preprod      | **Preprod**          | branch/tag/SHA               | `major`               | `v(X+1).0.0-rc.1` + pre-release              |
+| Cut **another candidate** for the **same base** | **Preprod**          | branch/tag/SHA (same train)  | `rc`                  | `vX.Y.Z-rc.N+1` + pre-release                |
+| Promote a **tested RC** to production           | **Prod** (manual)    | RC tag (e.g. `v1.4.0-rc.2`)  | n/a                   | `v1.4.0` + GitHub Release                    |
 
 ---
 
