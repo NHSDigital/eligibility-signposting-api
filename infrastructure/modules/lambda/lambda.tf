@@ -45,6 +45,7 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
     mode = "Active"
   }
 
+  publish = true
 }
 
 # provisioned concurrency - number of pre-warmed lambda containers
