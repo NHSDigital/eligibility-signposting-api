@@ -4,20 +4,24 @@ from dataclasses import dataclass
 
 @dataclass
 class ParsedToken:
-    attribute_level: str # example: "PERSON" or "TARGET"
-    attribute_name: str # example: "POSTCODE" or "RSV"
-    attribute_value: str | None # example: "LAST_SUCCESSFUL_DATE" if attribute_level is TARGET
-    format: str | None # example: "%d %B %Y" if DATE formatting is used
+    attribute_level: str  # example: "PERSON" or "TARGET"
+    attribute_name: str  # example: "POSTCODE" or "RSV"
+    attribute_value: str | None  # example: "LAST_SUCCESSFUL_DATE" if attribute_level is TARGET
+    format: str | None  # example: "%d %B %Y" if DATE formatting is used
 
 
 class TokenParser:
     @staticmethod
     def parse(token: str) -> ParsedToken:
+        token_body = token[2:-2]  # Strip the surrounding [[ ]]
+        # Check for empty body after stripping, e.g., '[[]]'
+        if not token_body:
+            raise ValueError("Invalid token.")
 
-        token_body = token[2:-2] # Strip the surrounding [[ ]]
-        token_parts = token_body.split(".") # Split by dot to separate level and attribute(s)
+        token_parts = token_body.split(".")
 
-        if len(token_parts) < 2:
+        # Check for empty parts created by leading/trailing dots or tokens with no dot
+        if len(token_parts) < 2 or not all(token_parts):
             raise ValueError("Invalid token.")
 
         token_level = token_parts[0].upper()

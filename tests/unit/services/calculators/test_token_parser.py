@@ -26,6 +26,31 @@ class TestTokenParser:
         assert parsed_token.attribute_value == expected_value
         assert parsed_token.format == expected_format
 
-    def test_parse_malformed_token_raises_error(self):
-        with pytest.raises(ValueError):
-            TokenParser.parse("[[PERSONAGE]]")
+    @pytest.mark.parametrize(
+        "token",
+        [
+            "[[.AGE]]",
+            "[[PERSON.]]",
+            "[[]]",
+            "[[PERSON]]",
+            "[[.PERSON.AGE]]",
+            "[[PERSON.AGE.]]",
+        ],
+    )
+    def test_parse_invalid_tokens_raises_error(self, token):
+        with pytest.raises(ValueError, match="Invalid token."):
+            TokenParser.parse(token)
+
+    @pytest.mark.parametrize(
+        "token",
+        [
+            "[[PERSON.DATE_OF_BIRTH:DATE(]]",
+            "[[PERSON.DATE_OF_BIRTH:DATE)]]",
+            "[[PERSON.DATE_OF_BIRTH:DATE]]",
+            "[[PERSON.DATE_OF_BIRTH:INVALID_FORMAT(abc)]]",
+            "[[PERSON.DATE_OF_BIRTH:INVALID_FORMAT(a (b) c)]]",
+        ],
+    )
+    def test_parse_invalid_token_format_raises_error(self, token):
+        with pytest.raises(ValueError, match="Invalid token format."):
+            TokenParser.parse(token)

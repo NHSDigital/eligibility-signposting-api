@@ -270,14 +270,18 @@ class EligibilityCalculator:
 
                     if attribute_level == "PERSON" and attribute.get("ATTRIBUTE_TYPE") == "PERSON":
                         if attribute_name in valid_person_keys:
-                            replace_with = EligibilityCalculator.replace_token_with_formatting(attribute, attribute_name, parsed_token.format)
+                            replace_with = EligibilityCalculator.replace_token_with_formatting(
+                                attribute, attribute_name, parsed_token.format
+                            )
                         else:
                             raise ValueError(f"Invalid attribute name '{attribute_name}' in token '{token}'.")
 
                     if attribute_level == "TARGET" and attribute.get("ATTRIBUTE_TYPE") == attribute_name.upper():
                         attribute_value = parsed_token.attribute_value
                         if attribute_value in valid_person_keys:
-                            replace_with = EligibilityCalculator.replace_token_with_formatting(attribute, attribute_value, parsed_token.format)
+                            replace_with = EligibilityCalculator.replace_token_with_formatting(
+                                attribute, attribute_value, parsed_token.format
+                            )
                         else:
                             raise ValueError(f"Invalid target attribute name '{attribute_value}' in token '{token}'.")
 
