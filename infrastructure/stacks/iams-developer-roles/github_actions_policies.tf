@@ -62,10 +62,14 @@ resource "aws_iam_policy" "lambda_management" {
           "lambda:ListAliases",
           "lambda:AddPermission",
           "lambda:RemovePermission",
-          "lambda:GetPolicy"
+          "lambda:GetPolicy",
+          "lambda:GetAlias",
+          "lambda:GetFunction",
+          "lambda:GetProvisionedConcurrencyConfig"
         ],
         Resource = [
-          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*eligibility_signposting_api"
+          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api",
+          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api:*"
         ]
       }
     ]
@@ -465,29 +469,6 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
   }
 }
 
-resource "aws_iam_policy" "cloudwatch_logging" {
-  name        = "cloudwatch-logging-management"
-  description = "Allow access to logging resources"
-  path        = "/service-policies/"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "logs:ListTagsForResource",
-          "logs:DescribeLogGroups",
-          "logs:PutRetentionPolicy"
-        ],
-        Resource = "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*"
-      }
-    ]
-  })
-
-  tags = merge(local.tags, { Name = "cloudwatch-logging-management" })
-}
-
 resource "aws_iam_policy" "firehose_readonly" {
   name        = "firehose-describe-access"
   description = "Allow GitHub Actions to describe Firehose delivery stream"
@@ -518,9 +499,9 @@ resource "aws_iam_policy" "firehose_readonly" {
   tags = merge(local.tags, { Name = "firehose-describe-access" })
 }
 
-resource "aws_iam_policy" "cloudwatch_alarms" {
-  name        = "cloudwatch-alarms-management"
-  description = "Allow GitHub Actions to manage CloudWatch alarms and SNS topics"
+resource "aws_iam_policy" "cloudwatch_management" {
+  name        = "cloudwatch-management"
+  description = "Allow GitHub Actions to manage CloudWatch logs, alarms, and SNS topics"
   path        = "/service-policies/"
 
   policy = jsonencode({
@@ -529,7 +510,10 @@ resource "aws_iam_policy" "cloudwatch_alarms" {
       {
         Effect = "Allow",
         Action = [
-          # CloudWatch Alarms management
+          "logs:ListTagsForResource",
+          "logs:DescribeLogGroups",
+          "logs:PutRetentionPolicy",
+
           "cloudwatch:PutMetricAlarm",
           "cloudwatch:DeleteAlarms",
           "cloudwatch:DescribeAlarms",
@@ -537,7 +521,7 @@ resource "aws_iam_policy" "cloudwatch_alarms" {
           "cloudwatch:ListTagsForResource",
           "cloudwatch:TagResource",
           "cloudwatch:UntagResource",
-          # SNS Topic management for alarm notifications
+
           "sns:CreateTopic",
           "sns:DeleteTopic",
           "sns:GetTopicAttributes",
@@ -552,6 +536,7 @@ resource "aws_iam_policy" "cloudwatch_alarms" {
           "sns:ListSubscriptionsByTopic"
         ],
         Resource = [
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
           "arn:aws:cloudwatch:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alarm:*",
           "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*"
         ]
@@ -559,7 +544,32 @@ resource "aws_iam_policy" "cloudwatch_alarms" {
     ]
   })
 
-  tags = merge(local.tags, { Name = "cloudwatch-alarms-management" })
+  tags = merge(local.tags, { Name = "cloudwatch-management" })
+}
+
+# SQS Management Policy for GetQueueAttributes
+resource "aws_iam_policy" "sqs_management" {
+  name        = "sqs-management"
+  description = "Policy granting permissions to get SQS queue attributes"
+  path        = "/service-policies/"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "sqs:GetQueueAttributes",
+          "sqs:listqueuetags"
+        ],
+        Resource = [
+          "arn:aws:sqs:eu-west-2:${data.aws_caller_identity.current.account_id}:*"
+        ]
+      }
+    ]
+  })
+
+  tags = merge(local.tags, { Name = "sqs-management" })
 }
 
 # Attach the policies to the role
@@ -598,17 +608,18 @@ resource "aws_iam_role_policy_attachment" "iam_management" {
   policy_arn = aws_iam_policy.iam_management.arn
 }
 
-resource "aws_iam_role_policy_attachment" "cloudwatch_logging" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.cloudwatch_logging.arn
-}
-
 resource "aws_iam_role_policy_attachment" "firehose_readonly_attach" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.firehose_readonly.arn
 }
 
-resource "aws_iam_role_policy_attachment" "cloudwatch_alarms" {
+resource "aws_iam_role_policy_attachment" "cloudwatch_management" {
   role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.cloudwatch_alarms.arn
+  policy_arn = aws_iam_policy.cloudwatch_management.arn
 }
+
+resource "aws_iam_role_policy_attachment" "sqs_management" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.sqs_management.arn
+}
+

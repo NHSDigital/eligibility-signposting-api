@@ -191,7 +191,6 @@ resource "aws_iam_role_policy_attachment" "lambda_logs_policy_attachment" {
 
 #Attach CloudWatchLambdaInsightsExecutionRolePolicy to lambda for enhanced monitoring
 resource "aws_iam_role_policy_attachment" "lambda_insights_policy" {
-  count      = var.environment == "prod" ? 1 : 0
   role       = aws_iam_role.eligibility_lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy"
 }

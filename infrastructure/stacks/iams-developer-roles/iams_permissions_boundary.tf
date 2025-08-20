@@ -150,6 +150,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "lambda:AddPermission",
       "lambda:RemovePermission",
       "lambda:GetPolicy",
+      "lambda:GetAlias",
+      "lambda:GetProvisionedConcurrencyConfig",
 
       # CloudWatch Logs - log management
       "logs:CreateLogGroup",
@@ -220,7 +222,9 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "ssm:AddTagsToResource",
 
       #SQS - message management
-      "sqs:SendMessage"
+      "sqs:SendMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:listqueuetags"
     ]
 
     resources = ["*"]
