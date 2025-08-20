@@ -44,17 +44,22 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   tracing_config {
     mode = "Active"
   }
+}
 
-  publish = true
+# lambda alias required for provisioning concurrency
+resource "aws_lambda_alias" "campaign_alias" {
+  name             = "live"
+  function_name    = coalesce(
+    aws_lambda_function.eligibility_signposting_lambda.function_name,
+    data.aws_lambda_function.existing.version
+  )
+  function_version = coalesce(
+    aws_lambda_function.eligibility_signposting_lambda.version,
+    data.aws_lambda_function.existing.version
+  )
 }
 
 # provisioned concurrency - number of pre-warmed lambda containers
-resource "aws_lambda_alias" "campaign_alias" {
-  name             = "live"
-  function_name    = aws_lambda_function.eligibility_signposting_lambda.function_name
-  function_version = aws_lambda_function.eligibility_signposting_lambda.version
-}
-
 resource "aws_lambda_provisioned_concurrency_config" "campaign_pc" {
   count                             = var.environment == "prod" ? 1 : 0
   function_name                     = aws_lambda_function.eligibility_signposting_lambda.function_name
