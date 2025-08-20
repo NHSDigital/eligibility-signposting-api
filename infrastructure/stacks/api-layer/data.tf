@@ -28,12 +28,3 @@ data "aws_ssm_parameter" "mtls_api_ca_cert" {
   name            = "/${var.environment}/mtls/api_ca_cert"
   with_decryption = true
 }
-
-data "aws_ssm_parameter" "splunk_hec_token" {
-  name = "/splunk/hec/token"
-  with_decryption = true
-}
-data "aws_ssm_parameter" "splunk_hec_endpoint" {
-  name = "/splunk/hec/endpoint"
-  with_decryption = true
-}
