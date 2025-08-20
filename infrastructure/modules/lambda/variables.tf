@@ -13,6 +13,12 @@ variable "lambda_func_name" {
   type        = string
 }
 
+variable "runtime" {
+  description = "runtime of the Lambda function"
+  type        = string
+}
+
+
 variable "vpc_intra_subnets" {
   description = "vpc private subnets for lambda"
   type        = list(string)
@@ -60,5 +66,10 @@ variable "enable_xray_patching"{
 
 variable "provisioned_concurrency_count" {
   description = "Number of prewarmed Lambda instances"
+  type        = number
+}
+
+variable "lambda_insights_extension_version" {
+  description = "version number of LambdaInsightsExtension"
   type        = number
 }

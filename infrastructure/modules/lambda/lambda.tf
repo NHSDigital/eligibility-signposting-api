@@ -11,7 +11,7 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
 
   source_code_hash = filebase64sha256(var.file_name)
 
-  runtime     = "python3.13"
+  runtime     = var.runtime
   timeout     = 30
   memory_size = 2048
 
@@ -36,6 +36,10 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   dead_letter_config {
     target_arn = aws_sqs_queue.lambda_dlq.arn
   }
+
+  layers = compact([
+  var.environment == "prod" ? "arn:aws:lambda:${var.region}:580247275435:layer:LambdaInsightsExtension:${var.lambda_insights_extension_version}" : null
+  ])
 
   tracing_config {
     mode = "Active"
