@@ -65,11 +65,14 @@ resource "aws_iam_policy" "lambda_management" {
           "lambda:GetPolicy",
           "lambda:GetAlias",
           "lambda:GetFunction",
-          "lambda:GetProvisionedConcurrencyConfig"
+          "lambda:GetProvisionedConcurrencyConfig",
+          "lambda:GetLayerVersion",
+          "lambda:PutProvisionedConcurrencyConfig"
         ],
         Resource = [
           "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api",
-          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api:*"
+          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api:*",
+          "arn:aws:lambda:*:580247275435:layer:LambdaInsightsExtension:*"
         ]
       }
     ]
