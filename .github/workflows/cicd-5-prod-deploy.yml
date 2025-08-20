@@ -1,0 +1,20 @@
+name: Prod Promote
+
+concurrency:
+  group: terraform-deploy-prod
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "RC tag to promote (e.g. v1.4.0-rc.2)"
+        required: true
+
+jobs:
+  call:
+    uses: ./.github/workflows/base-deploy.yml
+    with:
+      environment: prod
+      ref: ${{ inputs.ref }}
+    secrets: inherit

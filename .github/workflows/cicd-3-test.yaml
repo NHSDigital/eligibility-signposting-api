@@ -1,7 +1,7 @@
-# Deploys a given tag to a given environment and tags for semantic versioning
-# creates semantic release
+# Deploys a given tag to test environment
+# Does not tag or create a release
 
-name: "CI/CD deploy"
+name: "CI/CD deploy to TEST"
 
 concurrency:
   group: terraform-deploy-${{ github.event.inputs.environment }}
@@ -15,22 +15,12 @@ on:
         required: true
         default: "latest"
       environment:
-        description: "Target environment (e.g., test, preprod or prod)"
+        description: "Target environment (test only)"
         required: true
+        default: "test"
         type: choice
         options:
           - test
-          - preprod
-          - prod
-      release_type:
-        description: "Version bump type (patch, minor, major)"
-        required: false
-        default: "patch"
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
 
 jobs:
   metadata:
@@ -130,7 +120,6 @@ jobs:
           TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
           TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
 
-        # just planning for now for safety and until review
         run: |
           mkdir -p ./build
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=apply"
@@ -138,68 +127,3 @@ jobs:
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
         working-directory: ./infrastructure
-
-      - name: "Tag the deployment using incremental semantic versioning"
-        id: next_tag
-        run: |
-          # Fetch all tags and sort them semantically
-          git fetch --tags
-          latest_tag=$(git tag --list 'v*' | sort -V | tail -n 1)
-          echo "Latest tag: $latest_tag"
-
-          if [[ -z "$latest_tag" ]]; then
-            next_tag="v0.1.0"
-          else
-            # Extract the version numbers
-            IFS='.' read -r major minor patch <<< "${latest_tag#v}"
-            case "${{ github.event.inputs.release_type }}" in
-              major)
-              major=$((major + 1))
-              minor=0
-              patch=0
-              ;;
-              minor)
-              minor=$((minor + 1))
-              patch=0
-              ;;
-            patch|*)
-              patch=$((patch + 1))
-              ;;
-            esac
-
-            next_tag="v${major}.${minor}.${patch}"
-          fi
-
-          echo "Next tag: $next_tag"
-          echo "tag=$next_tag" >> $GITHUB_OUTPUT
-
-      - name: "Create GitHub Release"
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.next_tag.outputs.tag }}
-          release_name: Release ${{ steps.next_tag.outputs.tag }}
-          body: |
-            Auto-release created during deployment.
-          draft: false
-          prerelease: ${{ inputs.environment == 'preprod' }}
-
-  # TODO: complete notify step
-  # success:
-  #   name: "Success notification"
-  #   runs-on: ubuntu-latest
-  #   needs: [deploy]
-  #   steps:
-  #     - name: "Check prerequisites for notification"
-  #       id: check
-  #       run: echo "secret_exist=${{ secrets.TEAMS_NOTIFICATION_WEBHOOK_URL != '' }}" >> $GITHUB_OUTPUT
-  #     - name: "Notify on deployment to an environment"
-  #       if: steps.check.outputs.secret_exist == 'true'
-  #       uses: nhs-england-tools/notify-msteams-action@v0.0.4
-  #       with:
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
-  #         teams-webhook-url: ${{ secrets.TEAMS_NOTIFICATION_WEBHOOK_URL }}
-  #         message-title: "Notification title"
-  #         message-text: "This is a notification body"
-  #         link: ${{ github.event.pull_request.html_url }}
