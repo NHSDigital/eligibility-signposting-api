@@ -774,7 +774,7 @@ def test_eligibility_status_with_invalid_tokens_raises_attribute_error(faker: Fa
 
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(ValueError):
         calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
 
@@ -1439,7 +1439,9 @@ class TestTokenReplacement:
             ":INVALID_DATE_FORMATTER(19900327)",
             ":()",
             ":FORMAT(DATE)",
+            ":FORMAT(BLAH)",
             ":DATE[%d %B %Y]",
+            ":DATE(%A, (%d) %B %Y)",
         ],
     )
     def test_valid_token_invalid_format_should_raise_error(self, token_format: str):
@@ -1454,19 +1456,18 @@ class TestTokenReplacement:
             actions=[],
         )
 
-        with pytest.raises(AttributeError):
+        with pytest.raises(ValueError):
             EligibilityCalculator.find_and_replace_tokens_recursive(person, condition)
 
     @pytest.mark.parametrize(
         ("token_format", "expected"),
         [
-            (":DATE(%d %B %Y)", "27 March 1990"),
             (":DATE(%d %b %Y)", "27 Mar 1990"),
             (":DATE()", ""),
             ("", "19900327"),
             (":DATE(random_value)", "random_value"),
+            (":DATE(%d %B %Y)", "27 March 1990"),
             (":DATE(%A, %d %B %Y)", "Tuesday, 27 March 1990"),
-            (":DATE(%A, (%d) %B %Y)", "Tuesday, (27"),
             (":DATE(%A, {%d} %B %Y)", "Tuesday, {27} March 1990"),
             (":dATE(%A, {%d} %B %Y)", "Tuesday, {27} March 1990"),
             (":date(%A, {%d} %B %Y)", "Tuesday, {27} March 1990"),

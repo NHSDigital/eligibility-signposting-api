@@ -22,6 +22,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     Reason,
     Status,
 )
+from eligibility_signposting_api.services.calculators.token_parser import TokenParser
 from eligibility_signposting_api.services.processors.action_rule_handler import ActionRuleHandler
 from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
 from eligibility_signposting_api.services.processors.rule_processor import RuleProcessor
@@ -252,16 +253,15 @@ class EligibilityCalculator:
             return text
 
         pattern = r"\[\[.*?\]\]"
-        date_pattern = r"\DATE\((.*?)\)"
         all_tokens = re.findall(pattern, text, re.IGNORECASE)
+        valid_person_keys = EligibilityCalculator.get_all_valid_person_keys(person)
 
         for token in all_tokens:
-            middle = token[2:-2]
+            parsed_token = TokenParser.parse(token)
             try:
-                attribute_level = middle.split(".")[0].upper()
-                attribute_name = middle.split(".")[1]
+                attribute_level = parsed_token.attribute_level
+                attribute_name = parsed_token.attribute_name
                 replace_with = ""
-                valid_person_keys = EligibilityCalculator.get_all_valid_person_keys(person)
 
                 allowed_attribute_levels = ["PERSON", "TARGET"]
                 for attribute in person.data:
@@ -269,24 +269,17 @@ class EligibilityCalculator:
                         raise ValueError(f"Invalid attribute level '{attribute_level}' in token '{token}'.")
 
                     if attribute_level == "PERSON" and attribute.get("ATTRIBUTE_TYPE") == "PERSON":
-                        if attribute_name.split(":")[0].upper() in valid_person_keys:
-                            replace_with = EligibilityCalculator.replace_with_formatting(
-                                attribute, attribute_name, date_pattern, replace_with
-                            )
+                        if attribute_name in valid_person_keys:
+                            replace_with = EligibilityCalculator.replace_token_with_formatting(attribute, attribute_name, parsed_token.format)
                         else:
                             raise ValueError(f"Invalid attribute name '{attribute_name}' in token '{token}'.")
 
-                    if attribute_level == "TARGET":
-                        if attribute.get("ATTRIBUTE_TYPE") == attribute_name.upper():
-                            attribute_value = middle.split(".")[2]
-                            if attribute_value.split(":")[0].upper() in valid_person_keys:
-                                replace_with = EligibilityCalculator.replace_with_formatting(
-                                    attribute, attribute_value, date_pattern, replace_with
-                                )
-                            else:
-                                raise ValueError(
-                                    f"Invalid target attribute name '{attribute_value}' in token '{token}'."
-                                )
+                    if attribute_level == "TARGET" and attribute.get("ATTRIBUTE_TYPE") == attribute_name.upper():
+                        attribute_value = parsed_token.attribute_value
+                        if attribute_value in valid_person_keys:
+                            replace_with = EligibilityCalculator.replace_token_with_formatting(attribute, attribute_value, parsed_token.format)
+                        else:
+                            raise ValueError(f"Invalid target attribute name '{attribute_value}' in token '{token}'.")
 
                 text = text.replace(token, str(replace_with))
 
@@ -296,19 +289,14 @@ class EligibilityCalculator:
         return text
 
     @staticmethod
-    def replace_with_formatting(
-        attribute: dict[str, T], attribute_value: T, date_pattern: str, replace_with: str
-    ) -> str:
+    def replace_token_with_formatting(attribute: dict[str, T], attribute_value: T, date_format: str | None) -> str:
         try:
-            if len(attribute_value.split(":")) > 1:
-                token_format_type = attribute_value.split(":")[1]
-                token_date_format = re.search(date_pattern, token_format_type, re.IGNORECASE).group(1)
-                unformatted_replace_with = attribute.get(attribute_value.split(":")[0].upper())
-                if unformatted_replace_with is not None:
-                    replace_with_date_object = datetime.strptime(str(unformatted_replace_with), "%Y%m%d")
-                    replace_with = replace_with_date_object.strftime(str(token_date_format))
+            attribute_data = attribute.get(attribute_value)
+            if (date_format or date_format == "") and attribute_data:
+                replace_with_date_object = datetime.strptime(str(attribute_data), "%Y%m%d")
+                replace_with = replace_with_date_object.strftime(str(date_format))
             else:
-                replace_with = attribute.get(attribute_value) if attribute.get(attribute_value) else ""
+                replace_with = attribute_data if attribute_data else ""
             return replace_with
         except AttributeError:
             raise AttributeError("Invalid token format")
@@ -317,8 +305,5 @@ class EligibilityCalculator:
     def get_all_valid_person_keys(person: Person) -> set[str]:
         all_keys = set()
         for item in person.data:
-            keys = item.keys()
-            for key in keys:
-                key.upper()
-            all_keys.update(keys)
+            all_keys.update(item.keys())
         return all_keys
