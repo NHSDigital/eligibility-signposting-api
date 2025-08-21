@@ -226,7 +226,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
       #SQS - message management
       "sqs:SendMessage",
       "sqs:GetQueueAttributes",
-      "sqs:listqueuetags"
+      "sqs:listqueuetags",
+      "sqs:createqueue"
     ]
 
     resources = ["*"]

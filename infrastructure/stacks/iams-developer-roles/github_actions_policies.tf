@@ -563,7 +563,8 @@ resource "aws_iam_policy" "sqs_management" {
         Effect = "Allow",
         Action = [
           "sqs:GetQueueAttributes",
-          "sqs:listqueuetags"
+          "sqs:listqueuetags",
+          "sqs:createqueue"
         ],
         Resource = [
           "arn:aws:sqs:eu-west-2:${data.aws_caller_identity.current.account_id}:*"
