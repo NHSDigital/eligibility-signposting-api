@@ -11,19 +11,23 @@ data "aws_subnet" "private_subnets" {
 }
 
 module "eligibility_signposting_lambda_function" {
-  source                          = "../../modules/lambda"
-  eligibility_lambda_role_arn     = aws_iam_role.eligibility_lambda_role.arn
-  workspace                       = local.workspace
-  environment                     = var.environment
-  lambda_func_name                = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}eligibility_signposting_api"
-  security_group_ids              = [data.aws_security_group.main_sg.id]
-  vpc_intra_subnets               = [for v in data.aws_subnet.private_subnets : v.id]
-  file_name                       = "../../../dist/lambda.zip"
-  handler                         = "eligibility_signposting_api.app.lambda_handler"
-  eligibility_rules_bucket_name   = module.s3_rules_bucket.storage_bucket_name
-  eligibility_status_table_name   = module.eligibility_status_table.table_name
-  kinesis_audit_stream_to_s3_name = module.eligibility_audit_firehose_delivery_stream.firehose_stream_name
-  log_level                       = "INFO"
-  enable_xray_patching            = "true"
-  stack_name                      = local.stack_name
+  source                            = "../../modules/lambda"
+  eligibility_lambda_role_arn       = aws_iam_role.eligibility_lambda_role.arn
+  eligibility_lambda_role_name      = aws_iam_role.eligibility_lambda_role.name
+  workspace                         = local.workspace
+  environment                       = var.environment
+  runtime                           = "python3.13"
+  lambda_func_name                  = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}eligibility_signposting_api"
+  security_group_ids                = [data.aws_security_group.main_sg.id]
+  vpc_intra_subnets                 = [for v in data.aws_subnet.private_subnets : v.id]
+  file_name                         = "../../../dist/lambda.zip"
+  handler                           = "eligibility_signposting_api.app.lambda_handler"
+  eligibility_rules_bucket_name     = module.s3_rules_bucket.storage_bucket_name
+  eligibility_status_table_name     = module.eligibility_status_table.table_name
+  kinesis_audit_stream_to_s3_name   = module.eligibility_audit_firehose_delivery_stream.firehose_stream_name
+  lambda_insights_extension_version = 38
+  log_level                         = "INFO"
+  enable_xray_patching              = "true"
+  stack_name                        = local.stack_name
+  provisioned_concurrency_count     = 5
 }
