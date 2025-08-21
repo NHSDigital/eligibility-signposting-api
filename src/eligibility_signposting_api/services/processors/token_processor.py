@@ -55,9 +55,14 @@ class TokenProcessor:
         allowed_target_attributes = [
             "NHS_NUMBER",
             "ATTRIBUTE_TYPE",
+            "VALID_DOSES_COUNT",
+            "INVALID_DOSES_COUNT",
             "LAST_SUCCESSFUL_DATE",
-            "OPTOUT",
+            "LAST_VALID_DOSE_DATE",
+            "BOOKED_APPOINTMENT_DATE",
+            "BOOKED_APPOINTMENT_PROVIDER",
             "LAST_INVITE_DATE",
+            "LAST_INVITE_STATUS",
         ]
 
         for token in all_tokens:
