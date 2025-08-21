@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 from faker import Faker
 from flask import Flask
+from flask import g
 from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, contains_inanyorder, has_item, has_items, is_, is_in
 from pydantic import HttpUrl
@@ -742,6 +743,12 @@ def test_eligibility_status_replaces_tokens_with_attribute_data(faker: Faker):
     assert actual.conditions[0].cohort_results[1].description == "LAST_SUCCESSFUL_DATE: 03 January 2024"
     assert actual.conditions[0].actions[0].action_description == "## Get vaccinated at your GP surgery in QE1."
     assert actual.conditions[0].actions[0].url_label == "Your GP practice code is ."
+
+    audit_condition = g.audit_log.response.condition[0]
+    assert audit_condition.eligibility_cohort_groups[0].cohort_text in ["DOB: 20250510", "LAST_SUCCESSFUL_DATE: 03 January 2024"]
+    assert audit_condition.eligibility_cohort_groups[1].cohort_text in ["DOB: 20250510", "LAST_SUCCESSFUL_DATE: 03 January 2024"]
+    assert audit_condition.actions[0].action_description == "## Get vaccinated at your GP surgery in QE1."
+    assert audit_condition.actions[0].action_url_label == "Your GP practice code is ."
 
 
 def test_eligibility_status_with_invalid_tokens_raises_attribute_error(faker: Faker):

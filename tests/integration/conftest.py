@@ -19,6 +19,7 @@ from yarl import URL
 
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
+    AvailableAction,
     CampaignConfig,
     EndDate,
     RuleType,
@@ -396,6 +397,38 @@ def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[e
 
 
 @pytest.fixture
+def person_with_all_data(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
+    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    date_of_birth = eligibility_status.DateOfBirth(datetime.date(1990, 2, 28))
+
+    for row in (
+        rows := person_rows_builder(
+            nhs_number=nhs_number,
+            date_of_birth=date_of_birth,
+            gender="0",
+            postcode="SW18",
+            cohorts=["cohort_label1", "cohort_label2"],
+            vaccines=[("RSV", None)],
+            icb="QE1",
+            gp_practice="C81002",
+            pcn="U78207",
+            comissioning_region="Y60",
+            thirteen_q=True,
+            care_home=True,
+            de=False,
+            msoa="E02001562",
+            lsoa="E01030316",
+        ).data
+    ):
+        person_table.put_item(Item=row)
+
+    yield nhs_number
+
+    for row in rows:
+        person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
+
+
+@pytest.fixture
 def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
     nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
 
@@ -572,6 +605,59 @@ def campaign_config_with_and_rule(s3_client: BaseClient, rules_bucket: BucketNam
                         cohort_group="cohort_group2",
                         positive_description="positive_description",
                         negative_description="negative_description",
+                    ),
+                ],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture(scope="class")
+def campaign_config_with_tokens(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="RSV",
+        iterations=[
+            rule.IterationFactory.build(
+                actions_mapper=rule.ActionsMapperFactory.build(
+                    root={
+                        "TOKEN_TEST": AvailableAction(
+                            ActionType="ButtonAuthLink",
+                            ExternalRoutingCode="BookNBS",
+                            ActionDescription="## Token - PERSON.POSTCODE: [[PERSON.POSTCODE]].",
+                            UrlLabel="Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): [[PERSON.DATE_OF_BIRTH:DATE(%d %B %Y)]].",
+                        ),
+                        "TOKEN_TEST2": AvailableAction(
+                            ActionType="ButtonAuthLink",
+                            ExternalRoutingCode="BookNBS",
+                            ActionDescription="## Token - PERSON.GENDER: [[PERSON.GENDER]].",
+                            UrlLabel="Token - PERSON.DATE_OF_BIRTH: [[PERSON.DATE_OF_BIRTH]].",
+                        ),
+                    }
+                ),
+                iteration_rules=[
+                    rule.PostcodeSuppressionRuleFactory.build(),
+                    rule.PersonAgeSuppressionRuleFactory.build(),
+                    rule.ICBNonEligibleActionRuleFactory.build(comms_routing="TOKEN_TEST|TOKEN_TEST2"),
+                    rule.ICBNonActionableActionRuleFactory.build(comms_routing="TOKEN_TEST"),
+                ],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort1",
+                        cohort_group="cohort_group1",
+                        positive_description="Positive Description",
+                        negative_description="Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE]]",
+                    ),
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort2",
+                        cohort_group="cohort_group2",
+                        positive_description="Positive Description",
+                        negative_description="Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]",
                     ),
                 ],
             )

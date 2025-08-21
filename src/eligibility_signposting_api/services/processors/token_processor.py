@@ -30,6 +30,15 @@ class TokenProcessor:
                         value[i] = TokenProcessor.find_and_replace_tokens(person, item)
                     elif isinstance(item, str):
                         value[i] = TokenProcessor.replace_token(item, person)
+                    setattr(data_class, class_field.name, value)
+
+            elif isinstance(value, dict):
+                for key, dict_value in value.items():
+                    if isinstance(dict_value, str):
+                        value[key] = TokenProcessor.replace_token(dict_value, person)
+                    elif is_dataclass(dict_value):
+                        value[key] = TokenProcessor.find_and_replace_tokens(person, dict_value)
+                setattr(data_class, class_field.name, value)
 
             elif is_dataclass(value):
                 setattr(data_class, class_field.name, TokenProcessor.find_and_replace_tokens(person, value))
@@ -43,6 +52,13 @@ class TokenProcessor:
 
         pattern = r"\[\[.*?\]\]"
         all_tokens = re.findall(pattern, text, re.IGNORECASE)
+        allowed_target_attributes = [
+            "NHS_NUMBER",
+            "ATTRIBUTE_TYPE",
+            "LAST_SUCCESSFUL_DATE",
+            "OPTOUT",
+            "LAST_INVITE_DATE",
+        ]
 
         for token in all_tokens:
             parsed_token = TokenParser.parse(token)
@@ -58,8 +74,14 @@ class TokenProcessor:
             for attribute in person.data:
                 is_target_attribute = attribute.get("ATTRIBUTE_TYPE") == parsed_token.attribute_name.upper()
                 is_person_attribute = attribute.get("ATTRIBUTE_TYPE") == "PERSON"
+                is_target_rsv = True if parsed_token.attribute_name.upper() == "RSV" else False
 
-                if (is_target_attribute or is_person_attribute) and key_to_find in attribute:
+                valid_person_attribute = is_person_attribute and key_to_find in attribute
+                valid_target_attribute = (
+                    is_target_attribute and is_target_rsv and key_to_find in allowed_target_attributes
+                )
+
+                if valid_target_attribute or valid_person_attribute:
                     found_attribute = attribute
                     key_to_replace = key_to_find
                     break

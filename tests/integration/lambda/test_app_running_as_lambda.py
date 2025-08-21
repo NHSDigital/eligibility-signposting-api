@@ -585,3 +585,53 @@ def test_no_active_iteration_returns_empty_processed_suggestions(
             has_entries("condition", "FLU"),
         ),
     )
+
+
+def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
+    lambda_client: BaseClient,  # noqa:ARG001
+    person_with_all_data: NHSNumber,
+    campaign_config_with_tokens: CampaignConfig,
+    s3_client: BaseClient,
+    audit_bucket: BucketName,
+    api_gateway_endpoint: URL,
+    flask_function: str,
+    logs_client: BaseClient,
+):
+    # Given
+    # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
+    response = httpx.get(
+        invoke_url,
+        headers={"nhs-login-nhs-number": str(person_with_all_data)},
+        timeout=10,
+    )
+
+    # Then
+    assert_that(
+        response,
+        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
+    )
+
+    processed_suggestions = response.json()["processedSuggestions"][0]
+
+    assert processed_suggestions["actions"][0]["description"] == "## Token - PERSON.POSTCODE: SW18."
+    assert processed_suggestions["actions"][0]["urlLabel"] == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
+    assert processed_suggestions["actions"][1]["description"] == "## Token - PERSON.GENDER: 0."
+    assert processed_suggestions["actions"][1]["urlLabel"] == "Token - PERSON.DATE_OF_BIRTH: 19900228."
+    assert processed_suggestions["eligibilityCohorts"][0]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: "
+    assert processed_suggestions["eligibilityCohorts"][1]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
+
+    # Then - check if audited
+    objects = s3_client.list_objects_v2(Bucket=audit_bucket).get("Contents", [])
+    object_keys = [obj["Key"] for obj in objects]
+    latest_key = sorted(object_keys)[-1]
+    audit_data = json.loads(s3_client.get_object(Bucket=audit_bucket, Key=latest_key)["Body"].read())
+
+    audit_condition = audit_data["response"]["condition"][0]
+    assert audit_condition["actions"][0]["actionDescription"] == "## Token - PERSON.POSTCODE: SW18."
+    assert audit_condition["actions"][0]["actionUrlLabel"] == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
+    assert audit_condition["actions"][1]["actionDescription"] == "## Token - PERSON.GENDER: 0."
+    assert audit_condition["actions"][1]["actionUrlLabel"] == "Token - PERSON.DATE_OF_BIRTH: 19900228."
+    assert audit_condition["eligibilityCohortGroups"][0]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: "
+    assert audit_condition["eligibilityCohortGroups"][1]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
+
