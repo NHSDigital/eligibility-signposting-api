@@ -82,7 +82,6 @@ resource "aws_cloudwatch_event_target" "firehose_target" {
         new_state   = "<new_state>"
         old_state   = "<old_state>"
         reason      = "<reason>"
-        severity    = "<new_state>" == "ALARM" ? "high" : "info"
         region      = "<region>"
       }
     })
