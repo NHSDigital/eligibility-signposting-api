@@ -1,6 +1,6 @@
 import pytest
 
-from eligibility_signposting_api.services.calculators.token_parser import TokenParser
+from eligibility_signposting_api.services.processors.token_parser import TokenParser
 
 
 class TestTokenParser:
@@ -49,6 +49,7 @@ class TestTokenParser:
             "[[PERSON.DATE_OF_BIRTH:DATE]]",
             "[[PERSON.DATE_OF_BIRTH:INVALID_FORMAT(abc)]]",
             "[[PERSON.DATE_OF_BIRTH:INVALID_FORMAT(a (b) c)]]",
+            "[[PERSON.DATE_OF_BIRTH:DATE(a (b) c)]]",
         ],
     )
     def test_parse_invalid_token_format_raises_error(self, token):

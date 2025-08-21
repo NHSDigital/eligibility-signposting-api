@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import logging
-import re
 from collections import defaultdict
-from dataclasses import dataclass, field, fields, is_dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
 from itertools import chain
 from typing import TYPE_CHECKING, TypeVar
 
@@ -22,10 +20,10 @@ from eligibility_signposting_api.model.eligibility_status import (
     Reason,
     Status,
 )
-from eligibility_signposting_api.services.calculators.token_parser import TokenParser
 from eligibility_signposting_api.services.processors.action_rule_handler import ActionRuleHandler
 from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
 from eligibility_signposting_api.services.processors.rule_processor import RuleProcessor
+from eligibility_signposting_api.services.processors.token_processor import TokenProcessor
 
 if TYPE_CHECKING:
     from collections.abc import Collection
@@ -104,8 +102,8 @@ class EligibilityCalculator:
                 include_actions_flag=include_actions_flag,
             )
 
-            best_iteration_result = self.find_and_replace_tokens_recursive(self.person, best_iteration_result)
-            matched_action_detail = self.find_and_replace_tokens_recursive(self.person, matched_action_detail)
+            best_iteration_result = TokenProcessor.find_and_replace_tokens(self.person, best_iteration_result)
+            matched_action_detail = TokenProcessor.find_and_replace_tokens(self.person, matched_action_detail)
 
             condition_results[condition_name] = best_iteration_result.iteration_result
             condition_results[condition_name].actions = matched_action_detail.actions
@@ -221,93 +219,3 @@ class EligibilityCalculator:
             key = (reason.rule_type, reason.rule_priority)
             deduped.setdefault(key, reason)
         return list(deduped.values())
-
-    @staticmethod
-    def find_and_replace_tokens_recursive(person: Person, data_class: T) -> T:
-        if not is_dataclass(data_class):
-            return data_class
-
-        for class_field in fields(data_class):
-            value = getattr(data_class, class_field.name)
-
-            if isinstance(value, str):
-                setattr(data_class, class_field.name, EligibilityCalculator.replace_token(value, person))
-
-            elif isinstance(value, list):
-                for i, item in enumerate(value):
-                    if is_dataclass(item):
-                        value[i] = EligibilityCalculator.find_and_replace_tokens_recursive(person, item)
-                    elif isinstance(item, str):
-                        value[i] = EligibilityCalculator.replace_token(item, person)
-
-            elif is_dataclass(value):
-                setattr(
-                    data_class, class_field.name, EligibilityCalculator.find_and_replace_tokens_recursive(person, value)
-                )
-
-        return data_class
-
-    @staticmethod
-    def replace_token(text: str, person: Person) -> str:
-        if not isinstance(text, str):
-            return text
-
-        pattern = r"\[\[.*?\]\]"
-        all_tokens = re.findall(pattern, text, re.IGNORECASE)
-        valid_person_keys = EligibilityCalculator.get_all_valid_person_keys(person)
-
-        for token in all_tokens:
-            parsed_token = TokenParser.parse(token)
-            try:
-                attribute_level = parsed_token.attribute_level
-                attribute_name = parsed_token.attribute_name
-                replace_with = ""
-
-                allowed_attribute_levels = ["PERSON", "TARGET"]
-                for attribute in person.data:
-                    if attribute_level not in allowed_attribute_levels:
-                        raise ValueError(f"Invalid attribute level '{attribute_level}' in token '{token}'.")
-
-                    if attribute_level == "PERSON" and attribute.get("ATTRIBUTE_TYPE") == "PERSON":
-                        if attribute_name in valid_person_keys:
-                            replace_with = EligibilityCalculator.replace_token_with_formatting(
-                                attribute, attribute_name, parsed_token.format
-                            )
-                        else:
-                            raise ValueError(f"Invalid attribute name '{attribute_name}' in token '{token}'.")
-
-                    if attribute_level == "TARGET" and attribute.get("ATTRIBUTE_TYPE") == attribute_name.upper():
-                        attribute_value = parsed_token.attribute_value
-                        if attribute_value in valid_person_keys:
-                            replace_with = EligibilityCalculator.replace_token_with_formatting(
-                                attribute, attribute_value, parsed_token.format
-                            )
-                        else:
-                            raise ValueError(f"Invalid target attribute name '{attribute_value}' in token '{token}'.")
-
-                text = text.replace(token, str(replace_with))
-
-            except ValueError as e:
-                raise ValueError(e)
-
-        return text
-
-    @staticmethod
-    def replace_token_with_formatting(attribute: dict[str, T], attribute_value: T, date_format: str | None) -> str:
-        try:
-            attribute_data = attribute.get(attribute_value)
-            if (date_format or date_format == "") and attribute_data:
-                replace_with_date_object = datetime.strptime(str(attribute_data), "%Y%m%d")
-                replace_with = replace_with_date_object.strftime(str(date_format))
-            else:
-                replace_with = attribute_data if attribute_data else ""
-            return replace_with
-        except AttributeError:
-            raise AttributeError("Invalid token format")
-
-    @staticmethod
-    def get_all_valid_person_keys(person: Person) -> set[str]:
-        all_keys = set()
-        for item in person.data:
-            all_keys.update(item.keys())
-        return all_keys
