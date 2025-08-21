@@ -75,17 +75,15 @@ resource "aws_cloudwatch_event_target" "firehose_target" {
 
     input_template = jsonencode({
       time = "<time>"
-      host = "aws"
-      source = "aws:cloudwatch:alarm"
+      source = "elid-${var.environment}:cloudwatch:alarm"
       sourcetype = "aws:cloudwatch:alarm"
       event = {
-        account_id  = "<account>"
-        region      = "<region>"
         alarm_name  = "<alarm_name>"
         new_state   = "<new_state>"
         old_state   = "<old_state>"
         reason      = "<reason>"
         severity    = "<new_state>" == "ALARM" ? "high" : "info"
+        region      = "<region>"
       }
     })
   }

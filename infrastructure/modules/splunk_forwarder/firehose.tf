@@ -31,7 +31,7 @@ resource "aws_kinesis_firehose_delivery_stream" "splunk_delivery_stream" {
   splunk_configuration {
     hec_endpoint      = var.splunk_hec_endpoint
     hec_token         = var.splunk_hec_token
-    hec_endpoint_type = "Event"
+    hec_endpoint_type = "Raw"
     s3_backup_mode    = "FailedEventsOnly"
 
     s3_configuration {
