@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "eligibility_signposting_lambda" {
+  #checkov:skip=CKV_AWS_116: No deadletter queue is configured for this Lambda function, as the requests are synchronous
   #checkov:skip=CKV_AWS_115: Concurrent execution limit will be set at APIM level, not at Lambda level
   #checkov:skip=CKV_AWS_272: Skipping code signing but flagged to create ticket to investigate on ELI-238
   # If the file is not in the current working directory you will need to include a
@@ -27,13 +28,11 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
 
   kms_key_arn = aws_kms_key.lambda_cmk.arn
 
+  publish = true
+
   vpc_config {
     subnet_ids         = var.vpc_intra_subnets
     security_group_ids = var.security_group_ids
-  }
-
-  dead_letter_config {
-    target_arn = aws_sqs_queue.lambda_dlq.arn
   }
 
   layers = compact([
@@ -49,14 +48,8 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
 resource "aws_lambda_alias" "campaign_alias" {
   count            = var.environment == "prod" ? 1 : 0
   name             = "live"
-  function_name    = coalesce(
-    aws_lambda_function.eligibility_signposting_lambda.function_name,
-    data.aws_lambda_function.existing.function_name
-  )
-  function_version = coalesce(
-    aws_lambda_function.eligibility_signposting_lambda.version,
-    data.aws_lambda_function.existing.version
-  )
+  function_name    = aws_lambda_function.eligibility_signposting_lambda.function_name
+  function_version = aws_lambda_function.eligibility_signposting_lambda.version
 }
 
 # provisioned concurrency - number of pre-warmed lambda containers
@@ -66,3 +59,4 @@ resource "aws_lambda_provisioned_concurrency_config" "campaign_pc" {
   qualifier                         = aws_lambda_alias.campaign_alias[0].name
   provisioned_concurrent_executions = var.provisioned_concurrency_count
 }
+
