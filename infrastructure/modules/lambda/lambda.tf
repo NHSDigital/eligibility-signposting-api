@@ -27,6 +27,8 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
 
   kms_key_arn = aws_kms_key.lambda_cmk.arn
 
+  publish = true
+
   vpc_config {
     subnet_ids         = var.vpc_intra_subnets
     security_group_ids = var.security_group_ids
@@ -49,14 +51,8 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
 resource "aws_lambda_alias" "campaign_alias" {
   count            = var.environment == "prod" ? 1 : 0
   name             = "live"
-  function_name    = coalesce(
-    aws_lambda_function.eligibility_signposting_lambda.function_name,
-    data.aws_lambda_function.existing.function_name
-  )
-  function_version = coalesce(
-    aws_lambda_function.eligibility_signposting_lambda.version,
-    data.aws_lambda_function.existing.version
-  )
+  function_name    = aws_lambda_function.eligibility_signposting_lambda.function_name
+  function_version = aws_lambda_function.eligibility_signposting_lambda.version
 }
 
 # provisioned concurrency - number of pre-warmed lambda containers
@@ -66,3 +62,4 @@ resource "aws_lambda_provisioned_concurrency_config" "campaign_pc" {
   qualifier                         = aws_lambda_alias.campaign_alias[0].name
   provisioned_concurrent_executions = var.provisioned_concurrency_count
 }
+
