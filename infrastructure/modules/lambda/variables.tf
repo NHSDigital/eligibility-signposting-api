@@ -1,5 +1,10 @@
 variable "eligibility_lambda_role_arn" {
-  description = "lambda read role arn for dynamodb"
+  description = "lambda role arn"
+  type        = string
+}
+
+variable "eligibility_lambda_role_name" {
+  description = "lambda role name"
   type        = string
 }
 
@@ -7,6 +12,12 @@ variable "lambda_func_name" {
   description = "Name of the Lambda function"
   type        = string
 }
+
+variable "runtime" {
+  description = "runtime of the Lambda function"
+  type        = string
+}
+
 
 variable "vpc_intra_subnets" {
   description = "vpc private subnets for lambda"
@@ -51,4 +62,14 @@ variable "log_level" {
 variable "enable_xray_patching"{
   description = "flag to enable xray tracing, which puts an entry for dynamodb, s3 and firehose in trace map"
   type        = string
+}
+
+variable "provisioned_concurrency_count" {
+  description = "Number of prewarmed Lambda instances"
+  type        = number
+}
+
+variable "lambda_insights_extension_version" {
+  description = "version number of LambdaInsightsExtension"
+  type        = number
 }
