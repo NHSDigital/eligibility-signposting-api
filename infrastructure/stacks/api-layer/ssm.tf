@@ -69,7 +69,7 @@ resource "aws_ssm_parameter" "splunk_hec_token" {
   }
 
   lifecycle {
-    ignore_changes = [value] # Only ignore value changes, allow key_id updates during migration
+    ignore_changes = [value] # Needs manual changes in future
   }
 }
 
@@ -77,7 +77,7 @@ resource "aws_ssm_parameter" "splunk_hec_endpoint" {
   name        = "/splunk/hec/endpoint"
   description = "Splunk HEC endpoint"
   type        = "SecureString"
-  key_id      = aws_kms_key.splunk_hec_kms.id # Will migrate to customer key after initial creation
+  key_id      = aws_kms_key.splunk_hec_kms.id
   value       = var.splunk_hec_endpoint
   tier        = "Advanced"
 
@@ -89,6 +89,6 @@ resource "aws_ssm_parameter" "splunk_hec_endpoint" {
   }
 
   lifecycle {
-    ignore_changes = [value] # Only ignore value changes, allow key_id updates during migration
+    ignore_changes = [value]
   }
 }
