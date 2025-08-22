@@ -44,6 +44,7 @@ dist/lambda.zip: $(MAKE_DIR)/pyproject.toml $(MAKE_DIR)/poetry.lock $(shell find
 	unzip -q dist/lambda.zip -d tmp/
 	mkdir -p dist/
 	cd tmp && find . -type f | sort | zip -X ../lambda-temp.zip -@
+	test -f lambda-temp.zip
 	mv lambda-temp.zip dist/lambda.zip
 	rm -rf tmp
 
