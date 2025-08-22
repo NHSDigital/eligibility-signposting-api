@@ -590,12 +590,12 @@ def test_no_active_iteration_returns_empty_processed_suggestions(
 def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     person_with_all_data: NHSNumber,
-    campaign_config_with_tokens: CampaignConfig,
+    campaign_config_with_tokens: CampaignConfig,  # noqa:ARG001
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
-    flask_function: str,
-    logs_client: BaseClient,
+    flask_function: str,  # noqa:ARG001
+    logs_client: BaseClient,  # noqa:ARG001
 ):
     # Given
     # When

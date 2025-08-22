@@ -692,8 +692,8 @@ def test_eligibility_status_replaces_tokens_with_attribute_data(faker: Faker):
         gp_practice=None,
     )
 
-    person_attribute_token = "DOB: [[PERSON.DATE_OF_BIRTH]]"
-    target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"
+    person_attribute_token = "DOB: [[PERSON.DATE_OF_BIRTH]]"  # noqa: S105
+    target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"  # noqa: S105
     available_action = AvailableAction(
         ActionType="ButtonAuthLink",
         ExternalRoutingCode="BookNBS",
@@ -765,7 +765,7 @@ def test_eligibility_status_with_invalid_tokens_raises_attribute_error(faker: Fa
         nhs_number, date_of_birth=date_of_birth, cohorts=["cohort_1"], vaccines=[("RSV", datetime.date(2024, 1, 3))]
     )
 
-    target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE:INVALID_DATE_FORMAT(%d %B %Y)]]"
+    target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE:INVALID_DATE_FORMAT(%d %B %Y)]]"  # noqa: S105
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
             target="RSV",
@@ -797,7 +797,7 @@ def test_eligibility_status_with_invalid_person_attribute_name_raises_value_erro
         nhs_number, date_of_birth=date_of_birth, cohorts=["cohort_1"], vaccines=[("RSV", datetime.date(2024, 1, 3))]
     )
 
-    target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.ICECREAM]]"
+    target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.ICECREAM]]"  # noqa: S105
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
             target="RSV",
@@ -816,7 +816,7 @@ def test_eligibility_status_with_invalid_person_attribute_name_raises_value_erro
 
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
 

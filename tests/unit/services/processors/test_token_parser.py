@@ -5,7 +5,7 @@ from eligibility_signposting_api.services.processors.token_parser import TokenPa
 
 class TestTokenParser:
     @pytest.mark.parametrize(
-        "token, expected_level, expected_name, expected_value, expected_format",
+        ("token", "expected_level", "expected_name", "expected_value", "expected_format"),
         [
             ("[[PERSON.AGE]]", "PERSON", "AGE", None, None),
             ("[[TARGET.RSV.LAST_SUCCESSFUL_DATE]]", "TARGET", "RSV", "LAST_SUCCESSFUL_DATE", None),

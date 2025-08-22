@@ -630,7 +630,9 @@ def campaign_config_with_tokens(s3_client: BaseClient, rules_bucket: BucketName)
                             ActionType="ButtonAuthLink",
                             ExternalRoutingCode="BookNBS",
                             ActionDescription="## Token - PERSON.POSTCODE: [[PERSON.POSTCODE]].",
-                            UrlLabel="Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): [[PERSON.DATE_OF_BIRTH:DATE(%d %B %Y)]].",
+                            UrlLabel=(
+                                "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y):[[PERSON.DATE_OF_BIRTH:DATE(%d %B %Y)]]."
+                            ),
                         ),
                         "TOKEN_TEST2": AvailableAction(
                             ActionType="ButtonAuthLink",
@@ -651,13 +653,18 @@ def campaign_config_with_tokens(s3_client: BaseClient, rules_bucket: BucketName)
                         cohort_label="cohort1",
                         cohort_group="cohort_group1",
                         positive_description="Positive Description",
-                        negative_description="Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE]]",
+                        negative_description=(
+                            "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE]]"
+                        ),
                     ),
                     rule.IterationCohortFactory.build(
                         cohort_label="cohort2",
                         cohort_group="cohort_group2",
                         positive_description="Positive Description",
-                        negative_description="Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]",
+                        negative_description=(
+                            "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
+                            "[[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"
+                        ),
                     ),
                 ],
             )
