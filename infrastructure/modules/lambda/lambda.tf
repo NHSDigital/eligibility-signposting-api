@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "eligibility_signposting_lambda" {
+  #checkov:skip=CKV_AWS_116: No deadletter queue is configured for this Lambda function, as the requests are synchronous
   #checkov:skip=CKV_AWS_115: Concurrent execution limit will be set at APIM level, not at Lambda level
   #checkov:skip=CKV_AWS_272: Skipping code signing but flagged to create ticket to investigate on ELI-238
   # If the file is not in the current working directory you will need to include a
