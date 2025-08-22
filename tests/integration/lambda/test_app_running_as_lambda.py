@@ -615,11 +615,17 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     processed_suggestions = response.json()["processedSuggestions"][0]
 
     assert processed_suggestions["actions"][0]["description"] == "## Token - PERSON.POSTCODE: SW18."
-    assert processed_suggestions["actions"][0]["urlLabel"] == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
+    assert (
+        processed_suggestions["actions"][0]["urlLabel"]
+        == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
+    )
     assert processed_suggestions["actions"][1]["description"] == "## Token - PERSON.GENDER: 0."
     assert processed_suggestions["actions"][1]["urlLabel"] == "Token - PERSON.DATE_OF_BIRTH: 19900228."
     assert processed_suggestions["eligibilityCohorts"][0]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: "
-    assert processed_suggestions["eligibilityCohorts"][1]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
+    assert (
+        processed_suggestions["eligibilityCohorts"][1]["cohortText"]
+        == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
+    )
 
     # Then - check if audited
     objects = s3_client.list_objects_v2(Bucket=audit_bucket).get("Contents", [])
@@ -629,9 +635,14 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
 
     audit_condition = audit_data["response"]["condition"][0]
     assert audit_condition["actions"][0]["actionDescription"] == "## Token - PERSON.POSTCODE: SW18."
-    assert audit_condition["actions"][0]["actionUrlLabel"] == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
+    assert (
+        audit_condition["actions"][0]["actionUrlLabel"]
+        == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
+    )
     assert audit_condition["actions"][1]["actionDescription"] == "## Token - PERSON.GENDER: 0."
     assert audit_condition["actions"][1]["actionUrlLabel"] == "Token - PERSON.DATE_OF_BIRTH: 19900228."
     assert audit_condition["eligibilityCohortGroups"][0]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: "
-    assert audit_condition["eligibilityCohortGroups"][1]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
-
+    assert (
+        audit_condition["eligibilityCohortGroups"][1]["cohortText"]
+        == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
+    )
