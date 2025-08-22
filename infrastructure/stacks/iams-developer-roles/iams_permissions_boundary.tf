@@ -221,13 +221,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "ssm:GetParameters",
       "ssm:ListTagsForResource",
       "ssm:PutParameter",
-      "ssm:AddTagsToResource",
-
-      #SQS - message management
-      "sqs:SendMessage",
-      "sqs:GetQueueAttributes",
-      "sqs:listqueuetags",
-      "sqs:createqueue"
+      "ssm:AddTagsToResource"
     ]
 
     resources = ["*"]
