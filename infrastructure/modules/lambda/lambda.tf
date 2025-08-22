@@ -34,10 +34,6 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
     security_group_ids = var.security_group_ids
   }
 
-  dead_letter_config {
-    target_arn = aws_sqs_queue.lambda_dlq.arn
-  }
-
   layers = compact([
   var.environment == "prod" ? "arn:aws:lambda:${var.region}:580247275435:layer:LambdaInsightsExtension:${var.lambda_insights_extension_version}" : null
   ])

@@ -550,32 +550,6 @@ resource "aws_iam_policy" "cloudwatch_management" {
   tags = merge(local.tags, { Name = "cloudwatch-management" })
 }
 
-# SQS Management Policy for GetQueueAttributes
-resource "aws_iam_policy" "sqs_management" {
-  name        = "sqs-management"
-  description = "Policy granting permissions to get SQS queue attributes"
-  path        = "/service-policies/"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "sqs:GetQueueAttributes",
-          "sqs:listqueuetags",
-          "sqs:createqueue"
-        ],
-        Resource = [
-          "arn:aws:sqs:eu-west-2:${data.aws_caller_identity.current.account_id}:*"
-        ]
-      }
-    ]
-  })
-
-  tags = merge(local.tags, { Name = "sqs-management" })
-}
-
 # Attach the policies to the role
 resource "aws_iam_role_policy_attachment" "terraform_state" {
   role       = aws_iam_role.github_actions.name
@@ -621,9 +595,3 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_management" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.cloudwatch_management.arn
 }
-
-resource "aws_iam_role_policy_attachment" "sqs_management" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.sqs_management.arn
-}
-
