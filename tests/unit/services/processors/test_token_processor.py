@@ -263,6 +263,7 @@ class TestTokenProcessor:
             (":DATE()", ""),
             ("", "19900327"),
             (":DATE(random_value)", "random_value"),
+            (":DATE(random_value %Y)", "random_value 1990"),
             (":DATE(%d %B %Y)", "27 March 1990"),
             (":DATE(%A, %d %B %Y)", "Tuesday, 27 March 1990"),
             (":DATE(%A, {%d} %B %Y)", "Tuesday, {27} March 1990"),
