@@ -631,7 +631,7 @@ def campaign_config_with_tokens(s3_client: BaseClient, rules_bucket: BucketName)
                             ExternalRoutingCode="BookNBS",
                             ActionDescription="## Token - PERSON.POSTCODE: [[PERSON.POSTCODE]].",
                             UrlLabel=(
-                                "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y):[[PERSON.DATE_OF_BIRTH:DATE(%d %B %Y)]]."
+                                "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): [[PERSON.DATE_OF_BIRTH:DATE(%d %B %Y)]]."
                             ),
                         ),
                         "TOKEN_TEST2": AvailableAction(
