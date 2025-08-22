@@ -3,6 +3,7 @@ Bitwarden
 bot
 Cyber
 Dependabot
+dev
 Gitleaks
 Grype
 idempotence
@@ -11,12 +12,14 @@ OAuth
 Octokit
 onboarding
 Podman
+preprod
 Proxygen
 Python
 README
 Redocly
 sed
 subnet
+Splunk
 Syft
 Terraform
 toolchain
