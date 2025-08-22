@@ -58,7 +58,7 @@ resource "aws_ssm_parameter" "splunk_hec_token" {
   description = "Splunk HEC token"
   type        = "SecureString"
   key_id      = aws_kms_key.splunk_hec_kms.id # Will migrate to customer key after initial creation
-  value       = var.splunk_hec_token
+  value       = var.SPLUNK_HEC_TOKEN
   tier        = "Advanced"
 
   tags = {
@@ -78,7 +78,7 @@ resource "aws_ssm_parameter" "splunk_hec_endpoint" {
   description = "Splunk HEC endpoint"
   type        = "SecureString"
   key_id      = aws_kms_key.splunk_hec_kms.id
-  value       = var.splunk_hec_endpoint
+  value       = var.SPLUNK_HEC_ENDPOINT
   tier        = "Advanced"
 
   tags = {
