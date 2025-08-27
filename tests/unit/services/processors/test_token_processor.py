@@ -134,6 +134,22 @@ class TestTokenProcessor:
         with pytest.raises(ValueError, match=expected_error):
             TokenProcessor.find_and_replace_tokens(person, condition)
 
+    def test_valid_token_on_missing_target_attribute_and_invalid_token_should_raise_error(self):
+        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
+
+        condition = Condition(
+            condition_name=ConditionName("Condition name is [[TARGET.RSV.ICECREAM]]"),
+            status=Status.actionable,
+            status_text=StatusText("Some status"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        expected_error = re.escape("Invalid attribute name 'ICECREAM' in token '[[TARGET.RSV.ICECREAM]]'.")
+        with pytest.raises(ValueError, match=expected_error):
+            TokenProcessor.find_and_replace_tokens(person, condition)
+
     def test_missing_patient_vaccine_data_on_target_attribute_should_replace_with_empty(self):
         person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
 
