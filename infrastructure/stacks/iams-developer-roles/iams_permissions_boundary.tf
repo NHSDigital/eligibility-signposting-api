@@ -69,6 +69,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "events:ListTargetsByRule",
       "events:TagResource",
       "events:UntagResource",
+      "events:ListTagsForResource",
 
       # Kinesis Firehose - log streaming
       "firehose:CreateDeliveryStream",

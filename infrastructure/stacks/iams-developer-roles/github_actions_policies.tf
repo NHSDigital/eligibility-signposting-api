@@ -170,8 +170,10 @@ resource "aws_iam_policy" "s3_management" {
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-backup",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-backup/*"
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-access-logs/*"
         ]
       }
     ]
@@ -304,6 +306,16 @@ resource "aws_iam_policy" "api_infrastructure" {
           "acm:RequestCertificate",
           "acm:AddTagsToCertificate",
           "acm:ImportCertificate",
+
+          # eventbridge
+          "events:TagResource",
+          "events:PutRule",
+          "events:PutTargets",
+          "events:DescribeRule",
+          "events:ListTagsForResource",
+          "events:DeleteRule",
+          "events:ListTargetsByRule",
+          "events:RemoveTargets"
         ],
 
 
@@ -320,7 +332,9 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:NHSDAudit_trail_log_group*",
           "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/*",
+          "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/splunk/*",
           "arn:aws:acm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:certificate/*",
+          "arn:aws:events:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:rule/cloudwatch-alarm-state-change-to-splunk*",
         ]
       },
     ]
@@ -436,7 +450,11 @@ resource "aws_iam_policy" "iam_management" {
           # API role
           "arn:aws:iam::*:role/*eligibility-signposting-api-role",
           # Kinesis firehose role
-          "arn:aws:iam::*:role/eligibility_audit_firehose-role*"
+          "arn:aws:iam::*:role/eligibility_audit_firehose-role*",
+          # Eventbridge to firehose role
+          "arn:aws:iam::*:role/*-eventbridge-to-firehose-role*",
+          # Firehose splunk role
+          "arn:aws:iam::*:role/splunk-firehose-role"
         ]
       }
     ]
@@ -495,7 +513,10 @@ resource "aws_iam_policy" "firehose_readonly" {
           "firehose:StartDeliveryStreamEncryption",
           "firehose:StopDeliveryStreamEncryption"
         ]
-        Resource = "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/eligibility-signposting-api*"
+        Resource = [
+            "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/eligibility-signposting-api*",
+            "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/splunk-alarm-events*"
+        ]
       }
     ]
   })
