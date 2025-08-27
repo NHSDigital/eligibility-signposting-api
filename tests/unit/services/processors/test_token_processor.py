@@ -134,6 +134,45 @@ class TestTokenProcessor:
         with pytest.raises(ValueError, match=expected_error):
             TokenProcessor.find_and_replace_tokens(person, condition)
 
+    def test_missing_patient_vaccine_data_on_target_attribute_should_replace_with_empty(self):
+        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"}])
+
+        condition = Condition(
+            condition_name=ConditionName("Last successful date: [[TARGET.RSV.LAST_SUCCESSFUL_DATE]]"),
+            status=Status.actionable,
+            status_text=StatusText("Some status"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        actual = TokenProcessor.find_and_replace_tokens(person, condition)
+
+        assert actual.condition_name == "Last successful date: "
+
+    def test_non_rsv_target_token_should_raise_error(self):
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
+                {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("Last successful date: [[TARGET.COVID.LAST_SUCCESSFUL_DATE]]"),
+            status=Status.actionable,
+            status_text=StatusText("Some status"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        expected_error = re.escape(
+            "Invalid attribute name 'LAST_SUCCESSFUL_DATE' in token '[[TARGET.COVID.LAST_SUCCESSFUL_DATE]]'."
+        )
+        with pytest.raises(ValueError, match=expected_error):
+            TokenProcessor.find_and_replace_tokens(person, condition)
+
     def test_valid_token_but_missing_attribute_data_to_replace(self):
         person = Person(
             [
@@ -169,13 +208,18 @@ class TestTokenProcessor:
         assert actual.condition_name == expected.condition_name
 
     def test_simple_string_with_multiple_tokens(self):
-        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DEGREE": "DOCTOR", "QUALITY": "NICE"}])
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DEGREE": "DOCTOR", "QUALITY": "NICE"},
+                # {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"}
+            ]
+        )
 
         condition = Condition(
             condition_name=ConditionName("RSV"),
             status=Status.actionable,
             status_text=StatusText(
-                "You are a [[PERSON.QUALITY]] [[person.QUALITY]] [[PERSON.DEGREE]] and your age is [[PERSON.AGE]]."
+                "You are a [[PERSON.QUALITY]] [[person.QUALITY]] [[TARGET.RSV.LAST_SUCCESSFUL_DATE]] and your age is [[PERSON.AGE]]."
             ),
             cohort_results=[],
             suitability_rules=[],
@@ -185,7 +229,7 @@ class TestTokenProcessor:
         expected = Condition(
             condition_name=ConditionName("RSV"),
             status=Status.actionable,
-            status_text=StatusText("You are a NICE NICE DOCTOR and your age is 30."),
+            status_text=StatusText("You are a NICE NICE  and your age is 30."),
             cohort_results=[],
             suitability_rules=[],
             actions=[],

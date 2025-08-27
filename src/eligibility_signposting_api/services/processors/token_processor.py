@@ -69,7 +69,7 @@ class TokenProcessor:
 
         for token in all_tokens:
             parsed_token = TokenParser.parse(token)
-            found_attribute, key_to_replace = None, None
+            found_attribute, key_to_replace, replace_with = None, None, None
 
             attribute_level_map = {
                 "TARGET": parsed_token.attribute_value,
@@ -78,27 +78,33 @@ class TokenProcessor:
 
             key_to_find = attribute_level_map.get(parsed_token.attribute_level)
 
+            present_attributes = []
             for attribute in person.data:
-                is_target_attribute = attribute.get("ATTRIBUTE_TYPE") == parsed_token.attribute_name.upper()
-                is_person_attribute = attribute.get("ATTRIBUTE_TYPE") == "PERSON"
-                is_target_rsv = parsed_token.attribute_name.upper() == "RSV"
+                present_attributes.append(attribute.get("ATTRIBUTE_TYPE"))
 
-                valid_person_attribute = is_person_attribute and key_to_find in attribute
-                valid_target_attribute = (
-                    is_target_attribute and is_target_rsv and key_to_find in allowed_target_attributes
-                )
+            if (
+                parsed_token.attribute_level == "TARGET"
+                and parsed_token.attribute_name == "RSV"
+                and parsed_token.attribute_value in allowed_target_attributes
+                and parsed_token.attribute_name not in present_attributes
+            ):
+                replace_with = ""
 
-                if valid_target_attribute or valid_person_attribute:
-                    found_attribute = attribute
-                    key_to_replace = key_to_find
-                    break
+            if replace_with != "":
+                for attribute in person.data:
+                    is_person_attribute = attribute.get("ATTRIBUTE_TYPE") == "PERSON"
+                    is_target_rsv = parsed_token.attribute_name.upper() == "RSV"
 
-            if not found_attribute or key_to_replace is None:
-                TokenProcessor.handle_token_not_found(parsed_token, token)
+                    if (is_target_rsv or is_person_attribute) and key_to_find in attribute:
+                        found_attribute = attribute
+                        key_to_replace = key_to_find
+                        break
 
-            replace_with = TokenProcessor.apply_formatting(found_attribute, key_to_replace, parsed_token.format)
+                if not found_attribute or key_to_replace is None:
+                    TokenProcessor.handle_token_not_found(parsed_token, token)
+
+                replace_with = TokenProcessor.apply_formatting(found_attribute, key_to_replace, parsed_token.format)
             text = text.replace(token, str(replace_with))
-
         return text
 
     @staticmethod
