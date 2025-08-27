@@ -131,6 +131,9 @@ jobs:
           TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
           TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
           TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+          TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
+          TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
+
         working-directory: ./infrastructure
         shell: bash
         run: |
