@@ -54,7 +54,7 @@ class TokenProcessor:
 
         pattern = r"\[\[.*?\]\]"
         all_tokens = re.findall(pattern, text, re.IGNORECASE)
-        allowed_target_attributes = [
+        allowed_target_attributes = {
             "NHS_NUMBER",
             "ATTRIBUTE_TYPE",
             "VALID_DOSES_COUNT",
@@ -65,7 +65,7 @@ class TokenProcessor:
             "BOOKED_APPOINTMENT_PROVIDER",
             "LAST_INVITE_DATE",
             "LAST_INVITE_STATUS",
-        ]
+        }
 
         for token in all_tokens:
             parsed_token = TokenParser.parse(token)
@@ -78,9 +78,7 @@ class TokenProcessor:
 
             key_to_find = attribute_level_map.get(parsed_token.attribute_level)
 
-            present_attributes = []
-            for attribute in person.data:
-                present_attributes.append(attribute.get("ATTRIBUTE_TYPE"))
+            present_attributes = [attribute.get("ATTRIBUTE_TYPE") for attribute in person.data]
 
             if (
                 parsed_token.attribute_level == "TARGET"

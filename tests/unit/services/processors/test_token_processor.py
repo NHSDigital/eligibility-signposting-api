@@ -211,7 +211,6 @@ class TestTokenProcessor:
         person = Person(
             [
                 {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DEGREE": "DOCTOR", "QUALITY": "NICE"},
-                # {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"}
             ]
         )
 
@@ -219,7 +218,8 @@ class TestTokenProcessor:
             condition_name=ConditionName("RSV"),
             status=Status.actionable,
             status_text=StatusText(
-                "You are a [[PERSON.QUALITY]] [[person.QUALITY]] [[TARGET.RSV.LAST_SUCCESSFUL_DATE]] and your age is [[PERSON.AGE]]."
+                "You are a [[PERSON.QUALITY]] [[person.QUALITY]] "
+                "[[TARGET.RSV.LAST_SUCCESSFUL_DATE]] and your age is [[PERSON.AGE]]."
             ),
             cohort_results=[],
             suitability_rules=[],
