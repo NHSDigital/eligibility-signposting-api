@@ -30,7 +30,7 @@ class TokenProcessor:
         return data_class
 
     @staticmethod
-    def process_dict(class_field: Field, data_class: T, person: Person, value: dict[Any, Any]) -> None:
+    def process_dict(class_field: Field, data_class: object, person: Person, value: dict[Any, Any]) -> None:
         for key, dict_value in value.items():
             if isinstance(dict_value, str):
                 value[key] = TokenProcessor.replace_token(dict_value, person)
@@ -39,7 +39,7 @@ class TokenProcessor:
         setattr(data_class, class_field.name, value)
 
     @staticmethod
-    def process_list(class_field: Field, data_class: T, person: Person, value: list[Any]) -> None:
+    def process_list(class_field: Field, data_class: object, person: Person, value: list[Any]) -> None:
         for i, item in enumerate(value):
             if is_dataclass(item):
                 value[i] = TokenProcessor.find_and_replace_tokens(person, item)
@@ -93,7 +93,7 @@ class TokenProcessor:
                     key_to_replace = key_to_find
                     break
 
-            if not found_attribute:
+            if not found_attribute or key_to_replace is None:
                 TokenProcessor.handle_token_not_found(parsed_token, token)
 
             replace_with = TokenProcessor.apply_formatting(found_attribute, key_to_replace, parsed_token.format)
@@ -122,6 +122,6 @@ class TokenProcessor:
             else:
                 replace_with = attribute_data if attribute_data else ""
             return str(replace_with)
-        except (AttributeError, ValueError) as error:
+        except AttributeError as error:
             message = "Invalid token format"
             raise AttributeError(message) from error
