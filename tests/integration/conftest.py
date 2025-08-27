@@ -679,6 +679,48 @@ def campaign_config_with_tokens(s3_client: BaseClient, rules_bucket: BucketName)
 
 
 @pytest.fixture(scope="class")
+def campaign_config_with_invalid_tokens(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="RSV",
+        iterations=[
+            rule.IterationFactory.build(
+                actions_mapper=rule.ActionsMapperFactory.build(
+                    root={
+                        "TOKEN_TEST": AvailableAction(
+                            ActionType="ButtonAuthLink",
+                            ExternalRoutingCode="BookNBS",
+                            ActionDescription="## Token - PERSON.ICECREAM: [[PERSON.ICECREAM]].",
+                            UrlLabel=(
+                                "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): [[PERSON.DATE_OF_BIRTH:DATE(%d %B %Y)]]."
+                            ),
+                        )
+                    }
+                ),
+                iteration_rules=[
+                    rule.ICBNonEligibleActionRuleFactory.build(comms_routing="TOKEN_TEST"),
+                ],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort1",
+                        cohort_group="cohort_group1",
+                        positive_description="Positive Description",
+                        negative_description=(
+                            "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE]]"
+                        ),
+                    )
+                ],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture(scope="class")
 def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
     campaigns, campaign_data_keys = [], []

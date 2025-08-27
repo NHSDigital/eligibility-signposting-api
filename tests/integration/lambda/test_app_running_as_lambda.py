@@ -597,8 +597,6 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     flask_function: str,  # noqa:ARG001
     logs_client: BaseClient,  # noqa:ARG001
 ):
-    # Given
-    # When
     invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
     response = httpx.get(
         invoke_url,
@@ -606,43 +604,90 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
         timeout=10,
     )
 
-    # Then
     assert_that(
         response,
         is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
     )
 
     processed_suggestions = response.json()["processedSuggestions"][0]
+    response_actions = processed_suggestions["actions"]
+    response_eligibility_cohorts = processed_suggestions["eligibilityCohorts"]
 
-    assert processed_suggestions["actions"][0]["description"] == "## Token - PERSON.POSTCODE: SW18."
-    assert (
-        processed_suggestions["actions"][0]["urlLabel"]
-        == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
-    )
-    assert processed_suggestions["actions"][1]["description"] == "## Token - PERSON.GENDER: 0."
-    assert processed_suggestions["actions"][1]["urlLabel"] == "Token - PERSON.DATE_OF_BIRTH: 19900228."
-    assert processed_suggestions["eligibilityCohorts"][0]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: "
-    assert (
-        processed_suggestions["eligibilityCohorts"][1]["cohortText"]
-        == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
-    )
+    assert response_actions[0]["description"] == "## Token - PERSON.POSTCODE: SW18."
+    assert response_actions[0]["urlLabel"] == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
+    assert response_actions[1]["description"] == "## Token - PERSON.GENDER: 0."
+    assert response_actions[1]["urlLabel"] == "Token - PERSON.DATE_OF_BIRTH: 19900228."
+    assert response_eligibility_cohorts[0]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: "
+    assert response_eligibility_cohorts[1]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
 
-    # Then - check if audited
     objects = s3_client.list_objects_v2(Bucket=audit_bucket).get("Contents", [])
     object_keys = [obj["Key"] for obj in objects]
     latest_key = sorted(object_keys)[-1]
     audit_data = json.loads(s3_client.get_object(Bucket=audit_bucket, Key=latest_key)["Body"].read())
 
     audit_condition = audit_data["response"]["condition"][0]
-    assert audit_condition["actions"][0]["actionDescription"] == "## Token - PERSON.POSTCODE: SW18."
-    assert (
-        audit_condition["actions"][0]["actionUrlLabel"]
-        == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
+    audit_actions = audit_condition["actions"]
+    audit_eligibility_cohorts = audit_condition["eligibilityCohortGroups"]
+
+    assert audit_actions[0]["actionDescription"] == "## Token - PERSON.POSTCODE: SW18."
+    assert audit_actions[0]["actionUrlLabel"] == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
+    assert audit_actions[1]["actionDescription"] == "## Token - PERSON.GENDER: 0."
+    assert audit_actions[1]["actionUrlLabel"] == "Token - PERSON.DATE_OF_BIRTH: 19900228."
+    assert audit_eligibility_cohorts[0]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: "
+    assert audit_eligibility_cohorts[1]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
+
+
+def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
+    lambda_client: BaseClient,  # noqa:ARG001
+    person_with_all_data: NHSNumber,
+    campaign_config_with_invalid_tokens: CampaignConfig,  # noqa:ARG001
+    s3_client: BaseClient,
+    audit_bucket: BucketName,
+    api_gateway_endpoint: URL,
+    flask_function: str,
+    logs_client: BaseClient,
+):
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
+    response = httpx.get(
+        invoke_url,
+        headers={"nhs-login-nhs-number": str(person_with_all_data)},
+        timeout=10,
     )
-    assert audit_condition["actions"][1]["actionDescription"] == "## Token - PERSON.GENDER: 0."
-    assert audit_condition["actions"][1]["actionUrlLabel"] == "Token - PERSON.DATE_OF_BIRTH: 19900228."
-    assert audit_condition["eligibilityCohortGroups"][0]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: "
-    assert (
-        audit_condition["eligibilityCohortGroups"][1]["cohortText"]
-        == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
+
+    assert_that(
+        response,
+        is_response()
+        .with_status_code(HTTPStatus.INTERNAL_SERVER_ERROR)
+        .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
+        .and_body(
+            is_json_that(
+                has_entries(
+                    resourceType="OperationOutcome",
+                    issue=contains_exactly(
+                        has_entries(
+                            severity="error",
+                            code="processing",
+                            diagnostics="An unexpected error occurred.",
+                            details={
+                                "coding": [
+                                    {
+                                        "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                        "code": "INTERNAL_SERVER_ERROR",
+                                        "display": "An unexpected internal server error occurred.",
+                                    }
+                                ]
+                            },
+                        )
+                    ),
+                )
+            ),
+        ),
+    )
+
+    objects = s3_client.list_objects_v2(Bucket=audit_bucket).get("Contents", [])
+    assert len(objects) == 0  # Check there are no audit logs
+
+    assert_that(
+        get_log_messages(flask_function, logs_client),
+        has_item(contains_string("Invalid attribute name 'ICECREAM' in token '[[PERSON.ICECREAM]]'.")),
     )
