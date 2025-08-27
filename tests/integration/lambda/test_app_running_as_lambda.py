@@ -81,7 +81,7 @@ def test_install_and_call_lambda_flask(
         has_entries(statusCode=HTTPStatus.OK, body=is_json_that(has_key("processedSuggestions"))),
     )
 
-    assert_that(log_output, contains_string("person_data"))
+    assert_that(log_output, contains_string(f"checking nhs_number"))
 
 
 def test_install_and_call_flask_lambda_over_http(
