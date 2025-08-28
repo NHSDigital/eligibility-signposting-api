@@ -1,0 +1,31 @@
+name: Sonar static analysis (main)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sonar-main-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sonar_main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run static analysis script
+        env:
+          BRANCH_NAME: main
+          SONAR_ORGANISATION_KEY: ${{ secrets.SONAR_ORGANISATION_KEY }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          FORCE_USE_DOCKER: "true"
+        run: ./scripts/reports/perform-static-analysis.sh
