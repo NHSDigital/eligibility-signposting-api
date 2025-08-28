@@ -489,7 +489,6 @@ data "aws_iam_policy_document" "external_s3_read_move_policy_doc" {
       "s3:GetObjectVersion",
       "s3:GetObjectTagging",
       "s3:PutObjectTagging",
-      "s3:DeleteObject",
       "s3:PutObject"
     ]
     resources = [
