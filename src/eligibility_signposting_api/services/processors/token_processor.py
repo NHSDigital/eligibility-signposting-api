@@ -11,6 +11,11 @@ from eligibility_signposting_api.services.processors.token_parser import ParsedT
 T = TypeVar("T")
 
 
+TARGET_ATTRIBUTE_LEVEL = "TARGET"
+PERSON_ATTRIBUTE_LEVEL = "PERSON"
+ALLOWED_CONDITION = "RSV"
+
+
 @service
 class TokenProcessor:
     @staticmethod
@@ -66,23 +71,22 @@ class TokenProcessor:
             "LAST_INVITE_DATE",
             "LAST_INVITE_STATUS",
         }
+        present_attributes = [attribute.get("ATTRIBUTE_TYPE") for attribute in person.data]
 
         for token in all_tokens:
             parsed_token = TokenParser.parse(token)
             found_attribute, key_to_replace, replace_with = None, None, None
 
             attribute_level_map = {
-                "TARGET": parsed_token.attribute_value,
-                "PERSON": parsed_token.attribute_name,
+                TARGET_ATTRIBUTE_LEVEL: parsed_token.attribute_value,
+                PERSON_ATTRIBUTE_LEVEL: parsed_token.attribute_name,
             }
 
             key_to_find = attribute_level_map.get(parsed_token.attribute_level)
 
-            present_attributes = [attribute.get("ATTRIBUTE_TYPE") for attribute in person.data]
-
             if (
-                parsed_token.attribute_level == "TARGET"
-                and parsed_token.attribute_name == "RSV"
+                parsed_token.attribute_level == TARGET_ATTRIBUTE_LEVEL
+                and parsed_token.attribute_name == ALLOWED_CONDITION
                 and parsed_token.attribute_value in allowed_target_attributes
                 and parsed_token.attribute_name not in present_attributes
             ):
@@ -90,8 +94,8 @@ class TokenProcessor:
 
             if replace_with != "":
                 for attribute in person.data:
-                    is_person_attribute = attribute.get("ATTRIBUTE_TYPE") == "PERSON"
-                    is_target_rsv = parsed_token.attribute_name.upper() == "RSV"
+                    is_person_attribute = attribute.get("ATTRIBUTE_TYPE") == PERSON_ATTRIBUTE_LEVEL
+                    is_target_rsv = parsed_token.attribute_name.upper() == ALLOWED_CONDITION
 
                     if (is_target_rsv or is_person_attribute) and key_to_find in attribute:
                         found_attribute = attribute
@@ -107,10 +111,10 @@ class TokenProcessor:
 
     @staticmethod
     def handle_token_not_found(parsed_token: ParsedToken, token: str) -> Never:
-        if parsed_token.attribute_level == "TARGET":
+        if parsed_token.attribute_level == TARGET_ATTRIBUTE_LEVEL:
             message = f"Invalid attribute name '{parsed_token.attribute_value}' in token '{token}'."
             raise ValueError(message)
-        if parsed_token.attribute_level == "PERSON":
+        if parsed_token.attribute_level == PERSON_ATTRIBUTE_LEVEL:
             message = f"Invalid attribute name '{parsed_token.attribute_name}' in token '{token}'."
             raise ValueError(message)
         message = f"Invalid attribute level '{parsed_token.attribute_level}' in token '{token}'."
