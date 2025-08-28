@@ -20,6 +20,7 @@ from eligibility_signposting_api.audit.audit_models import (
 from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.model.eligibility_status import (
     BestIterationResult,
+    CohortGroupResult,
     ConditionName,
     IterationResult,
     MatchedActionDetail,
@@ -83,12 +84,7 @@ class AuditContext:
                     )
                 )
 
-            for result in best_cohort_results.values():
-                for rule in result.audit_rules:
-                    if rule.rule_type == RuleType.filter:
-                        filter_audit_rules.append(rule)
-                    if rule.rule_type == RuleType.suppression:
-                        suitability_audit_rules.append(rule)
+                AuditContext.get_audit_rules(filter_audit_rules, suitability_audit_rules, result)
 
         audit_filter_rule = AuditContext.create_audit_filter_rule(filter_audit_rules)
         audit_suitability_rule = AuditContext.create_audit_suitability_rule(suitability_audit_rules)
@@ -113,6 +109,14 @@ class AuditContext:
         )
 
         g.audit_log.response.condition.append(audit_condition)
+
+    @staticmethod
+    def get_audit_rules(filter_audit_rules: list, suitability_audit_rules: list, result: CohortGroupResult) -> None:
+        for rule in result.audit_rules:
+            if rule.rule_type == RuleType.filter:
+                filter_audit_rules.append(rule)
+            if rule.rule_type == RuleType.suppression:
+                suitability_audit_rules.append(rule)
 
     @staticmethod
     def add_rule_name_and_priority_to_audit(
