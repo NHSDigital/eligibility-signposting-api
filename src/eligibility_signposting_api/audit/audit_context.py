@@ -20,7 +20,6 @@ from eligibility_signposting_api.audit.audit_models import (
 from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.model.eligibility_status import (
     BestIterationResult,
-    CohortGroupResult,
     ConditionName,
     IterationResult,
     MatchedActionDetail,
@@ -64,12 +63,12 @@ class AuditContext:
         condition_name: ConditionName,
         best_iteration_result: BestIterationResult,
         action_detail: MatchedActionDetail,
-        cohort_results: list[CohortGroupResult],
     ) -> None:
         audit_eligibility_cohorts, audit_eligibility_cohort_groups, audit_actions = [], [], []
         best_active_iteration = best_iteration_result.active_iteration
         best_candidate = best_iteration_result.iteration_result
         best_cohort_results = best_iteration_result.cohort_results
+        filter_audit_rules, suitability_audit_rules = [], []
 
         if best_cohort_results:
             for cohort_label, result in sorted(best_cohort_results.items(), key=lambda item: item[1].cohort_code):
@@ -84,13 +83,12 @@ class AuditContext:
                     )
                 )
 
-        filter_audit_rules, suitability_audit_rules = [], []
-        for result in cohort_results:
-            for rule in result.audit_rules:
-                if rule.rule_type == RuleType.filter:
-                    filter_audit_rules.append(rule)
-                if rule.rule_type == RuleType.suppression:
-                    suitability_audit_rules.append(rule)
+            for result in best_cohort_results.values():
+                for rule in result.audit_rules:
+                    if rule.rule_type == RuleType.filter:
+                        filter_audit_rules.append(rule)
+                    if rule.rule_type == RuleType.suppression:
+                        suitability_audit_rules.append(rule)
 
         audit_filter_rule = AuditContext.create_audit_filter_rule(filter_audit_rules)
         audit_suitability_rule = AuditContext.create_audit_suitability_rule(suitability_audit_rules)

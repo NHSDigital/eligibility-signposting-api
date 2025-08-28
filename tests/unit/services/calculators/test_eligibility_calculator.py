@@ -756,6 +756,116 @@ def test_eligibility_status_replaces_tokens_with_attribute_data(faker: Faker):
     assert audit_condition.actions[0].action_url_label == "Your GP practice code is ."
 
 
+def test_regardless_of_final_status_audit_all_types_of_cohort_status_rules(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=85, maximum_age=85))
+
+    person_rows = person_rows_builder(
+        nhs_number,
+        date_of_birth=date_of_birth,
+        cohorts=[
+            "rsv_eli_376_cohort_1",
+            "rsv_eli_376_cohort_2",
+            "rsv_eli_376_cohort_3",
+            "rsv_eli_376_cohort_4",
+            "rsv_eli_376_cohort_5",
+        ],
+        icb="ABC",
+    )
+
+    available_action = AvailableAction(
+        ActionType="ButtonAuthLink",
+        ExternalRoutingCode="BookNBS",
+        ActionDescription="## Get vaccinated at your GP surgery in [[PERSON.ICB]].",
+        UrlLink=HttpUrl("https://www.nhs.uk/book-rsv"),
+        UrlLabel="Your GP practice code is [[PERSON.GP_PRACTICE]].",
+    )
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    default_not_actionable_routing="TOKEN_TEST",
+                    default_not_eligible_routing="TOKEN_TEST",
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="rsv_eli_376_cohort_1", cohort_group="rsv_eli_376_cohort_group", priority=0
+                        ),
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="rsv_eli_376_cohort_2", cohort_group="rsv_eli_376_cohort_group", priority=1
+                        ),
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="rsv_eli_376_cohort_3", cohort_group="rsv_eli_376_cohort_group", priority=2
+                        ),
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="rsv_eli_376_cohort_4",
+                            cohort_group="rsv_eli_376_cohort_group_other",
+                            priority=3,
+                        ),
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="rsv_eli_376_cohort_5",
+                            cohort_group="rsv_eli_376_cohort_group_another",
+                            priority=4,
+                        ),
+                    ],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            type=RuleType.filter,
+                            name=RuleName("NotEligible Reason 1"),
+                            description=RuleDescription("NotEligible Description 1"),
+                            priority=RulePriority("100"),
+                            operator=RuleOperator.year_lte,
+                            attribute_level=RuleAttributeLevel.PERSON,
+                            attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                            comparator=RuleComparator("-80"),
+                            cohort_label=CohortLabel("rsv_eli_376_cohort_1"),
+                        ),
+                        rule_builder.ICBRedirectRuleFactory.build(
+                            operator=RuleOperator.ne, comparator=RuleComparator("ABC")
+                        ),
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            type=RuleType.suppression,
+                            name=RuleName("NotActionable Reason 1"),
+                            description=RuleDescription("NotActionable Description 1"),
+                            priority=RulePriority("110"),
+                            operator=RuleOperator.year_lte,
+                            attribute_level=RuleAttributeLevel.PERSON,
+                            attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                            comparator=RuleComparator("-80"),
+                            cohort_label=CohortLabel("rsv_eli_376_cohort_5"),
+                        ),
+                    ],
+                    actions_mapper=rule_builder.ActionsMapperFactory.build(root={"TOKEN_TEST": available_action}),
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.actionable))
+        ),
+    )
+
+    assert len(g.audit_log.response.condition[0].filter_rules) == 1
+    assert g.audit_log.response.condition[0].filter_rules[0].rule_name == "NotEligible Reason 1"
+    assert g.audit_log.response.condition[0].filter_rules[0].rule_priority == "100"
+    assert len(g.audit_log.response.condition[0].suitability_rules) == 1
+    assert g.audit_log.response.condition[0].suitability_rules[0].rule_name == "NotActionable Reason 1"
+    assert g.audit_log.response.condition[0].suitability_rules[0].rule_message == "NotActionable Description 1"
+    assert g.audit_log.response.condition[0].suitability_rules[0].rule_priority == "110"
+
+
 def test_eligibility_status_with_invalid_tokens_raises_attribute_error(faker: Faker):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())

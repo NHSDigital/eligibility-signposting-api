@@ -117,7 +117,6 @@ class EligibilityCalculator:
                 condition_name,
                 best_iteration_result,
                 matched_action_detail,
-                condition_results[condition_name].cohort_results,
             )
 
         # Consolidate all the results and return

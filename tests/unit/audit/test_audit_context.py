@@ -150,9 +150,7 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g_for_actionable_
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(
-            condition_name, best_iteration_results, matched_action_detail, [cohort_group_result]
-        )
+        AuditContext.append_audit_condition(condition_name, best_iteration_results, matched_action_detail)
 
         expected_audit_action = [
             AuditAction(
@@ -226,9 +224,7 @@ def test_should_append_audit_suppression_rules_for_actionable_status(app):
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(
-            condition_name, best_iteration_results, MatchedActionDetail(), [cohort_group_result]
-        )
+        AuditContext.append_audit_condition(condition_name, best_iteration_results, MatchedActionDetail())
 
         assert g.audit_log.response.condition, condition_name
         cond = g.audit_log.response.condition[0]
@@ -283,9 +279,7 @@ def test_should_append_audit_filter_rules_for_not_actionable_status(app):
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(
-            condition_name, best_iteration_results, MatchedActionDetail(), [cohort_group_result]
-        )
+        AuditContext.append_audit_condition(condition_name, best_iteration_results, MatchedActionDetail())
 
         assert g.audit_log.response.condition, condition_name
         cond = g.audit_log.response.condition[0]
