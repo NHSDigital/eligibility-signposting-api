@@ -166,16 +166,16 @@ class TestTokenProcessor:
 
         assert actual.condition_name == "Last successful date: "
 
-    def test_non_rsv_target_token_should_raise_error(self):
+    def test_not_allowed_target_conditions_token_should_raise_error(self):
         person = Person(
             [
                 {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
-                {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
+                {"ATTRIBUTE_TYPE": "YELLOW_FEVER", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
             ]
         )
 
         condition = Condition(
-            condition_name=ConditionName("Last successful date: [[TARGET.COVID.LAST_SUCCESSFUL_DATE]]"),
+            condition_name=ConditionName("Last successful date: [[TARGET.YELLOW_FEVER.LAST_SUCCESSFUL_DATE]]"),
             status=Status.actionable,
             status_text=StatusText("Some status"),
             cohort_results=[],
@@ -184,7 +184,7 @@ class TestTokenProcessor:
         )
 
         expected_error = re.escape(
-            "Invalid attribute name 'LAST_SUCCESSFUL_DATE' in token '[[TARGET.COVID.LAST_SUCCESSFUL_DATE]]'."
+            "Invalid attribute name 'LAST_SUCCESSFUL_DATE' in token '[[TARGET.YELLOW_FEVER.LAST_SUCCESSFUL_DATE]]'."
         )
         with pytest.raises(ValueError, match=expected_error):
             TokenProcessor.find_and_replace_tokens(person, condition)
@@ -266,7 +266,7 @@ class TestTokenProcessor:
 
         condition = Condition(
             condition_name=ConditionName(
-                "You had your RSV vaccine on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"
+                "You had your COVID vaccine on [[TARGET.COVID.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]"
             ),
             status=Status.actionable,
             status_text=StatusText("Your birthday is on [[PERSON.DATE_OF_BIRTH:DATE(%-d %B %Y)]]"),
@@ -276,7 +276,7 @@ class TestTokenProcessor:
         )
 
         expected = Condition(
-            condition_name=ConditionName("You had your RSV vaccine on 01 January 2025"),
+            condition_name=ConditionName("You had your COVID vaccine on 01 January 2025"),
             status=Status.actionable,
             status_text=StatusText("Your birthday is on 27 March 1990"),
             cohort_results=[],
@@ -334,12 +334,12 @@ class TestTokenProcessor:
     def test_valid_date_format(self, token_format: str, expected: str):
         person = Person(
             [
-                {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "19900327"},
+                {"ATTRIBUTE_TYPE": "MMR", "CONDITION_NAME": "MMR", "LAST_SUCCESSFUL_DATE": "19900327"},
             ]
         )
 
         condition = Condition(
-            condition_name=ConditionName(f"Date: [[TARGET.RSV.LAST_SUCCESSFUL_DATE{token_format}]]"),
+            condition_name=ConditionName(f"Date: [[TARGET.MMR.LAST_SUCCESSFUL_DATE{token_format}]]"),
             status=Status.actionable,
             status_text=StatusText("Some text"),
             cohort_results=[],
@@ -358,22 +358,22 @@ class TestTokenProcessor:
             ("[[PERSON.date_of_birth:DATE(%d %B %Y)]]", "27 March 1990"),
             ("[[PERSON.DATE_OF_BIRTH:date(%d %B %Y)]]", "27 March 1990"),
             ("[[pErSoN.DATE_OF_BIRTH:DATE(%d %B %Y)]]", "27 March 1990"),
-            ("[[target.RSV.LAST_SUCCESSFUL_DATE:DATE(%-d %B %Y)]]", "1 January 2025"),
-            ("[[TARGET.rsv.LAST_SUCCESSFUL_DATE:DATE(%-d %B %Y)]]", "1 January 2025"),
-            ("[[TARGET.RSV.last_successful_date:DATE(%-d %B %Y)]]", "1 January 2025"),
-            ("[[TARGET.RSV.last_successful_date:date(%-d %B %Y)]]", "1 January 2025"),
+            ("[[target.FLU.LAST_SUCCESSFUL_DATE:DATE(%-d %B %Y)]]", "1 January 2025"),
+            ("[[TARGET.FLU.LAST_SUCCESSFUL_DATE:DATE(%-d %B %Y)]]", "1 January 2025"),
+            ("[[TARGET.FLU.last_successful_date:DATE(%-d %B %Y)]]", "1 January 2025"),
+            ("[[TARGET.FLU.last_successful_date:date(%-d %B %Y)]]", "1 January 2025"),
         ],
     )
     def test_token_replace_is_case_insensitive(self, token: str, expected: str):
         person = Person(
             [
                 {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DATE_OF_BIRTH": "19900327"},
-                {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": "20250101"},
+                {"ATTRIBUTE_TYPE": "FLU", "CONDITION_NAME": "FLU", "LAST_SUCCESSFUL_DATE": "20250101"},
             ]
         )
 
         condition = Condition(
-            condition_name=ConditionName(f"RSV vaccine on: {token}."),
+            condition_name=ConditionName(f"FLU vaccine on: {token}."),
             status=Status.actionable,
             status_text=StatusText(f"Your DOB is: {token}."),
             cohort_results=[],
@@ -384,4 +384,4 @@ class TestTokenProcessor:
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
         assert result.status_text == f"Your DOB is: {expected}."
-        assert result.condition_name == f"RSV vaccine on: {expected}."
+        assert result.condition_name == f"FLU vaccine on: {expected}."

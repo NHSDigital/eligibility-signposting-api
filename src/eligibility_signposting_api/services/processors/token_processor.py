@@ -5,6 +5,7 @@ from typing import Any, Never, TypeVar
 
 from wireup import service
 
+from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.token_parser import ParsedToken, TokenParser
 
@@ -13,7 +14,17 @@ T = TypeVar("T")
 
 TARGET_ATTRIBUTE_LEVEL = "TARGET"
 PERSON_ATTRIBUTE_LEVEL = "PERSON"
-ALLOWED_CONDITION = "RSV"
+ALLOWED_TARGET_ATTRIBUTES = {
+    "ATTRIBUTE_TYPE",
+    "VALID_DOSES_COUNT",
+    "INVALID_DOSES_COUNT",
+    "LAST_SUCCESSFUL_DATE",
+    "LAST_VALID_DOSE_DATE",
+    "BOOKED_APPOINTMENT_DATE",
+    "BOOKED_APPOINTMENT_PROVIDER",
+    "LAST_INVITE_DATE",
+    "LAST_INVITE_STATUS",
+}
 
 
 @service
@@ -59,18 +70,6 @@ class TokenProcessor:
 
         pattern = r"\[\[.*?\]\]"
         all_tokens = re.findall(pattern, text, re.IGNORECASE)
-        allowed_target_attributes = {
-            "NHS_NUMBER",
-            "ATTRIBUTE_TYPE",
-            "VALID_DOSES_COUNT",
-            "INVALID_DOSES_COUNT",
-            "LAST_SUCCESSFUL_DATE",
-            "LAST_VALID_DOSE_DATE",
-            "BOOKED_APPOINTMENT_DATE",
-            "BOOKED_APPOINTMENT_PROVIDER",
-            "LAST_INVITE_DATE",
-            "LAST_INVITE_STATUS",
-        }
         present_attributes = [attribute.get("ATTRIBUTE_TYPE") for attribute in person.data]
 
         for token in all_tokens:
@@ -86,8 +85,8 @@ class TokenProcessor:
 
             if (
                 parsed_token.attribute_level == TARGET_ATTRIBUTE_LEVEL
-                and parsed_token.attribute_name == ALLOWED_CONDITION
-                and parsed_token.attribute_value in allowed_target_attributes
+                and parsed_token.attribute_name in ALLOWED_CONDITIONS.__args__
+                and parsed_token.attribute_value in ALLOWED_TARGET_ATTRIBUTES
                 and parsed_token.attribute_name not in present_attributes
             ):
                 replace_with = ""
@@ -95,9 +94,9 @@ class TokenProcessor:
             if replace_with != "":
                 for attribute in person.data:
                     is_person_attribute = attribute.get("ATTRIBUTE_TYPE") == PERSON_ATTRIBUTE_LEVEL
-                    is_target_rsv = parsed_token.attribute_name.upper() == ALLOWED_CONDITION
+                    is_allowed_target = parsed_token.attribute_name.upper() in ALLOWED_CONDITIONS.__args__
 
-                    if (is_target_rsv or is_person_attribute) and key_to_find in attribute:
+                    if (is_allowed_target or is_person_attribute) and key_to_find in attribute:
                         found_attribute = attribute
                         key_to_replace = key_to_find
                         break

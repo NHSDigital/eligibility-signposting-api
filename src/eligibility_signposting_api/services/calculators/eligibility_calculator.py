@@ -4,7 +4,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
 from itertools import chain
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 from wireup import service
 
@@ -37,7 +37,6 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
-T = TypeVar("T")
 
 
 @service
