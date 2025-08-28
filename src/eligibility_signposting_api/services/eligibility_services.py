@@ -42,15 +42,6 @@ class EligibilityService:
             try:
                 person_data = self.person_repo.get_eligibility_data(nhs_number)
                 campaign_configs = list(self.campaign_repo.get_campaign_configs())
-                logger.debug(
-                    "got person_data for %r",
-                    nhs_number,
-                    extra={
-                        "campaign_configs": [c.model_dump(by_alias=True) for c in campaign_configs],
-                        "person_data": person_data,
-                        "nhs_number": nhs_number,
-                    },
-                )
             except NotFoundError as e:
                 raise UnknownPersonError from e
             else:
