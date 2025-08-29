@@ -1,5 +1,9 @@
 name: Preprod - Seed DynamoDB table
 
+concurrency:
+  group: seed-preprod-dynamodb
+  cancel-in-progress: false
+
 on:
   push:
     branches:
