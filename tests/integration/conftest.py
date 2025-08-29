@@ -23,7 +23,8 @@ from eligibility_signposting_api.model.campaign_config import (
     CampaignConfig,
     EndDate,
     RuleType,
-    StartDate, StatusText,
+    StartDate,
+    StatusText,
 )
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
@@ -528,7 +529,7 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
                         negative_description="negative_description",
                     )
                 ],
-                status_text=None
+                status_text=None,
             )
         ],
     )
@@ -608,7 +609,7 @@ def campaign_config_with_and_rule(s3_client: BaseClient, rules_bucket: BucketNam
                         negative_description="negative_description",
                     ),
                 ],
-                status_text=None
+                status_text=None,
             )
         ],
     )
@@ -767,7 +768,8 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
                     status_text=StatusText(
                         NotEligible=f"You are not eligible to take {targets[i]} vaccines.",
                         NotActionable=f"You have taken {targets[i]} vaccine in the last 90 days",
-                        Actionable=f"You can take {targets[i]} vaccine."),
+                        Actionable=f"You can take {targets[i]} vaccine.",
+                    ),
                 )
             ],
         )
@@ -796,7 +798,7 @@ def campaign_config_with_magic_cohort(s3_client: BaseClient, rules_bucket: Bucke
                     rule.PersonAgeSuppressionRuleFactory.build(),
                 ],
                 iteration_cohorts=[rule.MagicCohortFactory.build(cohort_label="elid_all_people")],
-                status_text=None
+                status_text=None,
             )
         ],
     )
@@ -829,7 +831,7 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
                         negative_description="",
                     )
                 ],
-                status_text=None
+                status_text=None,
             )
         ],
     )
