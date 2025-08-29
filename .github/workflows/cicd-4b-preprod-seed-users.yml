@@ -4,9 +4,17 @@ on:
   push:
     branches:
       - ELI-417-preprod-db-seeding
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - dev
 
 jobs:
-  seed:
+  seed-dynamodb:
     runs-on: ubuntu-latest
     environment: "dev"
     permissions:
@@ -37,7 +45,7 @@ jobs:
 
       - name: Run seed script
         run: |
-          python .github/scripts/seed_dynamodb.py \
+          python scripts/seed_users/seed_dynamodb.py \
             --table-name "${{ env.DYNAMODB_TABLE }}" \
             --region "${{ env.AWS_REGION }}" \
             --data-folder "${{ env.DATA_FOLDER }}"

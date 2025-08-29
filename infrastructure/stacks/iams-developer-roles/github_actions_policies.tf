@@ -109,16 +109,18 @@ resource "aws_iam_policy" "dynamodb_management" {
         }
       ],
       # to create test users in preprod
-      var.environment == "preprod" ? [
+      var.environment == "dev" ? [
         {
           Effect = "Allow",
           Action = [
             "dynamodb:GetItem",
             "dynamodb:PutItem",
             "dynamodb:DeleteItem",
+            "dynamodb:Scan",
+            "dynamodb:BatchWriteItem"
           ],
           Resource = [
-            "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-preprod-eligibility_datastore"
+            "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
           ]
         }
       ] : []

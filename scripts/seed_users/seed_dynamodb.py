@@ -14,25 +14,33 @@ def parse_args():
     return parser.parse_args()
 
 
-def clear_table(table):
-    scan = table.scan(
-        ProjectionExpression="#nhs, #type", ExpressionAttributeNames={"#nhs": "NHS_NUMBER", "#type": "ATTRIBUTE_TYPE"}
-    )
+def get_keys_from_folder(data_folder):
+    keys_to_delete = []
+    json_files = glob.glob(os.path.join(data_folder, "*.json"))
+    for file_path in json_files:
+        with open(file_path) as f:
+            payload = json.load(f)
+            items = payload.get("data", [])
+            for item in items:
+                nhs_number = item.get("NHS_NUMBER")
+                attr_type = item.get("ATTRIBUTE_TYPE")
+                if nhs_number and attr_type:
+                    keys_to_delete.append({"NHS_NUMBER": nhs_number, "ATTRIBUTE_TYPE": attr_type})
+    return keys_to_delete
+
+
+def delete_specific_items(table, keys):
     with table.batch_writer() as batch:
-        for item in scan["Items"]:
-            batch.delete_item(Key={"NHS_NUMBER": item["NHS_NUMBER"], "ATTRIBUTE_TYPE": item["ATTRIBUTE_TYPE"]})
+        for key in keys:
+            batch.delete_item(Key=key)
 
 
 def insert_data_from_folder(table, data_folder):
     json_files = glob.glob(os.path.join(data_folder, "*.json"))
     for file_path in json_files:
         with open(file_path) as f:
-            try:
-                payload = json.load(f)
-                items = payload.get("data", [])
-            except Exception as e:
-                print(f"Skipping {file_path}: {e}")
-                continue
+            payload = json.load(f)
+            items = payload.get("data", [])
 
         with table.batch_writer() as batch:
             for item in items:
@@ -48,7 +56,8 @@ def main():
     dynamodb = boto3.resource("dynamodb", region_name=args.region)
     table = dynamodb.Table(args.table_name)
 
-    clear_table(table)
+    keys_to_delete = get_keys_from_folder(args.data_folder)
+    delete_specific_items(table, keys_to_delete)
     insert_data_from_folder(table, args.data_folder)
 
 
