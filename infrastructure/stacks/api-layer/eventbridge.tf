@@ -73,17 +73,21 @@ resource "aws_cloudwatch_event_target" "firehose_target" {
       reason     = "$.detail.state.reason"
     }
 
-    input_template = jsonencode({
-      time = "<time>"
-      source = "elid-${var.environment}:cloudwatch:alarm"
-      sourcetype = "aws:cloudwatch:alarm"
-      event = {
-        alarm_name  = "<alarm_name>"
-        new_state   = "<new_state>"
-        old_state   = "<old_state>"
-        reason      = "<reason>"
-        region      = "<region>"
-      }
-    })
+    # Use a heredoc string so EventBridge placeholders like <time> are not JSON-escaped
+    # (jsonencode would turn < and > into \u003c/\u003e, preventing substitution).
+    input_template = <<TEMPLATE
+{
+  "time": "<time>",
+  "source": "elid-${var.environment}:cloudwatch:alarm",
+  "sourcetype": "aws:cloudwatch:alarm",
+  "event": {
+    "alarm_name": "<alarm_name>",
+    "new_state": "<new_state>",
+    "old_state": "<old_state>",
+    "reason": "<reason>",
+    "region": "<region>"
+  }
+}
+TEMPLATE
   }
 }
