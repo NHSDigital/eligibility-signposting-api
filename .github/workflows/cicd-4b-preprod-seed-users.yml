@@ -1,0 +1,43 @@
+name: Preprod - Seed DynamoDB table
+
+on:
+  push:
+    branches:
+      - ELI-417-preprod-db-seeding
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    environment: "dev"
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AWS_REGION: eu-west-2
+      DATA_FOLDER: vitaIntegrationTestData/
+      DYNAMODB_TABLE: eligibility-signposting-api-dev-eligibility_datastore
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: pip install boto3
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run seed script
+        run: |
+          python .github/scripts/seed_dynamodb.py \
+            --table-name "${{ env.DYNAMODB_TABLE }}" \
+            --region "${{ env.AWS_REGION }}" \
+            --data-folder "${{ env.DATA_FOLDER }}"
