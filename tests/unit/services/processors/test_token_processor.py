@@ -223,8 +223,6 @@ class TestTokenProcessor:
         assert actual.status_text == expected.status_text
         assert actual.condition_name == expected.condition_name
 
-
-    # todo
     def test_valid_token_but_missing_attribute_in_multiple_vacc_data_to_replace(self):
         person = Person(
             [
@@ -258,7 +256,6 @@ class TestTokenProcessor:
 
         assert actual.status_text == expected.status_text
         assert actual.condition_name == expected.condition_name
-
 
     def test_simple_string_with_multiple_tokens(self):
         person = Person(

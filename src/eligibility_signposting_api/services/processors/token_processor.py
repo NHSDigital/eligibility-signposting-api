@@ -97,7 +97,7 @@ class TokenProcessor:
                     is_allowed_target = parsed_token.attribute_name.upper() in ALLOWED_CONDITIONS.__args__
                     is_correct_target = parsed_token.attribute_name.upper() == attribute.get("ATTRIBUTE_TYPE")
 
-                    if ( (is_allowed_target and is_correct_target) or is_person_attribute) and key_to_find in attribute:
+                    if ((is_allowed_target and is_correct_target) or is_person_attribute) and key_to_find in attribute:
                         found_attribute = attribute
                         key_to_replace = key_to_find
                         break
