@@ -1,6 +1,6 @@
 {
   "meta": {
-    "lastUpdated": "2025-08-29T15:57:04.021419+00:00"
+    "lastUpdated": "2025-08-01T08:09:38.885621+00:00"
   },
   "processedSuggestions": [
     {
@@ -17,12 +17,12 @@
       "statusText": "You should have the RSV vaccine",
       "suitabilityRules": [
         {
-          "ruleCode": "Other Setting",
-          "ruleText": "## Getting the vaccine\n\n We believe you're living in a setting where care is provided.\n\n Speak to a member of staff where you live about getting the RSV vaccine.",
+          "ruleCode": "TooClose",
+          "ruleText": "##You have recently have the RSV vaccination\n\nYou must leave 90 days between doses of the RSV vaccine. Please try again soon.",
           "ruleType": "S"
         }
       ]
     }
   ],
-  "responseId": "08cdcd55-b0b9-46f7-b5f2-b102a226244c"
+  "responseId": "ef603f99-9a14-4f5e-8f54-d071201d478e"
 }
