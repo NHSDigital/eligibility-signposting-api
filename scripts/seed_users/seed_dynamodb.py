@@ -56,6 +56,9 @@ def main():
     dynamodb = boto3.resource("dynamodb", region_name=args.region)
     table = dynamodb.Table(args.table_name)
 
+    if not os.path.isdir(args.data_folder):
+        raise ValueError(f"Data folder '{args.data_folder}' does not exist or is not a directory.")
+
     keys_to_delete = get_keys_from_folder(args.data_folder)
     delete_specific_items(table, keys_to_delete)
     insert_data_from_folder(table, args.data_folder)
