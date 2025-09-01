@@ -109,7 +109,7 @@ resource "aws_iam_policy" "dynamodb_management" {
         }
       ],
       # to create test users in preprod
-      var.environment == "dev" ? [
+      var.environment == "preprod" ? [
         {
           Effect = "Allow",
           Action = [
