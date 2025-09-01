@@ -11,7 +11,7 @@ from typing import Literal, NewType
 
 from pydantic import BaseModel, Field, HttpUrl, RootModel, field_serializer, field_validator, model_validator
 
-from eligibility_signposting_api.config.contants import MAGIC_COHORT_LABEL, RULE_STOP_DEFAULT
+from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS, MAGIC_COHORT_LABEL, RULE_STOP_DEFAULT
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from pydantic import SerializationInfo
@@ -184,7 +184,7 @@ class CampaignConfig(BaseModel):
     version: CampaignVersion = Field(..., alias="Version")
     name: CampaignName = Field(..., alias="Name")
     type: Literal["V", "S"] = Field(..., alias="Type")
-    target: Literal["COVID", "FLU", "MMR", "RSV"] = Field(..., alias="Target")
+    target: ALLOWED_CONDITIONS = Field(..., alias="Target")
     manager: list[str] | None = Field(None, alias="Manager")
     approver: list[str] | None = Field(None, alias="Approver")
     reviewer: list[str] | None = Field(None, alias="Reviewer")

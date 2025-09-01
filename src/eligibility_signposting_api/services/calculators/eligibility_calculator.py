@@ -23,6 +23,7 @@ from eligibility_signposting_api.model.eligibility_status import (
 from eligibility_signposting_api.services.processors.action_rule_handler import ActionRuleHandler
 from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
 from eligibility_signposting_api.services.processors.rule_processor import RuleProcessor
+from eligibility_signposting_api.services.processors.token_processor import TokenProcessor
 
 if TYPE_CHECKING:
     from collections.abc import Collection
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
         IterationName,
     )
     from eligibility_signposting_api.model.person import Person
+
 
 logger = logging.getLogger(__name__)
 
@@ -99,19 +101,22 @@ class EligibilityCalculator:
                 include_actions_flag=include_actions_flag,
             )
 
+            best_iteration_result = TokenProcessor.find_and_replace_tokens(self.person, best_iteration_result)
+            matched_action_detail = TokenProcessor.find_and_replace_tokens(self.person, matched_action_detail)
+
             condition_results[condition_name] = best_iteration_result.iteration_result
             condition_results[condition_name].actions = matched_action_detail.actions
 
             condition: Condition = self.build_condition(
                 iteration_result=condition_results[condition_name], condition_name=condition_name
             )
+
             final_result.append(condition)
 
             AuditContext.append_audit_condition(
                 condition_name,
                 best_iteration_result,
                 matched_action_detail,
-                condition_results[condition_name].cohort_results,
             )
 
         # Consolidate all the results and return
