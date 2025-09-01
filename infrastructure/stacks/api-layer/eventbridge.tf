@@ -73,17 +73,7 @@ resource "aws_cloudwatch_event_target" "firehose_target" {
       reason     = "$.detail.state.reason"
     }
 
-    input_template = jsonencode({
-      time = "<time>"
-      source = "elid-${var.environment}:cloudwatch:alarm"
-      sourcetype = "aws:cloudwatch:alarm"
-      event = {
-        alarm_name  = "<alarm_name>"
-        new_state   = "<new_state>"
-        old_state   = "<old_state>"
-        reason      = "<reason>"
-        region      = "<region>"
-      }
-    })
+    # Eventbridge + Firehose splits events if we don't put on single line
+    input_template = "\"{ \\\"time\\\": \\\"<time>\\\", \\\"source\\\": \\\"elid-${var.environment}:cloudwatch:alarm\\\", \\\"sourcetype\\\": \\\"aws:cloudwatch:alarm\\\", \\\"event\\\": { \\\"alarm_name\\\": \\\"<alarm_name>\\\", \\\"new_state\\\": \\\"<new_state>\\\", \\\"old_state\\\": \\\"<old_state>\\\", \\\"reason\\\": \\\"<reason>\\\", \\\"region\\\": \\\"<region>\\\" } }\""
   }
 }
