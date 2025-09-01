@@ -1,7 +1,7 @@
 # 🧬 DynamoDB Seeder Script
 
 This script deletes and inserts items into a DynamoDB table using JSON seed data. It’s designed for integration testing and local development workflows.
-This script is user in the preprod seed workflow.
+This script is user in the Preprod seed workflow.
 
 ---
 
@@ -10,6 +10,7 @@ This script is user in the preprod seed workflow.
 - Python 3.13
 - AWS credentials configured (via `~/.aws/credentials`, environment variables, or IAM role)
 - Required Python packages:
+
   ```bash
   pip install boto3
   ```
@@ -27,7 +28,7 @@ python scripts/seed_users/seed_dynamodb.py \
   --data-folder <path-to-json-folder>
 ```
 
-### Example:
+### Example
 
 ```bash
 python scripts/seed_users/seed_dynamodb.py \
