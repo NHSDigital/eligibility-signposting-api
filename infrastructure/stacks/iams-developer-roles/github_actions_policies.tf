@@ -117,7 +117,8 @@ resource "aws_iam_policy" "dynamodb_management" {
             "dynamodb:PutItem",
             "dynamodb:DeleteItem",
             "dynamodb:Scan",
-            "dynamodb:BatchWriteItem"
+            "dynamodb:BatchWriteItem",
+            "dynamodb:Query"
           ],
           Resource = [
             "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
