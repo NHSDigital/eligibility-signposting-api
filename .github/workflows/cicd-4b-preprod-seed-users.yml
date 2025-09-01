@@ -27,7 +27,7 @@ jobs:
       contents: read
     env:
       AWS_REGION: eu-west-2
-      DATA_FOLDER: vitaIntegrationTestData/
+      DATA_FOLDER: tests/e2e/data/dynamoDB/vitaIntegrationTestData
       DYNAMODB_TABLE: eligibility-signposting-api-preprod-eligibility_datastore
 
     steps:
