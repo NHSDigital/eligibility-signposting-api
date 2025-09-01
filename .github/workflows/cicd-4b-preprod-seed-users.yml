@@ -1,12 +1,12 @@
-name: Preprod - Seed DynamoDB table
+name: dev - Seed DynamoDB table
 
 concurrency:
-  group: seed-preprod-dynamodb
+  group: seed-dev-dynamodb
   cancel-in-progress: false
 
 on:
   workflow_run:
-    workflows: [ "Preprod Deploy" ]
+    workflows: [ "CI/CD pull request" ]
     types:
       - completed
   workflow_dispatch:
@@ -16,19 +16,19 @@ on:
         required: true
         type: choice
         options:
-          - preprod
+          - dev
 
 jobs:
   seed-dynamodb:
     runs-on: ubuntu-latest
-    environment: "preprod"
+    environment: "dev"
     permissions:
       id-token: write
       contents: read
     env:
       AWS_REGION: eu-west-2
       DATA_FOLDER: tests/e2e/data/dynamoDB/vitaIntegrationTestData
-      DYNAMODB_TABLE: eligibility-signposting-api-preprod-eligibility_datastore
+      DYNAMODB_TABLE: eligibility-signposting-api-dev-eligibility_datastore
 
     steps:
       - name: Checkout repo
