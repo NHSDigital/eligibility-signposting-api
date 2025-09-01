@@ -33,6 +33,7 @@ jobs:
           name: coverage.xml
           path: coverage.xml
   sonar_main:
+    needs: test-unit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (full history)
