@@ -1,0 +1,59 @@
+name: preprod - Seed DynamoDB table
+
+concurrency:
+  group: seed-preprod-dynamodb
+  cancel-in-progress: false
+
+on:
+  workflow_run:
+    workflows: [ "Preprod Deploy" ]
+    types:
+      - completed
+    filters:
+      conclusion:
+        - success
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - preprod
+
+jobs:
+  seed-dynamodb:
+    runs-on: ubuntu-latest
+    environment: "preprod"
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AWS_REGION: eu-west-2
+      DATA_FOLDER: tests/e2e/data/dynamoDB/vitaIntegrationTestData
+      DYNAMODB_TABLE: eligibility-signposting-api-preprod-eligibility_datastore
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: pip install boto3
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run seed script
+        run: |
+          python scripts/seed_users/seed_dynamodb.py \
+            --table-name "${{ env.DYNAMODB_TABLE }}" \
+            --region "${{ env.AWS_REGION }}" \
+            --data-folder "${{ env.DATA_FOLDER }}"

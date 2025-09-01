@@ -233,7 +233,22 @@ data "aws_iam_policy_document" "permissions_boundary" {
       values   = [var.default_aws_region]
     }
   }
-
+  # Environment-specific actions
+  dynamic "statement" {
+    for_each = var.environment == "preprod" ? [1] : []
+    content {
+      sid    = "AllowPreprodDynamoDBItemOps"
+      effect = "Allow"
+      actions = [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Scan",
+        "dynamodb:BatchWriteItem"
+      ]
+      resources = ["*"]
+    }
+  }
   # Allow access to IAM actions for us-east-1 region only
   statement {
     sid       = "AllowIamActionsInUsEast1"
