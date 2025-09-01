@@ -6,9 +6,12 @@ concurrency:
 
 on:
   workflow_run:
-    workflows: [ "CI/CD pull request" ]
+    workflows: [ "CI/CD publish" ]
     types:
       - completed
+    filters:
+      conclusion:
+        - success
   workflow_dispatch:
     inputs:
       environment:
