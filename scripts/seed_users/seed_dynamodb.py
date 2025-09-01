@@ -13,11 +13,13 @@ def parse_args():
     parser.add_argument("--data-folder", default="vitaIntegrationTestData/", help="Folder containing JSON seed data")
     return parser.parse_args()
 
+
 def resolve_data_folder(path):
     return os.path.abspath(path)
 
-def get_keys_from_folder(data_folder):
-    keys_to_delete = []
+
+def get_unique_nhs_numbers(data_folder):
+    nhs_numbers = set()
     json_files = glob.glob(os.path.join(data_folder, "*.json"))
     for file_path in json_files:
         with open(file_path) as f:
@@ -25,16 +27,24 @@ def get_keys_from_folder(data_folder):
             items = payload.get("data", [])
             for item in items:
                 nhs_number = item.get("NHS_NUMBER")
-                attr_type = item.get("ATTRIBUTE_TYPE")
-                if nhs_number and attr_type:
-                    keys_to_delete.append({"NHS_NUMBER": nhs_number, "ATTRIBUTE_TYPE": attr_type})
-    return keys_to_delete
+                if nhs_number:
+                    nhs_numbers.add(nhs_number)
+    return list(nhs_numbers)
 
 
-def delete_specific_items(table, keys):
-    with table.batch_writer() as batch:
-        for key in keys:
-            batch.delete_item(Key=key)
+def delete_all_items_for_nhs_numbers(table, nhs_numbers):
+    for nhs_number in nhs_numbers:
+        response = table.query(
+            KeyConditionExpression=boto3.dynamodb.conditions.Key("NHS_NUMBER").eq(nhs_number)
+        )
+        items = response.get("Items", [])
+        with table.batch_writer() as batch:
+            for item in items:
+                key = {
+                    "NHS_NUMBER": item["NHS_NUMBER"],
+                    "ATTRIBUTE_TYPE": item["ATTRIBUTE_TYPE"]
+                }
+                batch.delete_item(Key=key)
 
 
 def insert_data_from_folder(table, data_folder):
@@ -63,8 +73,8 @@ def main():
     if not os.path.isdir(data_folder):
         raise ValueError(f"Data folder '{data_folder}' does not exist or is not a directory.")
 
-    keys_to_delete = get_keys_from_folder(data_folder)
-    delete_specific_items(table, keys_to_delete)
+    nhs_numbers = get_unique_nhs_numbers(data_folder)
+    delete_all_items_for_nhs_numbers(table, nhs_numbers)
     insert_data_from_folder(table, data_folder)
 
 
