@@ -36,12 +36,6 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "dynamodb:CreateTable",
       "dynamodb:TagResource",
       "dynamodb:ListTagsOfResource",
-      # Only used in preprod
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:DeleteItem",
-      "dynamodb:Scan",
-      "dynamodb:BatchWriteItem",
 
       # EC2 - networking infrastructure
       "ec2:Describe*",
