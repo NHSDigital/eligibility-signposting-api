@@ -9,7 +9,6 @@ from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.token_parser import ParsedToken, TokenParser
 
-
 TARGET_ATTRIBUTE_LEVEL = "TARGET"
 PERSON_ATTRIBUTE_LEVEL = "PERSON"
 ALLOWED_TARGET_ATTRIBUTES = {
