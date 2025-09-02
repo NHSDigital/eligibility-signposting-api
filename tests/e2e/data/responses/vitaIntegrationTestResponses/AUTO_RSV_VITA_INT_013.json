@@ -19,7 +19,7 @@
       "statusText": "You should have the RSV vaccine",
       "suitabilityRules": [
         {
-          "ruleCode": "Already Vaccinated",
+          "ruleCode": "AlreadyVaccinated",
           "ruleText": "## You've had your RSV vaccination\n\n We believe you had your vaccination.",
           "ruleType": "S"
         }
