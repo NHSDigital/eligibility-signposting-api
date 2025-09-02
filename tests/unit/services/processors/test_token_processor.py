@@ -228,7 +228,9 @@ class TestTokenProcessor:
             [
                 {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "POSTCODE": None},
                 {"ATTRIBUTE_TYPE": "RSV", "CONDITION_NAME": "RSV", "LAST_SUCCESSFUL_DATE": None},
+                {"ATTRIBUTE_TYPE": "FAKEVACCS", "CONDITION_NAME": "FAKEVACCS", "LAST_SUCCESSFUL_DATE": None},
                 {"ATTRIBUTE_TYPE": "COVID", "CONDITION_NAME": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
+                {"ATTRIBUTE_TYPE": "FLU", "CONDITION_NAME": "FLU", "LAST_SUCCESSFUL_DATE": "20260101"},
             ]
         )
 
