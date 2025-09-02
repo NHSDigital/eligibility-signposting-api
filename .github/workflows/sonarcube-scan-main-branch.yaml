@@ -1,0 +1,54 @@
+name: Sonar static analysis (main)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sonar-main-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-unit:
+    name: "Unit tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v5
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: "Run unit test suite"
+        run: |
+          make test-unit
+      - name: "Save the coverage check result"
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage.xml
+          path: coverage.xml
+  sonar_main:
+    needs: test-unit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: "Get the coverage report"
+        uses: actions/download-artifact@v5
+        with:
+          name: coverage.xml
+      - name: Run static analysis script
+        env:
+          BRANCH_NAME: main
+          SONAR_ORGANISATION_KEY: ${{ vars.SONAR_ORGANISATION_KEY }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          FORCE_USE_DOCKER: "true"
+        run: ./scripts/reports/perform-static-analysis.sh
