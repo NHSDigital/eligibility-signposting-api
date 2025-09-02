@@ -1,15 +1,13 @@
 import re
 from dataclasses import Field, fields, is_dataclass
 from datetime import UTC, datetime
-from typing import Any, Never, TypeVar
+from typing import Any, Never
 
 from wireup import service
 
 from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.token_parser import ParsedToken, TokenParser
-
-T = TypeVar("T")
 
 
 TARGET_ATTRIBUTE_LEVEL = "TARGET"
@@ -30,7 +28,7 @@ ALLOWED_TARGET_ATTRIBUTES = {
 @service
 class TokenProcessor:
     @staticmethod
-    def find_and_replace_tokens(person: Person, data_class: T) -> T:
+    def find_and_replace_tokens[T](person: Person, data_class: T) -> T:
         if not is_dataclass(data_class):
             return data_class
         for class_field in fields(data_class):
@@ -121,7 +119,7 @@ class TokenProcessor:
         raise ValueError(message)
 
     @staticmethod
-    def apply_formatting(attribute: dict[str, T], attribute_value: str, date_format: str | None) -> str:
+    def apply_formatting[T](attribute: dict[str, T], attribute_value: str, date_format: str | None) -> str:
         try:
             attribute_data = attribute.get(attribute_value)
             if (date_format or date_format == "") and attribute_data:
