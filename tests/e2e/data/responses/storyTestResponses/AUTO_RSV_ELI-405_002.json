@@ -16,9 +16,9 @@
       "condition": "RSV",
       "eligibilityCohorts": [
         {
-          "cohortCode": "rsv_eli_376_cohort_group",
+          "cohortCode": "rsv_eli_405_cohort_group",
           "cohortStatus": "Actionable",
-          "cohortText": "are a member of eli_376_cohort_group_10"
+          "cohortText": "are a member of eli_405_cohort_group_10"
         }
       ],
       "status": "Actionable",
