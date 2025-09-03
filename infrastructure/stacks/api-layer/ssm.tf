@@ -92,3 +92,24 @@ resource "aws_ssm_parameter" "splunk_hec_endpoint" {
     ignore_changes = [value]
   }
 }
+
+resource "aws_ssm_parameter" "feature_toggles" {
+  for_each = jsondecode(file("${path.root}/scripts/feature_toggle/feature_toggle.json"))
+
+  name  = "/${var.environment}/feature_toggles/${each.key}"
+  type  = "String"
+
+  value = lookup(each.value.env_overrides, var.environment, each.value.default_state)
+
+  tags = {
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Purpose     = each.value.purpose
+    Ticket      = each.value.ticket
+    Created     = each.value.created
+  }
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}

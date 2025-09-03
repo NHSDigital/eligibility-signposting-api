@@ -150,6 +150,13 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
+      - name: "Validate Feature Toggles"
+        env:
+          ENV: ${{ needs.metadata.outputs.environment }}
+        run: |
+          pip install boto3
+          python scripts/feature_toggle/validate_toggles.py
+
       # ---------- Preprod path: create RC tag + pre-release ----------
       - name: "Create/Push RC tag for preprod"
         if: ${{ needs.metadata.outputs.environment == 'preprod' }}

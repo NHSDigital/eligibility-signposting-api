@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from wireup import service
 
 from eligibility_signposting_api.audit.audit_context import AuditContext
+from eligibility_signposting_api.feature_toggle.feature_toggle import is_feature_enabled
 from eligibility_signposting_api.model import campaign_config, eligibility_status
 from eligibility_signposting_api.model.eligibility_status import (
     BestIterationResult,
@@ -154,7 +155,11 @@ class EligibilityCalculator:
 
             # Determine Result between cohorts - get the best
             status, best_cohorts = self.get_the_best_cohort_memberships(cohort_results)
-            status_text = self.get_status_text(active_iteration.status_text, ConditionName(cc.target), status)
+
+            if is_feature_enabled("enable_dynamic_status_text"):
+                status_text = self.get_status_text(active_iteration.status_text, ConditionName(cc.target), status)
+            else:
+                status_text = status.get_default_status_text(ConditionName(cc.target))
 
             iteration_results[active_iteration.name] = BestIterationResult(
                 IterationResult(status, status_text, best_cohorts, []),

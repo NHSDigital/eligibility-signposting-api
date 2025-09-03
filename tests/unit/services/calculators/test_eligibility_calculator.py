@@ -1,6 +1,7 @@
 import datetime
 import logging
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from faker import Faker
@@ -931,7 +932,34 @@ def test_eligibility_status_with_invalid_person_attribute_name_raises_value_erro
         calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
 
-def test_status_text_is_used_from_campaign_when_available_for_all_statuses(faker: Faker):
+@pytest.mark.parametrize(
+    ("enable_dynamic_status_text", "expected_rsv_text", "expected_covid_text", "expected_flu_text"),
+    [
+        (
+            True, # Toggle is ON
+            "You can take RSV vaccine.",
+            "You have taken COVID vaccine in the last 90 days",
+            "You are not eligible to take FLU vaccines.",
+        ),
+        (
+            False, # Toggle is OFF
+            "You should have the RSV vaccine",
+            "You should have the COVID vaccine",
+            "We do not believe you can have it",
+        ),
+    ],
+)
+@patch("eligibility_signposting_api.services.calculators.eligibility_calculator.is_feature_enabled")
+def test_status_text_is_conditional_on_toggle(  # noqa: PLR0913
+    mock_is_feature_enabled,
+    enable_dynamic_status_text,
+    expected_rsv_text,
+    expected_covid_text,
+    expected_flu_text,
+    faker: Faker,
+):
+    mock_is_feature_enabled.return_value = enable_dynamic_status_text
+
     person_rows = person_rows_builder(NHSNumber(faker.nhs_number()), cohorts=["cohort1"], icb="QE1")
 
     campaign_configs = [
@@ -992,19 +1020,19 @@ def test_status_text_is_used_from_campaign_when_available_for_all_statuses(faker
         is_condition()
         .with_condition_name(ConditionName("RSV"))
         .and_status(Status.actionable)
-        .and_status_text(StatusText("You can take RSV vaccine."))
+        .and_status_text(StatusText(expected_rsv_text))
     )
     covid_condition = (
         is_condition()
         .with_condition_name(ConditionName("COVID"))
         .and_status(Status.not_actionable)
-        .and_status_text(StatusText("You have taken COVID vaccine in the last 90 days"))
+        .and_status_text(StatusText(expected_covid_text))
     )
     flu_condition = (
         is_condition()
         .with_condition_name(ConditionName("FLU"))
         .and_status(Status.not_eligible)
-        .and_status_text(StatusText("You are not eligible to take FLU vaccines."))
+        .and_status_text(StatusText(expected_flu_text))
     )
 
     assert_that(
@@ -1014,12 +1042,8 @@ def test_status_text_is_used_from_campaign_when_available_for_all_statuses(faker
 
     assert len(g.audit_log.response.condition) == len(campaign_configs)
 
-    for condition in g.audit_log.response.condition:
-        assert condition.status_text in (
-            "You can take RSV vaccine.",
-            "You have taken COVID vaccine in the last 90 days",
-            "You are not eligible to take FLU vaccines.",
-        )
+    actual_texts_from_audit = {condition.status_text for condition in g.audit_log.response.condition}
+    assert actual_texts_from_audit == {expected_rsv_text, expected_covid_text, expected_flu_text}
 
 
 def test_status_text_uses_default_when_unavailable(faker: Faker):

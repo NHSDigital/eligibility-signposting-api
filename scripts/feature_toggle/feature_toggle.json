@@ -1,0 +1,27 @@
+{
+  "enable_dynamic_status_text": {
+    "purpose": "Enables dynamic status text based on conditions.",
+    "ticket": "ELI-427",
+    "created": "2025-09-02",
+    "default_state": false,
+    "env_overrides": {
+      "dev": true
+    }
+  },
+  "enable_multiple_magic_cohorts": {
+    "purpose": "Allows multiple magic cohorts in calculations.",
+    "ticket": "ELI-500",
+    "created": "2025-10-23",
+    "default_state": false,
+    "env_overrides": {
+      "dev": true,
+      "test": true
+    }
+  },
+  "enable_caching_campaign_config": {
+    "purpose": "Adds a caching layer for campaign configuration.",
+    "ticket": "ELI-600",
+    "created": "2025-11-16",
+    "default_state": false
+  }
+}
