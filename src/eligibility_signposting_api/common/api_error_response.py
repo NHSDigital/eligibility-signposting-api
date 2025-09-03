@@ -4,7 +4,7 @@ import uuid
 from datetime import UTC, datetime
 from enum import Enum
 from http import HTTPStatus
-from typing import Any
+from typing import Any, cast
 
 from fhir.resources.operationoutcome import OperationOutcome, OperationOutcomeIssue
 
@@ -57,11 +57,12 @@ class APIErrorResponse:
                 }
             ]
         }
+        typed_location = cast("list[str | None] | None", location)
         return OperationOutcomeIssue(
             severity=self.fhir_issue_severity,
             code=self.fhir_issue_code,
             diagnostics=diagnostics,
-            location=location,
+            location=typed_location,
             details=details,
         )  # pyright: ignore[reportCallIssue]
 
