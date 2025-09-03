@@ -118,9 +118,9 @@ class TokenProcessor:
         raise ValueError(message)
 
     @staticmethod
-    def apply_formatting[T](attribute: dict[str, T], attribute_value: str, date_format: str | None) -> str:
+    def apply_formatting[T](attributes: dict[str, T], attribute_name: str, date_format: str | None) -> str:
         try:
-            attribute_data = attribute.get(attribute_value)
+            attribute_data = attributes.get(attribute_name)
             if (date_format or date_format == "") and attribute_data:
                 replace_with_date_object = datetime.strptime(str(attribute_data), "%Y%m%d").replace(tzinfo=UTC)
                 replace_with = replace_with_date_object.strftime(str(date_format))
@@ -130,3 +130,6 @@ class TokenProcessor:
         except AttributeError as error:
             message = "Invalid token format"
             raise AttributeError(message) from error
+        except Exception as error:
+            message = "Invalid value error"
+            raise ValueError(message) from error
