@@ -6,7 +6,7 @@
   "config_filenames": [
     "AUTO_RSV_ELI-223-12.json"
   ],
-  "expected_response_code": 5001,
+  "expected_response_code": 500,
   "data": [
     {
       "NHS_NUMBER": "9900223012",
