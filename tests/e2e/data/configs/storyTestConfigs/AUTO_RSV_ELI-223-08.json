@@ -47,29 +47,29 @@
         ],
         "IterationRules": [
           {
-						"Type": "S",
-						"Name": "Already Vaccinated",
-						"Description": "## You've had your RSV vaccination\\n\\nWe believe you had the RSV vaccination on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]",
-						"Priority": 200,
-						"AttributeLevel": "TARGET",
-						"AttributeTarget": "RSV",
-						"AttributeName": "LAST_SUCCESSFUL_DATE",
-						"Operator": "Y>=",
-						"Comparator": "-25",
-						"RuleStop": "N"
-					},
+            "Type": "S",
+            "Name": "Already Vaccinated",
+            "Description": "## You've had your RSV vaccination\\n\\nWe believe you had the RSV vaccination on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]",
+            "Priority": 200,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "Operator": "Y>=",
+            "Comparator": "-25",
+            "RuleStop": "N"
+          },
           {
-						"Type": "S",
-						"Name": "Already Booked",
-						"Description": "## You have a COVID vaccination booking on [[TARGET.COVID.BOOKED_APPOINTMENT_DATE:DATE(%d %B %Y)]]",
-						"Priority": 210,
-						"AttributeLevel": "TARGET",
-						"AttributeTarget": "COVID",
-						"AttributeName": "BOOKED_APPOINTMENT_DATE",
-						"Operator": "is_not_empty",
-						"Comparator": "",
-						"RuleStop": "Y"
-					}
+            "Type": "S",
+            "Name": "Already Booked",
+            "Description": "## You have a COVID vaccination booking on [[TARGET.COVID.BOOKED_APPOINTMENT_DATE:DATE(%d %B %Y)]]",
+            "Priority": 210,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "COVID",
+            "AttributeName": "BOOKED_APPOINTMENT_DATE",
+            "Operator": "is_not_empty",
+            "Comparator": "",
+            "RuleStop": "Y"
+          }
         ],
         "ActionsMapper": {
           "TEST_ACTION": {
@@ -87,12 +87,12 @@
             "UrlLabel": ""
           },
           "TEST_NOT_ELI": {
-						"ExternalRoutingCode": "TestNotEligible",
-						"ActionDescription": "## You are not eligible as your dob is [[PERSON.DATE_OF_BIRTH:DATE(%d %B %Y)]].",
-						"ActionType": "ButtonWithAuthLink",
-						"UrlLink": "http://www.nhs.uk/book-rsv",
-						"UrlLabel": "You're not Eligible"
-					}
+            "ExternalRoutingCode": "TestNotEligible",
+            "ActionDescription": "## You are not eligible as your dob is [[PERSON.DATE_OF_BIRTH:DATE(%d %B %Y)]].",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "You're not Eligible"
+          }
         }
       }
     ]

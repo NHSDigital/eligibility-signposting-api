@@ -26,7 +26,7 @@
       "suitabilityRules": [
         {
           "ruleCode": "Already Vaccinated",
-          "ruleText": "We believe you had the RSV vaccination on .You also have a Flu Vaccination Booking on  and your ICB is " ,
+          "ruleText": "We believe you had the RSV vaccination on .You also have a Flu Vaccination Booking on  and your ICB is ",
           "ruleType": "S"
         }
       ]
