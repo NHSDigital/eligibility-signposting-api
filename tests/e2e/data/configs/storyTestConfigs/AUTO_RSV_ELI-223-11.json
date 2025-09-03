@@ -1,8 +1,8 @@
 {
   "CampaignConfig": {
-    "ID": "AUTO_RSV_ELI-223-04-Campaign-ID",
+    "ID": "AUTO_RSV_ELI-223-08-Campaign-ID",
     "Version": 1,
-    "Name": "ELI-223-04-Iteration-Config-Name",
+    "Name": "ELI-223-08-Iteration-Config-Name",
     "Type": "V",
     "Target": "RSV",
     "Manager": [
@@ -24,12 +24,12 @@
     "DefaultCommsRouting": "BOOK_NBS",
     "Iterations": [
       {
-        "ID": "AUTO_RSV_ELI-223-04-Iteration-ID",
+        "ID": "AUTO_RSV_ELI-223-08-Iteration-ID",
         "DefaultCommsRouting": "TEST_ACTION",
         "DefaultNotActionableRouting": "TEST_NOT_ACTION",
         "DefaultNotEligibleRouting": "TEST_NOT_ELI",
         "Version": 1,
-        "Name": "ELI-223-04-Iteration-Config-Name",
+        "Name": "ELI-223-08-Iteration-Config-Name",
         "IterationDate": "20240808",
         "IterationNumber": 1,
         "CommsType": "I",
@@ -47,40 +47,40 @@
         ],
         "IterationRules": [
           {
-						"Type": "S",
-						"Name": "Already Vaccinated",
-						"Description": "We believe you had the RSV vaccination on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]].You also have a Flu Vaccination Booking on [[TARGET.FLU.BOOKED_APPOINTMENT_DATE:DATE(%Y/%m/%d)]] and your ICB is [[PERSON.ICB]]",
-						"Priority": 200,
-						"AttributeLevel": "TARGET",
-						"AttributeTarget": "COVID",
-						"AttributeName": "LAST_SUCCESSFUL_DATE",
-						"Operator": "Y>=",
-						"Comparator": "-25",
-						"RuleStop": "Y"
-					}
+            "Type": "S",
+            "Name": "Already Booked",
+            "Description": "## You have a COVID vaccination booking on [[TARGET.COVID.BOOKED_APPOINTMENT_DATE:DATE(%d %B %Y)]]",
+            "Priority": 210,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "COVID",
+            "AttributeName": "BOOKED_APPOINTMENT_DATE",
+            "Operator": "is_empty",
+            "Comparator": "",
+            "RuleStop": "Y"
+          }
         ],
         "ActionsMapper": {
           "TEST_ACTION": {
-            "ExternalRoutingCode": "TestActionDefault",
-            "ActionDescription": "ActionDefault Description",
+            "ExternalRoutingCode": "TestActionable",
+            "ActionDescription": "## You are actionable as your dob is [[PERSON.DATE_OF_BIRTH:DATE(%d %B %Y)]].",
             "ActionType": "ButtonWithAuthLink",
             "UrlLink": "http://www.nhs.uk/book-rsv",
-            "UrlLabel": "TestActionDefault"
+            "UrlLabel": "You're actionable"
           },
           "TEST_NOT_ACTION": {
             "ExternalRoutingCode": "TestNotAction",
-            "ActionDescription": "ActionDescription ICB: [[PERSON.ICB]]",
-            "ActionType": "ActionType PCN: [[PERSON.PCN]]",
+            "ActionDescription": "TestNotAction Description",
+            "ActionType": "ButtonWithAuthLink",
             "UrlLink": null,
-            "UrlLabel": "urlLabel MSOA: [[PERSON.MSOA]]"
+            "UrlLabel": ""
           },
-          "AMEND_NBS": {
-						"ExternalRoutingCode": "AmendNBS",
-						"ActionDescription": "## You have an RSV vaccination appointment\n You can view, change or cancel your appointment below.",
-						"ActionType": "ButtonWithAuthLink",
-						"UrlLink": "http://www.nhs.uk/book-rsv",
-						"UrlLabel": "Manage your appointment"
-					}
+          "TEST_NOT_ELI": {
+            "ExternalRoutingCode": "TestNotEligible",
+            "ActionDescription": "## You are not eligible as your dob is [[PERSON.DATE_OF_BIRTH:DATE(%d %B %Y)]].",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "You're not Eligible"
+          }
         }
       }
     ]
