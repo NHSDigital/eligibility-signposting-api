@@ -16,14 +16,14 @@
       "condition": "RSV",
       "eligibilityCohorts": [
         {
-          "cohortCode": "rsv_eli_376_cohort_group",
+          "cohortCode": "rsv_eli_405_cohort_group",
           "cohortStatus": "Actionable",
-          "cohortText": "are a member of eli_376_cohort_group_0"
+          "cohortText": "are a member of eli_405_cohort_group_0"
         },
         {
-          "cohortCode": "rsv_eli_376_cohort_group_other",
+          "cohortCode": "rsv_eli_405_cohort_group_other",
           "cohortStatus": "Actionable",
-          "cohortText": "are a member of eli_376_cohort_group_other"
+          "cohortText": "are a member of eli_405_cohort_group_other"
         }
       ],
       "status": "Actionable",
