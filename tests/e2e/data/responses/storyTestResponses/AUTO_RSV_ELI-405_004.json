@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "lastUpdated": "<ignored>"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "TestAction",
+          "actionType": "ButtonWithAuthLink",
+          "description": "TestAction Description",
+          "urlLabel": "Continue to booking",
+          "urlLink": "http://www.nhs.uk/book-rsv"
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_eli_405_cohort_group_other",
+          "cohortStatus": "Actionable",
+          "cohortText": "are a member of eli_405_cohort_group_other"
+        }
+      ],
+      "status": "Actionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "<ignored>"
+}
