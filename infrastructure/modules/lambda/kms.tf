@@ -7,7 +7,7 @@ resource "aws_kms_key" "lambda_cmk" {
 }
 
 resource "aws_kms_alias" "lambda_cmk" {
-  name          = "alias/${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.lambda_func_name}-cmk"
+  name          = "alias/${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.lambda_func_name}-key"
   target_key_id = aws_kms_key.lambda_cmk.key_id
 }
 

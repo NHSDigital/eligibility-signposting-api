@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "lastUpdated": "2025-09-02T15:42:30.916497+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "TestNotAction",
+          "actionType": "ButtonWithAuthLink",
+          "description": "TestNotAction Description",
+          "urlLabel": "",
+          "urlLink": ""
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_eli_223_cohort_group",
+          "cohortStatus": "NotActionable",
+          "cohortText": "are a member of eli_223_cohort_group"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "Already Vaccinated",
+          "ruleText": "## You've had your RSV vaccination\\n\\nWe believe you had the RSV vaccination on <<RDATE_DAY_-10>>",
+          "ruleType": "S"
+        },
+        {
+          "ruleCode": "Already Booked",
+          "ruleText": "## You have a COVID vaccination booking on 02 January 2035",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "62f8b582-deee-4a3c-9798-1553d60024b6"
+}

@@ -189,6 +189,12 @@ resource "aws_iam_role_policy_attachment" "lambda_logs_policy_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+#Attach CloudWatchLambdaInsightsExecutionRolePolicy to lambda for enhanced monitoring
+resource "aws_iam_role_policy_attachment" "lambda_insights_policy" {
+  role       = aws_iam_role.eligibility_lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy"
+}
+
 # Policy doc for S3 Audit bucket
 data "aws_iam_policy_document" "s3_audit_bucket_policy" {
   statement {
@@ -282,6 +288,52 @@ data "aws_iam_policy_document" "s3_rules_kms_key_policy" {
 resource "aws_kms_key_policy" "s3_rules_kms_key" {
   key_id = module.s3_rules_bucket.storage_bucket_kms_key_id
   policy = data.aws_iam_policy_document.s3_rules_kms_key_policy.json
+}
+
+resource "aws_iam_role_policy" "splunk_firehose_policy" {
+  name = "splunk-firehose-policy"
+  role = aws_iam_role.splunk_firehose_assume_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      # Allow Firehose to write to S3 backup bucket
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:GetBucketLocation",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          module.s3_firehose_backup_bucket.storage_bucket_arn,
+          "${module.s3_firehose_backup_bucket.storage_bucket_arn}/*"
+        ]
+      },
+      # Allow Firehose to use KMS key for S3 encryption
+      {
+        Effect = "Allow",
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
+        ],
+        Resource = [module.s3_firehose_backup_bucket.storage_bucket_kms_key_arn]
+      },
+      # Allow logging to CloudWatch
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:PutLogEvents",
+          "logs:CreateLogStream",
+          "logs:CreateLogGroup"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 data "aws_iam_policy_document" "s3_audit_kms_key_policy" {

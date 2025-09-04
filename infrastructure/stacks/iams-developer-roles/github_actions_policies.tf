@@ -62,10 +62,20 @@ resource "aws_iam_policy" "lambda_management" {
           "lambda:ListAliases",
           "lambda:AddPermission",
           "lambda:RemovePermission",
-          "lambda:GetPolicy"
+          "lambda:GetPolicy",
+          "lambda:GetAlias",
+          "lambda:GetFunction",
+          "lambda:GetLayerVersion",
+          "lambda:GetProvisionedConcurrencyConfig",
+          "lambda:PutProvisionedConcurrencyConfig",
+          "lambda:DeleteProvisionedConcurrencyConfig",
+          "lambda:ListProvisionedConcurrencyConfigs",
+
         ],
         Resource = [
-          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:*eligibility_signposting_api"
+          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api",
+          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api:*",
+          "arn:aws:lambda:*:580247275435:layer:LambdaInsightsExtension:*"
         ]
       }
     ]
@@ -82,24 +92,43 @@ resource "aws_iam_policy" "dynamodb_management" {
 
   policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "dynamodb:DescribeTimeToLive",
-          "dynamodb:DescribeTable",
-          "dynamodb:DescribeContinuousBackups",
-          "dynamodb:ListTables",
-          "dynamodb:DeleteTable",
-          "dynamodb:CreateTable",
-          "dynamodb:TagResource",
-          "dynamodb:ListTagsOfResource",
-        ],
-        Resource = [
-          "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
-        ]
-      }
-    ]
+    Statement = concat(
+      [
+        {
+          Effect = "Allow",
+          Action = [
+            "dynamodb:DescribeTimeToLive",
+            "dynamodb:DescribeTable",
+            "dynamodb:DescribeContinuousBackups",
+            "dynamodb:ListTables",
+            "dynamodb:DeleteTable",
+            "dynamodb:CreateTable",
+            "dynamodb:TagResource",
+            "dynamodb:ListTagsOfResource",
+          ],
+          Resource = [
+            "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
+          ]
+        }
+      ],
+      # to create test users in preprod
+        var.environment == "preprod" ? [
+        {
+          Effect = "Allow",
+          Action = [
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:DeleteItem",
+            "dynamodb:Scan",
+            "dynamodb:BatchWriteItem",
+            "dynamodb:Query"
+          ],
+          Resource = [
+            "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
+          ]
+        }
+      ] : []
+    )
   })
 
   tags = merge(local.tags, { Name = "dynamodb-management" })
@@ -163,8 +192,10 @@ resource "aws_iam_policy" "s3_management" {
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-backup",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-backup/*"
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-access-logs/*"
         ]
       }
     ]
@@ -297,6 +328,16 @@ resource "aws_iam_policy" "api_infrastructure" {
           "acm:RequestCertificate",
           "acm:AddTagsToCertificate",
           "acm:ImportCertificate",
+
+          # eventbridge
+          "events:TagResource",
+          "events:PutRule",
+          "events:PutTargets",
+          "events:DescribeRule",
+          "events:ListTagsForResource",
+          "events:DeleteRule",
+          "events:ListTargetsByRule",
+          "events:RemoveTargets"
         ],
 
 
@@ -313,7 +354,9 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:NHSDAudit_trail_log_group*",
           "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/*",
+          "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/splunk/*",
           "arn:aws:acm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:certificate/*",
+          "arn:aws:events:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:rule/cloudwatch-alarm-state-change-to-splunk*",
         ]
       },
     ]
@@ -429,7 +472,11 @@ resource "aws_iam_policy" "iam_management" {
           # API role
           "arn:aws:iam::*:role/*eligibility-signposting-api-role",
           # Kinesis firehose role
-          "arn:aws:iam::*:role/eligibility_audit_firehose-role*"
+          "arn:aws:iam::*:role/eligibility_audit_firehose-role*",
+          # Eventbridge to firehose role
+          "arn:aws:iam::*:role/*-eventbridge-to-firehose-role*",
+          # Firehose splunk role
+          "arn:aws:iam::*:role/splunk-firehose-role"
         ]
       }
     ]
@@ -440,8 +487,8 @@ resource "aws_iam_policy" "iam_management" {
 # Assume role policy document for GitHub Actions
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
-    sid     = "OidcAssumeRoleWithWebIdentity"
-    effect  = "Allow"
+    sid    = "OidcAssumeRoleWithWebIdentity"
+    effect = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
 
     principals {
@@ -454,38 +501,15 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
+      values = ["repo:${var.github_org}/${var.github_repo}:*"]
     }
 
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
+      values = ["sts.amazonaws.com"]
     }
   }
-}
-
-resource "aws_iam_policy" "cloudwatch_logging" {
-  name        = "cloudwatch-logging-management"
-  description = "Allow access to logging resources"
-  path        = "/service-policies/"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "logs:ListTagsForResource",
-          "logs:DescribeLogGroups",
-          "logs:PutRetentionPolicy"
-        ],
-        Resource = "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*"
-      }
-    ]
-  })
-
-  tags = merge(local.tags, { Name = "cloudwatch-logging-management" })
 }
 
 resource "aws_iam_policy" "firehose_readonly" {
@@ -511,16 +535,19 @@ resource "aws_iam_policy" "firehose_readonly" {
           "firehose:StartDeliveryStreamEncryption",
           "firehose:StopDeliveryStreamEncryption"
         ]
-        Resource = "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/eligibility-signposting-api*"
+        Resource = [
+          "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/eligibility-signposting-api*",
+          "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/splunk-alarm-events*"
+        ]
       }
     ]
   })
   tags = merge(local.tags, { Name = "firehose-describe-access" })
 }
 
-resource "aws_iam_policy" "cloudwatch_alarms" {
-  name        = "cloudwatch-alarms-management"
-  description = "Allow GitHub Actions to manage CloudWatch alarms and SNS topics"
+resource "aws_iam_policy" "cloudwatch_management" {
+  name        = "cloudwatch-management"
+  description = "Allow GitHub Actions to manage CloudWatch logs, alarms, and SNS topics"
   path        = "/service-policies/"
 
   policy = jsonencode({
@@ -529,7 +556,10 @@ resource "aws_iam_policy" "cloudwatch_alarms" {
       {
         Effect = "Allow",
         Action = [
-          # CloudWatch Alarms management
+          "logs:ListTagsForResource",
+          "logs:DescribeLogGroups",
+          "logs:PutRetentionPolicy",
+
           "cloudwatch:PutMetricAlarm",
           "cloudwatch:DeleteAlarms",
           "cloudwatch:DescribeAlarms",
@@ -537,7 +567,7 @@ resource "aws_iam_policy" "cloudwatch_alarms" {
           "cloudwatch:ListTagsForResource",
           "cloudwatch:TagResource",
           "cloudwatch:UntagResource",
-          # SNS Topic management for alarm notifications
+
           "sns:CreateTopic",
           "sns:DeleteTopic",
           "sns:GetTopicAttributes",
@@ -552,6 +582,7 @@ resource "aws_iam_policy" "cloudwatch_alarms" {
           "sns:ListSubscriptionsByTopic"
         ],
         Resource = [
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
           "arn:aws:cloudwatch:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alarm:*",
           "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*"
         ]
@@ -559,7 +590,7 @@ resource "aws_iam_policy" "cloudwatch_alarms" {
     ]
   })
 
-  tags = merge(local.tags, { Name = "cloudwatch-alarms-management" })
+  tags = merge(local.tags, { Name = "cloudwatch-management" })
 }
 
 # Attach the policies to the role
@@ -598,17 +629,12 @@ resource "aws_iam_role_policy_attachment" "iam_management" {
   policy_arn = aws_iam_policy.iam_management.arn
 }
 
-resource "aws_iam_role_policy_attachment" "cloudwatch_logging" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.cloudwatch_logging.arn
-}
-
 resource "aws_iam_role_policy_attachment" "firehose_readonly_attach" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.firehose_readonly.arn
 }
 
-resource "aws_iam_role_policy_attachment" "cloudwatch_alarms" {
+resource "aws_iam_role_policy_attachment" "cloudwatch_management" {
   role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.cloudwatch_alarms.arn
+  policy_arn = aws_iam_policy.cloudwatch_management.arn
 }

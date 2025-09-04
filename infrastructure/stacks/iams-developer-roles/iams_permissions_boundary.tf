@@ -69,6 +69,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "events:ListTargetsByRule",
       "events:TagResource",
       "events:UntagResource",
+      "events:ListTagsForResource",
 
       # Kinesis Firehose - log streaming
       "firehose:CreateDeliveryStream",
@@ -150,6 +151,12 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "lambda:AddPermission",
       "lambda:RemovePermission",
       "lambda:GetPolicy",
+      "lambda:GetAlias",
+      "lambda:GetLayerVersion",
+      "lambda:GetProvisionedConcurrencyConfig",
+      "lambda:PutProvisionedConcurrencyConfig",
+      "lambda:DeleteProvisionedConcurrencyConfig",
+      "lambda:ListProvisionedConcurrencyConfigs",
 
       # CloudWatch Logs - log management
       "logs:CreateLogGroup",
@@ -228,7 +235,23 @@ data "aws_iam_policy_document" "permissions_boundary" {
       values   = [var.default_aws_region]
     }
   }
-
+  # Environment-specific actions
+  dynamic "statement" {
+    for_each = var.environment == "preprod" ? [1] : []
+    content {
+      sid    = "AllowPreprodDynamoDBItemOps"
+      effect = "Allow"
+      actions = [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Scan",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:Query"
+      ]
+      resources = ["*"]
+    }
+  }
   # Allow access to IAM actions for us-east-1 region only
   statement {
     sid       = "AllowIamActionsInUsEast1"
