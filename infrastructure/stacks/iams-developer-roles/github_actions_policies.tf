@@ -65,9 +65,12 @@ resource "aws_iam_policy" "lambda_management" {
           "lambda:GetPolicy",
           "lambda:GetAlias",
           "lambda:GetFunction",
-          "lambda:GetProvisionedConcurrencyConfig",
           "lambda:GetLayerVersion",
-          "lambda:PutProvisionedConcurrencyConfig"
+          "lambda:GetProvisionedConcurrencyConfig",
+          "lambda:PutProvisionedConcurrencyConfig",
+          "lambda:DeleteProvisionedConcurrencyConfig",
+          "lambda:ListProvisionedConcurrencyConfigs",
+
         ],
         Resource = [
           "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api",
@@ -109,7 +112,7 @@ resource "aws_iam_policy" "dynamodb_management" {
         }
       ],
       # to create test users in preprod
-      var.environment == "preprod" ? [
+        var.environment == "preprod" ? [
         {
           Effect = "Allow",
           Action = [
