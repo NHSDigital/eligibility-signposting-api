@@ -104,6 +104,7 @@ def test_base_eligible_with_when_magic_cohort_is_present_v1(
         test_comment,
     )
 
+
 @pytest.mark.parametrize(
     ("person_cohorts", "iteration_cohorts_and_virtual_flag", "status", "test_comment"),
     [

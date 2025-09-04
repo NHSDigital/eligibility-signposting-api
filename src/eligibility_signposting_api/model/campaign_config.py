@@ -110,8 +110,7 @@ class IterationCohort(BaseModel):
     def is_magic_cohort(self) -> bool:
         if magic_cohort_virtual_toggle:
             return self.virtual == Virtual.YES
-        else:
-            return self.cohort_label.upper() == MAGIC_COHORT_LABEL.upper()
+        return self.cohort_label.upper() == MAGIC_COHORT_LABEL.upper()
 
 
 class IterationRule(BaseModel):
