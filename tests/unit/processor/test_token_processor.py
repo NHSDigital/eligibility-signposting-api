@@ -1,6 +1,6 @@
 import pytest
 
-from eligibility_signposting_api.services.processors.token_processor import TokenProcessor, TokenError
+from eligibility_signposting_api.services.processors.token_processor import TokenError, TokenProcessor
 
 
 @pytest.mark.parametrize(
