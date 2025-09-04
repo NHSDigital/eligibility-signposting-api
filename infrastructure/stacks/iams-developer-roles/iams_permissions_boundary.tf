@@ -152,9 +152,11 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "lambda:RemovePermission",
       "lambda:GetPolicy",
       "lambda:GetAlias",
-      "lambda:GetProvisionedConcurrencyConfig",
       "lambda:GetLayerVersion",
+      "lambda:GetProvisionedConcurrencyConfig",
       "lambda:PutProvisionedConcurrencyConfig",
+      "lambda:DeleteProvisionedConcurrencyConfig",
+      "lambda:ListProvisionedConcurrencyConfigs",
 
       # CloudWatch Logs - log management
       "logs:CreateLogGroup",
