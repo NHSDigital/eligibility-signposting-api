@@ -24,6 +24,7 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleOperator,
     RulePriority,
     RuleType,
+    Virtual,
 )
 
 
@@ -37,6 +38,7 @@ def future_date(days_ahead: int = 365) -> date:
 
 class IterationCohortFactory(ModelFactory[IterationCohort]):
     priority = RulePriority(0)
+    virtual = Virtual.NO
 
 
 class IterationRuleFactory(ModelFactory[IterationRule]):
@@ -112,6 +114,7 @@ class MagicCohortFactory(IterationCohortFactory):
     cohort_group = CohortGroup("magic cohort group")
     positive_description = Description("magic positive description")
     negative_description = Description("magic negative description")
+    virtual = Virtual.YES
     priority = 1
 
 
@@ -120,6 +123,7 @@ class Rsv75RollingCohortFactory(IterationCohortFactory):
     cohort_group = CohortGroup("rsv_age_range")
     positive_description = Description("rsv_age_range positive description")
     negative_description = Description("rsv_age_range negative description")
+    virtual = Virtual.NO
     priority = 2
 
 
@@ -128,6 +132,7 @@ class Rsv75to79CohortFactory(IterationCohortFactory):
     cohort_group = CohortGroup("rsv_age_range")
     positive_description = Description("rsv_age_range positive description")
     negative_description = Description("rsv_age_range negative description")
+    virtual = Virtual.NO
     priority = 3
 
 
@@ -136,6 +141,7 @@ class RsvPretendClinicalCohortFactory(IterationCohortFactory):
     cohort_group = CohortGroup("rsv_clinical_cohort")
     positive_description = Description("rsv_clinical_cohort positive description")
     negative_description = Description("rsv_clinical_cohort negative description")
+    virtual = Virtual.NO
     priority = 4
 
 

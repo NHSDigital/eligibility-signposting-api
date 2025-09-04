@@ -11,7 +11,7 @@ from typing import Literal, NewType
 
 from pydantic import BaseModel, Field, HttpUrl, RootModel, field_serializer, field_validator, model_validator
 
-from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS, MAGIC_COHORT_LABEL, RULE_STOP_DEFAULT
+from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS, RULE_STOP_DEFAULT
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from pydantic import SerializationInfo
@@ -90,18 +90,24 @@ class RuleAttributeLevel(StrEnum):
     COHORT = "COHORT"
 
 
+class Virtual(StrEnum):
+    YES = "Y"
+    NO = "N"
+
+
 class IterationCohort(BaseModel):
     cohort_label: CohortLabel = Field(alias="CohortLabel")
     cohort_group: CohortGroup = Field(alias="CohortGroup")
     positive_description: Description | None = Field(None, alias="PositiveDescription")
     negative_description: Description | None = Field(None, alias="NegativeDescription")
     priority: int | None = Field(None, alias="Priority")
+    virtual: Virtual = Field(default=Virtual.NO, alias="Virtual")
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
     @cached_property
     def is_magic_cohort(self) -> bool:
-        return self.cohort_label.upper() == MAGIC_COHORT_LABEL.upper()
+        return self.virtual == Virtual.YES
 
 
 class IterationRule(BaseModel):

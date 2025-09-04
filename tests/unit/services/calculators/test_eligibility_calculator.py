@@ -58,29 +58,35 @@ def app():
 
 
 @pytest.mark.parametrize(
-    ("person_cohorts", "iteration_cohorts", "status", "test_comment"),
+    ("person_cohorts", "iteration_cohorts_and_virtual_flag", "status", "test_comment"),
     [
-        (["cohort1"], ["elid_all_people"], Status.actionable, "Only magic cohort present"),
-        (["cohort1"], ["elid_all_people", "cohort1"], Status.actionable, "Magic cohort with other cohorts"),
-        (["cohort1"], ["cohort2"], Status.not_eligible, "No magic cohort. No matching person cohort"),
-        ([], ["elid_all_people"], Status.actionable, "No person cohorts. Only magic cohort present"),
+        (["cohort1"], {"elid_all_people": "Y"}, Status.actionable, "Only magic cohort present"),
+        (["cohort1"], {"elid_all_people": "Y", "cohort1": "N"}, Status.actionable, "Magic cohort with other cohorts"),
+        (["cohort1"], {"cohort2": "N"}, Status.not_eligible, "No magic cohort. No matching person cohort"),
+        ([], {"elid_all_people": "Y"}, Status.actionable, "No person cohorts. Only magic cohort present"),
     ],
 )
 def test_base_eligible_with_when_magic_cohort_is_present(
-    faker: Faker, person_cohorts: list[str], iteration_cohorts: list[str], status: Status, test_comment: str
+    faker: Faker,
+    person_cohorts: list[str],
+    iteration_cohorts_and_virtual_flag: dict[str, str],
+    status: Status,
+    test_comment: str,
 ):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=79))
 
     person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=person_cohorts)
+
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
             target="RSV",
             iterations=[
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[
-                        rule_builder.IterationCohortFactory.build(cohort_label=label) for label in iteration_cohorts
+                        rule_builder.IterationCohortFactory.build(cohort_label=label, virtual=flag.upper())
+                        for label, flag in iteration_cohorts_and_virtual_flag.items()
                     ],
                     iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
                 )
