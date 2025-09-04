@@ -1,6 +1,6 @@
 import pytest
 
-from eligibility_signposting_api.services.processors.token_processor import TokenProcessor
+from eligibility_signposting_api.services.processors.token_processor import TokenProcessor, TokenError
 
 
 @pytest.mark.parametrize(
@@ -49,5 +49,5 @@ def test_apply_formatting_raises_value_error_on_invalid_date():
     attribute_value = "DATE_OF_BIRTH"
     date_format = "%Y-%m-%d"
 
-    with pytest.raises(ValueError, match="Invalid value error$"):
+    with pytest.raises(TokenError, match="Invalid value error"):
         TokenProcessor.apply_formatting(attribute, attribute_value, date_format)
