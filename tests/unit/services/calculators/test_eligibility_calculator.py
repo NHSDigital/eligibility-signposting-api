@@ -9,6 +9,7 @@ from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, contains_inanyorder, has_item, has_items, is_, is_in
 from pydantic import HttpUrl
 
+from eligibility_signposting_api.feature_toggle import magic_cohort_virtual_toggle
 from eligibility_signposting_api.model import campaign_config as rules_model
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
@@ -66,7 +67,8 @@ def app():
         ([], ["elid_all_people"], Status.actionable, "No person cohorts. Only magic cohort present"),
     ],
 )
-def test_base_eligible_with_when_magic_cohort_is_present(
+@pytest.mark.skipif(magic_cohort_virtual_toggle, reason="if magic virtual toggle is off")
+def test_base_eligible_with_when_magic_cohort_is_present_v1(
     faker: Faker, person_cohorts: list[str], iteration_cohorts: list[str], status: Status, test_comment: str
 ):
     # Given
@@ -81,6 +83,58 @@ def test_base_eligible_with_when_magic_cohort_is_present(
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[
                         rule_builder.IterationCohortFactory.build(cohort_label=label) for label in iteration_cohorts
+                    ],
+                    iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(status))
+        ),
+        test_comment,
+    )
+
+@pytest.mark.parametrize(
+    ("person_cohorts", "iteration_cohorts_and_virtual_flag", "status", "test_comment"),
+    [
+        (["cohort1"], {"elid_all_people": "Y"}, Status.actionable, "Only magic cohort present"),
+        (["cohort1"], {"elid_all_people": "Y", "cohort1": "N"}, Status.actionable, "Magic cohort with other cohorts"),
+        (["cohort1"], {"cohort2": "N"}, Status.not_eligible, "No magic cohort. No matching person cohort"),
+        ([], {"elid_all_people": "Y"}, Status.actionable, "No person cohorts. Only magic cohort present"),
+    ],
+)
+@pytest.mark.skipif(not magic_cohort_virtual_toggle, reason="if magic virtual toggle is on")
+def test_base_eligible_with_when_magic_cohort_is_present_v2(
+    faker: Faker,
+    person_cohorts: list[str],
+    iteration_cohorts_and_virtual_flag: dict[str, str],
+    status: Status,
+    test_comment: str,
+):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=76, maximum_age=79))
+
+    person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=person_cohorts)
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(cohort_label=label, virtual=flag.upper())
+                        for label, flag in iteration_cohorts_and_virtual_flag.items()
                     ],
                     iteration_rules=[rule_builder.PersonAgeSuppressionRuleFactory.build()],
                 )
