@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 
 
 def handle_exception(e: Exception) -> ResponseReturnValue | HTTPException:
-    logger.exception("Unexpected Exception", exc_info=e)
-
     # Let Flask handle its own exceptions for now.
     if isinstance(e, HTTPException):
         return e
 
-    full_traceback = "".join(traceback.format_exception(e))
+    tb = traceback.extract_tb(e.__traceback__)
+    stack_only = "".join(traceback.format_list(tb))
+
     response = INTERNAL_SERVER_ERROR.log_and_generate_response(
-        log_message=f"An unexpected error occurred: {full_traceback}", diagnostics="An unexpected error occurred."
+        log_message=f"An unexpected error occurred: {stack_only}", diagnostics="An unexpected error occurred."
     )
     return make_response(response.get("body"), response.get("statusCode"), response.get("headers"))

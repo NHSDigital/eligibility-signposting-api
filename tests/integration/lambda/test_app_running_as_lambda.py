@@ -689,5 +689,5 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
 
     assert_that(
         get_log_messages(flask_function, logs_client),
-        has_item(contains_string("Invalid attribute name 'ICECREAM' in token '[[PERSON.ICECREAM]]'.")),
+        has_item(contains_string("TokenProcessor.handle_token_not_found")),
     )
