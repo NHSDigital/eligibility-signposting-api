@@ -780,7 +780,7 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
 
 
 @pytest.fixture(scope="class")
-def campaign_config_with_magic_cohort(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
+def campaign_config_with_virtual_cohort(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
     campaign: CampaignConfig = rule.CampaignConfigFactory.build(
         target="COVID",
         iterations=[
@@ -789,7 +789,7 @@ def campaign_config_with_magic_cohort(s3_client: BaseClient, rules_bucket: Bucke
                     rule.PostcodeSuppressionRuleFactory.build(type=RuleType.filter),
                     rule.PersonAgeSuppressionRuleFactory.build(),
                 ],
-                iteration_cohorts=[rule.MagicCohortFactory.build(cohort_label="elid_all_people")],
+                iteration_cohorts=[rule.VirtualCohortFactory.build(cohort_label="virtual_cohort")],
             )
         ],
     )

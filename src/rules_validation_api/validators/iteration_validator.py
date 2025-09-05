@@ -28,6 +28,21 @@ class IterationValidation(Iteration):
     @field_validator("iteration_cohorts")
     @classmethod
     def validate_iteration_cohorts(cls, iteration_cohorts: list[IterationCohort]) -> list[IterationCohortValidation]:
+        seen_labels = set()
+        errors = []
+        for cohort in iteration_cohorts:
+            label = cohort.cohort_label
+            if label in seen_labels:
+                error = InitErrorDetails(
+                    type="value_error",
+                    loc=("iteration_cohort",),
+                    input=label,
+                    ctx={"error": f"Duplicate iteration_cohort: {label}"},
+                )
+                errors.append(error)
+            seen_labels.add(label)
+        if errors:
+            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=errors)
         return [IterationCohortValidation(**i.model_dump()) for i in iteration_cohorts]
 
     @field_validator("actions_mapper", mode="after")

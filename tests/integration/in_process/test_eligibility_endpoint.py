@@ -289,12 +289,12 @@ class TestStandardResponse:
         )
 
 
-class TestMagicCohortResponse:
-    def test_not_eligible_by_rule_when_only_magic_cohort_is_present(
+class TestVirtualCohortResponse:
+    def test_not_eligible_by_rule_when_only_virtual_cohort_is_present(
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
-        campaign_config_with_magic_cohort: CampaignConfig,  # noqa: ARG002
+        campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
     ):
         # Given
 
@@ -317,9 +317,9 @@ class TestMagicCohortResponse:
                                     "status": "NotEligible",
                                     "eligibilityCohorts": [
                                         {
-                                            "cohortCode": "magic cohort group",
+                                            "cohortCode": "virtual cohort group",
                                             "cohortStatus": "NotEligible",
-                                            "cohortText": "magic negative description",
+                                            "cohortText": "virtual negative description",
                                         }
                                     ],
                                     "actions": [],
@@ -333,11 +333,11 @@ class TestMagicCohortResponse:
             ),
         )
 
-    def test_not_actionable_when_only_magic_cohort_is_present(
+    def test_not_actionable_when_only_virtual_cohort_is_present(
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config_with_magic_cohort: CampaignConfig,  # noqa: ARG002
+        campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
     ):
         # Given
 
@@ -360,9 +360,9 @@ class TestMagicCohortResponse:
                                     "status": "NotActionable",
                                     "eligibilityCohorts": [
                                         {
-                                            "cohortCode": "magic cohort group",
+                                            "cohortCode": "virtual cohort group",
                                             "cohortStatus": "NotActionable",
-                                            "cohortText": "magic positive description",
+                                            "cohortText": "virtual positive description",
                                         }
                                     ],
                                     "actions": [],
@@ -382,11 +382,11 @@ class TestMagicCohortResponse:
             ),
         )
 
-    def test_actionable_when_only_magic_cohort_is_present(
+    def test_actionable_when_only_virtual_cohort_is_present(
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        campaign_config_with_magic_cohort: CampaignConfig,  # noqa: ARG002
+        campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
     ):
         # Given
 
@@ -409,9 +409,9 @@ class TestMagicCohortResponse:
                                     "status": "Actionable",
                                     "eligibilityCohorts": [
                                         {
-                                            "cohortCode": "magic cohort group",
+                                            "cohortCode": "virtual cohort group",
                                             "cohortStatus": "Actionable",
-                                            "cohortText": "magic positive description",
+                                            "cohortText": "virtual positive description",
                                         }
                                     ],
                                     "actions": [

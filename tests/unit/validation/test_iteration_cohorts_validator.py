@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
+from eligibility_signposting_api.model.campaign_config import Virtual
 from rules_validation_api.validators.iteration_cohort_validator import IterationCohortValidation
 
 
@@ -63,3 +64,42 @@ class TestOptionalFieldsSchemaValidations:
         data = {"CohortLabel": "rsv_75_rolling", "CohortGroup": "rsv_age_rolling", "Priority": cohort_priority}
         cohort = IterationCohortValidation(**data)
         assert cohort.priority == cohort_priority
+
+    def test_virtual_valid_value(
+        self,
+    ):
+        data = {"CohortLabel": "rsv_75_rolling", "CohortGroup": "rsv_age_rolling", "Priority": 10}
+        cohort = IterationCohortValidation(**data)
+        assert cohort.virtual == Virtual.NO
+
+    @pytest.mark.parametrize(
+        ("virtual_str", "expected"),
+        [
+            ("Y", Virtual.YES),
+            ("y", Virtual.YES),
+            ("N", Virtual.NO),
+            ("n", Virtual.NO),
+            (None, Virtual.NO),
+        ],
+    )
+    def test_virtual_valid_value_when_provided(self, virtual_str: str, expected: Virtual):
+        cohort_priority = 10
+        data = {
+            "CohortLabel": "rsv_75_rolling",
+            "CohortGroup": "rsv_age_rolling",
+            "Priority": cohort_priority,
+            "Virtual": virtual_str,
+        }
+        cohort = IterationCohortValidation(**data)
+        assert cohort.virtual == expected
+
+    @pytest.mark.parametrize("invalid_value", ["", "yes", "no", "1", "0", "true", "X", "Z"])
+    def test_virtual_invalid_values_raise_error(self, invalid_value):
+        data = {
+            "CohortLabel": "rsv_75_rolling",
+            "CohortGroup": "rsv_age_rolling",
+            "Priority": 10,
+            "Virtual": invalid_value,
+        }
+        with pytest.raises(ValidationError):
+            IterationCohortValidation(**data)
