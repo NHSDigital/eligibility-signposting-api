@@ -109,11 +109,11 @@ class CampaignConfigFactory(RawCampaignConfigFactory):
 
 
 # Iteration cohort factories
-class MagicCohortFactory(IterationCohortFactory):
-    cohort_label = CohortLabel("elid_all_people")
-    cohort_group = CohortGroup("magic cohort group")
-    positive_description = Description("magic positive description")
-    negative_description = Description("magic negative description")
+class VirtualCohortFactory(IterationCohortFactory):
+    cohort_label = CohortLabel("virtual cohort label")
+    cohort_group = CohortGroup("virtual cohort group")
+    positive_description = Description("virtual positive description")
+    negative_description = Description("virtual negative description")
     virtual = Virtual.YES
     priority = 1
 

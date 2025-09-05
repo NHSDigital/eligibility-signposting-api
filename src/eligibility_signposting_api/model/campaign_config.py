@@ -91,7 +91,7 @@ class RuleAttributeLevel(StrEnum):
 
 
 class Virtual(StrEnum):
-    YES = "Y"  # TODO: Done - check line 112 below
+    YES = "Y"
     NO = "N"
 
 

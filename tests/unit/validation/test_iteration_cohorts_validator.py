@@ -65,9 +65,10 @@ class TestOptionalFieldsSchemaValidations:
         cohort = IterationCohortValidation(**data)
         assert cohort.priority == cohort_priority
 
-    def test_virtual_valid_value(self):  # TODO Done : parse iteration_cohort and check  if the virtual value is N by default
-        cohort_priority = 10
-        data = {"CohortLabel": "rsv_75_rolling", "CohortGroup": "rsv_age_rolling", "Priority": cohort_priority}
+    def test_virtual_valid_value(
+        self,
+    ):
+        data = {"CohortLabel": "rsv_75_rolling", "CohortGroup": "rsv_age_rolling", "Priority": 10}
         cohort = IterationCohortValidation(**data)
         assert cohort.virtual == Virtual.NO
 
@@ -81,7 +82,7 @@ class TestOptionalFieldsSchemaValidations:
             (None, Virtual.NO),
         ],
     )
-    def test_virtual_valid_value_when_provided(self, virtual_str: str, expected: Virtual):  # TODO : Done - recheck
+    def test_virtual_valid_value_when_provided(self, virtual_str: str, expected: Virtual):
         cohort_priority = 10
         data = {
             "CohortLabel": "rsv_75_rolling",
@@ -93,7 +94,7 @@ class TestOptionalFieldsSchemaValidations:
         assert cohort.virtual == expected
 
     @pytest.mark.parametrize("invalid_value", ["", "yes", "no", "1", "0", "true", "X", "Z"])
-    def test_virtual_invalid_values_raise_error(self, invalid_value):  # TODO : Done - recheck
+    def test_virtual_invalid_values_raise_error(self, invalid_value):
         data = {
             "CohortLabel": "rsv_75_rolling",
             "CohortGroup": "rsv_age_rolling",

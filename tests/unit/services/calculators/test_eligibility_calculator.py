@@ -60,45 +60,45 @@ def app():
 @pytest.mark.parametrize(
     ("person_cohorts", "iteration_cohorts_and_virtual_flag", "status", "test_comment"),
     [
-        (["cohort1"], {"cohort2": "Y"}, Status.actionable, "a magic cohort"),
-        (["cohort1"], {"cohort1": "Y"}, Status.actionable, "a magic cohort that is in person cohort"),
-        (["cohort1"], {"cohort1": "N"}, Status.actionable, "a non-magic cohort that is in person cohort"),
-        (["cohort1"], {"cohort2": "N"}, Status.not_eligible, "a non-magic cohort that is not in person cohort"),
+        (["cohort1"], {"cohort2": "Y"}, Status.actionable, "a virtual cohort"),
+        (["cohort1"], {"cohort1": "Y"}, Status.actionable, "a virtual cohort that is in person cohort"),
+        (["cohort1"], {"cohort1": "N"}, Status.actionable, "a non-virtual cohort that is in person cohort"),
+        (["cohort1"], {"cohort2": "N"}, Status.not_eligible, "a non-virtual cohort that is not in person cohort"),
         (
             ["cohort1"],
             {"cohort1": "N", "cohort2": "Y"},
             Status.actionable,
-            "one magic cohort, other is non magic & in person cohort",
+            "one virtual cohort, other is non virtual & in person cohort",
         ),
         (
             ["cohort1"],
             {"cohort1": "Y", "cohort2": "N"},
             Status.actionable,
-            "one non magic cohort, other is magic & in person cohort",
+            "one non virtual cohort, other is virtual & in person cohort",
         ),
         (
             ["cohort1"],
             {"cohort2": "y", "cohort3": "y"},
             Status.actionable,
-            "two magic cohorts, neither of them is in person cohort",
+            "two virtual cohorts, neither of them is in person cohort",
         ),
         (
             ["cohort1", "cohort2"],
             {"cohort1": "y", "cohort2": "y"},
             Status.actionable,
-            "two magic cohorts, both are in person cohort",
+            "two virtual cohorts, both are in person cohort",
         ),
         (
             ["cohort1"],
             {"cohort2": "N", "cohort3": "N"},
             Status.not_eligible,
-            "two not magic cohorts, neither of them is in person cohort",
+            "two not virtual cohorts, neither of them is in person cohort",
         ),
-        ([], {"cohort1": "Y"}, Status.actionable, "No person cohorts. Only magic cohort"),
-        ([], {"cohort1": "N"}, Status.not_eligible, "No person cohorts. Only non-magic cohort"),
+        ([], {"cohort1": "Y"}, Status.actionable, "No person cohorts. Only virtual cohort"),
+        ([], {"cohort1": "N"}, Status.not_eligible, "No person cohorts. Only non-virtual cohort"),
     ],
 )
-def test_base_eligible_with_when_magic_cohort_is_present(  # TODO rename magic to virtual
+def test_base_eligible_with_when_virtual_cohort_is_present(
     faker: Faker,
     person_cohorts: list[str],
     iteration_cohorts_and_virtual_flag: dict[str, str],
@@ -541,16 +541,16 @@ def test_status_if_iteration_rules_contains_virtual_cohorts_as_cohort_label_fiel
             person_rows_builder(nhs_number="123", cohorts=[], postcode="AC01", de=True, icb="QE1"),
             Status.not_eligible,
             [
-                ("magic cohort group", "magic negative description"),
+                ("virtual cohort group", "virtual negative description"),
                 ("rsv_age_range", "rsv_age_range negative description"),
             ],
-            "rsv_75_rolling is not base-eligible & magic cohort group not eligible by F rules ",
+            "rsv_75_rolling is not base-eligible & virtual cohort group not eligible by F rules ",
         ),
         (
             person_rows_builder(nhs_number="123", cohorts=["rsv_75_rolling"], postcode="AC01", de=True, icb="QE1"),
             Status.not_eligible,
             [
-                ("magic cohort group", "magic negative description"),
+                ("virtual cohort group", "virtual negative description"),
                 ("rsv_age_range", "rsv_age_range negative description"),
             ],
             "all the cohorts are not-eligible by F rules",
@@ -559,7 +559,7 @@ def test_status_if_iteration_rules_contains_virtual_cohorts_as_cohort_label_fiel
             person_rows_builder(nhs_number="123", cohorts=["rsv_75_rolling"], postcode="SW19", de=False, icb="QE1"),
             Status.not_actionable,
             [
-                ("magic cohort group", "magic positive description"),
+                ("virtual cohort group", "virtual positive description"),
                 ("rsv_age_range", "rsv_age_range positive description"),
             ],
             "all the cohorts are not-actionable",
@@ -568,7 +568,7 @@ def test_status_if_iteration_rules_contains_virtual_cohorts_as_cohort_label_fiel
             person_rows_builder(nhs_number="123", cohorts=["rsv_75_rolling"], postcode="AC01", de=False, icb="QE1"),
             Status.actionable,
             [
-                ("magic cohort group", "magic positive description"),
+                ("virtual cohort group", "virtual positive description"),
                 ("rsv_age_range", "rsv_age_range positive description"),
             ],
             "all the cohorts are actionable",
@@ -576,18 +576,18 @@ def test_status_if_iteration_rules_contains_virtual_cohorts_as_cohort_label_fiel
         (
             person_rows_builder(nhs_number="123", cohorts=["rsv_75_rolling"], postcode="AC01", de=False, icb="NOT_QE1"),
             Status.actionable,
-            [("magic cohort group", "magic positive description")],
-            "magic_cohort is actionable, but not others",
+            [("virtual cohort group", "virtual positive description")],
+            "virtual_cohort is actionable, but not others",
         ),
         (
             person_rows_builder(nhs_number="123", cohorts=["rsv_75_rolling"], postcode="SW19", de=False, icb="NOT_QE1"),
             Status.not_actionable,
-            [("magic cohort group", "magic positive description")],
-            "magic_cohort is not-actionable, but others are not eligible",
+            [("virtual cohort group", "virtual positive description")],
+            "virtual_cohort is not-actionable, but others are not eligible",
         ),
     ],
 )
-def test_cohort_groups_and_their_descriptions_when_magic_cohort_is_present(
+def test_cohort_groups_and_their_descriptions_when_virtual_cohort_is_present(
     person_rows: list[dict[str, Any]],
     expected_status: str,
     expected_cohort_group_and_description: list[tuple[str, str]],
@@ -601,7 +601,7 @@ def test_cohort_groups_and_their_descriptions_when_magic_cohort_is_present(
                 rule_builder.IterationFactory.build(
                     iteration_cohorts=[
                         rule_builder.Rsv75RollingCohortFactory.build(),
-                        rule_builder.MagicCohortFactory.build(),
+                        rule_builder.VirtualCohortFactory.build(),
                     ],
                     iteration_rules=[
                         # F common rule
