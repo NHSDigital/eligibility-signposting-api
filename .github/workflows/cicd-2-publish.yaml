@@ -129,12 +129,3 @@ jobs:
             Author: "${{ github.actor }}"
             title: "Pushed to main"
             version: "${{ needs.metadata.outputs.version }}"
-
-  call-deploy-test:
-    name: "Trigger TEST deploy (only on success)"
-    needs: publish
-    if: ${{ needs.publish.result == 'success' && github.ref == 'refs/heads/main' }}
-    uses: ./.github/workflows/cicd-3-test_auto.yaml
-    with:
-      ref: ${{ github.sha }}
-    secrets: inherit
