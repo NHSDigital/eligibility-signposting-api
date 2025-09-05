@@ -1,14 +1,14 @@
 {
   "meta": {
-    "lastUpdated": "2025-08-29T15:22:00.510996+00:00"
+    "lastUpdated": "2025-09-05T15:10:53.120938+00:00"
   },
   "processedSuggestions": [
     {
       "actions": [
         {
-          "actionCode": "BookLocal",
+          "actionCode": "ContactGP",
           "actionType": "InfoText",
-          "description": "## Getting the vaccine\n\n You can get an RSV vaccination at your GP surgery.\n Your GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
+          "description": "## Get vaccinated at your GP practice\n\nContact your GP surgery to book an appointment.",
           "urlLabel": "",
           "urlLink": ""
         },
@@ -29,7 +29,7 @@
         {
           "actionCode": "HelpSupportInfo",
           "actionType": "InfoText",
-          "description": "## If you think this is incorrect\n\n If you have already had this vaccination or your personal details are wrong, visit our [help and support page](https://digital.nhs.uk/services/eligibility-data-product-elid).",
+          "description": "## If you think this is incorrect\n\nIf you have already had this vaccination or your personal details are wrong, visit our [help and support page](https://www.nhs.uk/nhs-app/nhs-app-help-and-support/).",
           "urlLabel": "",
           "urlLink": ""
         }
@@ -39,7 +39,7 @@
         {
           "cohortCode": "rsv_age",
           "cohortStatus": "Actionable",
-          "cohortText": "are aged 75 to 79 years old"
+          "cohortText": "are aged between 75 and 79"
         }
       ],
       "status": "Actionable",
@@ -47,5 +47,5 @@
       "suitabilityRules": []
     }
   ],
-  "responseId": "b84ec710-7da3-4e4c-a37d-798a8c185a7d"
+  "responseId": "6dee29a7-3419-48f0-9f10-2a8a0caf79ea"
 }

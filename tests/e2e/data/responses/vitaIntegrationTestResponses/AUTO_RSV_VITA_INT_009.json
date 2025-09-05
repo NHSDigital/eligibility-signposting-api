@@ -10,7 +10,7 @@
         {
           "cohortCode": "rsv_age",
           "cohortStatus": "NotActionable",
-          "cohortText": "are aged 75 to 79 years old"
+          "cohortText": "are aged between 75 and 79"
         }
       ],
       "status": "NotActionable",

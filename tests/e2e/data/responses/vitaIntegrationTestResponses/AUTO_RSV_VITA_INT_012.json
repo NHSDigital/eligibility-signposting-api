@@ -8,7 +8,7 @@
         {
           "actionCode": "AlreadyVaccinatedInfo",
           "actionType": "InfoText",
-          "description": "## If you think this is incorrect\n\n If you believe you've not been vaccinated against RSV, speak to your healthcare professional.\n\nFor anything else please see our [help and support page](https://digital.nhs.uk/services/eligibility-data-product-elid).",
+          "description": "## If you think this is incorrect\n\nIf you believe you've not been vaccinated against RSV, speak to your healthcare professional.\n\nFor anything else please see our [help and support page](https://www.nhs.uk/nhs-app/nhs-app-help-and-support/).",
           "urlLabel": "",
           "urlLink": ""
         }
@@ -20,7 +20,7 @@
       "suitabilityRules": [
         {
           "ruleCode": "AlreadyVaccinated",
-          "ruleText": "## You've had your RSV vaccination\n\n We believe you had your vaccination.",
+          "ruleText": "## You've had your RSV vaccination\n\nWe believe you were vaccinated against RSV on 3 April 2025.",
           "ruleType": "S"
         }
       ]
