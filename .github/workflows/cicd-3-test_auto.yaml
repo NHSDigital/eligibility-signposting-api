@@ -20,7 +20,6 @@ jobs:
   metadata:
     name: "Resolve metadata from triggering run"
     runs-on: ubuntu-latest
-    # keep your guard if you want, but it’s not needed with workflow_call
     outputs:
       terraform_version: ${{ steps.vars.outputs.terraform_version }}
       tag: ${{ steps.tag.outputs.name }}
