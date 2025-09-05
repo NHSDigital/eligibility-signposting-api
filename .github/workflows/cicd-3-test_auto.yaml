@@ -1,11 +1,9 @@
 name: "Auto Deploy to test"
 
 on:
-  workflow_call:
-    inputs:
-      ref:
-        required: true
-        type: string
+  workflow_run:
+    workflows: ["CI/CD publish"]
+    types: [completed]
 
 concurrency:
   group: terraform-deploy-test
@@ -20,6 +18,11 @@ jobs:
   metadata:
     name: "Resolve metadata from triggering run"
     runs-on: ubuntu-latest
+    if: >
+      ${{
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main'
+      }}
     outputs:
       terraform_version: ${{ steps.vars.outputs.terraform_version }}
       tag: ${{ steps.tag.outputs.name }}
@@ -27,7 +30,7 @@ jobs:
       - name: "Checkout exact commit from CI/CD publish"
         uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: "Set CI/CD variables"
         id: vars
@@ -38,7 +41,7 @@ jobs:
         id: tag
         run: |
           git fetch --tags --force
-          SHA="${{ inputs.ref }}"
+          SHA="${{ github.event.workflow_run.head_sha }}"
           TAG=$(git tag --points-at "$SHA" | grep '^dev-' | head -n1 || true)
           if [ -z "$TAG" ]; then
             echo "No dev-* tag found on $SHA" >&2
@@ -59,7 +62,7 @@ jobs:
       - name: "Checkout same commit"
         uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: "Setup Terraform"
         uses: hashicorp/setup-terraform@v3
