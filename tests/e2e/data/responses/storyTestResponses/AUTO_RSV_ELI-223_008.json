@@ -8,7 +8,7 @@
         {
           "actionCode": "TestNotEligible",
           "actionType": "ButtonWithAuthLink",
-          "description": "## You are not eligible as your dob is 03 September 1950.",
+          "description": "## You are not eligible as your dob is <<RDATE_AGE_75>>.",
           "urlLabel": "You're not Eligible",
           "urlLink": "http://www.nhs.uk/book-rsv"
         }

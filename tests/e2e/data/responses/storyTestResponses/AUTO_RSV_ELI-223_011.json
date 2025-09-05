@@ -8,7 +8,7 @@
         {
           "actionCode": "TestActionable",
           "actionType": "ButtonWithAuthLink",
-          "description": "## You are actionable as your dob is 03 September 1950.",
+          "description": "## You are actionable as your dob is <<RDATE_AGE_75>>.",
           "urlLabel": "You're actionable",
           "urlLink": "http://www.nhs.uk/book-rsv"
         }
