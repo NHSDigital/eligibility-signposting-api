@@ -91,7 +91,7 @@ class RuleAttributeLevel(StrEnum):
 
 
 class Virtual(StrEnum):
-    YES = "Y"
+    YES = "Y"  # TODO: Done - check line 112 below
     NO = "N"
 
 
@@ -108,6 +108,18 @@ class IterationCohort(BaseModel):
     @cached_property
     def is_magic_cohort(self) -> bool:
         return self.virtual == Virtual.YES
+
+    @field_validator("virtual", mode="before")
+    @classmethod
+    def normalize_virtual(cls, value: str) -> Virtual:
+        if value is None:
+            return Virtual.NO
+        if isinstance(value, str):
+            value = value.strip().upper()
+        if value == "Y":
+            return Virtual.YES
+        msg = f"Invalid value for Virtual: {value!r}"
+        raise ValueError(msg)
 
 
 class IterationRule(BaseModel):

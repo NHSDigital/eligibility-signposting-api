@@ -66,13 +66,13 @@ def app():
         (["cohort1"], {"cohort2": "N"}, Status.not_eligible, "a non-magic cohort that is not in person cohort"),
         (
             ["cohort1"],
-            {"cohort1": "N", "cohort2": "y"},
+            {"cohort1": "N", "cohort2": "Y"},
             Status.actionable,
             "one magic cohort, other is non magic & in person cohort",
         ),
         (
             ["cohort1"],
-            {"cohort1": "N", "cohort2": "y"},
+            {"cohort1": "Y", "cohort2": "N"},
             Status.actionable,
             "one non magic cohort, other is magic & in person cohort",
         ),
@@ -95,10 +95,10 @@ def app():
             "two not magic cohorts, neither of them is in person cohort",
         ),
         ([], {"cohort1": "Y"}, Status.actionable, "No person cohorts. Only magic cohort"),
-        ([], {"elid_all_people": "N"}, Status.not_eligible, "No person cohorts. Only non-magic cohort"),
+        ([], {"cohort1": "N"}, Status.not_eligible, "No person cohorts. Only non-magic cohort"),
     ],
 )
-def test_base_eligible_with_when_magic_cohort_is_present(
+def test_base_eligible_with_when_magic_cohort_is_present(  # TODO rename
     faker: Faker,
     person_cohorts: list[str],
     iteration_cohorts_and_virtual_flag: dict[str, str],
