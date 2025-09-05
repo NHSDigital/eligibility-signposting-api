@@ -103,7 +103,6 @@ jobs:
           TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
           TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
 
-        # just planning for now for safety and until review
         run: |
           mkdir -p ./build
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=apply"
@@ -119,29 +118,6 @@ jobs:
           git tag ${{ needs.metadata.outputs.version }}
           git push origin ${{ needs.metadata.outputs.version }}
 
-      # --- Keeping these just in case: Uncomment to release to GitHub ---
-      # - name: "Create release"
-      #   id: create_release
-      #   uses: actions/create-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     tag_name: ${{ needs.metadata.outputs.version }}
-      #     release_name: Release ${{ needs.metadata.outputs.version }}
-      #     body: |
-      #       Release of ${{ needs.metadata.outputs.version }}
-      #     draft: false
-      #     prerelease: true
-
-      # - name: "Upload release asset"
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: "${{ steps.create_release.outputs.upload_url }}"
-      #     asset_path: ./build/lambda.zip
-      #     asset_name: lambda-${{ needs.metadata.outputs.version }}.zip
-      #     asset_content_type: application/zip
       - name: "Notify Slack on PR merge"
         uses: slackapi/slack-github-action@v2.1.1
         with:
@@ -153,3 +129,12 @@ jobs:
             Author: "${{ github.actor }}"
             title: "Pushed to main"
             version: "${{ needs.metadata.outputs.version }}"
+
+  call-deploy-test:
+    name: "Trigger TEST deploy (only on success)"
+    needs: publish
+    if: ${{ needs.publish.result == 'success' && github.ref == 'refs/heads/main' }}
+    uses: .github/workflows/cicd-3-test_auto.yaml
+    with:
+      ref: ${{ github.sha }}
+    secrets: inherit
