@@ -341,6 +341,7 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
   #checkov:skip=CKV_AWS_356: Root user needs full KMS key management
   #checkov:skip=CKV_AWS_109: Root user needs full KMS key management
 
+  # Allow root user to have full control
   statement {
     sid    = "EnableIamUserPermissions"
     effect = "Allow"
@@ -351,12 +352,20 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
     actions = ["kms:*"]
     resources = ["*"]
   }
+
+  # Allow Lambda, Firehose, and external write roles to use the KMS key
   statement {
-    sid    = "AllowLambdaFullWrite"
+    sid    = "AllowAuditKeyAccess"
     effect = "Allow"
     principals {
       type = "AWS"
-      identifiers = [aws_iam_role.eligibility_lambda_role.arn, aws_iam_role.eligibility_audit_firehose_role.arn]
+      identifiers = concat(
+        [
+          aws_iam_role.eligibility_lambda_role.arn,
+          aws_iam_role.eligibility_audit_firehose_role.arn
+        ],
+        aws_iam_role.write_access_role[*].arn
+      )
     }
     actions = [
       "kms:Decrypt",
@@ -458,4 +467,40 @@ resource "aws_kms_key_policy" "sns_encryption_key_policy" {
       }
     ]
   })
+}
+
+# Policy doc for external write role to read, move, and tag objects in S3
+data "aws_iam_policy_document" "external_s3_read_move_policy_doc" {
+  statement {
+    sid    = "ListBucket"
+    actions = [
+      "s3:ListBucket",
+      "s3:ListBucketVersions"
+    ]
+    resources = [
+      module.s3_audit_bucket.storage_bucket_arn
+    ]
+  }
+
+  statement {
+    sid    = "ReadMoveTagObjects"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:GetObjectTagging",
+      "s3:PutObjectTagging",
+      "s3:PutObject"
+    ]
+    resources = [
+      "${module.s3_audit_bucket.storage_bucket_arn}/*"
+    ]
+  }
+}
+
+# Attach external S3 read, move & tagging policy to external write role
+resource "aws_iam_role_policy" "external_s3_read_move_policy" {
+  count  = length(aws_iam_role.write_access_role)
+  name   = "S3ReadMoveTagAccess"
+  role   = aws_iam_role.write_access_role[count.index].id
+  policy = data.aws_iam_policy_document.external_s3_read_move_policy_doc.json
 }
