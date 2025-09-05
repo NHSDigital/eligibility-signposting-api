@@ -118,6 +118,8 @@ class IterationCohort(BaseModel):
             value = value.strip().upper()
         if value == "Y":
             return Virtual.YES
+        if value == "N":
+            return Virtual.NO
         msg = f"Invalid value for Virtual: {value!r}"
         raise ValueError(msg)
 
