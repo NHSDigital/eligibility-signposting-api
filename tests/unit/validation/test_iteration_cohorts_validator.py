@@ -92,7 +92,7 @@ class TestOptionalFieldsSchemaValidations:
         cohort = IterationCohortValidation(**data)
         assert cohort.virtual == expected
 
-    @pytest.mark.parametrize("invalid_value", ["", "yes", "no", "1", "true", "X", "Z"])
+    @pytest.mark.parametrize("invalid_value", ["", "yes", "no", "1", "0", "true", "X", "Z"])
     def test_virtual_invalid_values_raise_error(self, invalid_value):  # TODO : Done - recheck
         data = {
             "CohortLabel": "rsv_75_rolling",
