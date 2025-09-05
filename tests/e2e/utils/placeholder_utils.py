@@ -9,23 +9,27 @@ logger = logging.getLogger(__name__)
 
 
 def resolve_placeholders(value, context=None, file_name=None):
+    """
+    Replace placeholders of the form <<PLACEHOLDER>> in a string with resolved values.
+    If resolution fails, the original placeholder text is left unchanged.
+    """
+
     if not isinstance(value, str):
         return value
 
-    match = re.search(r"<<(.*?)>>", value)
-    if not match:
-        return value
+    def replacer(match):
+        placeholder = match.group(1)
+        try:
+            resolved = _resolve_placeholder_value(placeholder)
+        except Exception:
+            logger.exception("[ERROR] Could not resolve placeholder %s:", placeholder)
+            return match.group(0)  # leave placeholder unchanged
+        else:
+            if context:
+                context.add(placeholder, resolved, file_name)
+            return resolved
 
-    placeholder = match.group(1)
-
-    try:
-        resolved = _resolve_placeholder_value(placeholder)
-        if context:
-            context.add(placeholder, resolved, file_name)
-        return value.replace(f"<<{placeholder}>>", resolved)
-    except Exception:
-        logger.exception("[ERROR] Could not resolve placeholder %s:", placeholder)
-        return value
+    return re.sub(r"<<(.*?)>>", replacer, value)
 
 
 def _resolve_placeholder_value(placeholder: str) -> str:
@@ -76,4 +80,4 @@ def _resolve_age_placeholder(today: datetime, years_back: int, format_type: str)
 
 
 def _format_date(date: datetime, format_type: str) -> str:
-    return date.strftime("%Y%m%d") if format_type == "DATE" else date.strftime("%-d %B %Y")
+    return date.strftime("%Y%m%d") if format_type == "DATE" else date.strftime("%d %B %Y")

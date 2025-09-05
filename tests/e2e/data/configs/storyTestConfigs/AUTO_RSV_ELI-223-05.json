@@ -1,0 +1,88 @@
+{
+  "CampaignConfig": {
+    "ID": "AUTO_RSV_ELI-223-05-Campaign-ID",
+    "Version": 1,
+    "Name": "ELI-223-05-Iteration-Config-Name",
+    "Type": "V",
+    "Target": "RSV",
+    "Manager": [
+      "person1@nhs.net"
+    ],
+    "Approver": [
+      "person1@nhs.net"
+    ],
+    "Reviewer": [
+      "person1@nhs.net"
+    ],
+    "IterationFrequency": "X",
+    "IterationType": "O",
+    "IterationTime": "07:00:00",
+    "StartDate": "20250717",
+    "EndDate": "20350717",
+    "ApprovalMinimum": 0,
+    "ApprovalMaximum": 0,
+    "DefaultCommsRouting": "BOOK_NBS",
+    "Iterations": [
+      {
+        "ID": "AUTO_RSV_ELI-223-05-Iteration-ID",
+        "DefaultCommsRouting": "TEST_ACTION",
+        "DefaultNotActionableRouting": "TEST_NOT_ACTION",
+        "DefaultNotEligibleRouting": "TEST_NOT_ELI",
+        "Version": 1,
+        "Name": "ELI-223-05-Iteration-Config-Name",
+        "IterationDate": "20240808",
+        "IterationNumber": 1,
+        "CommsType": "I",
+        "ApprovalMinimum": 0,
+        "ApprovalMaximum": 0,
+        "Type": "O",
+        "IterationCohorts": [
+          {
+            "CohortLabel": "rsv_eli_223_cohort_1",
+            "CohortGroup": "rsv_eli_223_cohort_group",
+            "PositiveDescription": "are a member of eli_223_cohort_group",
+            "NegativeDescription": "are not a member of eli_223_cohort_group",
+            "Priority": 0
+          }
+        ],
+        "IterationRules": [
+          {
+            "Type": "S",
+            "Name": "Already Vaccinated",
+            "Description": "We believe you had the RSV vaccination on [[TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%A, (%d) %B %Y)]].",
+            "Priority": 200,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "Operator": "Y>=",
+            "Comparator": "-25",
+            "RuleStop": "Y"
+          }
+        ],
+        "ActionsMapper": {
+          "TEST_ACTION": {
+            "ExternalRoutingCode": "TestActionDefault",
+            "ActionDescription": "TestActionDefault Description",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "TestActionDefault"
+          },
+          "TEST_NOT_ACTION": {
+            "ExternalRoutingCode": "TestNotAction",
+            "ActionDescription": "TestNotAction Description",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": null,
+            "UrlLabel": ""
+          },
+          "AMEND_NBS": {
+            "ExternalRoutingCode": "AmendNBS",
+            "ActionDescription": "## You have an RSV vaccination appointment\n You can view, change or cancel your appointment below.",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Manage your appointment"
+          }
+        }
+      }
+    ]
+  }
+}

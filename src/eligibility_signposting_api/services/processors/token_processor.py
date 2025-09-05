@@ -1,16 +1,13 @@
 import re
 from dataclasses import Field, fields, is_dataclass
 from datetime import UTC, datetime
-from typing import Any, Never, TypeVar
+from typing import Any, Never
 
 from wireup import service
 
 from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.token_parser import ParsedToken, TokenParser
-
-T = TypeVar("T")
-
 
 TARGET_ATTRIBUTE_LEVEL = "TARGET"
 PERSON_ATTRIBUTE_LEVEL = "PERSON"
@@ -27,10 +24,14 @@ ALLOWED_TARGET_ATTRIBUTES = {
 }
 
 
+class TokenError(Exception):
+    """Person value error."""
+
+
 @service
 class TokenProcessor:
     @staticmethod
-    def find_and_replace_tokens(person: Person, data_class: T) -> T:
+    def find_and_replace_tokens[T](person: Person, data_class: T) -> T:
         if not is_dataclass(data_class):
             return data_class
         for class_field in fields(data_class):
@@ -95,8 +96,9 @@ class TokenProcessor:
                 for attribute in person.data:
                     is_person_attribute = attribute.get("ATTRIBUTE_TYPE") == PERSON_ATTRIBUTE_LEVEL
                     is_allowed_target = parsed_token.attribute_name.upper() in ALLOWED_CONDITIONS.__args__
+                    is_correct_target = parsed_token.attribute_name.upper() == attribute.get("ATTRIBUTE_TYPE")
 
-                    if (is_allowed_target or is_person_attribute) and key_to_find in attribute:
+                    if ((is_allowed_target and is_correct_target) or is_person_attribute) and key_to_find in attribute:
                         found_attribute = attribute
                         key_to_replace = key_to_find
                         break
@@ -120,9 +122,9 @@ class TokenProcessor:
         raise ValueError(message)
 
     @staticmethod
-    def apply_formatting(attribute: dict[str, T], attribute_value: str, date_format: str | None) -> str:
+    def apply_formatting[T](attributes: dict[str, T], attribute_name: str, date_format: str | None) -> str:
         try:
-            attribute_data = attribute.get(attribute_value)
+            attribute_data = attributes.get(attribute_name)
             if (date_format or date_format == "") and attribute_data:
                 replace_with_date_object = datetime.strptime(str(attribute_data), "%Y%m%d").replace(tzinfo=UTC)
                 replace_with = replace_with_date_object.strftime(str(date_format))
@@ -132,3 +134,6 @@ class TokenProcessor:
         except AttributeError as error:
             message = "Invalid token format"
             raise AttributeError(message) from error
+        except ValueError as error:
+            message = "Invalid value error"
+            raise TokenError(message) from error
