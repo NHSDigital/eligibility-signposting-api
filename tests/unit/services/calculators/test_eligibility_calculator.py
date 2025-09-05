@@ -64,11 +64,36 @@ def app():
         (["cohort1"], {"cohort1": "Y"}, Status.actionable, "a magic cohort that is in person cohort"),
         (["cohort1"], {"cohort1": "N"}, Status.actionable, "a non-magic cohort that is in person cohort"),
         (["cohort1"], {"cohort2": "N"}, Status.not_eligible, "a non-magic cohort that is not in person cohort"),
-        (["cohort1"], {"cohort1": "N", "cohort2": "y"}, Status.actionable, "one magic cohort, other is non magic & in person cohort"),
-        (["cohort1"], {"cohort1": "N", "cohort2": "y"}, Status.actionable, "one non magic cohort, other is magic & in person cohort"),
-        (["cohort1"], {"cohort2": "y", "cohort3":"y"}, Status.actionable, "two magic cohorts, neither of them is in person cohort"),
-        (["cohort1","cohort2" ], {"cohort1": "y", "cohort2":"y"}, Status.actionable, "two magic cohorts, both are in person cohort"),
-        (["cohort1"], {"cohort2": "N", "cohort3":"N"}, Status.not_eligible, "two not magic cohorts, neither of them is in person cohort"),
+        (
+            ["cohort1"],
+            {"cohort1": "N", "cohort2": "y"},
+            Status.actionable,
+            "one magic cohort, other is non magic & in person cohort",
+        ),
+        (
+            ["cohort1"],
+            {"cohort1": "N", "cohort2": "y"},
+            Status.actionable,
+            "one non magic cohort, other is magic & in person cohort",
+        ),
+        (
+            ["cohort1"],
+            {"cohort2": "y", "cohort3": "y"},
+            Status.actionable,
+            "two magic cohorts, neither of them is in person cohort",
+        ),
+        (
+            ["cohort1", "cohort2"],
+            {"cohort1": "y", "cohort2": "y"},
+            Status.actionable,
+            "two magic cohorts, both are in person cohort",
+        ),
+        (
+            ["cohort1"],
+            {"cohort2": "N", "cohort3": "N"},
+            Status.not_eligible,
+            "two not magic cohorts, neither of them is in person cohort",
+        ),
         ([], {"cohort1": "Y"}, Status.actionable, "No person cohorts. Only magic cohort"),
         ([], {"elid_all_people": "N"}, Status.not_eligible, "No person cohorts. Only non-magic cohort"),
     ],
@@ -369,8 +394,9 @@ def test_status_on_target_based_on_last_successful_date(
     ("person_cohorts", "expected_status", "test_comment"),
     [
         (["cohort1", "cohort2"], Status.actionable, "cohort1 is not actionable, cohort 2 is actionable"),
-        (["cohort3", "cohort2"], Status.actionable, "cohort3 is not eligible, cohort 2 is actionable"),
+        (["cohort3", "cohort2"], Status.actionable, "cohort1 is not eligible, cohort 2 is actionable"),
         (["cohort1"], Status.not_actionable, "cohort1 is not actionable"),
+        (["cohort3"], Status.not_eligible, "cohort1 and cohort 2 are not eligible"),
     ],
 )
 def test_status_if_iteration_rules_contains_cohort_label_field(
@@ -408,6 +434,103 @@ def test_status_if_iteration_rules_contains_cohort_label_field(
             has_items(is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status))
         ),
         test_comment,
+    )
+
+
+@pytest.mark.parametrize(
+    ("iteration_cohorts_with_virtual_flag", "iteration_rules_with_cohort_labels", "expected_statuses"),
+    [
+        (
+            {"cohort1": "Y", "cohort2": "Y"},
+            ["cohort1", "cohort2"],
+            {"cohort1": Status.not_actionable, "cohort2": Status.not_actionable},
+        ),
+        ({"cohort1": "Y", "cohort2": "Y"}, ["cohort3"], {"cohort1": Status.actionable, "cohort2": Status.actionable}),
+        (
+            {"cohort1": "Y", "cohort2": "Y"},
+            ["cohort1"],
+            {"cohort2": Status.actionable},
+        ),
+        (
+            {"cohort1": "Y", "cohort2": "Y"},
+            ["cohort2"],
+            {"cohort1": Status.actionable},
+        ),
+        (
+            {"cohort1": "Y", "cohort2": "N"},
+            ["cohort1", "cohort2"],
+            {"cohort1": Status.not_actionable, "cohort2": Status.not_actionable},
+        ),
+        ({"cohort1": "Y", "cohort2": "N"}, ["cohort3"], {"cohort1": Status.actionable, "cohort2": Status.actionable}),
+        (
+            {"cohort1": "Y", "cohort2": "N"},
+            ["cohort1"],
+            {"cohort2": Status.actionable},
+        ),
+        (
+            {"cohort1": "Y", "cohort2": "N"},
+            ["cohort2"],
+            {"cohort1": Status.actionable},
+        ),
+    ],
+)
+def test_status_if_iteration_rules_contains_virtual_cohorts_as_cohort_label_field(
+    iteration_cohorts_with_virtual_flag: dict[str, str],
+    iteration_rules_with_cohort_labels: list,
+    expected_statuses: dict[str, Status],
+    faker: Faker,
+):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=66, maximum_age=74))
+
+    person_rows = person_rows_builder(
+        nhs_number,
+        date_of_birth=date_of_birth,
+        cohorts=["cohort1", "cohort2"],
+    )
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_group=f"group_{label}", cohort_label=label, virtual=flag.upper()
+                        )
+                        for label, flag in iteration_cohorts_with_virtual_flag.items()
+                    ],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(cohort_label=label)
+                        for label in iteration_rules_with_cohort_labels
+                    ],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_cohort_results(
+                    contains_exactly(
+                        *[
+                            is_cohort_result().with_cohort_code(f"group_{cohort}").with_status(status)
+                            for cohort, status in expected_statuses.items()
+                        ]
+                    )
+                )
+            )
+        ),
     )
 
 
