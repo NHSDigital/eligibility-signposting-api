@@ -26,12 +26,12 @@
       "suitabilityRules": [
         {
           "ruleCode": "Target Substitution LAST_SUCCESSFUL_DATE",
-          "ruleText": "Target Substitution LAST_SUCCESSFUL_DATE 24 August 2025",
+          "ruleText": "Target Substitution LAST_SUCCESSFUL_DATE <<RDATE_DAY_-10>>",
           "ruleType": "S"
         },
         {
           "ruleCode": "Target Substitution BOOKED_APPOINTMENT_DATE",
-          "ruleText": "Target Substitution BOOKED_APPOINTMENT_DATE 15 February 2025",
+          "ruleText": "Target Substitution BOOKED_APPOINTMENT_DATE <<RDATE_DAY_-200>>",
           "ruleType": "S"
         },
         {
@@ -46,7 +46,7 @@
         },
         {
           "ruleCode": "Target Substitution LAST_INVITE_DATE",
-          "ruleText": "Target Substitution LAST_INVITE_DATE 09 August 2025",
+          "ruleText": "Target Substitution LAST_INVITE_DATE <<RDATE_DAY_-25>>",
           "ruleType": "S"
         },
         {
@@ -56,7 +56,7 @@
         },
         {
           "ruleCode": "Target Substitution LAST_VALID_DOSE_DATE",
-          "ruleText": "Target Substitution LAST_VALID_DOSE_DATE 20250824",
+          "ruleText": "Target Substitution LAST_VALID_DOSE_DATE <<DATE_DAY_-10>>",
           "ruleType": "S"
         },
         {
@@ -66,7 +66,7 @@
         },
         {
           "ruleCode": "Person Substitution DATE_OF_BIRTH",
-          "ruleText": "Target Substitution DATE_OF_BIRTH 03 September 1950",
+          "ruleText": "Target Substitution DATE_OF_BIRTH <<RDATE_AGE_75>>",
           "ruleType": "S"
         },
         {
