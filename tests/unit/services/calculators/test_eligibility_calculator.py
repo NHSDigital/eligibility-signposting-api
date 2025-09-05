@@ -60,10 +60,17 @@ def app():
 @pytest.mark.parametrize(
     ("person_cohorts", "iteration_cohorts_and_virtual_flag", "status", "test_comment"),
     [
-        (["cohort1"], {"elid_all_people": "Y"}, Status.actionable, "Only magic cohort present"),
-        (["cohort1"], {"elid_all_people": "Y", "cohort1": "N"}, Status.actionable, "Magic cohort with other cohorts"),
-        (["cohort1"], {"cohort2": "N"}, Status.not_eligible, "No magic cohort. No matching person cohort"),
-        ([], {"elid_all_people": "Y"}, Status.actionable, "No person cohorts. Only magic cohort present"),
+        (["cohort1"], {"cohort2": "Y"}, Status.actionable, "a magic cohort"),
+        (["cohort1"], {"cohort1": "Y"}, Status.actionable, "a magic cohort that is in person cohort"),
+        (["cohort1"], {"cohort1": "N"}, Status.actionable, "a non-magic cohort that is in person cohort"),
+        (["cohort1"], {"cohort2": "N"}, Status.not_eligible, "a non-magic cohort that is not in person cohort"),
+        (["cohort1"], {"cohort1": "N", "cohort2": "y"}, Status.actionable, "one magic cohort, other is non magic & in person cohort"),
+        (["cohort1"], {"cohort1": "N", "cohort2": "y"}, Status.actionable, "one non magic cohort, other is magic & in person cohort"),
+        (["cohort1"], {"cohort2": "y", "cohort3":"y"}, Status.actionable, "two magic cohorts, neither of them is in person cohort"),
+        (["cohort1","cohort2" ], {"cohort1": "y", "cohort2":"y"}, Status.actionable, "two magic cohorts, both are in person cohort"),
+        (["cohort1"], {"cohort2": "N", "cohort3":"N"}, Status.not_eligible, "two not magic cohorts, neither of them is in person cohort"),
+        ([], {"cohort1": "Y"}, Status.actionable, "No person cohorts. Only magic cohort"),
+        ([], {"elid_all_people": "N"}, Status.not_eligible, "No person cohorts. Only non-magic cohort"),
     ],
 )
 def test_base_eligible_with_when_magic_cohort_is_present(
