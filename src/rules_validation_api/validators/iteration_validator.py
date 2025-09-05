@@ -29,7 +29,7 @@ class IterationValidation(Iteration):
     @classmethod
     def validate_iteration_cohorts(cls, iteration_cohorts: list[IterationCohort]) -> list[IterationCohortValidation]:
         seen_labels = set()
-        errors = []  # TODO y n
+        errors = []  # TODO small case y, n
         for cohort in iteration_cohorts:
             label = cohort.cohort_label
             if label in seen_labels:

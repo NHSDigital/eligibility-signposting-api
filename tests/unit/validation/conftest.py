@@ -73,6 +73,3 @@ def valid_iteration_cohorts():
         }
 
     return _cohort
-
-
-# TODO parse iteration_cohort and check  if the virtual value is N by default

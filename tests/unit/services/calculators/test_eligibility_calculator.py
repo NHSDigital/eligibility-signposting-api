@@ -98,7 +98,7 @@ def app():
         ([], {"cohort1": "N"}, Status.not_eligible, "No person cohorts. Only non-magic cohort"),
     ],
 )
-def test_base_eligible_with_when_magic_cohort_is_present(  # TODO rename
+def test_base_eligible_with_when_magic_cohort_is_present(  # TODO rename magic to virtual
     faker: Faker,
     person_cohorts: list[str],
     iteration_cohorts_and_virtual_flag: dict[str, str],

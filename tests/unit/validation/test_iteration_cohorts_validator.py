@@ -65,7 +65,7 @@ class TestOptionalFieldsSchemaValidations:
         cohort = IterationCohortValidation(**data)
         assert cohort.priority == cohort_priority
 
-    def test_virtual_valid_value(self):  # TODO : Done - recheck
+    def test_virtual_valid_value(self):  # TODO Done : parse iteration_cohort and check  if the virtual value is N by default
         cohort_priority = 10
         data = {"CohortLabel": "rsv_75_rolling", "CohortGroup": "rsv_age_rolling", "Priority": cohort_priority}
         cohort = IterationCohortValidation(**data)
