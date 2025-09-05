@@ -24,6 +24,7 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleOperator,
     RulePriority,
     RuleType,
+    Virtual,
 )
 
 
@@ -37,6 +38,7 @@ def future_date(days_ahead: int = 365) -> date:
 
 class IterationCohortFactory(ModelFactory[IterationCohort]):
     priority = RulePriority(0)
+    virtual = Virtual.NO
 
 
 class IterationRuleFactory(ModelFactory[IterationRule]):
@@ -112,6 +114,7 @@ class MagicCohortFactory(IterationCohortFactory):
     cohort_group = CohortGroup("magic cohort group")
     positive_description = Description("magic positive description")
     negative_description = Description("magic negative description")
+    virtual = Virtual.YES
     priority = 1
 
 
