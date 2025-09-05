@@ -153,3 +153,11 @@ jobs:
             Author: "${{ github.actor }}"
             title: "Pushed to main"
             version: "${{ needs.metadata.outputs.version }}"
+
+  regression_tests:
+    name: Regression Tests
+    uses: ./.github/workflows/run-regression-tests.yml
+    if: ${{ always() && !failure() && !cancelled() && inputs.RUN_REGRESSION_TESTS == true }}
+    with:
+      ENVIRONMENT: "DEV"
+      VERSION_NUMBER: "main"
