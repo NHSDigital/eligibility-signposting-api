@@ -81,4 +81,6 @@ jobs:
             poetry run python run_regression_tests.py \
             --env="$TARGET_ENVIRONMENT" \
             --pr_label="$VERSION_NUMBER" \
-            --token="$GITHUB-TOKEN"
+            --token="$GITHUB-TOKEN" \
+            --regression_test_repo_tag "${REGRESSION_TEST_REPO_TAG}" \
+            --regression_test_workflow_tag "${REGRESSION_TEST_WORKFLOW_TAG}"
