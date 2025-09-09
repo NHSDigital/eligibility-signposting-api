@@ -76,7 +76,7 @@ jobs:
             # This will normally be the same as REGRESSION_TEST_REPO_TAG
             REGRESSION_TEST_WORKFLOW_TAG="main"
             poetry install
-            echo Running regression tests in the "$TARGET_ENVIRONMENT" environment
+            echo Running regression tests in the "$TARGET_ENVIRONMENT" environment using token: "$TESTS_TOKEN"
             poetry run python run_regression_tests.py \
             --env="$TARGET_ENVIRONMENT" \
             --pr_label="$VERSION_NUMBER" \
