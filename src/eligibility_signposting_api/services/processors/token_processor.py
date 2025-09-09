@@ -24,6 +24,10 @@ ALLOWED_TARGET_ATTRIBUTES = {
 }
 
 
+class TokenError(Exception):
+    """Person value error."""
+
+
 @service
 class TokenProcessor:
     @staticmethod
@@ -130,6 +134,6 @@ class TokenProcessor:
         except AttributeError as error:
             message = "Invalid token format"
             raise AttributeError(message) from error
-        except Exception as error:
+        except ValueError as error:
             message = "Invalid value error"
-            raise ValueError(message) from error
+            raise TokenError(message) from error
