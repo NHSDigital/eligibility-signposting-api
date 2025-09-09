@@ -66,8 +66,8 @@ jobs:
         env:
           TARGET_ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
           VERSION_NUMBER: ${{ inputs.VERSION_NUMBER }}
-          GITHUB-TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
-#          GITHUB-TOKEN: ${{ steps.generate-token.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
             # this should be the tag of the tests you want to run
             REGRESSION_TEST_REPO_TAG="main"
@@ -81,6 +81,6 @@ jobs:
             poetry run python run_regression_tests.py \
             --env="$TARGET_ENVIRONMENT" \
             --pr_label="$VERSION_NUMBER" \
-            --token="$GITHUB-TOKEN" \
+            --token="$GITHUB_TOKEN" \
             --regression_test_repo_tag "${REGRESSION_TEST_REPO_TAG}" \
             --regression_test_workflow_tag "${REGRESSION_TEST_WORKFLOW_TAG}"
