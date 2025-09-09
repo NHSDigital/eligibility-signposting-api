@@ -67,7 +67,7 @@ def trigger_test_run(
         "inputs": {
             "id": run_id,
             "tags": "@regression",
-            "environment": ENVIRONMENT_NAMES[env],
+            "environment": ENVIRONMENT_NAMES[env.lower()],
             "pull_request_id": pr_label,
             "github_tag": regression_test_repo_tag,
         },
