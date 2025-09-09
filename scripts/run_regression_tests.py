@@ -146,13 +146,8 @@ def find_workflow(auth_header, run_id, run_date_filter):
     return None
 
 
-def get_auth_header(is_called_from_github, token, user):
-    if is_called_from_github:
-        return BearerAuth(token)
-    else:
-        user_credentials = user.split(":")
-        return HTTPBasicAuth(user_credentials[0], user_credentials[1])
-
+def get_auth_header(token):
+    return BearerAuth(token)
 
 def get_upload_result_job(auth_header, workflow_id):
     job_request_url = f"{GITHUB_API_URL}/runs/{workflow_id}/jobs"
