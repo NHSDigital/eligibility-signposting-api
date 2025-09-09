@@ -70,11 +70,11 @@ jobs:
 #          GITHUB-TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
             # this should be the tag of the tests you want to run
-            REGRESSION_TEST_REPO_TAG=main
+            REGRESSION_TEST_REPO_TAG="main"
 
             # this should be the tag of the regression test workflow you want to run
             # This will normally be the same as REGRESSION_TEST_REPO_TAG
-            REGRESSION_TEST_WORKFLOW_TAG=main
+            REGRESSION_TEST_WORKFLOW_TAG="main"
 
             poetry install
             echo Running regression tests in the "$TARGET_ENVIRONMENT" environment
