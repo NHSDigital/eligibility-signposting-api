@@ -13,6 +13,8 @@ on:
         type: string
       PRODUCT:
         type: string
+    secrets:
+      TESTS_TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
 
 jobs:
   run_regression_tests:
@@ -61,8 +63,7 @@ jobs:
           PYTHON_CONFIGURE_OPTS: --enable-shared
 
       - name: Run Regression Testing
-        with:
-          TESTS_TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
+
         working-directory: scripts
         if: ${{ (inputs.ENVIRONMENT != 'prod') && (inputs.ENVIRONMENT != 'ref') }}
         env:
