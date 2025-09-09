@@ -16,16 +16,6 @@ from requests.auth import HTTPBasicAuth, AuthBase
 GITHUB_API_URL = "https://api.github.com/repos/NHSDigital/eligibility-signposting-api-regression-tests/actions"
 GITHUB_RUN_URL = "https://github.com/NHSDigital/eligibility-signposting-api-regression-tests/actions/runs"
 
-ENVIRONMENT_NAMES = {
-    "dev": "INTERNAL-DEV",
-    "dev-pr": "INTERNAL-DEV",
-    "internal-dev": "INTERNAL-DEV",
-    "qa": "INTERNAL-QA",
-    "internal-qa": "INTERNAL-QA",
-    "int": "INT",
-    "ref": "REF",
-}
-
 
 class BearerAuth(AuthBase):
     def __init__(self, token):
@@ -149,41 +139,27 @@ def find_workflow(auth_header, run_id, run_date_filter):
 def get_auth_header(token):
     return BearerAuth(token)
 
-def get_upload_result_job(auth_header, workflow_id):
+
+def get_job(auth_header, workflow_id):
     job_request_url = f"{GITHUB_API_URL}/runs/{workflow_id}/jobs"
     job_response = requests.get(
         job_request_url,
         headers=get_headers(),
         auth=auth_header,
-        timeout=120,
     )
-    jobs = job_response.json()["jobs"]
-    upload_result_job = next(
-        (job for job in jobs if job["name"] == "upload_results"),
-        {"status": "can not find upload results job - tests are likely still running"},
-    )
-    return upload_result_job
+    return job_response.json()["jobs"][0]
 
 
 def check_job(auth_header, workflow_id):
-    max_attempts = 360  # this is about an hour
-    current_attempt = 0
-
     print("Checking job status, please wait...")
-    job = get_upload_result_job(auth_header, workflow_id)
+    print("Current status:", end=" ")
+    job = get_job(auth_header, workflow_id)
     job_status = job["status"]
 
     while job_status != "completed":
-        if current_attempt > max_attempts:
-            raise TimeoutError(
-                f"Regression test job not completed after {current_attempt} attempts"
-            )
-        print(
-            f"Current upload results job status : {job_status} after {current_attempt} attempts"
-        )
+        print(job_status)
         time.sleep(10)
-        current_attempt = current_attempt + 1
-        job = get_upload_result_job(auth_header, workflow_id)
+        job = get_job(auth_header, workflow_id)
         job_status = job["status"]
 
     return job["conclusion"]
