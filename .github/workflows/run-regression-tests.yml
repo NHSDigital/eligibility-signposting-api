@@ -13,8 +13,9 @@ on:
         type: string
       PRODUCT:
         type: string
-    secrets:
-      TESTS_TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
+#    secrets:
+#      TESTS_TOKEN:
+#        required: true
 
 jobs:
   run_regression_tests:
@@ -69,6 +70,7 @@ jobs:
         env:
           TARGET_ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
           VERSION_NUMBER: ${{ inputs.VERSION_NUMBER }}
+          TESTS_TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
 #          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
             # this should be the tag of the tests you want to run
