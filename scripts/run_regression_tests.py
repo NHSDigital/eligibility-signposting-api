@@ -203,15 +203,6 @@ def main():
         help="Please provide the environment you wish to run in.",
     )
     parser.add_argument(
-        "--user", required=False, help="Please provide the user credentials."
-    )
-    parser.add_argument(
-        "--is_called_from_github",
-        default=False,
-        type=lambda x: (str(x).lower() == "true"),
-        help="If this is being called from github actions rather than azure",
-    )
-    parser.add_argument(
         "--token", required=False, help="Please provide the authentication token."
     )
     parser.add_argument(
@@ -230,15 +221,12 @@ def main():
 
     print(f"pr_label: {arguments.pr_label}")
     print(f"env: {arguments.env}")
-    print(f"is_called_from_github: {arguments.is_called_from_github}")
     print(f"regression_tests_repo_tag: {arguments.regression_test_repo_tag}")
     print(f"regression_test_workflow_tag: {arguments.regression_test_workflow_tag}")
 
     run_id = generate_unique_run_id()
     run_date_filter = generate_timestamp()
-    auth_header = get_auth_header(
-        arguments.is_called_from_github, arguments.token, arguments.user
-    )
+    auth_header = get_auth_header(arguments.token)
 
     pr_label = arguments.pr_label.lower()
     trigger_test_run(
