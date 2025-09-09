@@ -6,6 +6,7 @@ vale 3.11.2
 poetry 2.1.4
 act 0.2.77
 nodejs 22.18.0
+python 3.13
 
 # ==============================================================================
 # The section below is reserved for Docker image versions.
