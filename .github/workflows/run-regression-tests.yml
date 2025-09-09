@@ -61,13 +61,13 @@ jobs:
           PYTHON_CONFIGURE_OPTS: --enable-shared
 
       - name: Run Regression Testing
+        with:
+          TESTS_TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
         working-directory: scripts
         if: ${{ (inputs.ENVIRONMENT != 'prod') && (inputs.ENVIRONMENT != 'ref') }}
         env:
           TARGET_ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
           VERSION_NUMBER: ${{ inputs.VERSION_NUMBER }}
-        with:
-          TESTS_TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
 #          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
             # this should be the tag of the tests you want to run
