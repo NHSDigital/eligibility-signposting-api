@@ -211,7 +211,7 @@
           },
           {
             "Type": "S",
-            "Name": "Empty Suggestion",
+            "Name": "EmptySuggestion",
             "Description": "",
             "Priority": 198,
             "AttributeLevel": "PERSON",
