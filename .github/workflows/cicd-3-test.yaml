@@ -1,7 +1,7 @@
 # Deploys a given tag to test environment
 # Does not tag or create a release
 
-name: "CI/CD Testing regression tests integration"
+name: "Testing Regression Tests E2E Integration"
 
 #concurrency:
 #  group: terraform-deploy-${{ github.event.inputs.environment }}
