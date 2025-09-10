@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "lastUpdated": "2025-09-01T15:34:26.148961+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "TestNotAction",
+          "actionType": "ActionType PCN: ",
+          "description": "ActionDescription ICB: ",
+          "urlLabel": "urlLabel MSOA: ",
+          "urlLink": ""
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_eli_223_cohort_group",
+          "cohortStatus": "NotActionable",
+          "cohortText": "are a member of eli_223_cohort_group"
+        }
+      ],
+      "status": "NotActionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": [
+        {
+          "ruleCode": "Already Vaccinated",
+          "ruleText": "We believe you had the RSV vaccination on .You also have a Flu Vaccination Booking on  and your ICB is ",
+          "ruleType": "S"
+        }
+      ]
+    }
+  ],
+  "responseId": "d7671622-8269-4660-82ff-4d909da183dc"
+}
