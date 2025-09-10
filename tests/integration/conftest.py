@@ -24,6 +24,7 @@ from eligibility_signposting_api.model.campaign_config import (
     EndDate,
     RuleType,
     StartDate,
+    StatusText,
 )
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
@@ -528,6 +529,7 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
                         negative_description="negative_description",
                     )
                 ],
+                status_text=None,
             )
         ],
     )
@@ -607,6 +609,7 @@ def campaign_config_with_and_rule(s3_client: BaseClient, rules_bucket: BucketNam
                         negative_description="negative_description",
                     ),
                 ],
+                status_text=None,
             )
         ],
     )
@@ -762,6 +765,11 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
                             negative_description="negative_desc_4",
                         ),
                     ],
+                    status_text=StatusText(
+                        NotEligible=f"You are not eligible to take {targets[i]} vaccines.",
+                        NotActionable=f"You have taken {targets[i]} vaccine in the last 90 days",
+                        Actionable=f"You can take {targets[i]} vaccine.",
+                    ),
                 )
             ],
         )
@@ -790,6 +798,7 @@ def campaign_config_with_virtual_cohort(s3_client: BaseClient, rules_bucket: Buc
                     rule.PersonAgeSuppressionRuleFactory.build(),
                 ],
                 iteration_cohorts=[rule.VirtualCohortFactory.build(cohort_label="virtual_cohort")],
+                status_text=None,
             )
         ],
     )
@@ -822,6 +831,7 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
                         negative_description="",
                     )
                 ],
+                status_text=None,
             )
         ],
     )

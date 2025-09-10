@@ -165,6 +165,14 @@ class ActionsMapper(RootModel[dict[str, AvailableAction]]):
         return self.root.get(key, default)
 
 
+class StatusText(BaseModel):
+    not_eligible: str | None = Field(None, alias="NotEligible")
+    not_actionable: str | None = Field(None, alias="NotActionable")
+    actionable: str | None = Field(None, alias="Actionable")
+
+    model_config = {"populate_by_name": True, "extra": "ignore"}
+
+
 class Iteration(BaseModel):
     id: IterationID = Field(..., alias="ID")
     version: IterationVersion = Field(..., alias="Version")
@@ -180,6 +188,7 @@ class Iteration(BaseModel):
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
     actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
+    status_text: StatusText | None = Field(None, alias="StatusText")
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
