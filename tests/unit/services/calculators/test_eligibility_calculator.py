@@ -9,8 +9,8 @@ from freezegun import freeze_time
 from hamcrest import assert_that, contains_exactly, contains_inanyorder, has_item, has_items, is_, is_in
 from pydantic import HttpUrl
 
+from eligibility_signposting_api.model import campaign_config, eligibility_status
 from eligibility_signposting_api.model import campaign_config as rules_model
-from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
     AvailableAction,
     CohortLabel,
@@ -39,6 +39,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     RuleDescription,
     RulePriority,
     Status,
+    StatusText,
     SuggestedAction,
 )
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculator
@@ -930,6 +931,336 @@ def test_eligibility_status_with_invalid_person_attribute_name_raises_value_erro
         calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
 
+def test_status_text_is_used_from_campaign_when_available_for_all_statuses(faker: Faker):
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()), cohorts=["cohort1"], icb="QE1")
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[],
+                    status_text=campaign_config.StatusText(
+                        NotEligible="You are not eligible to take RSV vaccines.",
+                        NotActionable="You have taken RSV vaccine in the last 90 days",
+                        Actionable="You can take RSV vaccine.",
+                    ),
+                )
+            ],
+        ),
+        rule_builder.CampaignConfigFactory.build(
+            target="COVID",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[rule_builder.ICBRedirectRuleFactory.build(type=RuleType.suppression)],
+                    status_text=campaign_config.StatusText(
+                        NotEligible="You are not eligible to take COVID vaccines.",
+                        NotActionable="You have taken COVID vaccine in the last 90 days",
+                        Actionable="You can take COVID vaccine.",
+                    ),
+                )
+            ],
+        ),
+        rule_builder.CampaignConfigFactory.build(
+            target="FLU",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[rule_builder.ICBRedirectRuleFactory.build(type=RuleType.filter)],
+                    status_text=campaign_config.StatusText(
+                        NotEligible="You are not eligible to take FLU vaccines.",
+                        NotActionable="You have taken FLU vaccine in the last 90 days",
+                        Actionable="You can take FLU vaccine.",
+                    ),
+                )
+            ],
+        ),
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    rsv_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("RSV"))
+        .and_status(Status.actionable)
+        .and_status_text(StatusText("You can take RSV vaccine."))
+    )
+    covid_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("COVID"))
+        .and_status(Status.not_actionable)
+        .and_status_text(StatusText("You have taken COVID vaccine in the last 90 days"))
+    )
+    flu_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("FLU"))
+        .and_status(Status.not_eligible)
+        .and_status_text(StatusText("You are not eligible to take FLU vaccines."))
+    )
+
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(contains_inanyorder(rsv_condition, covid_condition, flu_condition)),
+    )
+
+    assert len(g.audit_log.response.condition) == len(campaign_configs)
+
+    for condition in g.audit_log.response.condition:
+        assert condition.status_text in (
+            "You can take RSV vaccine.",
+            "You have taken COVID vaccine in the last 90 days",
+            "You are not eligible to take FLU vaccines.",
+        )
+
+
+def test_status_text_uses_default_when_unavailable(faker: Faker):
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()), cohorts=["cohort1"], icb="QE1")
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[],
+                    status_text=None,
+                )
+            ],
+        ),
+        rule_builder.CampaignConfigFactory.build(
+            target="COVID",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[rule_builder.ICBRedirectRuleFactory.build(type=RuleType.suppression)],
+                    status_text=None,
+                )
+            ],
+        ),
+        rule_builder.CampaignConfigFactory.build(
+            target="FLU",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[rule_builder.ICBRedirectRuleFactory.build(type=RuleType.filter)],
+                    status_text=None,
+                )
+            ],
+        ),
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    rsv_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("RSV"))
+        .and_status(Status.actionable)
+        .and_status_text(StatusText("You should have the RSV vaccine"))
+    )
+    covid_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("COVID"))
+        .and_status(Status.not_actionable)
+        .and_status_text(StatusText("You should have the COVID vaccine"))
+    )
+    flu_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("FLU"))
+        .and_status(Status.not_eligible)
+        .and_status_text(StatusText("We do not believe you can have it"))
+    )
+
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(contains_inanyorder(rsv_condition, covid_condition, flu_condition)),
+    )
+
+    assert len(g.audit_log.response.condition) == len(campaign_configs)
+
+    for condition in g.audit_log.response.condition:
+        assert condition.status_text in (
+            "You should have the RSV vaccine",
+            "You should have the COVID vaccine",
+            "We do not believe you can have it",
+        )
+
+
+def test_status_text_uses_default_when_empty(faker: Faker):
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()), cohorts=["cohort1"], icb="QE1")
+    status_text = campaign_config.StatusText(NotEligible="", NotActionable="", Actionable="")
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[],
+                    status_text=status_text,
+                )
+            ],
+        ),
+        rule_builder.CampaignConfigFactory.build(
+            target="COVID",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[rule_builder.ICBRedirectRuleFactory.build(type=RuleType.suppression)],
+                    status_text=status_text,
+                )
+            ],
+        ),
+        rule_builder.CampaignConfigFactory.build(
+            target="FLU",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[rule_builder.ICBRedirectRuleFactory.build(type=RuleType.filter)],
+                    status_text=status_text,
+                )
+            ],
+        ),
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    rsv_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("RSV"))
+        .and_status(Status.actionable)
+        .and_status_text(StatusText("You should have the RSV vaccine"))
+    )
+    covid_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("COVID"))
+        .and_status(Status.not_actionable)
+        .and_status_text(StatusText("You should have the COVID vaccine"))
+    )
+    flu_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("FLU"))
+        .and_status(Status.not_eligible)
+        .and_status_text(StatusText("We do not believe you can have it"))
+    )
+
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(contains_inanyorder(rsv_condition, covid_condition, flu_condition)),
+    )
+
+    assert len(g.audit_log.response.condition) == len(campaign_configs)
+
+    for condition in g.audit_log.response.condition:
+        assert condition.status_text in (
+            "You should have the RSV vaccine",
+            "You should have the COVID vaccine",
+            "We do not believe you can have it",
+        )
+
+
+def test_status_text_uses_default_when_status_text_is_present_but_values_are_none(faker: Faker):
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()), cohorts=["cohort1"], icb="QE1")
+    status_text = campaign_config.StatusText(NotEligible=None, NotActionable=None, Actionable=None)
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[],
+                    status_text=status_text,
+                )
+            ],
+        ),
+        rule_builder.CampaignConfigFactory.build(
+            target="COVID",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[rule_builder.ICBRedirectRuleFactory.build(type=RuleType.suppression)],
+                    status_text=status_text,
+                )
+            ],
+        ),
+        rule_builder.CampaignConfigFactory.build(
+            target="FLU",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    default_comms_routing="TOKEN_TEST",
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[rule_builder.ICBRedirectRuleFactory.build(type=RuleType.filter)],
+                    status_text=status_text,
+                )
+            ],
+        ),
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    rsv_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("RSV"))
+        .and_status(Status.actionable)
+        .and_status_text(StatusText("You should have the RSV vaccine"))
+    )
+    covid_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("COVID"))
+        .and_status(Status.not_actionable)
+        .and_status_text(StatusText("You should have the COVID vaccine"))
+    )
+    flu_condition = (
+        is_condition()
+        .with_condition_name(ConditionName("FLU"))
+        .and_status(Status.not_eligible)
+        .and_status_text(StatusText("We do not believe you can have it"))
+    )
+
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(contains_inanyorder(rsv_condition, covid_condition, flu_condition)),
+    )
+
+    assert len(g.audit_log.response.condition) == len(campaign_configs)
+
+    for condition in g.audit_log.response.condition:
+        assert condition.status_text in (
+            "You should have the RSV vaccine",
+            "You should have the COVID vaccine",
+            "We do not believe you can have it",
+        )
+
+
 class TestEligibilityResultBuilder:
     def test_build_condition_results_single_condition_single_cohort_actionable(self):
         cohort_group_results = [CohortGroupResult("COHORT_A", Status.actionable, [], "Cohort A Description", [])]
@@ -943,14 +1274,16 @@ class TestEligibilityResultBuilder:
                 url_label=None,
             )
         ]
-        iteration_result = IterationResult(Status.actionable, cohort_group_results, suggested_actions)
+        iteration_result = IterationResult(
+            Status.actionable, StatusText("You should have the RSV vaccine"), cohort_group_results, suggested_actions
+        )
 
         result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
         assert_that(result.condition_name, is_(ConditionName("RSV")))
         assert_that(result.status, is_(Status.actionable))
         assert_that(result.actions, is_(suggested_actions))
-        assert_that(result.status_text, is_(Status.actionable.get_status_text(ConditionName("RSV"))))
+        assert_that(result.status_text, is_(Status.actionable.get_default_status_text(ConditionName("RSV"))))
 
         assert_that(len(result.cohort_results), is_(1))
         deduplicated_cohort = result.cohort_results[0]
@@ -973,14 +1306,19 @@ class TestEligibilityResultBuilder:
                 url_label=None,
             )
         ]
-        iteration_result = IterationResult(Status.not_eligible, cohort_group_results, suggested_actions)
+        iteration_result = IterationResult(
+            Status.not_eligible,
+            StatusText("We do not believe you can have it"),
+            cohort_group_results,
+            suggested_actions,
+        )
 
         result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
         assert_that(result.condition_name, is_(ConditionName("RSV")))
         assert_that(result.status, is_(Status.not_eligible))
         assert_that(result.actions, is_(suggested_actions))
-        assert_that(result.status_text, is_(Status.not_eligible.get_status_text(ConditionName("RSV"))))
+        assert_that(result.status_text, is_(Status.not_eligible.get_default_status_text(ConditionName("RSV"))))
 
         assert_that(len(result.cohort_results), is_(1))
         deduplicated_cohort = result.cohort_results[0]
@@ -1022,7 +1360,7 @@ class TestEligibilityResultBuilder:
                 url_label=None,
             )
         ]
-        iteration_result = IterationResult(Status.not_eligible, cohort_group_results, suggested_actions)
+        iteration_result = IterationResult(Status.not_eligible, None, cohort_group_results, suggested_actions)
 
         result: Condition = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
@@ -1065,7 +1403,7 @@ class TestEligibilityResultBuilder:
                 url_label=None,
             )
         ]
-        iteration_result = IterationResult(Status.not_eligible, cohort_group_results, suggested_actions)
+        iteration_result = IterationResult(Status.not_eligible, None, cohort_group_results, suggested_actions)
 
         result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
@@ -1097,7 +1435,7 @@ class TestEligibilityResultBuilder:
             CohortGroupResult("COHORT_Y", Status.not_actionable, [reason_2], "Cohort Y Description", []),
         ]
 
-        iteration_result = IterationResult(Status.not_eligible, cohort_group_results, [])
+        iteration_result = IterationResult(Status.not_eligible, None, cohort_group_results, [])
 
         result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
@@ -1174,7 +1512,7 @@ class TestEligibilityResultBuilder:
             ),
         ]
 
-        iteration_result = IterationResult(Status.not_actionable, cohort_group_results, [])
+        iteration_result = IterationResult(Status.not_actionable, None, cohort_group_results, [])
 
         result: Condition = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
@@ -1288,7 +1626,7 @@ class TestEligibilityResultBuilder:
             CohortGroupResult("COHORT_Y", Status.not_actionable, [reason_1, reason_2], "Cohort Y Description", [])
         ]
 
-        iteration_result = IterationResult(Status.not_actionable, cohort_group_results, [])
+        iteration_result = IterationResult(Status.not_actionable, None, cohort_group_results, [])
         result = EligibilityCalculator.build_condition(iteration_result, ConditionName("RSV"))
 
         assert_that(len(result.cohort_results), is_(1))

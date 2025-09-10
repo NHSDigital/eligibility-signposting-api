@@ -24,6 +24,7 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleOperator,
     RulePriority,
     RuleType,
+    StatusText,
 )
 
 
@@ -60,6 +61,12 @@ class ActionsMapperFactory(ModelFactory[ActionsMapper]):
     root = Use(lambda: {"defaultcomms": AvailableActionDetailFactory.build()})
 
 
+class StatusTextFactory(ModelFactory[StatusText]):
+    not_eligible = "Not eligible status text"
+    not_actionable = "Not actionable status text"
+    actionable = "Actionable status text"
+
+
 class IterationFactory(ModelFactory[Iteration]):
     iteration_cohorts = Use(IterationCohortFactory.batch, size=2)
     iteration_rules = Use(IterationRuleFactory.batch, size=2)
@@ -80,7 +87,7 @@ class CampaignConfigFactory(RawCampaignConfigFactory):
     def build(cls, **kwargs) -> CampaignConfig:
         """Ensure invariants are met:
         * no iterations with duplicate iteration dates
-        * must have iteration active from campaign start date"""
+        * must have iteration active from the campaign start date"""
         processed_kwargs = cls.process_kwargs(**kwargs)
         start_date: date = processed_kwargs["start_date"]
         iterations: list[Iteration] = processed_kwargs["iterations"]

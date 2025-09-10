@@ -73,7 +73,7 @@ class Status(Enum):
         """
         return max(statuses)
 
-    def get_status_text(self, condition_name: ConditionName) -> StatusText:
+    def get_default_status_text(self, condition_name: ConditionName) -> StatusText:
         status_to_text_mapping = {
             self.not_eligible: lambda: StatusText("We do not believe you can have it"),
             self.not_actionable: lambda: StatusText(f"You should have the {condition_name} vaccine"),
@@ -130,6 +130,7 @@ class CohortGroupResult:
 @dataclass
 class IterationResult:
     status: Status
+    status_text: StatusText
     cohort_results: list[CohortGroupResult]
     actions: list[SuggestedAction] | None
 
