@@ -247,7 +247,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
         "dynamodb:DeleteItem",
         "dynamodb:Scan",
         "dynamodb:BatchWriteItem",
-        "dynamodb:Query"
+        "dynamodb:Query",
+        "dynamodb:UpdateTable"
       ]
       resources = ["*"]
     }
