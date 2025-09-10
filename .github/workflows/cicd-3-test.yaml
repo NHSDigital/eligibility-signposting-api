@@ -9,18 +9,18 @@ concurrency:
 
 on:
   workflow_dispatch:
-#    inputs:
-#      tag:
-#        description: "This is the tag that is going to be deployed"
-#        required: true
-#        default: "latest"
-#      environment:
-#        description: "Target environment (test only)"
-#        required: true
-#        default: "test"
-#        type: choice
-#        options:
-#          - test
+    inputs:
+      tag:
+        description: "This is the tag that is going to be deployed"
+        required: true
+        default: "latest"
+      environment:
+        description: "Target environment (test only)"
+        required: true
+        default: "test"
+        type: choice
+        options:
+          - test
 
 jobs:
 #  metadata:
@@ -130,9 +130,10 @@ jobs:
 #        working-directory: ./infrastructure
 
   regression_tests:
+#    needs: deploy
     name: Regression Tests
     uses: ./.github/workflows/run-regression-tests.yml
     with:
-      ENVIRONMENT: "DEV"
+      ENVIRONMENT: "test"
       VERSION_NUMBER: "main"
     secrets: inherit

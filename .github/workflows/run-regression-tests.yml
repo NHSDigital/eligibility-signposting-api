@@ -9,13 +9,8 @@ on:
       VERSION_NUMBER:
         required: true
         type: string
-      REGRESSION_TESTS_PEM:
-        type: string
       PRODUCT:
         type: string
-#    secrets:
-#      TESTS_TOKEN:
-#        required: true
 
 jobs:
   run_regression_tests:
@@ -32,23 +27,17 @@ jobs:
           ref: ${{ env.BRANCH_NAME }}
           fetch-depth: 0
 
-#      - name: Generate a token to authenticate regression testing
-#        id: generate-token
-#        uses: actions/create-github-app-token@v2
-#        with:
-#          app-id: ${{ vars.REGRESSION_TESTS_APP_ID }}
-#          private-key: ${{ secrets.REGRESSION_TESTS_PEM }}
-#          owner: "NHSDigital"
-#          repositories: "electronic-prescription-service-api-regression-tests"
-
-      # using git commit sha for version of action to ensure we have stable version
-      - name: Install asdf
-        uses: asdf-vm/actions/setup@1902764435ca0dd2f3388eea723a4f92a4eb8302
-        with:
-          asdf_branch: v0.15.0
+      #      - name: Generate a token to authenticate regression testing
+      #        id: generate-token
+      #        uses: actions/create-github-app-token@v2
+      #        with:
+      #          app-id: ${{ vars.REGRESSION_TESTS_APP_ID }}
+      #          private-key: ${{ secrets.REGRESSION_TESTS_PEM }}
+      #          owner: "NHSDigital"
+      #          repositories: "electronic-prescription-service-api-regression-tests"
 
       - name: Cache asdf
-        uses: actions/cache@v4
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
         with:
           path: |
             ~/.asdf
@@ -63,27 +52,25 @@ jobs:
         env:
           PYTHON_CONFIGURE_OPTS: --enable-shared
 
-      - name: Run Regression Testing
+      - name: setup venv
+        uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+#          python-version: '3.13.5'
+          cache: 'poetry' # caching poetry dependencies
+      - run: poetry install
 
+      - name: Run Regression Testing
         working-directory: scripts
         if: ${{ (inputs.ENVIRONMENT != 'prod') && (inputs.ENVIRONMENT != 'ref') }}
         env:
           TARGET_ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
           VERSION_NUMBER: ${{ inputs.VERSION_NUMBER }}
           TESTS_TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
-#          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+        # GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
-            # this should be the tag of the tests you want to run
-            REGRESSION_TEST_REPO_TAG="main"
-
-            # this should be the tag of the regression test workflow you want to run
-            # This will normally be the same as REGRESSION_TEST_REPO_TAG
-            REGRESSION_TEST_WORKFLOW_TAG="main"
-            poetry install
-            echo Running regression tests in the "$TARGET_ENVIRONMENT" environment using token: "$TESTS_TOKEN"
-            poetry run python run_regression_tests.py \
-            --env="$TARGET_ENVIRONMENT" \
-            --pr_label="$VERSION_NUMBER" \
-            --token="$TESTS_TOKEN" \
-            --regression_test_repo_tag "${REGRESSION_TEST_REPO_TAG}" \
-            --regression_test_workflow_tag "${REGRESSION_TEST_WORKFLOW_TAG}"
+          echo Running regression tests in the "$TARGET_ENVIRONMENT" environment.
+          poetry run python run_regression_tests.py \
+          --env="$TARGET_ENVIRONMENT" \
+          --token="$TESTS_TOKEN" \
+          --regression_test_repo_tag "$VERSION_NUMBER"

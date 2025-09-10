@@ -30,3 +30,12 @@ jobs:
       ref: ${{ inputs.ref }}
       release_type: ${{ inputs.release_type }}
     secrets: inherit
+
+  regression_tests:
+    needs: call
+    name: Regression Tests
+    uses: ./.github/workflows/run-regression-tests.yml
+    with:
+      ENVIRONMENT: "pre-prod"
+      VERSION_NUMBER: "main"
+    secrets: inherit

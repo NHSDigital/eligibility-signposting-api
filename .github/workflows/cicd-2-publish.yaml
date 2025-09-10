@@ -129,3 +129,13 @@ jobs:
             Author: "${{ github.actor }}"
             title: "Pushed to main"
             version: "${{ needs.metadata.outputs.version }}"
+
+
+  regression_tests:
+    needs: publish
+    name: Regression Tests
+    uses: ./.github/workflows/run-regression-tests.yml
+    with:
+      ENVIRONMENT: "dev"
+      VERSION_NUMBER: "main"
+    secrets: inherit
