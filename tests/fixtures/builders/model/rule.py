@@ -24,8 +24,8 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleOperator,
     RulePriority,
     RuleType,
-    Virtual,
     StatusText,
+    Virtual,
 )
 
 
