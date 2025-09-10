@@ -3,9 +3,9 @@
 
 name: "CI/CD deploy to TEST"
 
-concurrency:
-  group: terraform-deploy-${{ github.event.inputs.environment }}
-  cancel-in-progress: false
+#concurrency:
+#  group: terraform-deploy-${{ github.event.inputs.environment }}
+#  cancel-in-progress: false
 
 on:
   workflow_dispatch:
