@@ -46,10 +46,10 @@ jobs:
       # Use grep to find the line beginning with "python"
       - name: Get Python version from file
         run: |
-          PYTHON_VERSION=$(grep "^python\K.*" .tool-versions)
+          PYTHON_VERSION=$(grep "^python" .tool-versions | sed 's/python //g')
           echo "PYTHON_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV
 
-      - name: setup venv
+      - name: setup python venv
         uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
