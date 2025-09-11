@@ -27,15 +27,6 @@ jobs:
           ref: ${{ env.BRANCH_NAME }}
           fetch-depth: 0
 
-      #      - name: Generate a token to authenticate regression testing
-      #        id: generate-token
-      #        uses: actions/create-github-app-token@v2
-      #        with:
-      #          app-id: ${{ vars.REGRESSION_TESTS_APP_ID }}
-      #          private-key: ${{ secrets.REGRESSION_TESTS_PEM }}
-      #          owner: "NHSDigital"
-      #          repositories: "electronic-prescription-service-api-regression-tests"
-
       - name: Cache asdf
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
         with:
