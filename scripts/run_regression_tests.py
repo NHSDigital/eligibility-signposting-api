@@ -171,6 +171,7 @@ def main():
     parser.add_argument(
         "--pr_label",
         required=False,
+        default="None",
         help="Please provide the PR number.",
     )
     parser.add_argument(
