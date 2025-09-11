@@ -1,0 +1,72 @@
+name: E2E Regression Tests
+
+on:
+  workflow_call:
+    inputs:
+      ENVIRONMENT:
+        required: true
+        type: string
+      VERSION_NUMBER:
+        required: true
+        type: string
+      PRODUCT:
+        type: string
+
+jobs:
+  regression-tests:
+    runs-on: ubuntu-22.04
+    environment: ${{ inputs.ENVIRONMENT }}
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: Checkout local github actions
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+          fetch-depth: 0
+
+      - name: Cache asdf
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: |
+            ~/.asdf
+          key: ${{ runner.os }}-asdf-${{ hashFiles('**/.tool-versions') }}
+          restore-keys: |
+            ${{ runner.os }}-asdf-
+
+      - name: Install asdf dependencies in .tool-versions
+        uses: asdf-vm/actions/install@1902764435ca0dd2f3388eea723a4f92a4eb8302
+        with:
+          asdf_branch: v0.15.0
+        env:
+          PYTHON_CONFIGURE_OPTS: --enable-shared
+
+      # Use grep to find the line beginning with "python"
+      - name: Get Python version from file
+        run: |
+          PYTHON_VERSION=$(grep "^python" .tool-versions | sed 's/python //g')
+          echo "PYTHON_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV
+
+      - name: setup python venv
+        uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '${{ env.PYTHON_VERSION }}'
+          cache: 'poetry' # caching poetry dependencies
+      - run: poetry install
+
+      - name: Run Regression Testing
+        working-directory: scripts
+        if: ${{ (inputs.ENVIRONMENT != 'prod') && (inputs.ENVIRONMENT != 'ref') }}
+        env:
+          TARGET_ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
+          VERSION_NUMBER: ${{ inputs.VERSION_NUMBER }}
+          TESTS_TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
+        run: |
+          echo Running regression tests in the "$TARGET_ENVIRONMENT" environment.
+          poetry run python run_regression_tests.py \
+          --env="$TARGET_ENVIRONMENT" \
+          --token="$TESTS_TOKEN" \
+          --regression_test_repo_tag "$VERSION_NUMBER"
