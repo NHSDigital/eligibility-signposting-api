@@ -43,11 +43,17 @@ jobs:
         env:
           PYTHON_CONFIGURE_OPTS: --enable-shared
 
+      # Use grep to find the line beginning with "python"
+      - name: Get Python version from file
+        run: |
+          PYTHON_VERSION=$(grep "^python==\K.*" .tool-versions)
+          echo "PYTHON_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV
+
       - name: setup venv
         uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
-#          python-version: '3.13.5'
+          python-version: '${{ env.PYTHON_VERSION }}'
           cache: 'poetry' # caching poetry dependencies
       - run: poetry install
 
