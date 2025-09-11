@@ -16,9 +16,6 @@ jobs:
   regression-tests:
     runs-on: ubuntu-22.04
     environment: ${{ inputs.ENVIRONMENT }}
-    permissions:
-      id-token: write
-      contents: write
 
     steps:
       - name: Checkout local github actions
