@@ -1,4 +1,4 @@
-name: Run Regression Tests
+name: E2E Regression Tests
 
 on:
   workflow_call:
@@ -13,7 +13,7 @@ on:
         type: string
 
 jobs:
-  run_regression_tests:
+  regression-tests:
     runs-on: ubuntu-22.04
     environment: ${{ inputs.ENVIRONMENT }}
     permissions:
@@ -64,7 +64,6 @@ jobs:
           TARGET_ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
           VERSION_NUMBER: ${{ inputs.VERSION_NUMBER }}
           TESTS_TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
-        # GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           echo Running regression tests in the "$TARGET_ENVIRONMENT" environment.
           poetry run python run_regression_tests.py \

@@ -132,7 +132,7 @@ jobs:
   regression_tests:
 #    needs: deploy
     name: Regression Tests
-    uses: ./.github/workflows/run-regression-tests.yml
+    uses: ./.github/workflows/regression-tests.yml
     with:
       ENVIRONMENT: "test"
       VERSION_NUMBER: "main"

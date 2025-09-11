@@ -34,7 +34,7 @@ jobs:
   regression_tests:
     needs: call
     name: Regression Tests
-    uses: ./.github/workflows/run-regression-tests.yml
+    uses: ./.github/workflows/regression-tests.yml
     with:
       ENVIRONMENT: "pre-prod"
       VERSION_NUMBER: "main"
