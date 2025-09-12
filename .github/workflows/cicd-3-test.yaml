@@ -88,6 +88,8 @@ jobs:
 
       - name: "Checkout Repository"
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag }}
 
       - name: "Build lambda artefact"
         run: |
