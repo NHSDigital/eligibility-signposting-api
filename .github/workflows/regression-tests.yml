@@ -11,10 +11,12 @@ on:
         type: string
       PRODUCT:
         type: string
+    secrets: {}
+
 
 jobs:
   regression-tests:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     environment: ${{ inputs.ENVIRONMENT }}
 
     steps:
