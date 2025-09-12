@@ -103,11 +103,8 @@ jobs:
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
         working-directory: ./infrastructure
 
-  regression_tests:
-    needs: deploy
-    name: Regression Tests
-    uses: ./.github/workflows/regression-tests.yml
-    with:
-      ENVIRONMENT: "test"
-      VERSION_NUMBER: "main"
-    secrets: inherit
+      - name: "Regression Tests"
+        uses: ./.github/workflows/regression-tests.yml
+        with:
+          ENVIRONMENT: "test"
+          VERSION_NUMBER: "main"

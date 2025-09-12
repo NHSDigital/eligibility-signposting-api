@@ -266,3 +266,10 @@ jobs:
             Auto-release created during production deployment.
           draft: false
           prerelease: false
+
+      - name: "Regression Tests"
+        if: ${{ needs.metadata.outputs.environment == 'preprod' }}
+        uses: ./.github/workflows/regression-tests.yml
+        with:
+          ENVIRONMENT: "preprod"
+          VERSION_NUMBER: "main"
