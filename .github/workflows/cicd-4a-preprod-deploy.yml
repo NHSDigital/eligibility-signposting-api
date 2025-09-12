@@ -23,19 +23,18 @@ on:
           - major
 
 jobs:
-  call:
-    uses: ./.github/workflows/base-deploy.yml
-    with:
-      environment: preprod
-      ref: ${{ inputs.ref }}
-      release_type: ${{ inputs.release_type }}
-    secrets: inherit
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Deploy"
+        uses: ./.github/workflows/base-deploy.yml
+        with:
+          environment: preprod
+          ref: ${{ inputs.ref }}
+          release_type: ${{ inputs.release_type }}
 
-  regression_tests:
-    needs: call
-    name: Regression Tests
-    uses: ./.github/workflows/regression-tests.yml
-    with:
-      ENVIRONMENT: "pre-prod"
-      VERSION_NUMBER: "main"
-    secrets: inherit
+      - name: Regression Tests
+        uses: ./.github/workflows/regression-tests.yml
+        with:
+          ENVIRONMENT: "preprod"
+          VERSION_NUMBER: "main"

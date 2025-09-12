@@ -16,7 +16,7 @@ on:
         required: false
         default: "patch"
         type: string
-    secrets: {}
+    secrets: inherit
 
 jobs:
   metadata:
