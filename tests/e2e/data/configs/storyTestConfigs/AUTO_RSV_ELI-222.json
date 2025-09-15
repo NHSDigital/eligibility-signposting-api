@@ -56,7 +56,8 @@
             "CohortGroup": "magic_cohort",
             "PositiveDescription": "",
             "NegativeDescription": "",
-            "Priority": 20
+            "Priority": 20,
+            "Virtual": "Y"
           }
         ],
         "IterationRules": [
