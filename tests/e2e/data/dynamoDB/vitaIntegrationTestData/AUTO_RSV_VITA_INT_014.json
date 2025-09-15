@@ -1,21 +1,16 @@
 {
-  "scenario_name": "RSV - Vita Integration - NotActionable - You should have the RSV vaccine (already vaccinated) - empty cohorts - AlreadyVaccinated",
+  "scenario_name": "RSV - Vita Integration - - Not Eligible",
   "request_headers": {
-    "nhs-login-nhs-number": "9466447939"
+    "nhs-login-nhs-number": "9657933617"
   },
   "config_filenames": [
     "vita_integration_test_config.json"
   ],
   "data": [
     {
-      "NHS_NUMBER": "9466447939",
-      "ATTRIBUTE_TYPE": "RSV",
-      "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_-1>>"
-    },
-    {
-      "NHS_NUMBER": "9466447939",
+      "NHS_NUMBER": "9657933617",
       "ATTRIBUTE_TYPE": "PERSON",
-      "DATE_OF_BIRTH": "19500601",
+      "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "2",
       "POSTCODE": "CB3 8DX",
       "POSTCODE_SECTOR": "CB38",
@@ -29,6 +24,12 @@
       "13Q_FLAG": "N",
       "CARE_HOME_FLAG": "Y",
       "DE_FLAG": "N"
+    },
+    {
+      "NHS_NUMBER": "9657933617",
+      "ATTRIBUTE_TYPE": "RSV",
+      "LAST_SUCCESSFUL_DATE": null,
+      "BOOKED_APPOINTMENT_DATE": null
     }
   ]
 }

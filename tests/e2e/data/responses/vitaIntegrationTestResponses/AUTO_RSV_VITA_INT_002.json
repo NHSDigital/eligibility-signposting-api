@@ -1,6 +1,6 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-31T15:34:16.758583+00:00"
+    "lastUpdated": "2025-08-29T15:27:30.337860+00:00"
   },
   "processedSuggestions": [
     {
@@ -8,14 +8,7 @@
         {
           "actionCode": "BookLocal",
           "actionType": "InfoText",
-          "description": "##Getting the vaccine\n\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
-          "urlLabel": "",
-          "urlLink": ""
-        },
-        {
-          "actionCode": "HelpSupportInfo",
-          "actionType": "InfoText",
-          "description": "## CONTENT TBC\n\nBlah blah blah.",
+          "description": "## Getting the vaccine\n\nYou can get an RSV vaccination at your GP surgery.\n\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
           "urlLabel": "",
           "urlLink": ""
         }
@@ -25,7 +18,7 @@
         {
           "cohortCode": "rsv_age",
           "cohortStatus": "Actionable",
-          "cohortText": "are aged 75 to 79 years old"
+          "cohortText": "are aged between 75 and 79"
         }
       ],
       "status": "Actionable",
@@ -33,5 +26,5 @@
       "suitabilityRules": []
     }
   ],
-  "responseId": "04e12c58-86a4-46e9-a6ef-d640eb9a8e94"
+  "responseId": "db3354f3-2388-48cf-be82-b32270be2c33"
 }
