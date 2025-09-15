@@ -11,12 +11,11 @@ on:
         type: string
       PRODUCT:
         type: string
-    secrets: {}
+    secrets: { }
 
 jobs:
   regression-tests:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -44,19 +43,13 @@ jobs:
           PYTHON_VERSION=$(grep "^python" .tool-versions | sed 's/python //g')
           echo "PYTHON_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: setup python venv
+        uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install Poetry (into setup-python env)
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
-          python -m poetry --version
-
-      - name: Install deps
-        run: python -m poetry install --no-interaction --no-ansi
+          python-version: '${{ env.PYTHON_VERSION }}'
+          cache: 'poetry' # caching poetry dependencies
+      - run: poetry install
 
       - name: Run Regression Testing
         working-directory: scripts
@@ -66,7 +59,7 @@ jobs:
           VERSION_NUMBER: ${{ inputs.VERSION_NUMBER }}
           TESTS_TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
         run: |
-          python -m poetry run python run_regression_tests.py \
+          poetry run python run_regression_tests.py \
             --env="$TARGET_ENVIRONMENT" \
             --token="$TESTS_TOKEN" \
             --regression_test_repo_tag "$VERSION_NUMBER"
