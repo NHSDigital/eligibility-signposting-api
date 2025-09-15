@@ -1,36 +1,30 @@
 {
   "meta": {
-    "lastUpdated": "2025-08-01T08:10:25.890939+00:00"
+    "lastUpdated": "2025-08-29T16:02:53.910473+00:00"
   },
   "processedSuggestions": [
     {
       "actions": [
         {
-          "actionCode": "ManagedSettingInfo",
+          "actionCode": "AlreadyVaccinatedInfo",
           "actionType": "InfoText",
-          "description": "## If you think this is incorrect\n\nIf you have already had this vaccination or your personal details are wrong, visit our help and support page. (ADD LINK).",
+          "description": "## If you think this is incorrect\n\nIf you believe you've not been vaccinated against RSV, speak to your healthcare professional.\n\nFor anything else please see our [help and support page](https://www.nhs.uk/nhs-app/nhs-app-help-and-support/).",
           "urlLabel": "",
           "urlLink": ""
         }
       ],
       "condition": "RSV",
-      "eligibilityCohorts": [
-        {
-          "cohortCode": "rsv_age",
-          "cohortStatus": "NotActionable",
-          "cohortText": "are aged 75 to 79 years old"
-        }
-      ],
+      "eligibilityCohorts": [],
       "status": "NotActionable",
       "statusText": "You should have the RSV vaccine",
       "suitabilityRules": [
         {
-          "ruleCode": "Other Setting",
-          "ruleText": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
+          "ruleCode": "AlreadyVaccinated",
+          "ruleText": "## You've had your RSV vaccination\n\nWe believe you were vaccinated against RSV on 3 April 2025.",
           "ruleType": "S"
         }
       ]
     }
   ],
-  "responseId": "2effe07d-747b-4288-84ef-9b7770dc7430"
+  "responseId": "c999bfc5-48b1-44f0-9e99-58d4c4ca495b"
 }
