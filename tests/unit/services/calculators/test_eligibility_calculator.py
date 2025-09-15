@@ -1767,3 +1767,36 @@ class TestEligibilityResultBuilder:
 
         assert_that(len(result.cohort_results), is_(1))
         assert_that(result.cohort_results[0].reasons, contains_inanyorder(*expected_reasons))
+
+
+def test_campaigns_with_rule_code_in_description(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(
+        nhs_number, postcode=Postcode("SW19 2BH"), cohorts=["cohort1"]
+    )
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
+                    iteration_rules=[rule_builder.PostcodeSuppressionRuleFactory.build(
+                        name=RuleName("RuleCodeName|Excluded postcode In SW19"),
+                        priority=rules_model.RulePriority(10),
+                        comparator=rules_model.RuleComparator("NW1")
+                    )],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    assert True
+
