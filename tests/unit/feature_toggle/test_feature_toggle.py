@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 from botocore.exceptions import ClientError
 
-os.environ["AWS_DEFAULT_REGION"] = "eu-west-2"
+os.environ["AWS_DEFAULT_REGION"] = "eu-west-1"
 os.environ["ENV"] = "local"
 
 import pytest
@@ -78,7 +78,7 @@ class TestGetSsmParameter:
 @patch("eligibility_signposting_api.feature_toggle.feature_toggle.get_ssm_parameter")
 class TestIsFeatureEnabled:
     @pytest.mark.parametrize(
-        "return_value, expected_result",
+        ("return_value", "expected_result"),
         [
             ("true", True),
             ("True", True),
@@ -90,7 +90,7 @@ class TestIsFeatureEnabled:
         ],
     )
     def test_is_feature_enabled_various_inputs(
-        self, mock_get_ssm_parameter: Mock, return_value: str, expected_result: bool
+        self, mock_get_ssm_parameter: Mock, return_value: str, *, expected_result: bool
     ):
         feature_name = "is_feature_enabled_test"
         expected_param_name = f"/local/feature_toggles/{feature_name}"
