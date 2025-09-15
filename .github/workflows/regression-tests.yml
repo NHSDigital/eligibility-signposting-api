@@ -59,6 +59,7 @@ jobs:
           VERSION_NUMBER: ${{ inputs.VERSION_NUMBER }}
           TESTS_TOKEN: ${{ secrets.REGRESSION_TESTS_PAT }}
         run: |
+          echo Running regression tests in the "$TARGET_ENVIRONMENT" environment.
           poetry run python run_regression_tests.py \
             --env="$TARGET_ENVIRONMENT" \
             --token="$TESTS_TOKEN" \
