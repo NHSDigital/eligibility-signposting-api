@@ -8,7 +8,7 @@
         {
           "actionCode": "ManageLocal",
           "actionType": "CardWithText",
-          "description": "##You have an RSV vaccination appointment\n\nContact your healthcare provider to change or cancel your appointment.",
+          "description": "## You have an RSV vaccination appointment booked\n\nTo change or cancel your appointment, contact the provider you booked it with.",
           "urlLabel": "",
           "urlLink": ""
         }

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "lastUpdated": "2025-07-31T15:35:30.455708+00:00"
+    "lastUpdated": "2025-08-29T15:36:03.086801+00:00"
   },
   "processedSuggestions": [
     {
@@ -8,14 +8,7 @@
         {
           "actionCode": "BookLocal",
           "actionType": "InfoText",
-          "description": "##Getting the vaccine\n\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
-          "urlLabel": "",
-          "urlLink": ""
-        },
-        {
-          "actionCode": "HelpSupportInfo",
-          "actionType": "InfoText",
-          "description": "## CONTENT TBC\n\nBlah blah blah.",
+          "description": "## Getting the vaccine\n\nYou can get an RSV vaccination at your GP surgery.\n\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
           "urlLabel": "",
           "urlLink": ""
         }
@@ -33,5 +26,5 @@
       "suitabilityRules": []
     }
   ],
-  "responseId": "ad2f0a17-938a-423f-a2c7-82cfda58ced9"
+  "responseId": "d149d5a0-fd89-4015-80db-c249ab8a324f"
 }

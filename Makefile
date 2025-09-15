@@ -36,6 +36,9 @@ _dist_include="pytest.ini poetry.lock poetry.toml pyproject.toml Makefile build/
 dependencies: # Install dependencies needed to build and test the project @Pipeline
 	scripts/dependencies.sh
 
+check-licenses:
+	scripts/check_python_licenses.sh
+
 .PHONY: build
 build: dist/lambda.zip # Build lambda.zip in dist/
 

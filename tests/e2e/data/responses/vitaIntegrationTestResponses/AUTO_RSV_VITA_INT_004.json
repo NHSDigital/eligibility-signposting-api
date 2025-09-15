@@ -8,7 +8,7 @@
         {
           "actionCode": "AmendNBS",
           "actionType": "ButtonWithAuthLink",
-          "description": "##You have an RSV vaccination appointment\nYou can view, change or cancel your appointment below.",
+          "description": "## You have an RSV vaccination appointment booked\n\nYou can view, change or cancel your appointment below.",
           "urlLabel": "Manage your appointment",
           "urlLink": "http://www.nhs.uk/book-rsv"
         }
