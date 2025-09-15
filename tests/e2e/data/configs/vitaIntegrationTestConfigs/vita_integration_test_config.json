@@ -387,7 +387,7 @@
           {
             "Type": "R",
             "Name": "Fix for Vita Scenario 2,3",
-            "Description": "Fix for Vita Scenario 2,3",
+            "Description": "Fix for Vita Scenario 2,3 which forces the response to only show BOOK_LOCAL",
             "Priority": 1950,
             "AttributeLevel": "PERSON",
             "AttributeName": "NHS_NUMBER",
