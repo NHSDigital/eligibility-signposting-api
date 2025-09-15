@@ -97,6 +97,7 @@ resource "aws_ssm_parameter" "feature_toggles" {
   for_each = jsondecode(file("${path.root}/scripts/feature_toggle/feature_toggle.json"))
 
   name  = "/${var.environment}/feature_toggles/${each.key}"
+  #checkov:skip=CKV2_AWS_34: Since this is a feature toggle config, secure string not needed
   type  = "String"
 
   value = lookup(each.value.env_overrides, var.environment, each.value.default_state)
