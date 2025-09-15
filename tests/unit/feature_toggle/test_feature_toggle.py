@@ -1,5 +1,6 @@
 import os
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
 from botocore.exceptions import ClientError
 
 os.environ["AWS_DEFAULT_REGION"] = "eu-west-2"
@@ -17,7 +18,6 @@ from eligibility_signposting_api.feature_toggle.feature_toggle import (
 @pytest.fixture(autouse=True)
 def clear_cache():
     ssm_cache_in_seconds.clear()
-    yield
 
 
 @patch("eligibility_signposting_api.feature_toggle.feature_toggle.ssm_client")
@@ -25,23 +25,17 @@ class TestGetSsmParameter:
     def test_get_ssm_parameter_success(self, mock_ssm_client: Mock):
         param_name = "/local/feature_toggles/feature_test"
         expected_value = "true"
-        mock_ssm_client.get_parameter.return_value = {
-            "Parameter": {"Value": expected_value}
-        }
+        mock_ssm_client.get_parameter.return_value = {"Parameter": {"Value": expected_value}}
 
         result = get_ssm_parameter(param_name)
 
         assert result == expected_value
-        mock_ssm_client.get_parameter.assert_called_once_with(
-            Name=param_name, WithDecryption=True
-        )
+        mock_ssm_client.get_parameter.assert_called_once_with(Name=param_name, WithDecryption=True)
 
     def test_get_ssm_parameter_is_cached(self, mock_ssm_client: Mock):
         param_name = "/local/feature_toggles/cached_feature"
         expected_value = "true"
-        mock_ssm_client.get_parameter.return_value = {
-            "Parameter": {"Value": expected_value}
-        }
+        mock_ssm_client.get_parameter.return_value = {"Parameter": {"Value": expected_value}}
 
         result1 = get_ssm_parameter(param_name)
         result2 = get_ssm_parameter(param_name)
@@ -65,9 +59,7 @@ class TestGetSsmParameter:
         result = get_ssm_parameter(param_name)
 
         assert result == "false"
-        mock_ssm_client.get_parameter.assert_called_once_with(
-            Name=param_name, WithDecryption=True
-        )
+        mock_ssm_client.get_parameter.assert_called_once_with(Name=param_name, WithDecryption=True)
 
     def test_get_ssm_parameter_client_error(self, mock_ssm_client: Mock):
         param_name = "/local/feature_toggles/error_feature"
