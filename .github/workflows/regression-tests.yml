@@ -13,17 +13,14 @@ on:
         type: string
     secrets: {}
 
-
 jobs:
   regression-tests:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.ENVIRONMENT }}
 
     steps:
-      - name: Checkout local github actions
+      - name: Checkout
         uses: actions/checkout@v5
         with:
-          ref: ${{ env.BRANCH_NAME }}
           fetch-depth: 0
 
       - name: Cache asdf
@@ -35,26 +32,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-asdf-
 
-      - name: Install asdf dependencies in .tool-versions
+      - name: Install asdf tools
         uses: asdf-vm/actions/install@1902764435ca0dd2f3388eea723a4f92a4eb8302
         with:
           asdf_branch: v0.15.0
         env:
           PYTHON_CONFIGURE_OPTS: --enable-shared
 
-      # Use grep to find the line beginning with "python"
-      - name: Get Python version from file
+      - name: Derive Python version from .tool-versions
         run: |
           PYTHON_VERSION=$(grep "^python" .tool-versions | sed 's/python //g')
           echo "PYTHON_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV
 
-      - name: setup python venv
-        uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          python-version: '${{ env.PYTHON_VERSION }}'
-          cache: 'poetry' # caching poetry dependencies
-      - run: poetry install
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+
+      - name: Install Poetry
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry --version
+
+      - name: Install deps
+        run: poetry install --no-interaction --no-ansi
 
       - name: Run Regression Testing
         working-directory: scripts
@@ -66,6 +69,6 @@ jobs:
         run: |
           echo Running regression tests in the "$TARGET_ENVIRONMENT" environment.
           poetry run python run_regression_tests.py \
-          --env="$TARGET_ENVIRONMENT" \
-          --token="$TESTS_TOKEN" \
-          --regression_test_repo_tag "$VERSION_NUMBER"
+            --env="$TARGET_ENVIRONMENT" \
+            --token="$TESTS_TOKEN" \
+            --regression_test_repo_tag "$VERSION_NUMBER"
