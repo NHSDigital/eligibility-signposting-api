@@ -1,4 +1,5 @@
 # Feature Toggles
+
 Feature toggles allow us to deploy code to production in a disabled state, enabling it later without a new deployment.
 
 ## How It Works
