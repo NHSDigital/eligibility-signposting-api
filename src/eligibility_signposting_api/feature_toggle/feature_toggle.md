@@ -6,10 +6,10 @@ Feature toggles allow us to deploy code to production in a disabled state, enabl
 
 Our feature toggle system is built on **AWS Systems Manager (SSM) Parameter Store**.
 
-1.  **Single Source of Truth**: AWS SSM is the single source of truth for the current state (`true` or `false`) of all feature toggles.
-2.  **Infrastructure as Code**: Toggles are defined in Terraform, ensuring configuration is version-controlled and repeatable across environments.
-3.  **CI/CD Validation**: The `required_toggles.txt` file in the repository lists all toggles the application requires. The CI/CD pipeline checks that every toggle in this file exists in AWS SSM before a deployment can proceed.
-4.  **Runtime Caching**: The application code uses a cached `is_feature_enabled()` function to check a toggle's state at runtime, minimizing calls to AWS and ensuring high performance.
+1. **Single Source of Truth**: AWS SSM is the single source of truth for the current state (`true` or `false`) of all feature toggles.
+2. **Infrastructure as Code**: Toggles are defined in Terraform, ensuring configuration is version-controlled and repeatable across environments.
+3. **CI/CD Validation**: The `required_toggles.txt` file in the repository lists all toggles the application requires. The CI/CD pipeline checks that every toggle in this file exists in AWS SSM before a deployment can proceed.
+4. **Runtime Caching**: The application code uses a cached `is_feature_enabled()` function to check a toggle's state at runtime, minimizing calls to AWS and ensuring high performance.
 
 ## Developer Workflow
 
@@ -41,6 +41,7 @@ Adding a new toggle is a single-step process. You only need to add a new entry t
 Our Terraform setup automatically reads this file and creates the corresponding SSM parameters. You do not need to write new Terraform code for each toggle.
 
 **File: [ssm.tf](../../../infrastructure/stacks/api-layer/ssm.tf) (For Reference—No edits needed)**
+
 ```terraform
 resource "aws_ssm_parameter" "feature_toggles" {
   for_each = jsondecode(file("${path.root}/scripts/feature_toggle/feature_toggle.json"))
@@ -121,9 +122,9 @@ Feature toggles are **technical debt**. Once a feature is fully released and sta
 
 Follow the **"Two-Ticket" Rule**:
 
-1.  When you create a ticket to add a feature toggle, immediately create a second ticket to remove it.
-2.  Link the two tickets.
-3.  Once the feature is permanently enabled, schedule the cleanup ticket in an upcoming sprint to remove the toggle from:
+1. When you create a ticket to add a feature toggle, immediately create a second ticket to remove it.
+2. Link the two tickets.
+3. Once the feature is permanently enabled, schedule the cleanup ticket in an upcoming sprint to remove the toggle from:
     - The application code
     - All related test code
     - The `feature_toggle.json` file
