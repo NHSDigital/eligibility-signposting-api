@@ -33,11 +33,6 @@
           "ruleCode": "AlreadyVaccinated",
           "ruleText": "## You've had your RSV vaccination.",
           "ruleType": "S"
-        },
-        {
-          "ruleCode": "AlreadyVaccinated",
-          "ruleText": "## You've had your RSV vaccination.",
-          "ruleType": "S"
         }
       ]
     }

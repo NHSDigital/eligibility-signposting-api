@@ -46,19 +46,11 @@
             "Virtual": "Y"
           },
           {
-            "CohortLabel": "elid_virtual_cohort_2",
-            "CohortGroup": "elid_virtual_cohort_2",
-            "PositiveDescription": "In elid_virtual_cohort_2",
-            "NegativeDescription": "Out elid_virtual_cohort_2",
-            "Priority": 2,
-            "Virtual": "Y"
-          },
-          {
             "CohortLabel": "rsv_eli_440_cohort_999",
             "CohortGroup": "rsv_eli_440_cohort_999",
             "PositiveDescription": "In rsv_eli_440_cohort_999",
             "NegativeDescription": "Out rsv_eli_440_cohort_999",
-            "Priority": 3
+            "Priority": 2
           }
         ],
         "IterationRules": [
@@ -70,7 +62,7 @@
             "AttributeLevel": "COHORT",
             "AttributeName": "COHORT_LABEL",
             "Operator": "MemberOf",
-            "Comparator": "elid_virtual_cohort"
+            "Comparator": "rsv_eli_440_cohort_999"
           }
         ],
         "ActionsMapper": {
