@@ -23,11 +23,6 @@ jobs:
       terraform_version: ${{ steps.vars.outputs.terraform_version }}
       tag: ${{ steps.tag.outputs.name }}
     steps:
-      - name: "Acquire deploy lock"
-        uses: softprops/turnstyle@v2
-        with:
-          poll-interval-seconds: 10
-
       - name: "Checkout exact commit from CI/CD publish"
         uses: actions/checkout@v5
         with:
@@ -56,10 +51,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [metadata]
     environment: test
+    timeout-minutes: 1440
     permissions:
       id-token: write
       contents: read
     steps:
+      - name: "Acquire deploy lock"
+        uses: softprops/turnstyle@v2
+        with:
+          poll-interval-seconds: 10
+
       - name: "Checkout same commit"
         uses: actions/checkout@v5
         with:

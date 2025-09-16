@@ -10,19 +10,12 @@ on:
         description: "This is the tag that is going to be deployed"
         required: true
         default: "latest"
-      environment:
-        description: "Target environment (test only)"
-        required: true
-        default: "test"
-        type: choice
-        options:
-          - test
 
 jobs:
   metadata:
     name: "Set CI/CD metadata"
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 1440
     environment: test
     outputs:
       build_datetime: ${{ steps.variables.outputs.build_datetime }}
