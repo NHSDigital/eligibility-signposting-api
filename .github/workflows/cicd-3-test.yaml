@@ -62,10 +62,10 @@ jobs:
           export TAG="${{ steps.variables.outputs.tag }}"
           make list-variables
   deploy:
-    name: "Deploy to an environment"
+    name: "Deploy to test environment"
     runs-on: ubuntu-latest
     needs: [metadata]
-    environment: ${{ inputs.environment }}
+    environment: test
     timeout-minutes: 30
     permissions:
       id-token: write
@@ -111,7 +111,7 @@ jobs:
 
       - name: "Terraform Apply"
         env:
-          ENVIRONMENT: ${{ inputs.environment }}
+          ENVIRONMENT: test
           WORKSPACE: "default"
           TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
           TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
