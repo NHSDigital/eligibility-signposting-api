@@ -119,7 +119,7 @@ jobs:
           path: ./build
 
       - name: "Configure AWS Credentials"
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
           aws-region: eu-west-2
@@ -267,9 +267,12 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: "Regression Tests"
-        if: ${{ needs.metadata.outputs.environment == 'preprod' }}
-        uses: ./.github/workflows/regression-tests.yml
-        with:
-          ENVIRONMENT: "preprod"
-          VERSION_NUMBER: "main"
+  regression-tests:
+    name: "Regression Tests"
+    if: ${{ needs.metadata.outputs.environment == 'preprod' }}
+    needs: deploy
+    uses: ./.github/workflows/regression-tests.yml
+    with:
+      ENVIRONMENT: "preprod"
+      VERSION_NUMBER: "main"
+    secrets: inherit
