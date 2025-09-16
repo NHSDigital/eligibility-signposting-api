@@ -3,10 +3,6 @@
 
 name: "CI/CD deploy to TEST"
 
-concurrency:
-  group: terraform-deploy-${{ github.event.inputs.environment }}
-  cancel-in-progress: false
-
 on:
   workflow_dispatch:
     inputs:
@@ -37,6 +33,11 @@ jobs:
       version: ${{ steps.variables.outputs.version }}
       tag: ${{ steps.variables.outputs.tag }}
     steps:
+      - name: "Acquire deploy lock"
+        uses: softprops/turnstyle@v2
+        with:
+          poll-interval-seconds: 10
+
       - name: "Checkout tag"
         uses: actions/checkout@v5
         with:

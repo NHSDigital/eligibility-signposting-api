@@ -5,10 +5,6 @@ on:
     workflows: ["CI/CD publish"]
     types: [completed]
 
-concurrency:
-  group: terraform-deploy-test
-  cancel-in-progress: false
-
 permissions:
   contents: read
   id-token: write
@@ -27,6 +23,11 @@ jobs:
       terraform_version: ${{ steps.vars.outputs.terraform_version }}
       tag: ${{ steps.tag.outputs.name }}
     steps:
+      - name: "Acquire deploy lock"
+        uses: softprops/turnstyle@v2
+        with:
+          poll-interval-seconds: 10
+
       - name: "Checkout exact commit from CI/CD publish"
         uses: actions/checkout@v5
         with:
