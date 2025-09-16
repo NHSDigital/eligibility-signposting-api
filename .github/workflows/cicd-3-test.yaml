@@ -15,7 +15,7 @@ jobs:
   metadata:
     name: "Set CI/CD metadata"
     runs-on: ubuntu-latest
-    timeout-minutes: 1440
+    timeout-minutes: 10080
     environment: test
     outputs:
       build_datetime: ${{ steps.variables.outputs.build_datetime }}
