@@ -79,6 +79,9 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install dependencies
+        run: pip install requests
+
       - name: "Checkout Repository"
         uses: actions/checkout@v5
         with:
