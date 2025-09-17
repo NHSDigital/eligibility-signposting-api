@@ -9,7 +9,7 @@ on:
       tag:
         description: "Branch/Tag/SHA to deploy to test"
         required: true
-        default: "dev-20250916094908"
+        default: "feauture/te-sd-ELI-452-cicd-improvements"
       release_type:
         description: "Version bump type (use 'rc' to keep the same base and just increment RC)"
         required: true
@@ -79,8 +79,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install dependencies
-        run: pip install requests
+      - run: poetry install
 
       - name: "Checkout Repository"
         uses: actions/checkout@v5

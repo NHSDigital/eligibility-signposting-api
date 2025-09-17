@@ -144,6 +144,8 @@ jobs:
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
 
+      - run: poetry install
+
       - name: "Tag and Release"
         if: ${{ needs.metadata.outputs.environment == 'preprod' || needs.metadata.outputs.environment == 'prod' }}
         env:
@@ -152,7 +154,7 @@ jobs:
           INPUT_RELEASE_TYPE: ${{ inputs.release_type }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: python tag_and_release.py
+        run: python scripts/seed_users/tag_and_release.py
 
 
   regression-tests:
