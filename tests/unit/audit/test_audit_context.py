@@ -26,6 +26,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     RuleName,
     RulePriority,
     Status,
+    StatusText,
     SuggestedAction,
     UrlLabel,
     UrlLink,
@@ -132,7 +133,10 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g_for_actionable_
         reasons=audit_rules,
     )
     iteration_result = IterationResult(
-        status=Status.actionable, cohort_results=[cohort_group_result], actions=suggested_actions
+        status=Status.actionable,
+        status_text=StatusText("You should have the Condition1 vaccine"),
+        cohort_results=[cohort_group_result],
+        actions=suggested_actions,
     )
     campaign_details = (CampaignID("CampaignID1"), CampaignVersion(123))
     matched_action_detail = MatchedActionDetail(
@@ -150,9 +154,7 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g_for_actionable_
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(
-            condition_name, best_iteration_results, matched_action_detail, [cohort_group_result]
-        )
+        AuditContext.append_audit_condition(condition_name, best_iteration_results, matched_action_detail)
 
         expected_audit_action = [
             AuditAction(
@@ -212,7 +214,12 @@ def test_should_append_audit_suppression_rules_for_actionable_status(app):
         audit_rules=audit_rules,
         reasons=audit_rules,
     )
-    iteration_result = IterationResult(status=Status.actionable, cohort_results=[cohort_group_result], actions=[])
+    iteration_result = IterationResult(
+        status=Status.actionable,
+        status_text=StatusText("You should have the Condition1 vaccine"),
+        cohort_results=[cohort_group_result],
+        actions=[],
+    )
     campaign_details = (CampaignID("CampaignID1"), CampaignVersion(123))
 
     best_iteration_results = BestIterationResult(
@@ -226,9 +233,7 @@ def test_should_append_audit_suppression_rules_for_actionable_status(app):
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(
-            condition_name, best_iteration_results, MatchedActionDetail(), [cohort_group_result]
-        )
+        AuditContext.append_audit_condition(condition_name, best_iteration_results, MatchedActionDetail())
 
         assert g.audit_log.response.condition, condition_name
         cond = g.audit_log.response.condition[0]
@@ -269,7 +274,12 @@ def test_should_append_audit_filter_rules_for_not_actionable_status(app):
         audit_rules=audit_rules,
         reasons=audit_rules,
     )
-    iteration_result = IterationResult(status=Status.not_actionable, cohort_results=[cohort_group_result], actions=[])
+    iteration_result = IterationResult(
+        status=Status.not_actionable,
+        status_text=StatusText("You should have the Condition1 vaccine"),
+        cohort_results=[cohort_group_result],
+        actions=[],
+    )
     campaign_details = (CampaignID("CampaignID1"), CampaignVersion(123))
 
     best_iteration_results = BestIterationResult(
@@ -283,9 +293,7 @@ def test_should_append_audit_filter_rules_for_not_actionable_status(app):
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(
-            condition_name, best_iteration_results, MatchedActionDetail(), [cohort_group_result]
-        )
+        AuditContext.append_audit_condition(condition_name, best_iteration_results, MatchedActionDetail())
 
         assert g.audit_log.response.condition, condition_name
         cond = g.audit_log.response.condition[0]

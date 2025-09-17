@@ -65,9 +65,12 @@ resource "aws_iam_policy" "lambda_management" {
           "lambda:GetPolicy",
           "lambda:GetAlias",
           "lambda:GetFunction",
-          "lambda:GetProvisionedConcurrencyConfig",
           "lambda:GetLayerVersion",
-          "lambda:PutProvisionedConcurrencyConfig"
+          "lambda:GetProvisionedConcurrencyConfig",
+          "lambda:PutProvisionedConcurrencyConfig",
+          "lambda:DeleteProvisionedConcurrencyConfig",
+          "lambda:ListProvisionedConcurrencyConfigs",
+
         ],
         Resource = [
           "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api",
@@ -89,24 +92,43 @@ resource "aws_iam_policy" "dynamodb_management" {
 
   policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "dynamodb:DescribeTimeToLive",
-          "dynamodb:DescribeTable",
-          "dynamodb:DescribeContinuousBackups",
-          "dynamodb:ListTables",
-          "dynamodb:DeleteTable",
-          "dynamodb:CreateTable",
-          "dynamodb:TagResource",
-          "dynamodb:ListTagsOfResource",
-        ],
-        Resource = [
-          "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
-        ]
-      }
-    ]
+    Statement = concat(
+      [
+        {
+          Effect = "Allow",
+          Action = [
+            "dynamodb:DescribeTimeToLive",
+            "dynamodb:DescribeTable",
+            "dynamodb:DescribeContinuousBackups",
+            "dynamodb:ListTables",
+            "dynamodb:DeleteTable",
+            "dynamodb:CreateTable",
+            "dynamodb:TagResource",
+            "dynamodb:ListTagsOfResource",
+          ],
+          Resource = [
+            "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
+          ]
+        }
+      ],
+      # to create test users in preprod
+        var.environment == "preprod" ? [
+        {
+          Effect = "Allow",
+          Action = [
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:DeleteItem",
+            "dynamodb:Scan",
+            "dynamodb:BatchWriteItem",
+            "dynamodb:Query"
+          ],
+          Resource = [
+            "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
+          ]
+        }
+      ] : []
+    )
   })
 
   tags = merge(local.tags, { Name = "dynamodb-management" })
@@ -465,8 +487,8 @@ resource "aws_iam_policy" "iam_management" {
 # Assume role policy document for GitHub Actions
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
-    sid     = "OidcAssumeRoleWithWebIdentity"
-    effect  = "Allow"
+    sid    = "OidcAssumeRoleWithWebIdentity"
+    effect = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
 
     principals {
@@ -479,13 +501,13 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
+      values = ["repo:${var.github_org}/${var.github_repo}:*"]
     }
 
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
+      values = ["sts.amazonaws.com"]
     }
   }
 }
@@ -514,8 +536,8 @@ resource "aws_iam_policy" "firehose_readonly" {
           "firehose:StopDeliveryStreamEncryption"
         ]
         Resource = [
-            "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/eligibility-signposting-api*",
-            "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/splunk-alarm-events*"
+          "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/eligibility-signposting-api*",
+          "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/splunk-alarm-events*"
         ]
       }
     ]

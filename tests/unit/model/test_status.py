@@ -27,15 +27,15 @@ class TestStatus:
         assert Status.best(Status.not_eligible) == Status.not_eligible
 
     def test_get_status_text(self):
-        assert Status.not_eligible.get_status_text(ConditionName("COVID")) == StatusText(
+        assert Status.not_eligible.get_default_status_text(ConditionName("COVID")) == StatusText(
             "We do not believe you can have it"
         )
 
-        assert Status.not_actionable.get_status_text(ConditionName("FLU")) == StatusText(
+        assert Status.not_actionable.get_default_status_text(ConditionName("FLU")) == StatusText(
             "You should have the FLU vaccine"
         )
 
-        assert Status.actionable.get_status_text(ConditionName("COVID")) == StatusText(
+        assert Status.actionable.get_default_status_text(ConditionName("COVID")) == StatusText(
             "You should have the COVID vaccine"
         )
 

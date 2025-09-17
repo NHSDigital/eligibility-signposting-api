@@ -64,12 +64,12 @@ class AuditContext:
         condition_name: ConditionName,
         best_iteration_result: BestIterationResult,
         action_detail: MatchedActionDetail,
-        cohort_results: list[CohortGroupResult],
     ) -> None:
         audit_eligibility_cohorts, audit_eligibility_cohort_groups, audit_actions = [], [], []
         best_active_iteration = best_iteration_result.active_iteration
         best_candidate = best_iteration_result.iteration_result
         best_cohort_results = best_iteration_result.cohort_results
+        filter_audit_rules, suitability_audit_rules = [], []
 
         if best_cohort_results:
             for cohort_label, result in sorted(best_cohort_results.items(), key=lambda item: item[1].cohort_code):
@@ -84,13 +84,7 @@ class AuditContext:
                     )
                 )
 
-        filter_audit_rules, suitability_audit_rules = [], []
-        for result in cohort_results:
-            for rule in result.audit_rules:
-                if rule.rule_type == RuleType.filter:
-                    filter_audit_rules.append(rule)
-                if rule.rule_type == RuleType.suppression:
-                    suitability_audit_rules.append(rule)
+                AuditContext.get_audit_rules(filter_audit_rules, suitability_audit_rules, result)
 
         audit_filter_rule = AuditContext.create_audit_filter_rule(filter_audit_rules)
         audit_suitability_rule = AuditContext.create_audit_suitability_rule(suitability_audit_rules)
@@ -105,7 +99,7 @@ class AuditContext:
             iteration_version=best_active_iteration.version if best_active_iteration else None,
             condition_name=condition_name,
             status=best_candidate.status.name if best_candidate and best_candidate.status else None,
-            status_text=best_candidate.status.get_status_text(condition_name) if best_candidate else None,
+            status_text=best_candidate.status_text if best_candidate else None,
             eligibility_cohorts=audit_eligibility_cohorts,
             eligibility_cohort_groups=audit_eligibility_cohort_groups,
             filter_rules=audit_filter_rule,
@@ -115,6 +109,14 @@ class AuditContext:
         )
 
         g.audit_log.response.condition.append(audit_condition)
+
+    @staticmethod
+    def get_audit_rules(filter_audit_rules: list, suitability_audit_rules: list, result: CohortGroupResult) -> None:
+        for rule in result.audit_rules:
+            if rule.rule_type == RuleType.filter:
+                filter_audit_rules.append(rule)
+            if rule.rule_type == RuleType.suppression:
+                suitability_audit_rules.append(rule)
 
     @staticmethod
     def add_rule_name_and_priority_to_audit(

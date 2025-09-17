@@ -460,7 +460,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "iterationVersion": rsv_campaign.iterations[0].version,
             "conditionName": rsv_campaign.target,
             "status": "not_eligible",
-            "statusText": "We do not believe you can have it",
+            "statusText": f"You are not eligible to take {rsv_campaign.target} vaccines.",
             "eligibilityCohorts": [
                 {"cohortCode": "cohort_label1", "cohortStatus": "not_eligible"},
                 {"cohortCode": "cohort_label4", "cohortStatus": "not_eligible"},
@@ -484,7 +484,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "iterationVersion": covid_campaign.iterations[0].version,
             "conditionName": covid_campaign.target,
             "status": "not_actionable",
-            "statusText": f"You should have the {covid_campaign.target} vaccine",
+            "statusText": f"You have taken {covid_campaign.target} vaccine in the last 90 days",
             "eligibilityCohorts": [
                 {"cohortCode": "cohort_label2", "cohortStatus": "not_actionable"},
                 {"cohortCode": "cohort_label4", "cohortStatus": "not_actionable"},
@@ -516,7 +516,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "iterationVersion": flu_campaign.iterations[0].version,
             "conditionName": flu_campaign.target,
             "status": "actionable",
-            "statusText": f"You should have the {flu_campaign.target} vaccine",
+            "statusText": f"You can take {flu_campaign.target} vaccine.",
             "eligibilityCohorts": [
                 {"cohortCode": "cohort_label3", "cohortStatus": "actionable"},
                 {"cohortCode": "cohort_label4", "cohortStatus": "actionable"},

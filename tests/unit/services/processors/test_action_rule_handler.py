@@ -13,6 +13,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     IterationResult,
     MatchedActionDetail,
     Status,
+    StatusText,
     SuggestedAction,
     UrlLabel,
     UrlLink,
@@ -779,7 +780,10 @@ def test_handle_when_active_iteration_present_and_include_actions_is_true(mock_h
     mock_handle.side_effect = [MatchedActionDetail()]
 
     handler.get_actions(
-        MOCK_PERSON, IterationFactory.build(), IterationResult(Status.actionable, [], []), include_actions_flag=True
+        MOCK_PERSON,
+        IterationFactory.build(),
+        IterationResult(Status.actionable, StatusText(""), [], []),
+        include_actions_flag=True,
     )
 
     assert_that(mock_handle.call_count, is_(1))
@@ -789,7 +793,9 @@ def test_handle_when_active_iteration_present_and_include_actions_is_true(mock_h
 def test_handle_when_active_iteration_absent_and_include_actions_is_true(mock_handle, handler: ActionRuleHandler):
     mock_handle.side_effect = [MatchedActionDetail()]
 
-    handler.get_actions(MOCK_PERSON, None, IterationResult(Status.actionable, [], []), include_actions_flag=True)
+    handler.get_actions(
+        MOCK_PERSON, None, IterationResult(Status.actionable, StatusText(""), [], []), include_actions_flag=True
+    )
 
     assert_that(mock_handle.call_count, is_(0))
 
@@ -799,7 +805,10 @@ def test_handle_is_not_called_when_include_actions_is_false(mock_handle, handler
     mock_handle.side_effect = [MatchedActionDetail()]
 
     handler.get_actions(
-        MOCK_PERSON, IterationFactory.build(), IterationResult(Status.actionable, [], []), include_actions_flag=False
+        MOCK_PERSON,
+        IterationFactory.build(),
+        IterationResult(Status.actionable, StatusText(""), [], []),
+        include_actions_flag=False,
     )
 
     assert_that(mock_handle.call_count, is_(0))

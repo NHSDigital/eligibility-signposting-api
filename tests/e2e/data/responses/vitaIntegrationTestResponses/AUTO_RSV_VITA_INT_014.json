@@ -1,30 +1,35 @@
 {
   "meta": {
-    "lastUpdated": "2025-08-01T08:11:38.412584+00:00"
+    "lastUpdated": "2025-08-29T16:08:57.918587+00:00"
   },
   "processedSuggestions": [
     {
       "actions": [
         {
-          "actionCode": "AlreadyVaccinatedInfo",
+          "actionCode": "HealthcareProInfo",
           "actionType": "InfoText",
-          "description": "## If you think this is incorrect\n\nIf you believe you've not been vaccinated against RSV, speak to your healthcare professional.\n\nFor anything else please see our help and support page. (ADD LINK).",
+          "description": "## If you think this is incorrect\n\nSpeak to your healthcare professional if you think you should be offered this vaccine.\n\nFor anything else, visit our [help and support page](https://www.nhs.uk/nhs-app/nhs-app-help-and-support/).",
           "urlLabel": "",
           "urlLink": ""
         }
       ],
       "condition": "RSV",
-      "eligibilityCohorts": [],
-      "status": "NotActionable",
-      "statusText": "You should have the RSV vaccine",
-      "suitabilityRules": [
+      "eligibilityCohorts": [
         {
-          "ruleCode": "Already Vaccinated",
-          "ruleText": "## You've had your RSV vaccination\n\nWe believe you had your vaccination.",
-          "ruleType": "S"
+          "cohortCode": "rsv_age",
+          "cohortStatus": "NotEligible",
+          "cohortText": "are not aged 75 to 79"
+        },
+        {
+          "cohortCode": "rsv_age_catchup",
+          "cohortStatus": "NotEligible",
+          "cohortText": "did not turn 80 after 1 September 2024"
         }
-      ]
+      ],
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
+      "suitabilityRules": []
     }
   ],
-  "responseId": "970bede3-4428-4456-9f4f-f1bf73c16953"
+  "responseId": "7ca07f73-f8be-4449-9f88-e6c06675cdad"
 }

@@ -24,6 +24,8 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleOperator,
     RulePriority,
     RuleType,
+    StatusText,
+    Virtual,
 )
 
 
@@ -37,6 +39,7 @@ def future_date(days_ahead: int = 365) -> date:
 
 class IterationCohortFactory(ModelFactory[IterationCohort]):
     priority = RulePriority(0)
+    virtual = Virtual.NO
 
 
 class IterationRuleFactory(ModelFactory[IterationRule]):
@@ -60,6 +63,12 @@ class ActionsMapperFactory(ModelFactory[ActionsMapper]):
     root = Use(lambda: {"defaultcomms": AvailableActionDetailFactory.build()})
 
 
+class StatusTextFactory(ModelFactory[StatusText]):
+    not_eligible = "Not eligible status text"
+    not_actionable = "Not actionable status text"
+    actionable = "Actionable status text"
+
+
 class IterationFactory(ModelFactory[Iteration]):
     iteration_cohorts = Use(IterationCohortFactory.batch, size=2)
     iteration_rules = Use(IterationRuleFactory.batch, size=2)
@@ -80,7 +89,7 @@ class CampaignConfigFactory(RawCampaignConfigFactory):
     def build(cls, **kwargs) -> CampaignConfig:
         """Ensure invariants are met:
         * no iterations with duplicate iteration dates
-        * must have iteration active from campaign start date"""
+        * must have iteration active from the campaign start date"""
         processed_kwargs = cls.process_kwargs(**kwargs)
         start_date: date = processed_kwargs["start_date"]
         iterations: list[Iteration] = processed_kwargs["iterations"]
@@ -107,11 +116,12 @@ class CampaignConfigFactory(RawCampaignConfigFactory):
 
 
 # Iteration cohort factories
-class MagicCohortFactory(IterationCohortFactory):
-    cohort_label = CohortLabel("elid_all_people")
-    cohort_group = CohortGroup("magic cohort group")
-    positive_description = Description("magic positive description")
-    negative_description = Description("magic negative description")
+class VirtualCohortFactory(IterationCohortFactory):
+    cohort_label = CohortLabel("virtual cohort label")
+    cohort_group = CohortGroup("virtual cohort group")
+    positive_description = Description("virtual positive description")
+    negative_description = Description("virtual negative description")
+    virtual = Virtual.YES
     priority = 1
 
 
@@ -120,6 +130,7 @@ class Rsv75RollingCohortFactory(IterationCohortFactory):
     cohort_group = CohortGroup("rsv_age_range")
     positive_description = Description("rsv_age_range positive description")
     negative_description = Description("rsv_age_range negative description")
+    virtual = Virtual.NO
     priority = 2
 
 
@@ -128,6 +139,7 @@ class Rsv75to79CohortFactory(IterationCohortFactory):
     cohort_group = CohortGroup("rsv_age_range")
     positive_description = Description("rsv_age_range positive description")
     negative_description = Description("rsv_age_range negative description")
+    virtual = Virtual.NO
     priority = 3
 
 
@@ -136,6 +148,7 @@ class RsvPretendClinicalCohortFactory(IterationCohortFactory):
     cohort_group = CohortGroup("rsv_clinical_cohort")
     positive_description = Description("rsv_clinical_cohort positive description")
     negative_description = Description("rsv_clinical_cohort negative description")
+    virtual = Virtual.NO
     priority = 4
 
 

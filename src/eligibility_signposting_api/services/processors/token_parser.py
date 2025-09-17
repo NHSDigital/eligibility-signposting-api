@@ -60,7 +60,7 @@ class TokenParser:
 
         format_str = format_match.group(1) if format_match else None
 
-        last_part = re.sub(r":DATE\(.*?\)", "", token_name, flags=re.IGNORECASE)
+        last_part = re.sub(r":DATE\([^)]*\)", "", token_name, flags=re.IGNORECASE)
 
         if len(token_parts) == TokenParser.MIN_TOKEN_PARTS:
             name = last_part.upper()

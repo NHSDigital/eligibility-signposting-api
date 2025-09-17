@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "lastUpdated": "2025-09-03T10:29:20.078600+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "TestActionable",
+          "actionType": "ButtonWithAuthLink",
+          "description": "## You are actionable as your dob is <<RDATE_AGE_75>>.",
+          "urlLabel": "You're actionable",
+          "urlLink": "http://www.nhs.uk/book-rsv"
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "rsv_eli_223_cohort_group",
+          "cohortStatus": "Actionable",
+          "cohortText": "are a member of eli_223_cohort_group"
+        }
+      ],
+      "status": "Actionable",
+      "statusText": "You should have the RSV vaccine",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "a9feb039-5b9c-48d3-a7f7-f923e30550a6"
+}

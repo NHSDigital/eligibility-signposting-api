@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from wireup import service
 
 from eligibility_signposting_api.audit.audit_context import AuditContext
-from eligibility_signposting_api.model import eligibility_status
+from eligibility_signposting_api.model import campaign_config, eligibility_status
 from eligibility_signposting_api.model.eligibility_status import (
     BestIterationResult,
     CohortGroupResult,
@@ -19,6 +19,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     IterationResult,
     Reason,
     Status,
+    StatusText,
 )
 from eligibility_signposting_api.services.processors.action_rule_handler import ActionRuleHandler
 from eligibility_signposting_api.services.processors.campaign_evaluator import CampaignEvaluator
@@ -117,7 +118,6 @@ class EligibilityCalculator:
                 condition_name,
                 best_iteration_result,
                 matched_action_detail,
-                condition_results[condition_name].cohort_results,
             )
 
         # Consolidate all the results and return
@@ -154,10 +154,33 @@ class EligibilityCalculator:
 
             # Determine Result between cohorts - get the best
             status, best_cohorts = self.get_the_best_cohort_memberships(cohort_results)
+            status_text = self.get_status_text(active_iteration.status_text, ConditionName(cc.target), status)
+
             iteration_results[active_iteration.name] = BestIterationResult(
-                IterationResult(status, best_cohorts, []), active_iteration, cc.id, cc.version, cohort_results
+                IterationResult(status, status_text, best_cohorts, []),
+                active_iteration,
+                cc.id,
+                cc.version,
+                cohort_results,
             )
         return iteration_results
+
+    @staticmethod
+    def get_status_text(
+        status_text: campaign_config.StatusText | None, condition_name: ConditionName, status: Status
+    ) -> StatusText:
+        if status_text is None:
+            status_text_or_default = status.get_default_status_text(condition_name)
+        else:
+            status_to_text = {
+                Status.not_eligible: status_text.not_eligible
+                or Status.not_eligible.get_default_status_text(condition_name),
+                Status.not_actionable: status_text.not_actionable
+                or Status.not_actionable.get_default_status_text(condition_name),
+                Status.actionable: status_text.actionable or Status.actionable.get_default_status_text(condition_name),
+            }
+            status_text_or_default = StatusText(status_to_text[status])
+        return status_text_or_default
 
     @staticmethod
     def build_condition(iteration_result: IterationResult, condition_name: ConditionName) -> Condition:
@@ -181,7 +204,7 @@ class EligibilityCalculator:
             cohort_results=list(deduplicated_cohort_results),
             suitability_rules=list(overall_deduplicated_reasons_for_condition),
             actions=iteration_result.actions,
-            status_text=iteration_result.status.get_status_text(condition_name),
+            status_text=iteration_result.status_text,
         )
 
     @staticmethod

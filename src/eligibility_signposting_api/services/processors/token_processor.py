@@ -1,16 +1,13 @@
 import re
 from dataclasses import Field, fields, is_dataclass
 from datetime import UTC, datetime
-from typing import Any, Never, TypeVar
+from typing import Any, Never
 
 from wireup import service
 
 from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.token_parser import ParsedToken, TokenParser
-
-T = TypeVar("T")
-
 
 TARGET_ATTRIBUTE_LEVEL = "TARGET"
 PERSON_ATTRIBUTE_LEVEL = "PERSON"
@@ -27,10 +24,14 @@ ALLOWED_TARGET_ATTRIBUTES = {
 }
 
 
+class TokenError(Exception):
+    """Person value error."""
+
+
 @service
 class TokenProcessor:
     @staticmethod
-    def find_and_replace_tokens(person: Person, data_class: T) -> T:
+    def find_and_replace_tokens[T](person: Person, data_class: T) -> T:
         if not is_dataclass(data_class):
             return data_class
         for class_field in fields(data_class):
@@ -70,43 +71,63 @@ class TokenProcessor:
 
         pattern = r"\[\[.*?\]\]"
         all_tokens = re.findall(pattern, text, re.IGNORECASE)
-        present_attributes = [attribute.get("ATTRIBUTE_TYPE") for attribute in person.data]
+        present_attributes = {attribute.get("ATTRIBUTE_TYPE") for attribute in person.data}
 
         for token in all_tokens:
-            parsed_token = TokenParser.parse(token)
-            found_attribute, key_to_replace, replace_with = None, None, None
-
-            attribute_level_map = {
-                TARGET_ATTRIBUTE_LEVEL: parsed_token.attribute_value,
-                PERSON_ATTRIBUTE_LEVEL: parsed_token.attribute_name,
-            }
-
-            key_to_find = attribute_level_map.get(parsed_token.attribute_level)
-
-            if (
-                parsed_token.attribute_level == TARGET_ATTRIBUTE_LEVEL
-                and parsed_token.attribute_name in ALLOWED_CONDITIONS.__args__
-                and parsed_token.attribute_value in ALLOWED_TARGET_ATTRIBUTES
-                and parsed_token.attribute_name not in present_attributes
-            ):
-                replace_with = ""
-
-            if replace_with != "":
-                for attribute in person.data:
-                    is_person_attribute = attribute.get("ATTRIBUTE_TYPE") == PERSON_ATTRIBUTE_LEVEL
-                    is_allowed_target = parsed_token.attribute_name.upper() in ALLOWED_CONDITIONS.__args__
-
-                    if (is_allowed_target or is_person_attribute) and key_to_find in attribute:
-                        found_attribute = attribute
-                        key_to_replace = key_to_find
-                        break
-
-                if not found_attribute or key_to_replace is None:
-                    TokenProcessor.handle_token_not_found(parsed_token, token)
-
-                replace_with = TokenProcessor.apply_formatting(found_attribute, key_to_replace, parsed_token.format)
-            text = text.replace(token, str(replace_with))
+            replacement = TokenProcessor.get_token_replacement(token, person.data, present_attributes)
+            text = text.replace(token, str(replacement))
         return text
+
+    @staticmethod
+    def get_token_replacement(token: str, person_data: list[dict], present_attributes: set) -> str:
+        parsed_token = TokenParser.parse(token)
+
+        if TokenProcessor.should_replace_with_empty(parsed_token, present_attributes):
+            return ""
+
+        found_attribute, key_to_replace = TokenProcessor.find_matching_attribute(parsed_token, person_data)
+
+        if not found_attribute or not key_to_replace:
+            TokenProcessor.handle_token_not_found(parsed_token, token)
+
+        return TokenProcessor.apply_formatting(found_attribute, key_to_replace, parsed_token.format)
+
+    @staticmethod
+    def should_replace_with_empty(parsed_token: ParsedToken, present_attributes: set) -> bool:
+        is_target_level = parsed_token.attribute_level == TARGET_ATTRIBUTE_LEVEL
+        is_allowed_condition = parsed_token.attribute_name in ALLOWED_CONDITIONS.__args__
+        is_allowed_target_attr = parsed_token.attribute_value in ALLOWED_TARGET_ATTRIBUTES
+        is_attr_not_present = parsed_token.attribute_name not in present_attributes
+
+        return all([is_target_level, is_allowed_condition, is_allowed_target_attr, is_attr_not_present])
+
+    @staticmethod
+    def find_matching_attribute(parsed_token: ParsedToken, person_data: list[dict]) -> tuple[dict | None, str | None]:
+        attribute_level_map = {
+            TARGET_ATTRIBUTE_LEVEL: parsed_token.attribute_value,
+            PERSON_ATTRIBUTE_LEVEL: parsed_token.attribute_name,
+        }
+        key_to_find = attribute_level_map.get(parsed_token.attribute_level)
+
+        for attribute in person_data:
+            if TokenProcessor.attribute_match(attribute, parsed_token, key_to_find):
+                return attribute, key_to_find
+
+        return None, None
+
+    @staticmethod
+    def attribute_match(attribute: dict, parsed_token: ParsedToken, key_to_find: str | None) -> bool:
+        if not key_to_find or key_to_find not in attribute:
+            return False
+
+        is_person_attribute = attribute.get("ATTRIBUTE_TYPE") == PERSON_ATTRIBUTE_LEVEL
+        if is_person_attribute:
+            return True
+
+        is_allowed_target = parsed_token.attribute_name.upper() in ALLOWED_CONDITIONS.__args__
+        is_correct_target = parsed_token.attribute_name.upper() == attribute.get("ATTRIBUTE_TYPE")
+
+        return is_allowed_target and is_correct_target
 
     @staticmethod
     def handle_token_not_found(parsed_token: ParsedToken, token: str) -> Never:
@@ -120,9 +141,9 @@ class TokenProcessor:
         raise ValueError(message)
 
     @staticmethod
-    def apply_formatting(attribute: dict[str, T], attribute_value: str, date_format: str | None) -> str:
+    def apply_formatting[T](attributes: dict[str, T], attribute_name: str, date_format: str | None) -> str:
         try:
-            attribute_data = attribute.get(attribute_value)
+            attribute_data = attributes.get(attribute_name)
             if (date_format or date_format == "") and attribute_data:
                 replace_with_date_object = datetime.strptime(str(attribute_data), "%Y%m%d").replace(tzinfo=UTC)
                 replace_with = replace_with_date_object.strftime(str(date_format))
@@ -132,3 +153,6 @@ class TokenProcessor:
         except AttributeError as error:
             message = "Invalid token format"
             raise AttributeError(message) from error
+        except ValueError as error:
+            message = "Invalid value error"
+            raise TokenError(message) from error

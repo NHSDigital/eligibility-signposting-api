@@ -11,7 +11,7 @@ from typing import Literal, NewType
 
 from pydantic import BaseModel, Field, HttpUrl, RootModel, field_serializer, field_validator, model_validator
 
-from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS, MAGIC_COHORT_LABEL, RULE_STOP_DEFAULT
+from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS, RULE_STOP_DEFAULT
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from pydantic import SerializationInfo
@@ -90,18 +90,38 @@ class RuleAttributeLevel(StrEnum):
     COHORT = "COHORT"
 
 
+class Virtual(StrEnum):
+    YES = "Y"
+    NO = "N"
+
+
 class IterationCohort(BaseModel):
     cohort_label: CohortLabel = Field(alias="CohortLabel")
     cohort_group: CohortGroup = Field(alias="CohortGroup")
     positive_description: Description | None = Field(None, alias="PositiveDescription")
     negative_description: Description | None = Field(None, alias="NegativeDescription")
     priority: int | None = Field(None, alias="Priority")
+    virtual: Virtual = Field(default=Virtual.NO, alias="Virtual")
 
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
     @cached_property
     def is_magic_cohort(self) -> bool:
-        return self.cohort_label.upper() == MAGIC_COHORT_LABEL.upper()
+        return self.virtual == Virtual.YES
+
+    @field_validator("virtual", mode="before")
+    @classmethod
+    def normalize_virtual(cls, value: str) -> Virtual:
+        if value is None:
+            return Virtual.NO
+        if isinstance(value, str):
+            value = value.strip().upper()
+        if value == "Y":
+            return Virtual.YES
+        if value == "N":
+            return Virtual.NO
+        msg = f"Invalid value for Virtual: {value!r}"
+        raise ValueError(msg)
 
 
 class IterationRule(BaseModel):
@@ -145,6 +165,14 @@ class ActionsMapper(RootModel[dict[str, AvailableAction]]):
         return self.root.get(key, default)
 
 
+class StatusText(BaseModel):
+    not_eligible: str | None = Field(None, alias="NotEligible")
+    not_actionable: str | None = Field(None, alias="NotActionable")
+    actionable: str | None = Field(None, alias="Actionable")
+
+    model_config = {"populate_by_name": True, "extra": "ignore"}
+
+
 class Iteration(BaseModel):
     id: IterationID = Field(..., alias="ID")
     version: IterationVersion = Field(..., alias="Version")
@@ -160,6 +188,7 @@ class Iteration(BaseModel):
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
     actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
+    status_text: StatusText | None = Field(None, alias="StatusText")
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
