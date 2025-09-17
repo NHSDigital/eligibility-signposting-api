@@ -3,29 +3,30 @@
 
 name: "CI/CD deploy to TEST"
 
+concurrency:
+  group: terraform-deploy-${{ github.event.inputs.environment }}
+  cancel-in-progress: false
+
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Branch/Tag/SHA to deploy to test"
+        description: "This is the tag that is going to be deployed"
         required: true
-        default: "feauture/te-sd-ELI-452-cicd-improvements"
-      release_type:
-        description: "Version bump type (use 'rc' to keep the same base and just increment RC)"
+        default: "latest"
+      environment:
+        description: "Target environment (test only)"
         required: true
-        default: "rc"
+        default: "test"
         type: choice
         options:
-          - rc
-          - patch
-          - minor
-          - major
+          - test
 
 jobs:
   metadata:
     name: "Set CI/CD metadata"
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 1
     outputs:
       build_datetime: ${{ steps.variables.outputs.build_datetime }}
       build_timestamp: ${{ steps.variables.outputs.build_timestamp }}
@@ -66,38 +67,75 @@ jobs:
           export TAG="${{ steps.variables.outputs.tag }}"
           make list-variables
   deploy:
-    name: "Deploy to test environment"
+    name: "Deploy to an environment"
     runs-on: ubuntu-latest
     needs: [metadata]
-    timeout-minutes: 10080
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 30
     permissions:
       id-token: write
       contents: write
     steps:
-      - name: "Checkout Repository"
-        uses: actions/checkout@v5
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
         with:
-          ref: ${{ github.event.inputs.tag }}
-
-      - name: "Install Poetry"
-        run: |
-            curl -sSL https://install.python-poetry.org | python3 -
-            echo "$HOME/.local/bin" >> $GITHUB_PATH
+          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
 
       - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: 'poetry'
 
-      - name: "Install dependencies"
-        run: poetry install
+      - name: "Checkout Repository"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag }}
 
-      - name: "Manage Release"
+      - name: "Build lambda artefact"
+        run: |
+          make dependencies install-python
+          make build
+
+      - name: "Upload lambda artefact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda
+          path: dist/lambda.zip
+
+      - name: "Download Built Lambdas"
+        uses: actions/download-artifact@v5
+        with:
+          name: lambda
+          path: ./build
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Terraform Apply"
         env:
-          ENVIRONMENT: 'preprod'
-          REF: ${{ needs.metadata.outputs.tag }}
-          INPUT_RELEASE_TYPE: ${{ inputs.release_type }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: poetry run python scripts/seed_users/tag_and_release.py
+          ENVIRONMENT: ${{ inputs.environment }}
+          WORKSPACE: "default"
+          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
+          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
+          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+          TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
+          TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
+        run: |
+          mkdir -p ./build
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=apply"
+          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
+        working-directory: ./infrastructure
+
+  regression-tests:
+    name: "Regression Tests"
+    needs: deploy
+    uses: ./.github/workflows/regression-tests.yml
+    with:
+      ENVIRONMENT: "test"
+      VERSION_NUMBER: "main"
+    secrets: inherit
