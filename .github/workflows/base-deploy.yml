@@ -144,128 +144,16 @@ jobs:
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
 
-      - name: "Set up git identity"
+      - name: "Tag and Release"
         if: ${{ needs.metadata.outputs.environment == 'preprod' || needs.metadata.outputs.environment == 'prod' }}
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-      # ---------- Preprod path: create RC tag + pre-release ----------
-      - name: "Create/Push RC tag for preprod"
-        if: ${{ needs.metadata.outputs.environment == 'preprod' }}
-        id: rc_tag
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch --tags
-
-          # Helper: get latest final and latest RC (across all bases)
-          latest_final="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' \
-            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || true)"
-          latest_any_rc="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*-rc.*' \
-            | sort -V | tail -n1 || true)"
-
-          # Determine the base version (vX.Y.Z) we will use for the next RC.
-          # If release_type=rc and we already have RCs, keep the SAME base as the latest RC.
-          # Otherwise, derive base from latest FINAL and bump per release_type.
-          if [[ "${{ inputs.release_type }}" == "rc" && -n "${latest_any_rc}" ]]; then
-            base="${latest_any_rc%-rc.*}"   # strip '-rc.N' → vX.Y.Z
-          else
-            # Start from latest FINAL (or 0.0.0 if none)
-            if [[ -z "${latest_final}" ]]; then
-              base_major=0; base_minor=0; base_patch=0
-            else
-              IFS='.' read -r base_major base_minor base_patch <<< "${latest_final#v}"
-            fi
-
-            case "${{ inputs.release_type }}" in
-              major) base_major=$((base_major+1)); base_minor=0; base_patch=0 ;;
-              minor) base_minor=$((base_minor+1)); base_patch=0 ;;
-              patch|rc|*) base_patch=$((base_patch+1)) ;;  # 'rc' with no prior RCs → default to patch bump
-            esac
-
-            base="v${base_major}.${base_minor}.${base_patch}"
-          fi
-
-          # Compute next RC number for this base
-          last_rc_for_base="$(git tag -l "${base}-rc.*" | sort -V | tail -n1 || true)"
-          if [[ -z "${last_rc_for_base}" ]]; then
-            next_rc="${base}-rc.1"
-          else
-            n="${last_rc_for_base##*-rc.}"
-            next_rc="${base}-rc.$((n+1))"
-          fi
-
-          # Tag current commit (whatever ref was checked out)
-          sha="$(git rev-parse HEAD)"
-          echo "Tagging ${sha} as ${next_rc}"
-          git tag -a "${next_rc}" "${sha}" -m "Release candidate ${next_rc}"
-          git push origin "${next_rc}"
-
-          echo "rc=${next_rc}" >> "$GITHUB_OUTPUT"
-
-      - name: "Create GitHub Pre-release (preprod)"
-        if: ${{ needs.metadata.outputs.environment == 'preprod' }}
-        uses: actions/create-release@v1
         env:
+          ENVIRONMENT: ${{ needs.metadata.outputs.environment }}
+          REF: ${{ needs.metadata.outputs.ref }}
+          INPUT_RELEASE_TYPE: ${{ inputs.release_type }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.rc_tag.outputs.rc }}
-          release_name: "Pre-release ${{ steps.rc_tag.outputs.rc }}"
-          body: |
-            Auto pre-release created during preprod deployment.
-          draft: false
-          prerelease: true
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python tag_and_release.py
 
-      # ---------- Prod path: promote RC to final ----------
-      - name: "Validate input is an RC tag (prod)"
-        if: ${{ needs.metadata.outputs.environment == 'prod' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          ref="${{ needs.metadata.outputs.ref }}"
-          if [[ ! "$ref" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$ ]]; then
-            echo "ERROR: For prod, 'ref' must be an RC tag like v1.4.0-rc.2 (got: $ref)"
-            exit 1
-          fi
-          git fetch --tags --quiet
-          if ! git rev-parse -q --verify "refs/tags/$ref" >/dev/null; then
-            echo "ERROR: Tag '$ref' does not exist on origin."
-            exit 1
-          fi
-
-      - name: "Create final tag from RC (prod)"
-        if: ${{ needs.metadata.outputs.environment == 'prod' }}
-        id: final_tag
-        shell: bash
-        run: |
-          set -euo pipefail
-          rc="${{ needs.metadata.outputs.ref }}"
-          final="${rc%-rc.*}"  # strip '-rc.N'
-          sha=$(git rev-list -n 1 "$rc")
-
-          if git rev-parse -q --verify "refs/tags/${final}" >/dev/null; then
-            echo "ERROR: Final tag ${final} already exists."
-            exit 1
-          fi
-
-          echo "Promoting $rc ($sha) to final $final"
-          git tag -a "${final}" "${sha}" -m "Release ${final}"
-          git push origin "${final}"
-          echo "final=${final}" >> $GITHUB_OUTPUT
-
-      - name: "Create GitHub Release (prod)"
-        if: ${{ needs.metadata.outputs.environment == 'prod' }}
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.final_tag.outputs.final }}
-          release_name: "Release ${{ steps.final_tag.outputs.final }}"
-          body: |
-            Auto-release created during production deployment.
-          draft: false
-          prerelease: false
 
   regression-tests:
     name: "Regression Tests"
