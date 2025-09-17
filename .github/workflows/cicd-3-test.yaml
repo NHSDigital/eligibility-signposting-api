@@ -79,12 +79,19 @@ jobs:
         with:
           ref: ${{ github.event.inputs.tag }}
 
+      - name: "Install Poetry"
+        run: |
+            curl -sSL https://install.python-poetry.org | python3 -
+            echo "$HOME/.local/bin" >> $GITHUB_PATH
+
       - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: 'poetry' # caching poetry dependencies
-      - run: poetry install
+          cache: 'poetry'
+
+      - name: "Install dependencies"
+        run: poetry install
 
       - name: "Manage Release"
         env:
@@ -93,4 +100,4 @@ jobs:
           INPUT_RELEASE_TYPE: ${{ inputs.release_type }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: python scripts/seed_users/tag_and_release.py
+        run: poetry run python scripts/seed_users/tag_and_release.py
