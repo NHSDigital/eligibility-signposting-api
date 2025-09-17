@@ -74,17 +74,17 @@ jobs:
       id-token: write
       contents: write
     steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag }}
+
       - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
           cache: 'poetry' # caching poetry dependencies
       - run: poetry install
-
-      - name: "Checkout Repository"
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.inputs.tag }}
 
       - name: "Manage Release"
         env:
