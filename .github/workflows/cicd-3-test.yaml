@@ -86,8 +86,8 @@ jobs:
 
       - name: "Manage Release"
         env:
-          ENVIRONMENT: ${{ needs.metadata.outputs.environment }}
-          REF: ${{ needs.metadata.outputs.ref }}
+          ENVIRONMENT: 'preprod'
+          REF: ${{ needs.metadata.outputs.tag }}
           INPUT_RELEASE_TYPE: ${{ inputs.release_type }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
