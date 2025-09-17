@@ -8,12 +8,12 @@ Our feature toggle system is built on **AWS Systems Manager (SSM) Parameter Stor
 
 1. **Single Source of Truth**: AWS SSM is the single source of truth for the current state (`true` or `false`) of all feature toggles.
 2. **Infrastructure as Code**: Toggles are defined in Terraform, ensuring configuration is version-controlled and repeatable across environments.
-3. **CI/CD Validation**: The `required_toggles.txt` file in the repository lists all toggles the application requires. The CI/CD pipeline checks that every toggle in this file exists in AWS SSM before a deployment can proceed.
+3. **CI/CD Validation**: The `feature_toggle.json` file in the repository lists all toggles the application requires. The CI/CD pipeline checks that every toggle in this file exists in AWS SSM before a deployment can proceed.
 4. **Runtime Caching**: The application code uses a cached `is_feature_enabled()` function to check a toggle's state at runtime, minimizing calls to AWS and ensuring high performance.
 
 ## Developer Workflow
 
-### Step 1: Define the Toggle in feature_toggle.json
+### Step 1: Define the Toggle (The Single Source of Truth)
 
 Adding a new toggle is a single-step process. You only need to add a new entry to the `feature_toggle.json` file. This file defines the toggle's metadata and its intended state for each environment.
 
@@ -65,7 +65,7 @@ resource "aws_ssm_parameter" "feature_toggles" {
 }
 ```
 
-### Step 2: Implement the Toggle Logic
+### Step 2: Implement and Test the Logic
 
 Import and use the `is_feature_enabled()` function to create a conditional code path.
 
@@ -81,8 +81,6 @@ else:
     # Existing (old) logic
     status_text = status.get_default_status_text(ConditionName(cc.target))
 ```
-
-### Step 3: Test Both Scenarios
 
 You must write unit tests that cover both the "on" and "off" states of the toggle. Use `pytest.mark.parametrize` to run the same test with both states and `unittest.mock.patch` to control the toggle's return value.
 
@@ -115,6 +113,12 @@ def test_status_text_is_conditional_on_toggle(
     # Given, When, Then...
     assert actual_text_from_audit == expected_rsv_text
 ```
+
+### Step 3: Commit and Deploy (The Automation)
+
+1. Terraform Apply: During the infrastructure step of deployment, Terraform executes the ssm.tf configuration. It reads the updated feature_toggle.json file.
+2. Creation: Because of the for_each loop, Terraform detects the new feature toggle entry. It then automatically runs the aws_ssm_parameter resource block for this new item, creating the parameter in AWS SSM with the correct name (e.g., /dev/feature_toggles/enable_dynamic_status_text) and the appropriate initial value based on the environment (true for dev, false for others).
+3. Validation: Immediately after the validate_toggles.py script runs. It reads the same JSON file, sees that the feature toggle is required, and queries AWS SSM to confirm that Terraform successfully created it.
 
 ### Step 4: Cleanup Process
 
