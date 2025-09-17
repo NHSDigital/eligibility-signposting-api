@@ -1,4 +1,4 @@
-name: "Auto Deploy to test"
+name: "3. CD | Deploy to Test"
 
 on:
   workflow_run:
