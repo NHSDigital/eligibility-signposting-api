@@ -32,11 +32,12 @@ jobs:
       terraform_version: ${{ steps.variables.outputs.terraform_version }}
       version: ${{ steps.variables.outputs.version }}
       tag: ${{ steps.variables.outputs.tag }}
+      ref: ${{ github.event.inputs.ref }}
     steps:
-      - name: "Checkout tag"
+      - name: "Checkout ref"
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.inputs.tag }}
+          ref: ${{ github.event.inputs.ref }}
 
       - name: "Set CI/CD variables"
         id: variables
@@ -45,12 +46,12 @@ jobs:
           echo "build_datetime=$datetime" >> $GITHUB_OUTPUT
           echo "build_timestamp=$(date --date=$datetime -u +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
           echo "build_epoch=$(date --date=$datetime -u +'%s')" >> $GITHUB_OUTPUT
-          echo "nodejs_version=$(grep "^nodejs" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
-          echo "python_version=$(grep "^nodejs" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
-          echo "terraform_version=$(grep "^terraform" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
-          # TODO: Get the version, but it may not be the .version file as this should come from the CI/CD Pull Request Workflow
+          echo "nodejs_version=$(grep '^nodejs' .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
+          echo "python_version=$(grep '^python' .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
+          echo "terraform_version=$(grep '^terraform' .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
           echo "version=$(head -n 1 .version 2> /dev/null || echo unknown)" >> $GITHUB_OUTPUT
-          echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ github.event.inputs.ref }}" >> $GITHUB_OUTPUT
+
       - name: "List variables"
         run: |
           export BUILD_DATETIME="${{ steps.variables.outputs.build_datetime }}"
@@ -62,6 +63,7 @@ jobs:
           export VERSION="${{ steps.variables.outputs.version }}"
           export TAG="${{ steps.variables.outputs.tag }}"
           make list-variables
+
   test:
     name: "Test tag and release"
     runs-on: ubuntu-latest
@@ -72,11 +74,16 @@ jobs:
       id-token: write
       contents: write
     steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.metadata.outputs.ref }}
+
       - name: "Manage Release"
         env:
-          ENVIRONMENT: ${{ needs.metadata.outputs.environment }}
+          ENVIRONMENT: test
           REF: ${{ needs.metadata.outputs.ref }}
-          INPUT_RELEASE_TYPE: ${{ inputs.release_type }}
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python scripts/seed_users/tag_and_release.py
