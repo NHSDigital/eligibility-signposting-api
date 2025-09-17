@@ -117,7 +117,7 @@ def test_status_text_is_conditional_on_toggle(
 ### Step 3: Commit and Deploy (The Automation)
 
 1. Terraform Apply: During the infrastructure step of deployment, Terraform executes the ssm.tf configuration. It reads the updated feature_toggle.json file.
-2. Creation: Because of the for_each loop, Terraform detects the new feature toggle entry. It then automatically runs the aws_ssm_parameter resource block for this new item, creating the parameter in AWS SSM with the correct name (e.g., /dev/feature_toggles/enable_dynamic_status_text) and the appropriate initial value based on the environment (true for dev, false for others).
+2. Creation: Because of the 'for each' loop, Terraform detects the new feature toggle entry. It then automatically runs the aws_ssm_parameter resource block for this new item, creating the parameter in AWS SSM with the correct name (e.g., /Dev/feature_toggles/enable_dynamic_status_text) and the appropriate initial value based on the environment (true for Dev and Test, false for others).
 3. Validation: Immediately after the validate_toggles.py script runs. It reads the same JSON file, sees that the feature toggle is required, and queries AWS SSM to confirm that Terraform successfully created it.
 
 ### Step 4: Cleanup Process
