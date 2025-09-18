@@ -47,7 +47,7 @@
           },
           {
             "CohortLabel": "elid_virtual_cohort_2",
-            "CohortGroup": "elid_virtual_cohort",
+            "CohortGroup": "elid_virtual_cohort_2",
             "PositiveDescription": "In elid_virtual_cohort_2",
             "NegativeDescription": "Out elid_virtual_cohort_2",
             "Priority": 2,
