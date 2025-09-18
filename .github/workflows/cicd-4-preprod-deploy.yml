@@ -1,4 +1,4 @@
-name: Preprod Deploy
+name: "4. CD | Deploy to PreProd"
 
 concurrency:
   group: terraform-deploy-preprod

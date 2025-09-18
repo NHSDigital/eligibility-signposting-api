@@ -2,7 +2,7 @@
 # Triggered on push to main. Tags the commit with a dev-<timestamp> label.
 # Does not create GitHub Releases or production tags (v1.x.x).
 
-name: "CI/CD publish"
+name: "2. CD | Deploy to Dev"
 
 on:
   push:
