@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "lastUpdated": "2025-09-16T14:43:55.970331+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "TestNotEli",
+          "actionType": "",
+          "description": "TestNotEli Description",
+          "urlLabel": "",
+          "urlLink": ""
+        }
+      ],
+      "condition": "FLU",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "eli_427_cohort_group_1",
+          "cohortStatus": "NotEligible",
+          "cohortText": "Not in eli_427_cohort_1"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "d5f9af16-453e-45c5-947f-dc2de44d5109"
+}

@@ -1,0 +1,46 @@
+{
+  "scenario_name": "ELI-427-002 - Custom Status Text - NotActionable",
+  "request_headers": {
+    "nhs-login-nhs-number": "9900427002"
+  },
+  "config_filenames": [
+    "AUTO_RSV_ELI-427-01-3.json"
+  ],
+  "data": [
+    {
+      "NHS_NUMBER": "9900427002",
+      "ATTRIBUTE_TYPE": "COHORTS",
+      "COHORT_MEMBERSHIPS": [
+        {
+          "COHORT_LABEL": "eli_427_cohort_1",
+          "DATE_JOINED": "20231020"
+        }
+      ]
+    },
+    {
+      "NHS_NUMBER": "9900427002",
+      "ATTRIBUTE_TYPE": "PERSON",
+      "DATE_OF_BIRTH": "<<DATE_AGE_74>>",
+      "GENDER": "0",
+      "POSTCODE": "SG8 6EG",
+      "POSTCODE_SECTOR": "SG86",
+      "POSTCODE_OUTCODE": "SG8",
+      "MSOA": "E02003792",
+      "LSOA": "E01018267",
+      "GP_PRACTICE_CODE": "D81046",
+      "PCN": "U75549",
+      "ICB": "QUE",
+      "COMMISSIONING_REGION": "Y61",
+      "13Q_FLAG": "N",
+      "CARE_HOME_FLAG": "N",
+      "DE_FLAG": "Y"
+    },
+    {
+      "NHS_NUMBER": "9900427002",
+      "ATTRIBUTE_TYPE": "RSV",
+      "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_0>>",
+      "BOOKED_APPOINTMENT_DATE": "<<DATE_DAY_-5>>",
+      "BOOKED_APPOINTMENT_PROVIDER": "NBS"
+    }
+  ]
+}

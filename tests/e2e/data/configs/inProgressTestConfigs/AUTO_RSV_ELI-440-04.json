@@ -56,13 +56,13 @@
         "IterationRules": [
           {
             "Type": "F",
-            "Name": "Filter anyone who is the the first virtual cohort",
-            "Description": "Filter anyone who is the the first virtual cohort.",
+            "Name": "Filter based on cohort membership",
+            "Description": "Filter based on cohort membership",
             "Priority": 100,
             "AttributeLevel": "COHORT",
             "AttributeName": "COHORT_LABEL",
-            "Operator": "MemberOf",
-            "Comparator": "rsv_eli_440_cohort_999"
+            "Operator": "in",
+            "Comparator": "elid_virtual_cohort"
           }
         ],
         "ActionsMapper": {
@@ -83,9 +83,9 @@
           "TEST_NOT_ELI": {
             "ExternalRoutingCode": "TestNotEli",
             "ActionDescription": "TestNotEli Description",
-            "ActionType": "",
-            "UrlLink": null,
-            "UrlLabel": ""
+            "ActionType": "TestNotEliAction",
+            "UrlLink": "https://www.noteligible.com/440",
+            "UrlLabel": "not_eli_UrlLabel"
           }
         }
       }
