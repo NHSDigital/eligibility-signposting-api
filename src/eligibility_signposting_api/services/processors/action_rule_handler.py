@@ -50,13 +50,14 @@ class ActionRuleHandler:
         matched_action_rule_priority, matched_action_rule_name = None, None
         for _, rule_group in groupby(sorted_rules_by_priority, key=priority_getter):
             rule_group_list = list(rule_group)
-            matcher_matched_list = [
+
+            all_rules_matched = all(
                 RuleCalculator(person=person, rule=rule).evaluate_exclusion()[1].matcher_matched
                 for rule in rule_group_list
-            ]
+            )
 
             comms_routing = rule_group_list[0].comms_routing
-            if comms_routing and all(matcher_matched_list):
+            if comms_routing and all_rules_matched:
                 rule_actions = self._get_actions_from_comms(action_mapper, comms_routing)
                 if rule_actions and len(rule_actions) > 0:
                     actions = rule_actions
