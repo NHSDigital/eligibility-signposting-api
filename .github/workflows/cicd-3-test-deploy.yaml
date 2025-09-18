@@ -2,7 +2,7 @@ name: "3. CD | Deploy to Test"
 
 on:
   workflow_run:
-    workflows: ["CI/CD publish"]
+    workflows: ["2. CD | Deploy to Dev"]
     types: [completed]
 
 permissions:
