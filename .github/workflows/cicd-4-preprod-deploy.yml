@@ -24,7 +24,7 @@ on:
 
 jobs:
   call:
-    uses: ./.github/workflows/helpers/base-deploy.yml
+    uses: ./.github/workflows/base-deploy.yml
     with:
       environment: preprod
       ref: ${{ inputs.ref }}

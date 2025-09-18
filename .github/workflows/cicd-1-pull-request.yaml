@@ -38,6 +38,7 @@ jobs:
           echo "python_version=$(grep "^nodejs" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
           echo "terraform_version=$(grep "^terraform" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
           echo "version=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+#          echo "version=$(head -n 1 .version 2> /dev/null || echo unknown)" >> $GITHUB_OUTPUT
       - name: "Check if pull request exists for this branch"
         id: pr_exists
         env:
@@ -64,11 +65,11 @@ jobs:
           export VERSION="${{ steps.variables.outputs.version }}"
           export DOES_PULL_REQUEST_EXIST="${{ steps.pr_exists.outputs.does_pull_request_exist }}"
           make list-variables
-  commit-stage:
+  commit-stage: # Recommended maximum execution time is 2 minutes
     name: "Commit stage"
     if: github.event.pull_request.draft == false
     needs: [metadata]
-    uses: ./.github/workflows/helpers/stage-1-commit.yaml
+    uses: ./.github/workflows/stage-1-commit.yaml
     with:
       build_datetime: "${{ needs.metadata.outputs.build_datetime }}"
       build_timestamp: "${{ needs.metadata.outputs.build_timestamp }}"
@@ -78,11 +79,11 @@ jobs:
       terraform_version: "${{ needs.metadata.outputs.terraform_version }}"
       version: "${{ needs.metadata.outputs.version }}"
     secrets: inherit
-  test-stage:
+  test-stage: # Recommended maximum execution time is 5 minutes
     name: "Test stage"
     if: github.event.pull_request.draft == false
     needs: [metadata, commit-stage]
-    uses: ./.github/workflows/helpers/stage-2-test.yaml
+    uses: ./.github/workflows/stage-2-test.yaml
     with:
       build_datetime: "${{ needs.metadata.outputs.build_datetime }}"
       build_timestamp: "${{ needs.metadata.outputs.build_timestamp }}"
@@ -92,10 +93,10 @@ jobs:
       terraform_version: "${{ needs.metadata.outputs.terraform_version }}"
       version: "${{ needs.metadata.outputs.version }}"
     secrets: inherit
-  build-stage:
+  build-stage: # Recommended maximum execution time is 3 minutes
     name: "Build stage"
     needs: [metadata, test-stage]
-    uses: ./.github/workflows/helpers/stage-3-build.yaml
+    uses: ./.github/workflows/stage-3-build.yaml
     if: needs.metadata.outputs.does_pull_request_exist == 'true' || (github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened'))
     with:
       build_datetime: "${{ needs.metadata.outputs.build_datetime }}"
@@ -106,10 +107,10 @@ jobs:
       terraform_version: "${{ needs.metadata.outputs.terraform_version }}"
       version: "${{ needs.metadata.outputs.version }}"
     secrets: inherit
-  acceptance-stage:
+  acceptance-stage: # Recommended maximum execution time is 10 minutes
     name: "Acceptance stage"
     needs: [metadata, build-stage]
-    uses: ./.github/workflows/helpers/stage-4-acceptance.yaml
+    uses: ./.github/workflows/stage-4-acceptance.yaml
     if: needs.metadata.outputs.does_pull_request_exist == 'true' || (github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened'))
     with:
       build_datetime: "${{ needs.metadata.outputs.build_datetime }}"

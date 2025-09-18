@@ -133,7 +133,7 @@ jobs:
   regression-tests:
     name: "Regression Tests"
     needs: publish
-    uses: ./.github/workflows/helpers/regression-tests.yml
+    uses: ./.github/workflows/regression-tests.yml
     with:
       ENVIRONMENT: "dev"
       VERSION_NUMBER: "main"
