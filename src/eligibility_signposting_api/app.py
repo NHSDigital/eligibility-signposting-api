@@ -12,7 +12,6 @@ from mangum.types import LambdaContext, LambdaEvent
 from eligibility_signposting_api import audit, repos, services
 from eligibility_signposting_api.common.cache_manager import FLASK_APP_CACHE_KEY, cache_manager
 from eligibility_signposting_api.common.error_handler import handle_exception
-from eligibility_signposting_api.common.request_validator import validate_request_params
 from eligibility_signposting_api.config.config import config
 from eligibility_signposting_api.logging.logs_helper import log_request_ids_from_headers
 from eligibility_signposting_api.logging.logs_manager import add_lambda_request_id_to_logger, init_logging
@@ -49,7 +48,6 @@ def get_or_create_app() -> Flask:
 @add_lambda_request_id_to_logger()
 @tracing_setup()
 @log_request_ids_from_headers()
-@validate_request_params()
 def lambda_handler(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]:  # pragma: no cover
     """Run the Flask app as an AWS Lambda."""
     app = get_or_create_app()

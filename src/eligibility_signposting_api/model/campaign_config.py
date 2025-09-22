@@ -204,6 +204,10 @@ class Iteration(BaseModel):
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
 
+    @cached_property
+    def virtual_cohort_labels(self) -> set[CohortLabel]:
+        return {cohort.cohort_label for cohort in self.iteration_cohorts if cohort.is_magic_cohort}
+
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
 

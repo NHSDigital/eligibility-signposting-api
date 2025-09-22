@@ -11,6 +11,7 @@ from wireup import Injected
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.common.api_error_response import NHS_NUMBER_NOT_FOUND_ERROR
+from eligibility_signposting_api.common.request_validator import validate_request_params
 from eligibility_signposting_api.model.eligibility_status import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.views.response_model import eligibility_response
@@ -32,6 +33,12 @@ def before_request() -> None:
     AuditContext.add_request_details(request)
 
 
+@eligibility_blueprint.get("/_status")
+def api_status() -> ResponseReturnValue:
+    return make_response({"status": "ok", "timestamp": datetime.now(UTC).isoformat()}, HTTPStatus.OK)
+
+
+@validate_request_params()
 @eligibility_blueprint.get("/", defaults={"nhs_number": ""})
 @eligibility_blueprint.get("/<nhs_number>")
 def check_eligibility(
