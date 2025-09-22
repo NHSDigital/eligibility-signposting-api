@@ -1,13 +1,9 @@
-name: "Auto Deploy to test"
+name: "3. CD | Deploy to Test"
 
 on:
   workflow_run:
-    workflows: ["CI/CD publish"]
+    workflows: ["2. CD | Deploy to Dev"]
     types: [completed]
-
-concurrency:
-  group: terraform-deploy-test
-  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -55,10 +51,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [metadata]
     environment: test
+    timeout-minutes: 10080
     permissions:
       id-token: write
       contents: read
     steps:
+      - name: "Acquire deploy lock"
+        uses: softprops/turnstyle@v2
+        with:
+          poll-interval-seconds: 10
+
       - name: "Checkout same commit"
         uses: actions/checkout@v5
         with:
