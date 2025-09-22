@@ -56,6 +56,10 @@ def validate_request_params() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any] | None:
+            # Skip validation for a status path
+            http_path = event.get("requestContext", {}).get("http", {}).get("path")
+            if http_path == "/patient-check/_status":
+                return func(event, context)
             path_nhs_no = event.get("pathParameters", {}).get("id")
             header_nhs_no = event.get("headers", {}).get(NHS_NUMBER_HEADER)
 

@@ -83,6 +83,31 @@ class TestValidateRequestParams:
         assert issue["details"]["coding"][0]["display"] == "Access has been denied to process this request."
         assert issue["diagnostics"] == "You are not authorised to request information for the supplied NHS Number"
 
+    def test_no_error_from_validate_if_endpoint_is_status(self, caplog):
+        mock_handler = MagicMock(return_value={"statusCode": 200, "body": "OK"})
+        mock_context = {}
+        event = {
+            "requestContext": {
+                "http": {
+                    "sourceIp": "192.0.0.1",
+                    "method": "GET",
+                    "path": "/patient-check/_status",
+                    "protocol": "HTTP/1.1",
+                }
+            }
+        }
+
+        decorator = request_validator.validate_request_params()
+        wrapped_handler = decorator(mock_handler)
+
+        with caplog.at_level(logging.ERROR):
+            response = wrapped_handler(event, mock_context)
+
+        mock_handler.assert_called_once()
+
+        assert response is not None
+        assert response["statusCode"] == HTTPStatus.OK
+
 
 class TestValidateQueryParameters:
     @pytest.mark.parametrize(

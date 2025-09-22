@@ -32,6 +32,11 @@ def before_request() -> None:
     AuditContext.add_request_details(request)
 
 
+@eligibility_blueprint.get("/_status")
+def api_status() -> ResponseReturnValue:
+    return make_response({"status": "ok", "timestamp": datetime.now(UTC).isoformat()}, HTTPStatus.OK)
+
+
 @eligibility_blueprint.get("/", defaults={"nhs_number": ""})
 @eligibility_blueprint.get("/<nhs_number>")
 def check_eligibility(
