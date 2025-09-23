@@ -26,6 +26,7 @@
 - [ ] I have updated the documentation accordingly
 - [ ] This PR is a result of pair or mob programming
 - [ ] Hot fix (for critical issue)
+
 ---
 
 ## Sensitive Information Declaration
