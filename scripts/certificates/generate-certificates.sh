@@ -206,8 +206,9 @@ create_certificate_chains() {
     # Create combined client certificate (certificate + CA chain)
     cat "${CERTS_DIR}/client/client.crt" "${CERTS_DIR}/ca/ca.crt" > "${CERTS_DIR}/combined/client-chain.crt"
 
-    # Create truststore (CA certificate for truststore)
-    cp "${CERTS_DIR}/ca/ca.crt" "${CERTS_DIR}/combined/truststore.pem"
+    # Create truststore (client certificate + CA certificate for API Gateway truststore)
+    # This matches the Terraform locals.tf expectation: mtls_api_client_cert + mtls_api_ca_cert
+    cp "${CERTS_DIR}/combined/client-chain.crt" "${CERTS_DIR}/combined/truststore.pem"
 
     # Create PEM files in the format expected by ACM
     cp "${CERTS_DIR}/client/client.crt" "${CERTS_DIR}/combined/certificate.pem"
