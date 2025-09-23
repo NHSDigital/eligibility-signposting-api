@@ -109,6 +109,7 @@ def test_install_and_call_flask_lambda_over_http(
 
 def test_install_and_call_flask_lambda_with_unknown_nhs_number(
     flask_function: str,
+    persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa: ARG001
     logs_client: BaseClient,
     api_gateway_endpoint: URL,
@@ -116,7 +117,7 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
 ):
     """Given lambda installed into localstack, run it via http, with a nonexistent NHS number specified"""
     # Given
-    nhs_number = NHSNumber(faker.nhs_number())
+    nhs_number = f"123{persisted_person}"
 
     # When
     invoke_url = f"{api_gateway_endpoint}/patient-check/{nhs_number}"
@@ -140,15 +141,15 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
                             severity="error",
                             code="processing",
                             diagnostics=f"NHS Number '{nhs_number!s}' was not "
-                            f"recognised by the Eligibility Signposting API",
+                                        f"recognised by the Eligibility Signposting API",
                             details={
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
                                         "code": "REFERENCE_NOT_FOUND",
                                         "display": "The given NHS number was not found in our datasets. "
-                                        "This could be because the number is incorrect or "
-                                        "some other reason we cannot process that number.",
+                                                   "This could be because the number is incorrect or "
+                                                   "some other reason we cannot process that number.",
                                     }
                                 ]
                             },
@@ -205,8 +206,6 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
         params={"includeActions": "Y"},
         timeout=10,
     )
-
-    # time.sleep(40)
 
     # Then
     assert_that(
