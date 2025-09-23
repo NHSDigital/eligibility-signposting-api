@@ -129,7 +129,6 @@ subjectAltName = @alt_names
 
 [alt_names]
 DNS.1 = ${API_DOMAIN}
-DNS.2 = *.${DOMAIN}
 EOF
 
     # Generate server private key
