@@ -98,8 +98,11 @@ def test_nhs_number_given(app: Flask, client: FlaskClient):
         get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()),
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
     ):
+        # Given
+        headers = {"nhs-login-nhs-number": str(12345)}
+
         # When
-        response = client.get("/patient-check/12345")
+        response = client.get("/patient-check/12345", headers=headers)
 
         # Then
         assert_that(response, is_response().with_status_code(HTTPStatus.OK))
@@ -108,14 +111,17 @@ def test_nhs_number_given(app: Flask, client: FlaskClient):
 def test_no_nhs_number_given(app: Flask, client: FlaskClient):
     # Given
     with get_app_container(app).override.service(EligibilityService, new=FakeUnknownPersonEligibilityService()):
+        # Given
+        headers = {"nhs-login-nhs-number": str(12345)}
+
         # When
-        response = client.get("/patient-check/")
+        response = client.get("/patient-check/", headers=headers)
 
     # Then
     assert_that(
         response,
         is_response()
-        .with_status_code(HTTPStatus.NOT_FOUND)
+        .with_status_code(HTTPStatus.FORBIDDEN)
         .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
         .and_text(
             is_json_that(
@@ -124,16 +130,14 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
                     issue=contains_exactly(
                         has_entries(
                             severity="error",
-                            code="processing",
-                            diagnostics="NHS Number '' was not recognised by the Eligibility Signposting API",
+                            code="forbidden",
+                            diagnostics="You are not authorised to request information for the supplied NHS Number",
                             details={
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
-                                        "code": "REFERENCE_NOT_FOUND",
-                                        "display": "The given NHS number was not found in our datasets. "
-                                        "This could be because the number is incorrect or "
-                                        "some other reason we cannot process that number.",
+                                        "code": "ACCESS_DENIED",
+                                        "display": "Access has been denied to process this request.",
                                     }
                                 ]
                             },
@@ -147,8 +151,10 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
 
 def test_unexpected_error(app: Flask, client: FlaskClient):
     # Given
+    headers = {"nhs-login-nhs-number": str(12345)}
+
     with get_app_container(app).override.service(EligibilityService, new=FakeUnexpectedErrorEligibilityService()):
-        response = client.get("/patient-check/12345")
+        response = client.get("/patient-check/12345", headers=headers)
 
         assert_that(
             response,
@@ -355,7 +361,7 @@ def test_excludes_nulls_via_build_response(client: FlaskClient):
             return_value=mocked_response,
         ),
     ):
-        response = client.get("/patient-check/12345")
+        response = client.get("/patient-check/12345", headers={"nhs-login-nhs-number": str(12345)})
         assert response.status_code == HTTPStatus.OK
 
         payload = json.loads(response.data)
@@ -407,7 +413,7 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
             return_value=mocked_response,
         ),
     ):
-        response = client.get("/patient-check/12345")
+        response = client.get("/patient-check/12345", headers={"nhs-login-nhs-number": str(12345)})
         assert response.status_code == HTTPStatus.OK
 
         payload = json.loads(response.data)

@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-import time
 from http import HTTPStatus
 
 import httpx
@@ -10,7 +9,6 @@ from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.response import is_response
-from faker import Faker
 from freezegun import freeze_time
 from hamcrest import (
     assert_that,
@@ -113,7 +111,6 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
     campaign_config: CampaignConfig,  # noqa: ARG001
     logs_client: BaseClient,
     api_gateway_endpoint: URL,
-    faker: Faker,
 ):
     """Given lambda installed into localstack, run it via http, with a nonexistent NHS number specified"""
     # Given
@@ -141,15 +138,15 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
                             severity="error",
                             code="processing",
                             diagnostics=f"NHS Number '{nhs_number!s}' was not "
-                                        f"recognised by the Eligibility Signposting API",
+                            f"recognised by the Eligibility Signposting API",
                             details={
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
                                         "code": "REFERENCE_NOT_FOUND",
                                         "display": "The given NHS number was not found in our datasets. "
-                                                   "This could be because the number is incorrect or "
-                                                   "some other reason we cannot process that number.",
+                                        "This could be because the number is incorrect or "
+                                        "some other reason we cannot process that number.",
                                     }
                                 ]
                             },

@@ -25,9 +25,7 @@ class TestBaseLine:
         campaign_config: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_person)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}", headers=headers)
@@ -59,12 +57,10 @@ class TestBaseLine:
         campaign_config: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_person)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
 
         # When
-        response = client.get(f"/patient-check/", headers=headers)
+        response = client.get("/patient-check/", headers=headers)
 
         # Then
         assert_that(
@@ -83,9 +79,7 @@ class TestStandardResponse:
         campaign_config: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_person_no_cohorts)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts)}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y", headers=headers)
@@ -129,9 +123,7 @@ class TestStandardResponse:
         campaign_config: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_person_pc_sw19)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19)}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
@@ -175,9 +167,7 @@ class TestStandardResponse:
         campaign_config: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_person)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -226,9 +216,7 @@ class TestStandardResponse:
         persisted_77yo_person: NHSNumber,
         campaign_config: CampaignConfig,  # noqa: ARG002
     ):
-        headers = {
-            "nhs-login-nhs-number": str(persisted_77yo_person)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
@@ -280,9 +268,7 @@ class TestStandardResponse:
         campaign_config_with_and_rule: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_person)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -336,9 +322,7 @@ class TestVirtualCohortResponse:
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_person_pc_sw19)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19)}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
@@ -382,9 +366,7 @@ class TestVirtualCohortResponse:
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_person)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -434,9 +416,7 @@ class TestVirtualCohortResponse:
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_77yo_person)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
@@ -490,10 +470,7 @@ class TestResponseOnMissingAttributes:
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_person_no_cohorts)
-        }
-
+        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts)}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y", headers=headers)
@@ -531,9 +508,7 @@ class TestResponseOnMissingAttributes:
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_person_pc_sw19)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19)}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
@@ -571,10 +546,7 @@ class TestResponseOnMissingAttributes:
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_person)
-        }
-
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -618,9 +590,7 @@ class TestResponseOnMissingAttributes:
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_77yo_person)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
@@ -666,9 +636,7 @@ class TestResponseOnMissingAttributes:
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
     ):
         # Given
-        headers = {
-            "nhs-login-nhs-number": str(persisted_77yo_person)
-        }
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=N", headers=headers)
