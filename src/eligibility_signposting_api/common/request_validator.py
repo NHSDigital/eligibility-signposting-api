@@ -4,7 +4,8 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any
 
-from mangum.types import LambdaContext, LambdaEvent
+from flask import request
+from flask.typing import ResponseReturnValue
 
 from eligibility_signposting_api.common.api_error_response import (
     INVALID_CATEGORY_ERROR,
@@ -55,21 +56,21 @@ def validate_nhs_number(path_nhs: str, header_nhs: str) -> bool:
 def validate_request_params() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any] | None:
-            path_nhs_no = event.get("pathParameters", {}).get("id")
-            header_nhs_no = event.get("headers", {}).get(NHS_NUMBER_HEADER)
+        def wrapper(*args, **kwargs) -> ResponseReturnValue:
+            nhs_number = kwargs.get("nhs_number")
+            header_nhs_no = request.headers.get(NHS_NUMBER_HEADER)
 
-            if not validate_nhs_number(path_nhs_no, header_nhs_no):
+            if not validate_nhs_number(nhs_number, header_nhs_no):
                 message = "You are not authorised to request information for the supplied NHS Number"
                 return NHS_NUMBER_MISMATCH_ERROR.log_and_generate_response(log_message=message, diagnostics=message)
 
-            query_params = event.get("queryStringParameters")
+            query_params = request.args
             if query_params:
                 is_valid, problem = validate_query_params(query_params)
                 if not is_valid:
                     return problem
 
-            return func(event, context)
+            return func(*args, **kwargs)
 
         return wrapper
 
