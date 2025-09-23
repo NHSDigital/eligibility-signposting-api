@@ -1,4 +1,4 @@
-name: Prod Promote
+name: "5. CD | Deploy to Prod"
 
 concurrency:
   group: terraform-deploy-prod
