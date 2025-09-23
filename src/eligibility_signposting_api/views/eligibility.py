@@ -95,10 +95,9 @@ def get_or_default_query_params() -> dict[str, Any]:
 
 def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:
     diagnostics = f"NHS Number '{nhs_number}' was not recognised by the Eligibility Signposting API"
-    response = NHS_NUMBER_NOT_FOUND_ERROR.log_and_generate_response(
+    return NHS_NUMBER_NOT_FOUND_ERROR.log_and_generate_response(
         log_message=diagnostics, diagnostics=diagnostics, location_param="id"
     )
-    return make_response(response.get("body"), response.get("statusCode"), response.get("headers"))
 
 
 def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibility_response.EligibilityResponse:

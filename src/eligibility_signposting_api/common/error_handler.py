@@ -11,7 +11,7 @@ from eligibility_signposting_api.services.processors.token_processor import Toke
 logger = logging.getLogger(__name__)
 
 
-def handle_exception(e: Exception) -> ResponseReturnValue | HTTPException:
+def handle_exception(e: Exception) -> ResponseReturnValue:
     if isinstance(e, HTTPException):
         return e
 
@@ -25,7 +25,6 @@ def handle_exception(e: Exception) -> ResponseReturnValue | HTTPException:
         logger.exception("Unexpected Exception", exc_info=e)
         log_msg = f"An unexpected error occurred: {full_traceback}"
 
-    response = INTERNAL_SERVER_ERROR.log_and_generate_response(
+    return INTERNAL_SERVER_ERROR.log_and_generate_response(
         log_message=log_msg, diagnostics="An unexpected error occurred."
     )
-    return make_response(response.get("body"), response.get("statusCode"), response.get("headers"))
