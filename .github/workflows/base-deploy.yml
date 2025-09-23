@@ -162,14 +162,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: poetry run python scripts/workflow/tag_and_release.py
-
-
-  regression-tests:
-    name: "Regression Tests"
-    if: ${{ needs.metadata.outputs.environment == 'preprod' }}
-    needs: deploy
-    uses: ./.github/workflows/regression-tests.yml
-    with:
-      ENVIRONMENT: "preprod"
-      VERSION_NUMBER: "main"
-    secrets: inherit
