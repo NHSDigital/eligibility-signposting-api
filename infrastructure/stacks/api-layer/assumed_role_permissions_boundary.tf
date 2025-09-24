@@ -25,6 +25,8 @@ data "aws_iam_policy_document" "assumed_role_permissions_boundary" {
       "s3:ListBucketMultipartUploads",
       "s3:GetObjectTagging",
       "s3:PutObjectTagging",
+      "s3:ListBucketVersions",
+      "s3:GetObjectVersion",
 
       # KMS - encryption/decryption for DynamoDB and S3
       "kms:Encrypt",
