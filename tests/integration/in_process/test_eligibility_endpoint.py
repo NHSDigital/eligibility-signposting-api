@@ -5,10 +5,11 @@ from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask.testing import FlaskClient
 from hamcrest import (
     assert_that,
+    contains_exactly,
     equal_to,
     has_entries,
     has_entry,
-    has_key, contains_exactly,
+    has_key,
 )
 
 from eligibility_signposting_api.model.campaign_config import CampaignConfig
@@ -671,21 +672,30 @@ class TestResponseOnMissingAttributes:
         response = client.get("/patient-check/_status")
 
         # Then
-        assert_that(response, is_response()
-                    .with_status_code(HTTPStatus.OK)
-                    .and_json(has_entries({
-            "status": "pass",
-            "checks": has_entries({
-                "healthcheckService:status": contains_exactly(
-                    has_entries({
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_json(
+                has_entries(
+                    {
                         "status": "pass",
-                        "timeout": False,
-                        "responseCode": HTTPStatus.OK,
-                        "outcome": "<html><h1>Ok</h1></html>",
-                        "links": has_entries({
-                            "self": "http://patient-check/_status"
-                        })
-                    })
+                        "checks": has_entries(
+                            {
+                                "healthcheckService:status": contains_exactly(
+                                    has_entries(
+                                        {
+                                            "status": "pass",
+                                            "timeout": False,
+                                            "responseCode": HTTPStatus.OK,
+                                            "outcome": "<html><h1>Ok</h1></html>",
+                                            "links": has_entries({"self": "https://patient-check/_status"}),
+                                        }
+                                    )
+                                )
+                            }
+                        ),
+                    }
                 )
-            })
-        })))
+            ),
+        )

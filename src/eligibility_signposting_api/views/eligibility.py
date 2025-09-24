@@ -178,6 +178,7 @@ def build_suitability_results(condition: Condition) -> list[eligibility_response
         if reason.rule_description
     ]
 
+
 def build_status_payload() -> dict:
     return {
         "status": "pass",
@@ -192,10 +193,8 @@ def build_status_payload() -> dict:
                     "timeout": False,
                     "responseCode": HTTPStatus.OK,
                     "outcome": "<html><h1>Ok</h1></html>",
-                    "links": {
-                        "self": f"http://{URL_PREFIX}/_status"
-                    }
+                    "links": {"self": f"https://{URL_PREFIX}/_status"},
                 }
             ]
-        }
+        },
     }
