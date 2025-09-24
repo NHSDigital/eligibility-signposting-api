@@ -23,6 +23,7 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
       ENV                        = var.environment
       LOG_LEVEL                  = var.log_level
       ENABLE_XRAY_PATCHING       = var.enable_xray_patching
+      API_DOMAIN_NAME            = var.api_domain_name
     }
   }
 
@@ -36,7 +37,9 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   }
 
   layers = compact([
-  var.environment == "prod" ? "arn:aws:lambda:${var.region}:580247275435:layer:LambdaInsightsExtension:${var.lambda_insights_extension_version}" : null
+      var.environment == "prod" ?
+      "arn:aws:lambda:${var.region}:580247275435:layer:LambdaInsightsExtension:${var.lambda_insights_extension_version}"
+      : null
   ])
 
   tracing_config {

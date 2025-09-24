@@ -492,7 +492,7 @@ def test_status_endpoint(app: Flask, client: FlaskClient):
                                             "timeout": False,
                                             "responseCode": HTTPStatus.OK,
                                             "outcome": "<html><h1>Ok</h1></html>",
-                                            "links": has_entries({"self": "https://patient-check/_status"}),
+                                            "links": has_entries({"self": "https://localhost/patient-check/_status"}),
                                         }
                                     )
                                 )
