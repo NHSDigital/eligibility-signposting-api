@@ -3,6 +3,7 @@ import uuid
 from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import Annotated, Any
+from urllib.parse import quote
 
 from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
@@ -180,6 +181,7 @@ def build_suitability_results(condition: Condition) -> list[eligibility_response
 
 
 def build_status_payload(api_domain_name: str) -> dict:
+    encoded_domain = quote(api_domain_name, safe="")
     return {
         "status": "pass",
         "version": "",
@@ -193,7 +195,7 @@ def build_status_payload(api_domain_name: str) -> dict:
                     "timeout": False,
                     "responseCode": HTTPStatus.OK,
                     "outcome": "<html><h1>Ok</h1></html>",
-                    "links": {"self": f"https://{api_domain_name}/{URL_PREFIX}/_status"},
+                    "links": {"self": f"https://{encoded_domain}/{URL_PREFIX}/_status"},
                 }
             ]
         },
