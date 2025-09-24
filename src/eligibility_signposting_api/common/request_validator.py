@@ -2,7 +2,6 @@ import logging
 import re
 from collections.abc import Callable
 from functools import wraps
-from typing import Any
 
 from flask import request
 from flask.typing import ResponseReturnValue
@@ -22,7 +21,7 @@ category_pattern = re.compile(r"^\s*(VACCINATIONS|SCREENING|ALL)\s*$", re.IGNORE
 include_actions_pattern = re.compile(r"^\s*([YN])\s*$", re.IGNORECASE)
 
 
-def validate_query_params(query_params: dict[str, str]) -> tuple[bool, dict[str, Any] | None]:
+def validate_query_params(query_params: dict[str, str]) -> tuple[bool, ResponseReturnValue | None]:
     conditions = query_params.get("conditions", "ALL").split(",")
     for condition in conditions:
         search = re.search(condition_pattern, condition)
@@ -40,7 +39,7 @@ def validate_query_params(query_params: dict[str, str]) -> tuple[bool, dict[str,
     return True, None
 
 
-def validate_nhs_number(path_nhs: str, header_nhs: str) -> bool:
+def validate_nhs_number(path_nhs: str | None, header_nhs: str | None) -> bool:
     logger.info("NHS numbers from the request", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
 
     if not header_nhs or not path_nhs:
@@ -56,18 +55,18 @@ def validate_nhs_number(path_nhs: str, header_nhs: str) -> bool:
 def validate_request_params() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs) -> ResponseReturnValue:
-            nhs_number = kwargs.get("nhs_number")
-            header_nhs_no = request.headers.get(NHS_NUMBER_HEADER)
+        def wrapper(*args, **kwargs) -> ResponseReturnValue:  # noqa:ANN002,ANN003
+            path_nhs_number = str(kwargs.get("nhs_number"))
+            header_nhs_no = str(request.headers.get(NHS_NUMBER_HEADER))
 
-            if not validate_nhs_number(nhs_number, header_nhs_no):
+            if not validate_nhs_number(path_nhs_number, header_nhs_no):
                 message = "You are not authorised to request information for the supplied NHS Number"
                 return NHS_NUMBER_MISMATCH_ERROR.log_and_generate_response(log_message=message, diagnostics=message)
 
             query_params = request.args
             if query_params:
                 is_valid, problem = validate_query_params(query_params)
-                if not is_valid:
+                if not is_valid and problem is not None:
                     return problem
 
             return func(*args, **kwargs)
@@ -77,7 +76,7 @@ def validate_request_params() -> Callable:
     return decorator
 
 
-def get_include_actions_error_response(include_actions: str) -> dict[str, Any]:
+def get_include_actions_error_response(include_actions: str) -> ResponseReturnValue:
     diagnostics = f"{include_actions} is not a value that is supported by the API"
     return INVALID_INCLUDE_ACTIONS_ERROR.log_and_generate_response(
         log_message=f"Invalid include actions query param: '{include_actions}'",
@@ -86,14 +85,14 @@ def get_include_actions_error_response(include_actions: str) -> dict[str, Any]:
     )
 
 
-def get_category_error_response(category: str) -> dict[str, Any]:
+def get_category_error_response(category: str) -> ResponseReturnValue:
     diagnostics = f"{category} is not a category that is supported by the API"
     return INVALID_CATEGORY_ERROR.log_and_generate_response(
         log_message=f"Invalid category query param: '{category}'", diagnostics=diagnostics, location_param="category"
     )
 
 
-def get_condition_error_response(condition: str) -> dict[str, Any]:
+def get_condition_error_response(condition: str) -> ResponseReturnValue:
     diagnostics = (
         f"{condition} should be a single or comma separated list of condition "
         f"strings with no other punctuation or special characters"
