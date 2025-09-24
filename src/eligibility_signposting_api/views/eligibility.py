@@ -2,11 +2,11 @@ import logging
 import uuid
 from datetime import UTC, datetime
 from http import HTTPStatus
-from typing import Any, Annotated
+from typing import Annotated, Any
 
 from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
-from wireup import Injected, Inject
+from wireup import Inject, Injected
 
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
@@ -179,7 +179,7 @@ def build_suitability_results(condition: Condition) -> list[eligibility_response
     ]
 
 
-def build_status_payload(api_domain_name:str) -> dict:
+def build_status_payload(api_domain_name: str) -> dict:
     return {
         "status": "pass",
         "version": "",
