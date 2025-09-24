@@ -1,13 +1,13 @@
 import logging
+import os
 import uuid
 from datetime import UTC, datetime
 from http import HTTPStatus
-from typing import Annotated, Any
-from urllib.parse import quote
+from typing import Any
 
 from flask import Blueprint, make_response, request
 from flask.typing import ResponseReturnValue
-from wireup import Inject, Injected
+from wireup import Injected
 
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
@@ -36,8 +36,8 @@ def before_request() -> None:
 
 
 @eligibility_blueprint.get("/_status")
-def api_status(api_domain_name: Annotated[str, Inject(param="api_domain_name")]) -> ResponseReturnValue:
-    return make_response(build_status_payload(api_domain_name), HTTPStatus.OK)
+def api_status() -> ResponseReturnValue:
+    return make_response(build_status_payload(), HTTPStatus.OK)
 
 
 @eligibility_blueprint.get("/", defaults={"nhs_number": ""})
@@ -180,8 +180,8 @@ def build_suitability_results(condition: Condition) -> list[eligibility_response
     ]
 
 
-def build_status_payload(api_domain_name: str) -> dict:
-    encoded_domain = quote(api_domain_name, safe="")
+def build_status_payload() -> dict:
+    api_domain_name = os.getenv("API_DOMAIN_NAME", "localhost")
     return {
         "status": "pass",
         "version": "",
@@ -195,7 +195,7 @@ def build_status_payload(api_domain_name: str) -> dict:
                     "timeout": False,
                     "responseCode": HTTPStatus.OK,
                     "outcome": "<html><h1>Ok</h1></html>",
-                    "links": {"self": f"https://{encoded_domain}/{URL_PREFIX}/_status"},
+                    "links": {"self": f"https://{api_domain_name}/{URL_PREFIX}/_status"},
                 }
             ]
         },

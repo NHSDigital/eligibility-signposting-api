@@ -23,7 +23,6 @@ def config() -> dict[str, Any]:
     rules_bucket_name = BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket"))
     audit_bucket_name = BucketName(os.getenv("AUDIT_BUCKET_NAME", "test-audit-bucket"))
     aws_default_region = AwsRegion(os.getenv("AWS_DEFAULT_REGION", "eu-west-1"))
-    api_domain_name = ApiDomainName(os.getenv("API_DOMAIN_NAME", "localhost"))
     enable_xray_patching = bool(os.getenv("ENABLE_XRAY_PATCHING", "false"))
     kinesis_audit_stream_to_s3 = AwsKinesisFirehoseStreamName(
         os.getenv("KINESIS_AUDIT_STREAM_TO_S3", "test_kinesis_audit_stream_to_s3")
@@ -41,7 +40,6 @@ def config() -> dict[str, Any]:
             "rules_bucket_name": rules_bucket_name,
             "audit_bucket_name": audit_bucket_name,
             "firehose_endpoint": None,
-            "api_domain_name": api_domain_name,
             "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
             "enable_xray_patching": enable_xray_patching,
             "log_level": log_level,
@@ -58,7 +56,6 @@ def config() -> dict[str, Any]:
         "rules_bucket_name": rules_bucket_name,
         "audit_bucket_name": audit_bucket_name,
         "firehose_endpoint": URL(os.getenv("FIREHOSE_ENDPOINT", local_stack_endpoint)),
-        "api_domain_name": api_domain_name,
         "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
         "enable_xray_patching": enable_xray_patching,
         "log_level": log_level,
