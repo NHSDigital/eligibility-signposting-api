@@ -2,7 +2,7 @@ locals {
   stack_name = "api-layer"
 
   api_subdomain   = var.environment
-  api_domain_name = "eligibility-signposting-api.nhs.uk"
+  api_domain_name = var.environment == "prod" ? "eligibility-signposting-api.national.nhs.uk" : "eligibility-signposting-api.nhs.uk"
 
   # PEM file for certificate
   pem_file_content = join("\n", [
