@@ -15,7 +15,7 @@ data "aws_iam_policy_document" "assumed_role_permissions_boundary" {
       "dynamodb:DeleteItem",
       "dynamodb:BatchWriteItem",
 
-      # S3 - bucket and object operations for Lambda and Firehose
+      # S3 - bucket and object operations for Lambda, Firehose and External Role
       "s3:GetObject",
       "s3:ListBucket",
       "s3:PutObject",
@@ -23,6 +23,8 @@ data "aws_iam_policy_document" "assumed_role_permissions_boundary" {
       "s3:AbortMultipartUpload",
       "s3:GetBucketLocation",
       "s3:ListBucketMultipartUploads",
+      "s3:GetObjectTagging",
+      "s3:PutObjectTagging",
 
       # KMS - encryption/decryption for DynamoDB and S3
       "kms:Encrypt",
