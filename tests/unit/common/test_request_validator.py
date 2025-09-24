@@ -82,6 +82,7 @@ class TestValidateRequestParams:
             assert issue["details"]["coding"][0]["code"] == "ACCESS_DENIED"
             assert issue["details"]["coding"][0]["display"] == "Access has been denied to process this request."
             assert issue["diagnostics"] == "You are not authorised to request information for the supplied NHS Number"
+            assert response.headers["Content-Type"] == "application/fhir+json"
 
 
 class TestValidateQueryParameters:
