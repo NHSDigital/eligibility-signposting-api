@@ -665,3 +665,10 @@ class TestResponseOnMissingAttributes:
                 )
             ),
         )
+
+    def test_status_endpoint(self, client: FlaskClient):
+        # When
+        response = client.get("/patient-check/_status")
+
+        # Then
+        assert_that(response, is_response().with_status_code(HTTPStatus.OK))

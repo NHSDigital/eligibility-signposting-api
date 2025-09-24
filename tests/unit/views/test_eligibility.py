@@ -467,3 +467,10 @@ def test_get_or_default_query_params_missing_include_actions(app: Flask):
         expected = {"includeActions": "Y", "category": "SCREENING", "conditions": ["COVID19", "FLU"]}
 
         assert_that(result, is_(expected))
+
+
+def test_status_endpoint(app: Flask, client: FlaskClient):
+    with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
+        response = client.get("/patient-check/_status")
+
+        assert_that(response, is_response().with_status_code(HTTPStatus.OK))

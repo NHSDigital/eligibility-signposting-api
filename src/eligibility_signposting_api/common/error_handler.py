@@ -1,7 +1,6 @@
 import logging
 import traceback
 
-from flask import make_response
 from flask.typing import ResponseReturnValue
 from werkzeug.exceptions import HTTPException
 

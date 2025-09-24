@@ -76,7 +76,9 @@ class APIErrorResponse:
         )  # pyright: ignore[reportCallIssue]
 
         response_body = json.dumps(problem.model_dump(by_alias=True, mode="json"))
-        return make_response(response_body, self.status_code, {"Content-Type": "application/fhir+json"}) #TODO: check header
+        return make_response(
+            response_body, self.status_code, {"Content-Type": "application/fhir+json"}
+        )  # TODO: check header
 
     def log_and_generate_response(
         self, log_message: str, diagnostics: str, location_param: str | None = None

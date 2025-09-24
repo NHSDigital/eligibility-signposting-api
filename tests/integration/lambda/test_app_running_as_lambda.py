@@ -690,3 +690,17 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
         get_log_messages(flask_function, logs_client),
         has_item(contains_string("Invalid attribute name 'ICECREAM' in token '[[PERSON.ICECREAM]]'.")),
     )
+
+
+def test_status_end_point(api_gateway_endpoint: URL):
+    """Given api-gateway and lambda installed into localstack, run it via http"""
+    # Given
+    # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/_status"
+    response = httpx.get(
+        invoke_url,
+        timeout=10,
+    )
+
+    # Then
+    assert_that(response, is_response().with_status_code(HTTPStatus.OK))
