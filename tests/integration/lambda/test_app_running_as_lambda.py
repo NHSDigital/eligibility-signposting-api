@@ -703,4 +703,21 @@ def test_status_end_point(api_gateway_endpoint: URL):
     )
 
     # Then
-    assert_that(response, is_response().with_status_code(HTTPStatus.OK))
+    assert_that(response, is_response()
+                .with_status_code(HTTPStatus.OK)
+                .and_json(has_entries({
+        "status": "pass",
+        "checks": has_entries({
+            "healthcheckService:status": contains_exactly(
+                has_entries({
+                    "status": "pass",
+                    "timeout": False,
+                    "responseCode": HTTPStatus.OK,
+                    "outcome": "<html><h1>Ok</h1></html>",
+                    "links": has_entries({
+                        "self": "http://patient-check/_status"
+                    })
+                })
+            )
+        })
+    })))

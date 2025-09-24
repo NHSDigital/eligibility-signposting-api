@@ -8,7 +8,7 @@ from hamcrest import (
     equal_to,
     has_entries,
     has_entry,
-    has_key,
+    has_key, contains_exactly,
 )
 
 from eligibility_signposting_api.model.campaign_config import CampaignConfig
@@ -671,4 +671,21 @@ class TestResponseOnMissingAttributes:
         response = client.get("/patient-check/_status")
 
         # Then
-        assert_that(response, is_response().with_status_code(HTTPStatus.OK))
+        assert_that(response, is_response()
+                    .with_status_code(HTTPStatus.OK)
+                    .and_json(has_entries({
+            "status": "pass",
+            "checks": has_entries({
+                "healthcheckService:status": contains_exactly(
+                    has_entries({
+                        "status": "pass",
+                        "timeout": False,
+                        "responseCode": HTTPStatus.OK,
+                        "outcome": "<html><h1>Ok</h1></html>",
+                        "links": has_entries({
+                            "self": "http://patient-check/_status"
+                        })
+                    })
+                )
+            })
+        })))

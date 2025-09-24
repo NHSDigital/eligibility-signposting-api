@@ -12,6 +12,7 @@ from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.common.api_error_response import NHS_NUMBER_NOT_FOUND_ERROR
 from eligibility_signposting_api.common.request_validator import validate_request_params
+from eligibility_signposting_api.config.contants import URL_PREFIX
 from eligibility_signposting_api.model.eligibility_status import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.views.response_model import eligibility_response
@@ -35,7 +36,7 @@ def before_request() -> None:
 
 @eligibility_blueprint.get("/_status")
 def api_status() -> ResponseReturnValue:
-    return make_response({"status": "ok", "timestamp": datetime.now(UTC).isoformat()}, HTTPStatus.OK)
+    return make_response(build_status_payload(), HTTPStatus.OK)
 
 
 @eligibility_blueprint.get("/", defaults={"nhs_number": ""})
@@ -176,3 +177,25 @@ def build_suitability_results(condition: Condition) -> list[eligibility_response
         for reason in condition.suitability_rules
         if reason.rule_description
     ]
+
+def build_status_payload() -> dict:
+    return {
+        "status": "pass",
+        "version": "",
+        "revision": "",
+        "releaseId": "",
+        "commitId": "",
+        "checks": {
+            "healthcheckService:status": [
+                {
+                    "status": "pass",
+                    "timeout": False,
+                    "responseCode": HTTPStatus.OK,
+                    "outcome": "<html><h1>Ok</h1></html>",
+                    "links": {
+                        "self": f"http://{URL_PREFIX}/_status"
+                    }
+                }
+            ]
+        }
+    }

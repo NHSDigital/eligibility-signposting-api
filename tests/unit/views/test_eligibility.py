@@ -10,7 +10,7 @@ from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask import Flask
 from flask.testing import FlaskClient
-from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_, none
+from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_, none, has_key, equal_to
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.audit.audit_service import AuditService
@@ -191,44 +191,46 @@ def test_unexpected_error(app: Flask, client: FlaskClient):
     ("cohort_results", "expected_eligibility_cohorts", "test_comment"),
     [
         (
-            [
-                CohortResultFactory.build(
-                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
-                ),
-                CohortResultFactory.build(
-                    cohort_code="CohortCode2", status=Status.not_actionable, description="+ve des 2"
-                ),
-            ],
-            [
-                ("CohortCode1", "NotActionable", "+ve des 1"),
-                ("CohortCode2", "NotActionable", "+ve des 2"),
-            ],
-            "two cohort group codes with same status, nothing is ignored",
+                [
+                    CohortResultFactory.build(
+                        cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                    ),
+                    CohortResultFactory.build(
+                        cohort_code="CohortCode2", status=Status.not_actionable, description="+ve des 2"
+                    ),
+                ],
+                [
+                    ("CohortCode1", "NotActionable", "+ve des 1"),
+                    ("CohortCode2", "NotActionable", "+ve des 2"),
+                ],
+                "two cohort group codes with same status, nothing is ignored",
         ),
         (
-            [
-                CohortResultFactory.build(
-                    cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
-                ),
-                CohortResultFactory.build(cohort_code="CohortCode2", status=Status.not_actionable, description=None),
-                CohortResultFactory.build(cohort_code="CohortCode3", status=Status.not_actionable, description=""),
-            ],
-            [("CohortCode1", "NotActionable", "+ve des 1")],
-            "only one cohort has description",
+                [
+                    CohortResultFactory.build(
+                        cohort_code="CohortCode1", status=Status.not_actionable, description="+ve des 1"
+                    ),
+                    CohortResultFactory.build(cohort_code="CohortCode2", status=Status.not_actionable,
+                                              description=None),
+                    CohortResultFactory.build(cohort_code="CohortCode3", status=Status.not_actionable, description=""),
+                ],
+                [("CohortCode1", "NotActionable", "+ve des 1")],
+                "only one cohort has description",
         ),
         (
-            [
-                CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable, description=""),
-            ],
-            [],
-            "only one cohort but no description, so it is ignored",
+                [
+                    CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable, description=""),
+                ],
+                [],
+                "only one cohort but no description, so it is ignored",
         ),
         (
-            [
-                CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable, description=None),
-            ],
-            [],
-            "only one cohort but no description, so it is ignored",
+                [
+                    CohortResultFactory.build(cohort_code="some_cohort", status=Status.not_actionable,
+                                              description=None),
+                ],
+                [],
+                "only one cohort but no description, so it is ignored",
         ),
     ],
 )
@@ -266,52 +268,52 @@ def test_no_suitability_rules_for_actionable():
     ("suggested_actions", "expected"),
     [
         (
-            [
-                SuggestedAction(
-                    action_type=ActionType("TYPE_A"),
-                    action_code=ActionCode("CODE123"),
-                    action_description=ActionDescription("Some description"),
-                    url_link=UrlLink("https://example.com"),
-                    url_label=UrlLabel("Learn more"),
-                )
-            ],
-            [
-                eligibility_response.Action(
-                    actionType=eligibility_response.ActionType("TYPE_A"),
-                    actionCode=eligibility_response.ActionCode("CODE123"),
-                    description=eligibility_response.Description("Some description"),
-                    urlLink=eligibility_response.UrlLink("https://example.com"),
-                    urlLabel=eligibility_response.UrlLabel("Learn more"),
-                )
-            ],
+                [
+                    SuggestedAction(
+                        action_type=ActionType("TYPE_A"),
+                        action_code=ActionCode("CODE123"),
+                        action_description=ActionDescription("Some description"),
+                        url_link=UrlLink("https://example.com"),
+                        url_label=UrlLabel("Learn more"),
+                    )
+                ],
+                [
+                    eligibility_response.Action(
+                        actionType=eligibility_response.ActionType("TYPE_A"),
+                        actionCode=eligibility_response.ActionCode("CODE123"),
+                        description=eligibility_response.Description("Some description"),
+                        urlLink=eligibility_response.UrlLink("https://example.com"),
+                        urlLabel=eligibility_response.UrlLabel("Learn more"),
+                    )
+                ],
         ),
         (
-            [
-                SuggestedAction(
-                    action_type=ActionType("TYPE_B"),
-                    action_code=ActionCode("CODE123"),
-                    action_description=None,
-                    url_link=None,
-                    url_label=None,
-                )
-            ],
-            [
-                eligibility_response.Action(
-                    actionType=eligibility_response.ActionType("TYPE_B"),
-                    actionCode=eligibility_response.ActionCode("CODE123"),
-                    description="",
-                    urlLink="",
-                    urlLabel="",
-                )
-            ],
+                [
+                    SuggestedAction(
+                        action_type=ActionType("TYPE_B"),
+                        action_code=ActionCode("CODE123"),
+                        action_description=None,
+                        url_link=None,
+                        url_label=None,
+                    )
+                ],
+                [
+                    eligibility_response.Action(
+                        actionType=eligibility_response.ActionType("TYPE_B"),
+                        actionCode=eligibility_response.ActionCode("CODE123"),
+                        description="",
+                        urlLink="",
+                        urlLabel="",
+                    )
+                ],
         ),
         (
-            None,
-            None,
+                None,
+                None,
         ),
         (
-            [],
-            [],
+                [],
+                [],
         ),
     ],
 )
@@ -473,4 +475,25 @@ def test_status_endpoint(app: Flask, client: FlaskClient):
     with get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()):
         response = client.get("/patient-check/_status")
 
-        assert_that(response, is_response().with_status_code(HTTPStatus.OK))
+        assert_that(response, is_response()
+                    .with_status_code(HTTPStatus.OK)
+                    )
+
+        assert_that(response, is_response()
+                    .with_status_code(HTTPStatus.OK)
+                    .and_json(has_entries({
+                                "status": "pass",
+                                "checks": has_entries({
+                                    "healthcheckService:status": contains_exactly(
+                                        has_entries({
+                                            "status": "pass",
+                                            "timeout": False,
+                                            "responseCode": HTTPStatus.OK,
+                                            "outcome": "<html><h1>Ok</h1></html>",
+                                            "links": has_entries({
+                                                "self": "http://patient-check/_status"
+                                            })
+                                        })
+                                    )
+                                })
+                            })))
