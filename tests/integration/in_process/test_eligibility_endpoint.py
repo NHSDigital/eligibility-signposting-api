@@ -699,3 +699,5 @@ class TestResponseOnMissingAttributes:
                 )
             ),
         )
+
+        assert_that(response.headers, has_entry("Content-Type", "application/json"))

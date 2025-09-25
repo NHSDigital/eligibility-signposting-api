@@ -17,6 +17,7 @@ from hamcrest import (
     contains_string,
     equal_to,
     has_entries,
+    has_entry,
     has_item,
     has_key,
     is_not,
@@ -730,3 +731,5 @@ def test_status_end_point(api_gateway_endpoint: URL):
             )
         ),
     )
+
+    assert_that(response.headers, has_entry("Content-Type", "application/json"))

@@ -37,7 +37,7 @@ def before_request() -> None:
 
 @eligibility_blueprint.get("/_status")
 def api_status() -> ResponseReturnValue:
-    return make_response(build_status_payload(), HTTPStatus.OK)
+    return make_response(build_status_payload(), HTTPStatus.OK, {"Content-Type": "application/json"})
 
 
 @eligibility_blueprint.get("/", defaults={"nhs_number": ""})
