@@ -1,5 +1,7 @@
 # Deployment & Release Process
+
 ## This might be out of date
+
 This repo uses GitHub Actions to deploy through four environments:
 
 - **Dev** – continuous integration deploys on push to `main`. Creates a `Dev-<timestamp>` tag.
