@@ -479,6 +479,7 @@ def test_status_endpoint(app: Flask, client: FlaskClient):
             response,
             is_response()
             .with_status_code(HTTPStatus.OK)
+            .with_headers(has_entries({"Content-Type": "application/json"}))
             .and_json(
                 has_entries(
                     {
@@ -502,5 +503,3 @@ def test_status_endpoint(app: Flask, client: FlaskClient):
                 )
             ),
         )
-
-        assert_that(response.headers, has_entry("Content-Type", "application/json"))
