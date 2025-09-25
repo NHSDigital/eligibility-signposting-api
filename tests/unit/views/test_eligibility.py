@@ -10,7 +10,7 @@ from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask import Flask
 from flask.testing import FlaskClient
-from hamcrest import assert_that, contains_exactly, has_entries, has_entry, has_length, is_, none
+from hamcrest import assert_that, contains_exactly, has_entries, has_length, is_, none
 from wireup.integration.flask import get_app_container
 
 from eligibility_signposting_api.audit.audit_service import AuditService

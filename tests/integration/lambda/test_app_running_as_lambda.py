@@ -17,7 +17,6 @@ from hamcrest import (
     contains_string,
     equal_to,
     has_entries,
-    has_entry,
     has_item,
     has_key,
     is_not,
