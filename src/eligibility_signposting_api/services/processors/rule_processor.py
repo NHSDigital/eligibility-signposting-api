@@ -38,8 +38,14 @@ class RuleProcessor:
     person_data_reader: PersonDataReader = field(default_factory=PersonDataReader)
 
     def is_base_eligible(self, person: Person, cohort: IterationCohort) -> bool:
+        if cohort.is_virtual_cohort:
+            for row in person.data:
+                if row.get("ATTRIBUTE_TYPE", "") == "COHORTS":
+                    row["COHORT_MEMBERSHIPS"].append({"COHORT_LABEL": cohort.cohort_label})
+
         person_cohorts = self.person_data_reader.get_person_cohorts(person)
-        return cohort.cohort_label in person_cohorts or cohort.is_magic_cohort
+
+        return cohort.cohort_label in person_cohorts
 
     def is_eligible(
         self,
