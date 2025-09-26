@@ -352,7 +352,6 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
     actions = ["kms:*"]
     resources = ["*"]
   }
-
   # Allow Lambda, Firehose, and external write roles to use the KMS key
   statement {
     sid    = "AllowAuditKeyAccess"
