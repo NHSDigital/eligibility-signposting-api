@@ -1,4 +1,5 @@
 import logging
+import os
 import uuid
 from datetime import UTC, datetime
 from http import HTTPStatus
@@ -11,6 +12,8 @@ from wireup import Injected
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.common.api_error_response import NHS_NUMBER_NOT_FOUND_ERROR
+from eligibility_signposting_api.common.request_validator import validate_request_params
+from eligibility_signposting_api.config.contants import URL_PREFIX
 from eligibility_signposting_api.model.eligibility_status import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.views.response_model import eligibility_response
@@ -32,8 +35,14 @@ def before_request() -> None:
     AuditContext.add_request_details(request)
 
 
+@eligibility_blueprint.get("/_status")
+def api_status() -> ResponseReturnValue:
+    return make_response(build_status_payload(), HTTPStatus.OK, {"Content-Type": "application/json"})
+
+
 @eligibility_blueprint.get("/", defaults={"nhs_number": ""})
 @eligibility_blueprint.get("/<nhs_number>")
+@validate_request_params()
 def check_eligibility(
     nhs_number: NHSNumber, eligibility_service: Injected[EligibilityService], audit_service: Injected[AuditService]
 ) -> ResponseReturnValue:
@@ -88,10 +97,9 @@ def get_or_default_query_params() -> dict[str, Any]:
 
 def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:
     diagnostics = f"NHS Number '{nhs_number}' was not recognised by the Eligibility Signposting API"
-    response = NHS_NUMBER_NOT_FOUND_ERROR.log_and_generate_response(
+    return NHS_NUMBER_NOT_FOUND_ERROR.log_and_generate_response(
         log_message=diagnostics, diagnostics=diagnostics, location_param="id"
     )
-    return make_response(response.get("body"), response.get("statusCode"), response.get("headers"))
 
 
 def build_eligibility_response(eligibility_status: EligibilityStatus) -> eligibility_response.EligibilityResponse:
@@ -170,3 +178,25 @@ def build_suitability_results(condition: Condition) -> list[eligibility_response
         for reason in condition.suitability_rules
         if reason.rule_description
     ]
+
+
+def build_status_payload() -> dict:
+    api_domain_name = os.getenv("API_DOMAIN_NAME", "localhost")
+    return {
+        "status": "pass",
+        "version": "",
+        "revision": "",
+        "releaseId": "",
+        "commitId": "",
+        "checks": {
+            "healthcheckService:status": [
+                {
+                    "status": "pass",
+                    "timeout": False,
+                    "responseCode": HTTPStatus.OK,
+                    "outcome": "<html><h1>Ok</h1></html>",
+                    "links": {"self": f"https://{api_domain_name}/{URL_PREFIX}/_status"},
+                }
+            ]
+        },
+    }

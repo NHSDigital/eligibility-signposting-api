@@ -1,9 +1,9 @@
-import json
 import logging
 from http import HTTPStatus
 from unittest.mock import MagicMock
 
 import pytest
+from flask import request
 
 from eligibility_signposting_api.common import request_validator
 from eligibility_signposting_api.common.request_validator import logger
@@ -40,48 +40,49 @@ class TestValidateNHSNumber:
 
 
 class TestValidateRequestParams:
-    def test_validate_request_params_success(self, caplog):
-        mock_handler = MagicMock()
-        mock_handler.__name__ = "mock_handler"
-
-        mock_event_valid = {
-            "pathParameters": {"id": "1234567890"},
-            "headers": {"nhs-login-nhs-number": "1234567890"},
-        }
-        mock_context = {}
+    def test_validate_request_params_success(self, app, caplog):
+        mock_api = MagicMock(return_value="success")
 
         decorator = request_validator.validate_request_params()
-        wrapped_handler = decorator(mock_handler)
-        with caplog.at_level(logging.INFO):
-            wrapped_handler(mock_event_valid, mock_context)
+        dummy_route = decorator(mock_api)
 
-        assert any("NHS numbers from the request" in record.message for record in caplog.records)
-        assert not any(record.levelname == "ERROR" for record in caplog.records)
+        with app.test_request_context(
+            "/dummy?id=1234567890",
+            headers={"nhs-login-nhs-number": "1234567890"},
+            method="GET",
+        ):
+            with caplog.at_level(logging.INFO):
+                response = dummy_route(nhs_number=request.args.get("id"))
 
-    def test_validate_request_params_nhs_mismatch(self, caplog):
-        mock_handler = MagicMock()
-        mock_context = {}
-        event = {
-            "pathParameters": {"id": "0987654321"},
-            "headers": {"nhs-login-nhs-number": "1234567890"},
-        }
+            assert response == "success"
+            assert any("NHS numbers from the request" in record.message for record in caplog.records)
+            assert not any(record.levelname == "ERROR" for record in caplog.records)
+
+    def test_validate_request_params_nhs_mismatch(self, app, caplog):
+        mock_api = MagicMock()
 
         decorator = request_validator.validate_request_params()
-        wrapped_handler = decorator(mock_handler)
+        dummy_route = decorator(mock_api)
 
-        with caplog.at_level(logging.ERROR):
-            response = wrapped_handler(event, mock_context)
+        with app.test_request_context(
+            "/dummy?id=1234567890",
+            headers={"nhs-login-nhs-number": "0987654321"},
+            method="GET",
+        ):
+            with caplog.at_level(logging.INFO):
+                response = dummy_route(nhs_number=request.args.get("id"))
 
-        mock_handler.assert_not_called()
+            mock_api.assert_not_called()
 
-        assert response is not None
-        assert response["statusCode"] == HTTPStatus.FORBIDDEN
-        response_body = json.loads(response["body"])
-        issue = response_body["issue"][0]
-        assert issue["code"] == "forbidden"
-        assert issue["details"]["coding"][0]["code"] == "ACCESS_DENIED"
-        assert issue["details"]["coding"][0]["display"] == "Access has been denied to process this request."
-        assert issue["diagnostics"] == "You are not authorised to request information for the supplied NHS Number"
+            assert response is not None
+            assert response.status_code == HTTPStatus.FORBIDDEN
+            response_json = response.json
+            issue = response_json["issue"][0]
+            assert issue["code"] == "forbidden"
+            assert issue["details"]["coding"][0]["code"] == "ACCESS_DENIED"
+            assert issue["details"]["coding"][0]["display"] == "Access has been denied to process this request."
+            assert issue["diagnostics"] == "You are not authorised to request information for the supplied NHS Number"
+            assert response.headers["Content-Type"] == "application/fhir+json"
 
 
 class TestValidateQueryParameters:
@@ -259,18 +260,18 @@ class TestValidateQueryParameters:
 
         assert is_valid is False
         assert problem is not None
-        assert problem["statusCode"] == HTTPStatus.BAD_REQUEST
-        assert problem["headers"]["Content-Type"] == "application/fhir+json"
+        assert problem.status_code == HTTPStatus.BAD_REQUEST
+        assert problem.headers["Content-Type"] == "application/fhir+json"
 
-        response_body = json.loads(problem["body"])
+        response_json = problem.json
 
-        assert response_body["resourceType"] == "OperationOutcome"
-        assert "id" in response_body
-        assert "meta" in response_body
-        assert "lastUpdated" in response_body["meta"]
+        assert response_json["resourceType"] == "OperationOutcome"
+        assert "id" in response_json
+        assert "meta" in response_json
+        assert "lastUpdated" in response_json["meta"]
 
-        assert len(response_body["issue"]) == 1
-        issue = response_body["issue"][0]
+        assert len(response_json["issue"]) == 1
+        issue = response_json["issue"][0]
 
         assert issue["severity"] == "error"
         assert issue["code"] == "value"
@@ -296,18 +297,18 @@ class TestValidateQueryParameters:
 
         assert is_valid is False
         assert problem is not None
-        assert problem["statusCode"] == HTTPStatus.UNPROCESSABLE_ENTITY
-        assert problem["headers"]["Content-Type"] == "application/fhir+json"
+        assert problem.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+        assert problem.headers["Content-Type"] == "application/fhir+json"
 
-        response_body = json.loads(problem["body"])
+        response_json = problem.json
 
-        assert response_body["resourceType"] == "OperationOutcome"
-        assert "id" in response_body
-        assert "meta" in response_body
-        assert "lastUpdated" in response_body["meta"]
+        assert response_json["resourceType"] == "OperationOutcome"
+        assert "id" in response_json
+        assert "meta" in response_json
+        assert "lastUpdated" in response_json["meta"]
 
-        assert len(response_body["issue"]) == 1
-        issue = response_body["issue"][0]
+        assert len(response_json["issue"]) == 1
+        issue = response_json["issue"][0]
 
         assert issue["severity"] == "error"
         assert issue["code"] == "value"
@@ -330,18 +331,18 @@ class TestValidateQueryParameters:
 
         assert is_valid is False
         assert problem is not None
-        assert problem["statusCode"] == HTTPStatus.UNPROCESSABLE_ENTITY
-        assert problem["headers"]["Content-Type"] == "application/fhir+json"
+        assert problem.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+        assert problem.headers["Content-Type"] == "application/fhir+json"
 
-        response_body = json.loads(problem["body"])
+        response_json = problem.json
 
-        assert response_body["resourceType"] == "OperationOutcome"
-        assert "id" in response_body
-        assert "meta" in response_body
-        assert "lastUpdated" in response_body["meta"]
+        assert response_json["resourceType"] == "OperationOutcome"
+        assert "id" in response_json
+        assert "meta" in response_json
+        assert "lastUpdated" in response_json["meta"]
 
-        assert len(response_body["issue"]) == 1
-        issue = response_body["issue"][0]
+        assert len(response_json["issue"]) == 1
+        issue = response_json["issue"][0]
 
         assert issue["severity"] == "error"
         assert issue["code"] == "value"
