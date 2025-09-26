@@ -80,10 +80,10 @@ jobs:
           make dependencies install-python
           make build
 
-      - name: "Upload lambda artefact"
+      - name: "Upload lambda artefact for cross-workflow use"
         uses: actions/upload-artifact@v4
         with:
-          name: lambda
+          name: lambda-${{ needs.metadata.outputs.version }}
           path: dist/lambda.zip
 
       - name: "Download Built Lambdas"

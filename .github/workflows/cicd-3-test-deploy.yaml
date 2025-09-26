@@ -78,10 +78,16 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
           aws-region: eu-west-2
 
-      - name: "Build lambda artefact (rebuild in TEST)"
+      - name: "Download lambda artefact from dev workflow"
+        uses: actions/download-artifact@v5
+        with:
+          name: lambda-${{ needs.metadata.outputs.tag }}
+          path: ./build
+
+      - name: "Confirm lambda artefact presence"
         run: |
-          make dependencies install-python
-          make build
+          ls -lh ./build
+          unzip -l ./build/lambda.zip
 
       - name: "Terraform Apply (TEST)"
         env:
