@@ -18,7 +18,7 @@ module "eligibility_signposting_lambda_function" {
   environment                       = var.environment
   runtime                           = "python3.13"
   lambda_func_name                  = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}eligibility_signposting_api"
-  security_group_ids                = [data.aws_security_group.main_sg.id]
+  security_group_ids = [data.aws_security_group.main_sg.id]
   vpc_intra_subnets                 = [for v in data.aws_subnet.private_subnets : v.id]
   file_name                         = "../../../dist/lambda.zip"
   handler                           = "eligibility_signposting_api.app.lambda_handler"
@@ -30,4 +30,5 @@ module "eligibility_signposting_lambda_function" {
   enable_xray_patching              = "true"
   stack_name                        = local.stack_name
   provisioned_concurrency_count     = 5
+  api_domain_name                   = local.api_domain_name
 }

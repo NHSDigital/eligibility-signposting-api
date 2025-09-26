@@ -5,6 +5,7 @@ from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask.testing import FlaskClient
 from hamcrest import (
     assert_that,
+    contains_exactly,
     equal_to,
     has_entries,
     has_entry,
@@ -25,9 +26,10 @@ class TestBaseLine:
         campaign_config: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}")
+        response = client.get(f"/patient-check/{persisted_person}", headers=headers)
 
         # Then
         assert_that(
@@ -45,7 +47,27 @@ class TestBaseLine:
         assert_that(
             response,
             is_response()
-            .with_status_code(HTTPStatus.NOT_FOUND)
+            .with_status_code(HTTPStatus.FORBIDDEN)
+            .and_text(is_json_that(has_entries(resourceType="OperationOutcome"))),
+        )
+
+    def test_no_nhs_number_given_but_header_given(
+        self,
+        client: FlaskClient,
+        persisted_person: NHSNumber,
+        campaign_config: CampaignConfig,  # noqa: ARG002
+    ):
+        # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
+
+        # When
+        response = client.get("/patient-check/", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.FORBIDDEN)
             .and_text(is_json_that(has_entries(resourceType="OperationOutcome"))),
         )
 
@@ -58,9 +80,10 @@ class TestStandardResponse:
         campaign_config: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -101,9 +124,10 @@ class TestStandardResponse:
         campaign_config: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -144,9 +168,10 @@ class TestStandardResponse:
         campaign_config: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -192,10 +217,10 @@ class TestStandardResponse:
         persisted_77yo_person: NHSNumber,
         campaign_config: CampaignConfig,  # noqa: ARG002
     ):
-        # Given
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -244,9 +269,10 @@ class TestStandardResponse:
         campaign_config_with_and_rule: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -297,9 +323,10 @@ class TestVirtualCohortResponse:
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -340,9 +367,10 @@ class TestVirtualCohortResponse:
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -389,9 +417,10 @@ class TestVirtualCohortResponse:
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -442,9 +471,10 @@ class TestResponseOnMissingAttributes:
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -479,9 +509,10 @@ class TestResponseOnMissingAttributes:
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -516,9 +547,10 @@ class TestResponseOnMissingAttributes:
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -559,9 +591,10 @@ class TestResponseOnMissingAttributes:
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y")
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
 
         # Then
         assert_that(
@@ -604,9 +637,10 @@ class TestResponseOnMissingAttributes:
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
     ):
         # Given
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
 
         # When
-        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=N")
+        response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=N", headers=headers)
 
         # Then
         assert_that(
@@ -632,3 +666,38 @@ class TestResponseOnMissingAttributes:
                 )
             ),
         )
+
+    def test_status_endpoint(self, client: FlaskClient):
+        # When
+        response = client.get("/patient-check/_status")
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_json(
+                has_entries(
+                    {
+                        "status": "pass",
+                        "checks": has_entries(
+                            {
+                                "healthcheckService:status": contains_exactly(
+                                    has_entries(
+                                        {
+                                            "status": "pass",
+                                            "timeout": False,
+                                            "responseCode": HTTPStatus.OK,
+                                            "outcome": "<html><h1>Ok</h1></html>",
+                                            "links": has_entries({"self": "https://localhost/patient-check/_status"}),
+                                        }
+                                    )
+                                )
+                            }
+                        ),
+                    }
+                )
+            ),
+        )
+
+        assert_that(response.headers, has_entry("Content-Type", "application/json"))

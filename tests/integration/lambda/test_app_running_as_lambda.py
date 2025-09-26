@@ -9,7 +9,6 @@ from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.response import is_response
-from faker import Faker
 from freezegun import freeze_time
 from hamcrest import (
     assert_that,
@@ -108,14 +107,14 @@ def test_install_and_call_flask_lambda_over_http(
 
 def test_install_and_call_flask_lambda_with_unknown_nhs_number(
     flask_function: str,
+    persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa: ARG001
     logs_client: BaseClient,
     api_gateway_endpoint: URL,
-    faker: Faker,
 ):
     """Given lambda installed into localstack, run it via http, with a nonexistent NHS number specified"""
     # Given
-    nhs_number = NHSNumber(faker.nhs_number())
+    nhs_number = f"123{persisted_person}"
 
     # When
     invoke_url = f"{api_gateway_endpoint}/patient-check/{nhs_number}"
@@ -690,4 +689,45 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
     assert_that(
         get_log_messages(flask_function, logs_client),
         has_item(contains_string("Invalid attribute name 'ICECREAM' in token '[[PERSON.ICECREAM]]'.")),
+    )
+
+
+def test_status_end_point(api_gateway_endpoint: URL):
+    """Given api-gateway and lambda installed into localstack, run it via http"""
+    # Given
+    # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/_status"
+    response = httpx.get(
+        invoke_url,
+        timeout=10,
+    )
+
+    # Then
+    assert_that(
+        response,
+        is_response()
+        .with_status_code(HTTPStatus.OK)
+        .with_headers(has_entries({"Content-Type": "application/json"}))
+        .and_json(
+            has_entries(
+                {
+                    "status": "pass",
+                    "checks": has_entries(
+                        {
+                            "healthcheckService:status": contains_exactly(
+                                has_entries(
+                                    {
+                                        "status": "pass",
+                                        "timeout": False,
+                                        "responseCode": HTTPStatus.OK,
+                                        "outcome": "<html><h1>Ok</h1></html>",
+                                        "links": has_entries({"self": "https://localhost/patient-check/_status"}),
+                                    }
+                                )
+                            )
+                        }
+                    ),
+                }
+            )
+        ),
     )

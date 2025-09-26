@@ -73,3 +73,8 @@ variable "lambda_insights_extension_version" {
   description = "version number of LambdaInsightsExtension"
   type        = number
 }
+
+variable "api_domain_name" {
+  description = "api domain name - env variable for status endpoint response"
+  type        = string
+}
