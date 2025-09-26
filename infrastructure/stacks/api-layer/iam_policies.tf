@@ -352,7 +352,6 @@ data "aws_iam_policy_document" "s3_audit_kms_key_policy" {
     actions = ["kms:*"]
     resources = ["*"]
   }
-
   # Allow Lambda, Firehose, and external write roles to use the KMS key
   statement {
     sid    = "AllowAuditKeyAccess"
@@ -503,4 +502,28 @@ resource "aws_iam_role_policy" "external_s3_read_move_policy" {
   name   = "S3ReadMoveTagAccess"
   role   = aws_iam_role.write_access_role[count.index].id
   policy = data.aws_iam_policy_document.external_s3_read_move_policy_doc.json
+}
+
+# KMS access policy for S3 audit bucket from external write role
+data "aws_iam_policy_document" "external_role_s3_audit_kms_access_policy" {
+  statement {
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = [
+      module.s3_audit_bucket.storage_bucket_kms_key_arn
+    ]
+  }
+}
+
+# Attach KMS policy to external write role
+resource "aws_iam_role_policy" "external_audit_kms_access_policy" {
+  count = length(aws_iam_role.write_access_role)
+  name   = "KMSAccessForS3Audit"
+  role   = aws_iam_role.write_access_role[count.index].id
+  policy = data.aws_iam_policy_document.external_role_s3_audit_kms_access_policy.json
 }
