@@ -938,7 +938,7 @@ def test_virtual_cohorts(faker: Faker):
                         rule_builder.PersonAgeSuppressionRuleFactory.build(
                             type=RuleType.filter,
                             name="Filter based on cohort membership",
-                            description="Filter based on cohort membership",
+                            description="Filter based on cohort membership.",
                             priority=100,
                             operator=RuleOperator.is_in,
                             attribute_level=RuleAttributeLevel.COHORT,
