@@ -14,11 +14,7 @@ jobs:
   metadata:
     name: "Resolve metadata from triggering run"
     runs-on: ubuntu-latest
-    if: >
-      ${{
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.head_branch == 'main'
-      }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     outputs:
       terraform_version: ${{ steps.vars.outputs.terraform_version }}
       tag: ${{ steps.tag.outputs.name }}
