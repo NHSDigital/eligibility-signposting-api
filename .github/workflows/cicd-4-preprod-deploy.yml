@@ -30,3 +30,4 @@ jobs:
       ref: ${{ inputs.ref }}
       release_type: ${{ inputs.release_type }}
     secrets: inherit
+

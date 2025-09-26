@@ -1,16 +1,16 @@
 {
-  "scenario_name": "RSV - Vita Integration - NotActionable - You should have the RSV vaccine ( managed setting ) - age rolling - OtherSetting",
+  "scenario_name": "RSV - Vita Integration - NotActionable - You should have the RSV vaccine (already vaccinated) - unknown membership - AlreadyVaccinated",
   "request_headers": {
-    "nhs-login-nhs-number": "9658220150"
+    "nhs-login-nhs-number": "9450114080"
   },
   "config_filenames": [
     "vita_integration_test_config.json"
   ],
   "data": [
     {
-      "NHS_NUMBER": "9658220150",
+      "NHS_NUMBER": "9450114080",
       "ATTRIBUTE_TYPE": "PERSON",
-      "DATE_OF_BIRTH": "19500601",
+      "DATE_OF_BIRTH": "<<DATE_AGE_75>>",
       "GENDER": "2",
       "POSTCODE": "CB3 8DX",
       "POSTCODE_SECTOR": "CB38",
@@ -26,14 +26,9 @@
       "DE_FLAG": "N"
     },
     {
-      "NHS_NUMBER": "9658220150",
-      "ATTRIBUTE_TYPE": "COHORTS",
-      "COHORT_MEMBERSHIPS": [
-        {
-          "COHORT_LABEL": "rsv_75to79",
-          "DATE_JOINED": "20231020"
-        }
-      ]
+      "NHS_NUMBER": "9450114080",
+      "ATTRIBUTE_TYPE": "RSV",
+      "LAST_SUCCESSFUL_DATE": "<<DATE_DAY_-1>>"
     }
   ]
 }

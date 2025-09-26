@@ -20,7 +20,7 @@
     {
       "NHS_NUMBER": "9658218873",
       "ATTRIBUTE_TYPE": "PERSON",
-      "DATE_OF_BIRTH": "19500601",
+      "DATE_OF_BIRTH": "<<DATE_AGE_80>>",
       "GENDER": "2",
       "POSTCODE": "CB3 8DX",
       "POSTCODE_SECTOR": "CB38",

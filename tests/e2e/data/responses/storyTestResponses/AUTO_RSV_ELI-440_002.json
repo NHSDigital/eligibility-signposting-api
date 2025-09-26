@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "lastUpdated": "2025-09-16T12:50:45.738791+00:00"
+  },
+  "processedSuggestions": [
+    {
+      "actions": [
+        {
+          "actionCode": "TestNotEli",
+          "actionType": "",
+          "description": "TestNotEli Description",
+          "urlLabel": "",
+          "urlLink": ""
+        }
+      ],
+      "condition": "RSV",
+      "eligibilityCohorts": [
+        {
+          "cohortCode": "elid_virtual_cohort",
+          "cohortStatus": "NotEligible",
+          "cohortText": "Out elid_virtual_cohort"
+        },
+        {
+          "cohortCode": "elid_virtual_cohort_2",
+          "cohortStatus": "NotEligible",
+          "cohortText": "Out elid_virtual_cohort_2"
+        }
+      ],
+      "status": "NotEligible",
+      "statusText": "We do not believe you can have it",
+      "suitabilityRules": []
+    }
+  ],
+  "responseId": "a3e00f89-5be5-4413-aa58-c4e8116f89ef"
+}

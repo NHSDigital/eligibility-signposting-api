@@ -84,6 +84,25 @@ jobs:
       contents: write
     environment: ${{ needs.metadata.outputs.environment }}
     steps:
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
+
+      - name: "Install Poetry"
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: 'poetry'
+
+      - name: "Install dependencies"
+        run: poetry install
+
       - name: "Checkout repository at ref"
         uses: actions/checkout@v5
         with:
@@ -153,6 +172,13 @@ jobs:
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
 
+      - name: "Validate Feature Toggles"
+        env:
+          ENV: ${{ needs.metadata.outputs.environment }}
+        run: |
+          pip install boto3
+          python scripts/feature_toggle/validate_toggles.py
+
       - name: "Tag and Release"
         if: ${{ needs.metadata.outputs.environment == 'preprod' || needs.metadata.outputs.environment == 'prod' }}
         env:
@@ -162,3 +188,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: poetry run python scripts/workflow/tag_and_release.py
+
+
+  regression-tests:
+    name: "Regression Tests"
+    if: ${{ needs.metadata.outputs.environment == 'preprod' }}
+    needs: deploy
+    uses: ./.github/workflows/regression-tests.yml
+    with:
+      ENVIRONMENT: "preprod"
+      VERSION_NUMBER: "main"
+    secrets: inherit

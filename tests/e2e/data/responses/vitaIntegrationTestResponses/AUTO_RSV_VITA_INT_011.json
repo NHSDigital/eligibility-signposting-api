@@ -1,28 +1,36 @@
 {
   "meta": {
-    "lastUpdated": "2025-08-01T08:09:38.885621+00:00"
+    "lastUpdated": "2025-09-05T14:51:57.234910+00:00"
   },
   "processedSuggestions": [
     {
-      "actions": [],
+      "actions": [
+        {
+          "actionCode": "ManagedSettingInfo",
+          "actionType": "InfoText",
+          "description": "## If you think this is incorrect\n\nIf you have already had this vaccination or your personal details are wrong, visit our [help and support page](https://www.nhs.uk/nhs-app/nhs-app-help-and-support/).",
+          "urlLabel": "",
+          "urlLink": ""
+        }
+      ],
       "condition": "RSV",
       "eligibilityCohorts": [
         {
           "cohortCode": "rsv_age",
           "cohortStatus": "NotActionable",
-          "cohortText": "are aged 75 to 79 years old"
+          "cohortText": "are aged between 75 and 79"
         }
       ],
       "status": "NotActionable",
       "statusText": "You should have the RSV vaccine",
       "suitabilityRules": [
         {
-          "ruleCode": "TooClose",
-          "ruleText": "##You have recently have the RSV vaccination\n\nYou must leave 90 days between doses of the RSV vaccine. Please try again soon.",
+          "ruleCode": "OtherSetting",
+          "ruleText": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
           "ruleType": "S"
         }
       ]
     }
   ],
-  "responseId": "ef603f99-9a14-4f5e-8f54-d071201d478e"
+  "responseId": "68e372d6-cc59-41c9-a6ad-b2cdf9b25bdb"
 }

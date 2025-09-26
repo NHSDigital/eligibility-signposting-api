@@ -93,7 +93,7 @@ jobs:
           path: ./build
 
       - name: "Configure AWS Credentials"
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
           aws-region: eu-west-2
@@ -134,3 +134,12 @@ jobs:
             Author: "${{ github.actor }}"
             title: "Pushed to main"
             version: "${{ needs.metadata.outputs.version }}"
+
+  regression-tests:
+    name: "Regression Tests"
+    needs: publish
+    uses: ./.github/workflows/regression-tests.yml
+    with:
+      ENVIRONMENT: "dev"
+      VERSION_NUMBER: "main"
+    secrets: inherit

@@ -30,7 +30,7 @@ boto3 = "^1.37.3"
 botocore = "^1.38.46"
 eval-type-backport = "^0.2.2"
 mangum = "^0.19.0"
-wireup = "^2.0.0"
+wireup = "^2.0.1"
 python-json-logger = "^3.3.0"
 fhir-resources = "^8.0.0"
 python-dateutil = "^2.9.0"
@@ -64,6 +64,8 @@ behave = "^1.2.6"
 boto3 = "^1.38.42"
 python-dotenv = "^1.1.1"
 openapi-spec-validator = "^0.7.2"
+pip-licenses = "^5.0.0"
+
 
 [tool.poetry-plugin-lambda-build]
 docker-image = "public.ecr.aws/sam/build-python3.13:1.139-x86_64"  # See https://gallery.ecr.aws/search?searchTerm=%22python%22&architecture=x86-64&popularRegistries=amazon&verified=verified&operatingSystems=Linux

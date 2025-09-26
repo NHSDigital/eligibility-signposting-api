@@ -6,13 +6,13 @@
     "Type": "V",
     "Target": "RSV",
     "Manager": [
-      "person1@nhs.net"
+      "example@nhs.net"
     ],
     "Approver": [
-      "person1@nhs.net"
+      "example@nhs.net"
     ],
     "Reviewer": [
-      "person1@nhs.net"
+      "example@nhs.net"
     ],
     "IterationFrequency": "X",
     "IterationType": "O",
@@ -40,8 +40,8 @@
           {
             "CohortLabel": "rsv_75to79",
             "CohortGroup": "rsv_age",
-            "PositiveDescription": "are aged 75 to 79 years old",
-            "NegativeDescription": "are not aged 75 to 79 years old",
+            "PositiveDescription": "are aged between 75 and 79",
+            "NegativeDescription": "are not aged 75 to 79",
             "Priority": 0
           },
           {
@@ -56,7 +56,8 @@
             "CohortGroup": "magic_cohort",
             "PositiveDescription": "",
             "NegativeDescription": "",
-            "Priority": 20
+            "Priority": 20,
+            "Virtual": "Y"
           }
         ],
         "IterationRules": [
@@ -97,29 +98,29 @@
           },
           {
             "Type": "F",
-            "Name": "Remove over 80 on day of execution",
-            "Description": "Exclude anyone who turned 80 before 2nd September 2024",
+            "Name": "Remove anyone 80 or over on day of execution from the 75 to 79 cohort",
+            "Description": "Exclude anyone who turned 80 on the day",
             "Priority": 130,
             "AttributeLevel": "PERSON",
             "AttributeName": "DATE_OF_BIRTH",
-            "Operator": "<",
-            "Comparator": "19440902",
+            "Operator": "Y<=",
+            "Comparator": "-80",
             "CohortLabel": "rsv_75to79"
           },
           {
             "Type": "F",
-            "Name": "Remove under 75 Years on day of execution",
-            "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 75 years is filtered out.",
+            "Name": "Remove under 80 years on day of execution from the 80 since 2nd Sept 2024 cohort",
+            "Description": "Ensure anyone who has a PDS date of birth which determines their age to be less than 80 years is filtered out",
             "Priority": 140,
             "AttributeLevel": "PERSON",
             "AttributeName": "DATE_OF_BIRTH",
             "Operator": "Y>",
-            "Comparator": "-75",
+            "Comparator": "-80",
             "CohortLabel": "rsv_80_since_02_Sept_2024"
           },
           {
             "Type": "F",
-            "Name": "Remove over 80 on day of execution",
+            "Name": "Remove those over 80 before 2nd September 2024 from the 80 since 2nd Sept 2024 cohort",
             "Description": "Exclude anyone who turned 80 before 2nd September 2024",
             "Priority": 150,
             "AttributeLevel": "PERSON",
@@ -211,7 +212,7 @@
           },
           {
             "Type": "S",
-            "Name": "Empty Suggestion",
+            "Name": "EmptySuggestion",
             "Description": "",
             "Priority": 198,
             "AttributeLevel": "PERSON",
@@ -222,8 +223,8 @@
           },
           {
             "Type": "S",
-            "Name": "Already Vaccinated",
-            "Description": "## You've had your RSV vaccination\n\nWe believe you had your vaccination.",
+            "Name": "AlreadyVaccinated",
+            "Description": "## You've had your RSV vaccination\n\nWe believe you were vaccinated against RSV on 3 April 2025.",
             "Priority": 200,
             "AttributeLevel": "TARGET",
             "AttributeTarget": "RSV",
@@ -234,7 +235,7 @@
           },
           {
             "Type": "S",
-            "Name": "Other Setting",
+            "Name": "OtherSetting",
             "Description": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
             "Priority": 510,
             "AttributeLevel": "PERSON",
@@ -246,7 +247,7 @@
           },
           {
             "Type": "S",
-            "Name": "Other Setting",
+            "Name": "OtherSetting",
             "Description": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
             "Priority": 520,
             "AttributeLevel": "PERSON",
@@ -258,7 +259,7 @@
           },
           {
             "Type": "S",
-            "Name": "Other Setting",
+            "Name": "OtherSetting",
             "Description": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
             "Priority": 530,
             "AttributeLevel": "PERSON",
@@ -270,7 +271,7 @@
           },
           {
             "Type": "S",
-            "Name": "Other Setting",
+            "Name": "OtherSetting",
             "Description": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
             "Priority": 540,
             "AttributeLevel": "PERSON",
@@ -282,7 +283,7 @@
           },
           {
             "Type": "S",
-            "Name": "Other Setting with no future booking",
+            "Name": "OtherSetting",
             "Description": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
             "Priority": 550,
             "AttributeLevel": "PERSON",
@@ -294,7 +295,7 @@
           },
           {
             "Type": "S",
-            "Name": "Other Setting",
+            "Name": "OtherSetting",
             "Description": "## Getting the vaccine\n\nWe believe you're living in a setting where care is provided.\n\nSpeak to a member of staff where you live about getting the RSV vaccine.",
             "Priority": 560,
             "AttributeLevel": "PERSON",
@@ -342,14 +343,25 @@
           },
           {
             "Type": "R",
-            "Name": "Within CP Expansion ICB",
+            "Name": "Within CP Expansion ICB not 80 plus",
             "Description": "Book an appointment on NBS as within CP expansion",
             "Priority": 1200,
             "Operator": "in",
             "Comparator": "QH8,QJG",
             "AttributeLevel": "PERSON",
             "AttributeName": "ICB",
-            "CommsRouting": "BOOK_LOCAL|BOOK_NBS|HELP_SUPPORT"
+            "CommsRouting": "CONTACT_GP|BOOK_NBS_INFO|WALKIN|HELP_SUPPORT"
+          },
+          {
+            "Type": "R",
+            "Name": "Within CP Expansion ICB not 80 plus",
+            "Description": "Book an appointment on NBS as within CP expansion",
+            "Priority": 1200,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "Y>",
+            "Comparator": "-80",
+            "CommsRouting": "CONTACT_GP|BOOK_NBS_INFO|WALKIN|HELP_SUPPORT"
           },
           {
             "Type": "R",
@@ -360,7 +372,29 @@
             "Comparator": "E08000028,E08000031,E08000025,E06000016,E06000008,E07000117,E07000120,E08000011,E08000012,E07000122,E07000123,E08000014,E07000126,E08000013,E07000127,E08000015,E07000128",
             "AttributeLevel": "PERSON",
             "AttributeName": "LOCAL_AUTHORITY",
-            "CommsRouting": "BOOK_LOCAL|BOOK_NBS|HELP_SUPPORT"
+            "CommsRouting": "CONTACT_GP|BOOK_NBS_INFO|WALKIN|HELP_SUPPORT"
+          },
+          {
+            "Type": "R",
+            "Name": "Within CP Expansion ICB not 80 plus",
+            "Description": "Book an appointment on NBS as within CP expansion",
+            "Priority": 1300,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": "Y>",
+            "Comparator": "-80",
+            "CommsRouting": "CONTACT_GP|BOOK_NBS_INFO|WALKIN|HELP_SUPPORT"
+          },
+          {
+            "Type": "R",
+            "Name": "Fix for Vita Scenario 2,3",
+            "Description": "Fix for Vita Scenario 2,3 which forces the response to only show BOOK_LOCAL",
+            "Priority": 1950,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "NHS_NUMBER",
+            "Operator": "in",
+            "Comparator": "9686368906,9658218873",
+            "CommsRouting": "BOOK_LOCAL"
           },
           {
             "Type": "Y",
@@ -416,58 +450,72 @@
             "UrlLink": "http://www.nhs.uk/book-rsv",
             "UrlLabel": "Continue to booking"
           },
+          "BOOK_NBS_INFO": {
+            "ExternalRoutingCode": "BookNBSInfoText",
+            "ActionDescription": "## Book an appointment online at a pharmacy\n\nYou can book an appointment online at a pharmacy that offers the RSV vaccination. You need to be registered with a GP to do this.",
+            "ActionType": "ButtonWithAuthLinkWithInfoText",
+            "UrlLink": "https://f.nhswebsite-integration.nhs.uk/nbs/nhs-app/rsv",
+            "UrlLabel": "Continue to booking"
+          },
           "AMEND_NBS": {
             "ExternalRoutingCode": "AmendNBS",
-            "ActionDescription": "##You have an RSV vaccination appointment\nYou can view, change or cancel your appointment below.",
+            "ActionDescription": "## You have an RSV vaccination appointment booked\n\nYou can view, change or cancel your appointment below.",
             "ActionType": "ButtonWithAuthLink",
             "UrlLink": "http://www.nhs.uk/book-rsv",
             "UrlLabel": "Manage your appointment"
           },
           "CONTACT_GP": {
             "ExternalRoutingCode": "ContactGP",
-            "ActionDescription": "Contact your GP",
+            "ActionDescription": "## Get vaccinated at your GP practice\n\nContact your GP surgery to book an appointment.",
             "ActionType": "InfoText",
             "UrlLink": null,
             "UrlLabel": ""
           },
           "BOOK_LOCAL": {
             "ExternalRoutingCode": "BookLocal",
-            "ActionDescription": "##Getting the vaccine\n\nYou can get an RSV vaccination at your GP surgery.\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
+            "ActionDescription": "## Getting the vaccine\n\nYou can get an RSV vaccination at your GP surgery.\n\nYour GP surgery may contact you about getting the RSV vaccine. This may be by letter, text, phone call, email or through the NHS App. You do not need to wait to be contacted before booking your vaccination.",
             "ActionType": "InfoText",
             "UrlLink": null,
             "UrlLabel": ""
           },
           "MANAGE_LOCAL": {
             "ExternalRoutingCode": "ManageLocal",
-            "ActionDescription": "##You have an RSV vaccination appointment\n\nContact your healthcare provider to change or cancel your appointment.",
+            "ActionDescription": "## You have an RSV vaccination appointment booked\n\nTo change or cancel your appointment, contact the provider you booked it with.",
             "ActionType": "CardWithText",
             "UrlLink": null,
             "UrlLabel": ""
           },
           "HELP_SUPPORT": {
             "ExternalRoutingCode": "HelpSupportInfo",
-            "ActionDescription": "## CONTENT TBC\n\nBlah blah blah.",
+            "ActionDescription": "## If you think this is incorrect\n\nIf you have already had this vaccination or your personal details are wrong, visit our [help and support page](https://www.nhs.uk/nhs-app/nhs-app-help-and-support/).",
             "ActionType": "InfoText",
             "UrlLink": null,
             "UrlLabel": ""
           },
           "CHECK_CORRECT_X": {
             "ExternalRoutingCode": "HealthcareProInfo",
-            "ActionDescription": "## If you think this is incorrect\n\nSpeak to your healthcare professional if you think you should be offered this vaccine.\n\nFor anything else, visit our help and support page. (ADD LINK)",
+            "ActionDescription": "## If you think this is incorrect\n\nSpeak to your healthcare professional if you think you should be offered this vaccine.\n\nFor anything else, visit our [help and support page](https://www.nhs.uk/nhs-app/nhs-app-help-and-support/).",
             "ActionType": "InfoText",
             "UrlLink": null,
             "UrlLabel": ""
           },
           "CHECK_CORRECT_ALREADY_VACCINATED": {
             "ExternalRoutingCode": "AlreadyVaccinatedInfo",
-            "ActionDescription": "## If you think this is incorrect\n\nIf you believe you've not been vaccinated against RSV, speak to your healthcare professional.\n\nFor anything else please see our help and support page. (ADD LINK).",
+            "ActionDescription": "## If you think this is incorrect\n\nIf you believe you've not been vaccinated against RSV, speak to your healthcare professional.\n\nFor anything else please see our [help and support page](https://www.nhs.uk/nhs-app/nhs-app-help-and-support/).",
             "ActionType": "InfoText",
             "UrlLink": null,
             "UrlLabel": ""
           },
+          "WALKIN": {
+            "ExternalRoutingCode": "WalkIn",
+            "ActionDescription": "## Get vaccinated without an appointment\n\nYou can get an RSV vaccination at some pharmacies without needing an appointment.\n\nYou do not need to be registered with a GP to do this.",
+            "ActionType": "ActionLinkWithInfoText",
+            "UrlLink": "https://www.nhs.uk/service-search/vaccination-and-booking-services/find-a-pharmacy-where-you-can-get-a-free-rsv-vaccination",
+            "UrlLabel": "Find a pharmacy where you can get a free RSV vaccination"
+          },
           "CHECK_CORRECT_OTHER_SETTING": {
             "ExternalRoutingCode": "ManagedSettingInfo",
-            "ActionDescription": "## If you think this is incorrect\n\nIf you have already had this vaccination or your personal details are wrong, visit our help and support page. (ADD LINK).",
+            "ActionDescription": "## If you think this is incorrect\n\nIf you have already had this vaccination or your personal details are wrong, visit our [help and support page](https://www.nhs.uk/nhs-app/nhs-app-help-and-support/).",
             "ActionType": "InfoText",
             "UrlLink": null,
             "UrlLabel": ""
