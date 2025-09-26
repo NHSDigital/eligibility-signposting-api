@@ -893,6 +893,82 @@ def test_eligibility_status_replaces_tokens_with_attribute_data(faker: Faker):
     assert audit_condition.actions[0].action_url_label == "Your GP practice code is ."
 
 
+def test_virtual_cohorts(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    date_of_birth = DateOfBirth(datetime.date(2025, 5, 10))
+
+    person_rows = person_rows_builder(
+        nhs_number,
+        date_of_birth=date_of_birth,
+        cohorts=["rsv_eli_440_cohort_999"],
+    )
+
+    available_action = AvailableAction(
+        ActionType="ButtonAuthLink",
+        ExternalRoutingCode="BookNBS",
+        ActionDescription="## Get vaccinated.",
+        UrlLink=HttpUrl("https://www.nhs.uk/book-rsv"),
+        UrlLabel="Label",
+    )
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="elid_virtual_cohort",
+                            cohort_group="elid_virtual_cohort",
+                            positive_description="In elid_virtual_cohort",
+                            negative_description="Out elid_virtual_cohort",
+                            priority=1,
+                            virtual="Y",
+                        ),
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="rsv_eli_440_cohort_999",
+                            cohort_group="rsv_eli_440_cohort_999",
+                            positive_description="In rsv_eli_440_cohort_999",
+                            negative_description="Out rsv_eli_440_cohort_999",
+                            priority=2,
+                        ),
+                    ],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            type=RuleType.filter,
+                            name="Filter based on cohort membership",
+                            description="Filter based on cohort membership",
+                            priority=100,
+                            operator=RuleOperator.is_in,
+                            attribute_level=RuleAttributeLevel.COHORT,
+                            attribute_name="COHORT_LABEL",
+                            comparator="elid_virtual_cohort",
+                        ),
+                    ],
+                    actions_mapper=rule_builder.ActionsMapperFactory.build(root={"TEST": available_action}),
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_eligible))
+        ),
+    )
+
+    assert actual.conditions[0].cohort_results[0].status == Status.not_eligible
+    assert actual.conditions[0].cohort_results[1].status == Status.not_eligible
+
+
 def test_regardless_of_final_status_audit_all_types_of_cohort_status_rules(faker: Faker):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
