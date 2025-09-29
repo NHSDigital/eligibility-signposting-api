@@ -83,6 +83,7 @@ jobs:
         with:
           name: lambda-${{ needs.metadata.outputs.tag }}
           path: ./build
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: "Confirm lambda artefact presence"
         run: |
