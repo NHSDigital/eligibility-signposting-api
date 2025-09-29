@@ -84,6 +84,12 @@ jobs:
       contents: write
     environment: ${{ needs.metadata.outputs.environment }}
     steps:
+      - name: "Checkout repository at ref"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.metadata.outputs.ref }}
+          fetch-depth: 0
+
       - name: "Setup Terraform"
         uses: hashicorp/setup-terraform@v3
         with:
@@ -102,12 +108,6 @@ jobs:
 
       - name: "Install dependencies"
         run: poetry install
-
-      - name: "Checkout repository at ref"
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ needs.metadata.outputs.ref }}
-          fetch-depth: 0
 
       - name: "Setup Terraform"
         uses: hashicorp/setup-terraform@v3
