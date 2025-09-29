@@ -9,8 +9,6 @@ on:
       VERSION_NUMBER:
         required: true
         type: string
-      PRODUCT:
-        type: string
     secrets: { }
 
 jobs:

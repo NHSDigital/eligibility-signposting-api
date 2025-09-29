@@ -46,7 +46,6 @@ def generate_timestamp():
 
 def trigger_test_run(
     env,
-    pr_label,
     auth_header,
     run_id,
     regression_test_repo_tag,
@@ -58,7 +57,6 @@ def trigger_test_run(
             "id": run_id,
             "tags": "@regression",
             "environment": env.lower(),
-            "pull_request_id": pr_label,
             "github_tag": regression_test_repo_tag,
         },
     }
@@ -169,12 +167,6 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--pr_label",
-        required=False,
-        default="None",
-        help="Please provide the PR number.",
-    )
-    parser.add_argument(
         "--env",
         required=True,
         help="Please provide the environment you wish to run in.",
@@ -196,7 +188,6 @@ def main():
 
     arguments = parser.parse_args()
 
-    print(f"pr_label: {arguments.pr_label}")
     print(f"env: {arguments.env}")
     print(f"regression_tests_repo_tag: {arguments.regression_test_repo_tag}")
     print(f"regression_test_workflow_tag: {arguments.regression_test_workflow_tag}")
@@ -205,10 +196,8 @@ def main():
     run_date_filter = generate_timestamp()
     auth_header = get_auth_header(arguments.token)
 
-    pr_label = arguments.pr_label.lower()
     trigger_test_run(
         arguments.env,
-        pr_label,
         auth_header,
         run_id,
         arguments.regression_test_repo_tag,
