@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref_name }}
 
       - name: "Set CI/CD variables"
         id: variables
@@ -70,6 +72,8 @@ jobs:
 
       - name: "Checkout Repository"
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref_name }}
 
       - name: "Build lambda artefact"
         run: |

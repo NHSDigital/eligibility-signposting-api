@@ -4,9 +4,10 @@ import uuid
 from datetime import UTC, datetime
 from enum import Enum
 from http import HTTPStatus
-from typing import Any
 
 from fhir.resources.operationoutcome import OperationOutcome, OperationOutcomeIssue
+from flask import make_response
+from flask.typing import ResponseReturnValue
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ class APIErrorResponse:
             details=details,
         )  # pyright: ignore[reportCallIssue]
 
-    def generate_response(self, diagnostics: str, location_param: str | None = None) -> dict[str, Any]:
+    def generate_response(self, diagnostics: str, location_param: str | None = None) -> ResponseReturnValue:
         issue_location = [f"parameters/{location_param}"] if location_param else None
 
         problem = OperationOutcome(
@@ -75,16 +76,11 @@ class APIErrorResponse:
         )  # pyright: ignore[reportCallIssue]
 
         response_body = json.dumps(problem.model_dump(by_alias=True, mode="json"))
-
-        return {
-            "statusCode": self.status_code,
-            "headers": {"Content-Type": "application/fhir+json"},
-            "body": response_body,
-        }
+        return make_response(response_body, self.status_code, {"Content-Type": "application/fhir+json"})
 
     def log_and_generate_response(
         self, log_message: str, diagnostics: str, location_param: str | None = None
-    ) -> dict[str, Any]:
+    ) -> ResponseReturnValue:
         logger.error(log_message)
         return self.generate_response(diagnostics, location_param)
 

@@ -14,6 +14,7 @@ AwsRegion = NewType("AwsRegion", str)
 AwsAccessKey = NewType("AwsAccessKey", str)
 AwsSecretAccessKey = NewType("AwsSecretAccessKey", str)
 AwsKinesisFirehoseStreamName = NewType("AwsKinesisFirehoseStreamName", str)
+ApiDomainName = NewType("ApiDomainName", str)
 
 
 @cache
