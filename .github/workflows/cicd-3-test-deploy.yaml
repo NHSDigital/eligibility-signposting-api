@@ -53,7 +53,7 @@ jobs:
       contents: read
     steps:
       - name: "Acquire deploy lock"
-        uses: softprops/turnstyle@v2
+        uses: softprops/turnstyle@v3
         with:
           poll-interval-seconds: 10
 
@@ -68,7 +68,7 @@ jobs:
           terraform_version: ${{ needs.metadata.outputs.terraform_version }}
 
       - name: "Set up Python"
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
