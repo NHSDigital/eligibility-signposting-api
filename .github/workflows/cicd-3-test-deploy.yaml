@@ -85,11 +85,6 @@ jobs:
           path: ./build
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: "Confirm lambda artefact presence"
-        run: |
-          ls -lh ./build
-          unzip -l ./build/lambda.zip
-
       - name: "Terraform Apply (TEST)"
         env:
           ENVIRONMENT: test
