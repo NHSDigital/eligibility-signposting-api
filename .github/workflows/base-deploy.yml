@@ -84,25 +84,6 @@ jobs:
       contents: write
     environment: ${{ needs.metadata.outputs.environment }}
     steps:
-      - name: "Setup Terraform"
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
-
-      - name: "Install Poetry"
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: "Set up Python"
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-          cache: 'poetry'
-
-      - name: "Install dependencies"
-        run: poetry install
-
       - name: "Checkout repository at ref"
         uses: actions/checkout@v5
         with:
