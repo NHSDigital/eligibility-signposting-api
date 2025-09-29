@@ -515,7 +515,8 @@ data "aws_iam_policy_document" "external_role_s3_audit_kms_access_policy" {
       "kms:DescribeKey"
     ]
     resources = [
-      module.s3_audit_bucket.storage_bucket_kms_key_arn
+      module.s3_audit_bucket.storage_bucket_kms_key_arn,
+      module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk_arn
     ]
   }
 }
