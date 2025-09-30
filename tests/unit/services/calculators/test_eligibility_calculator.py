@@ -894,14 +894,17 @@ def test_eligibility_status_replaces_tokens_with_attribute_data(faker: Faker):
 
 
 @pytest.mark.parametrize(
-    ("rule_type", "expected_status"),
+    ("rule_type", "cohorts", "expected_status"),
     [
-        (RuleType.filter, Status.not_eligible),
-        (RuleType.suppression, Status.not_actionable),
-        (RuleType.redirect, Status.actionable),
+        (RuleType.filter, ["rsv_eli_440_cohort_999"], Status.not_eligible),
+        (RuleType.suppression, ["rsv_eli_440_cohort_999"], Status.not_actionable),
+        (RuleType.redirect, ["rsv_eli_440_cohort_999"], Status.actionable),
+        (RuleType.filter, [], Status.not_eligible),
+        (RuleType.suppression, [], Status.not_actionable),
+        (RuleType.redirect, [], Status.actionable),
     ],
 )
-def test_virtual_cohorts(faker: Faker, rule_type: RuleType, expected_status: Status):
+def test_virtual_cohorts(faker: Faker, rule_type: RuleType, cohorts: list[str], expected_status: Status):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(datetime.date(2025, 5, 10))
@@ -909,7 +912,7 @@ def test_virtual_cohorts(faker: Faker, rule_type: RuleType, expected_status: Sta
     person_rows = person_rows_builder(
         nhs_number,
         date_of_birth=date_of_birth,
-        cohorts=["rsv_eli_440_cohort_999"],
+        cohorts=cohorts,
     )
 
     campaign_configs = [
@@ -932,67 +935,6 @@ def test_virtual_cohorts(faker: Faker, rule_type: RuleType, expected_status: Sta
                             positive_description="In rsv_eli_440_cohort_999",
                             negative_description="Out rsv_eli_440_cohort_999",
                             priority=2,
-                        ),
-                    ],
-                    iteration_rules=[
-                        rule_builder.PersonAgeSuppressionRuleFactory.build(
-                            type=rule_type,
-                            name="Filter based on cohort membership",
-                            description="Filter based on cohort membership.",
-                            priority=100,
-                            operator=RuleOperator.is_in,
-                            attribute_level=RuleAttributeLevel.COHORT,
-                            attribute_name="COHORT_LABEL",
-                            comparator="elid_virtual_cohort",
-                        ),
-                    ],
-                )
-            ],
-        )
-    ]
-
-    calculator = EligibilityCalculator(person_rows, campaign_configs)
-
-    # When
-    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
-
-    # Then
-    assert_that(
-        actual,
-        is_eligibility_status().with_conditions(
-            has_item(is_condition().with_condition_name(ConditionName("RSV")).and_status(expected_status))
-        ),
-    )
-
-
-@pytest.mark.parametrize(
-    ("rule_type", "expected_status"),
-    [
-        (RuleType.filter, Status.not_eligible),
-        (RuleType.suppression, Status.not_actionable),
-        (RuleType.redirect, Status.actionable),
-    ],
-)
-def test_virtual_cohorts_with_no_person_cohorts(faker: Faker, rule_type: RuleType, expected_status: Status):
-    # Given
-    nhs_number = NHSNumber(faker.nhs_number())
-    date_of_birth = DateOfBirth(datetime.date(2025, 5, 10))
-
-    person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=[])
-
-    campaign_configs = [
-        rule_builder.CampaignConfigFactory.build(
-            target="RSV",
-            iterations=[
-                rule_builder.IterationFactory.build(
-                    iteration_cohorts=[
-                        rule_builder.IterationCohortFactory.build(
-                            cohort_label="elid_virtual_cohort",
-                            cohort_group="elid_virtual_cohort",
-                            positive_description="In elid_virtual_cohort",
-                            negative_description="Out elid_virtual_cohort",
-                            priority=1,
-                            virtual="Y",
                         ),
                     ],
                     iteration_rules=[
