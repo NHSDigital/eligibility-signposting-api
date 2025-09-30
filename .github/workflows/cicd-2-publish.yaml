@@ -116,19 +116,6 @@ jobs:
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
         working-directory: ./infrastructure
 
-      - name: "Extract S3 bucket name from Terraform output"
-        id: tf_output
-        run: |
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
-          echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
-        working-directory: ./infrastructure/stacks/api-layer
-
-      - name: "Upload lambda artifact to S3"
-        run: |
-          aws s3 cp ./build/lambda.zip \
-            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
-            --region eu-west-2
-
       - name: "Tag the dev deployment"
         run: |
           git config user.name "github-actions"
