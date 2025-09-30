@@ -113,7 +113,7 @@ jobs:
         run: |
           BUCKET=$(terraform output -raw lambda_artifact_bucket)
           echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
-        working-directory: ./infrastructure
+        working-directory: ./infrastructure/stacks/api-layer
 
       - name: "Upload lambda artifact to S3"
         run: |
