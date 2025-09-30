@@ -121,6 +121,14 @@ jobs:
             s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.version }}/lambda.zip \
             --region eu-west-2
 
+      - name: "Download lambda artifact from S3"
+        run: |
+          aws s3 cp \
+            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.version }}/lambda.zip \
+            ./build/lambda.zip \
+            --region eu-west-2
+
+
       - name: "Tag the dev deployment"
         run: |
           git config user.name "github-actions"
