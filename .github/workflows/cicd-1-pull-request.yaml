@@ -111,7 +111,7 @@ jobs:
       - name: "Extract S3 bucket name from Terraform output"
         id: tf_output
         run: |
-          BUCKET=$(terraform output -raw lambda_bucket)
+          BUCKET=$(terraform output -raw lambda_artifact_bucket)
           echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
         working-directory: ./infrastructure
 
