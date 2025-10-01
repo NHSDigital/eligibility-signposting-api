@@ -2124,14 +2124,14 @@ files = [
 
 [[package]]
 name = "polyfactory"
-version = "2.21.0"
+version = "2.22.2"
 description = "Mock data generation factories"
 optional = false
 python-versions = "<4.0,>=3.8"
 groups = ["dev"]
 files = [
-    {file = "polyfactory-2.21.0-py3-none-any.whl", hash = "sha256:9483b764756c8622313d99f375889b1c0d92f09affb05742d7bcfa2b5198d8c5"},
-    {file = "polyfactory-2.21.0.tar.gz", hash = "sha256:a6d8dba91b2515d744cc014b5be48835633f7ccb72519a68f8801759e5b1737a"},
+    {file = "polyfactory-2.22.2-py3-none-any.whl", hash = "sha256:9bea58ac9a80375b4153cd60820f75e558b863e567e058794d28c6a52b84118a"},
+    {file = "polyfactory-2.22.2.tar.gz", hash = "sha256:a3297aa0b004f2b26341e903795565ae88507c4d86e68b132c2622969028587a"},
 ]
 
 [package.dependencies]
@@ -2732,14 +2732,14 @@ pytest = ">=3.6"
 
 [[package]]
 name = "pytest-nhsd-apim"
-version = "5.0.0"
+version = "5.0.4"
 description = "Pytest plugin accessing NHSDigital's APIM proxies"
 optional = false
 python-versions = "<4.0,>=3.8"
 groups = ["dev"]
 files = [
-    {file = "pytest_nhsd_apim-5.0.0-py3-none-any.whl", hash = "sha256:ef79d99221e403e2198c3f206655f85ff59a9111549b03367f39b1cfe444828d"},
-    {file = "pytest_nhsd_apim-5.0.0.tar.gz", hash = "sha256:7107b78ac0162727dccb8f51ca19ee339d86cdbcb97ae1948ff19e840d2ad932"},
+    {file = "pytest_nhsd_apim-5.0.4-py3-none-any.whl", hash = "sha256:04a17d90ec85958cb9823db29a798a42ab8cfd37c3c36379294e0eb0a60e0815"},
+    {file = "pytest_nhsd_apim-5.0.4.tar.gz", hash = "sha256:9b8d1c2d6fe69dcffd148fc3102e43bf0be2b39c6db950f7ae82711f3b58bfbc"},
 ]
 
 [package.dependencies]
@@ -3689,4 +3689,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "7128f099d6d9799a9732934c455841ac0ebb9cb0eb949b253d470e7c417f71e4"
+content-hash = "4655a0a3e7636ba5c56fb60423618715b65ca2946ceaf124110b2aff2ec75210"

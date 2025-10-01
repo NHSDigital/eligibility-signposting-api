@@ -106,7 +106,7 @@ class IterationCohort(BaseModel):
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
     @cached_property
-    def is_magic_cohort(self) -> bool:
+    def is_virtual_cohort(self) -> bool:
         return self.virtual == Virtual.YES
 
     @field_validator("virtual", mode="before")
