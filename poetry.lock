@@ -3679,18 +3679,21 @@ files = [
 
 [[package]]
 name = "wireup"
-version = "2.0.1"
+version = "2.1.0"
 description = "Python Dependency Injection Library"
 optional = false
 python-versions = "<4.0,>=3.8"
 groups = ["main"]
 files = [
-    {file = "wireup-2.0.1-py3-none-any.whl", hash = "sha256:436c892d796ccebdc2235be8be7f8c81565ad357819692cb68a00fb1db501652"},
-    {file = "wireup-2.0.1.tar.gz", hash = "sha256:c4e0e8860e5aa6389f67ab1a4d1fd9cbaf137bdeff1bbf48f88715501078b2e6"},
+    {file = "wireup-2.1.0-py3-none-any.whl", hash = "sha256:8d7248bdc3c70f3b06b2ba4f7a8659ae221a94d45291ef28282fb58797af72be"},
+    {file = "wireup-2.1.0.tar.gz", hash = "sha256:de1db25a7c4da688bbd14517a1a7adfa45dcb7f018657483dc82abee4213fce3"},
 ]
 
 [package.dependencies]
 typing_extensions = ">=4.7,<5.0"
+
+[package.extras]
+eval-type = ["eval-type-backport (>=0.2.0,<0.3.0)"]
 
 [[package]]
 name = "wrapt"
@@ -3915,4 +3918,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "e21c14d77a6c377b2efd6422f86d977e4364a433e716b255367c07cf1d8af19f"
+content-hash = "4f0659395807fbf69804499cb19f6c5f844bfca2aacf07eebd34158ed0f6f32a"
