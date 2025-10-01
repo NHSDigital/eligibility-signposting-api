@@ -1,7 +1,7 @@
 resource "aws_dynamodb_table" "dynamodb_table" {
-  name         = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.project_name}-${var.environment}-${var.table_name_suffix}"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = var.partition_key
+  name                        = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.project_name}-${var.environment}-${var.table_name_suffix}"
+  billing_mode                = "PAY_PER_REQUEST"
+  hash_key                    = var.partition_key
   deletion_protection_enabled = var.environment == "prod"
 
   attribute {
@@ -26,7 +26,7 @@ resource "aws_dynamodb_table" "dynamodb_table" {
 
   #checkov:skip=CKV_AWS_28: Point-in-time recovery is enabled only for production environments
   point_in_time_recovery {
-    enabled = var.environment == "prod"
+    enabled = var.environment == "prod" || var.environment == "preprod"
   }
 
   tags = var.tags
