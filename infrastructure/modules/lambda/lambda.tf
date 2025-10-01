@@ -37,10 +37,12 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   }
 
   layers = compact([
-      var.environment == "prod" ?
+      var.environment == "prod" || var.environment == "preprod" ?
       "arn:aws:lambda:${var.region}:580247275435:layer:LambdaInsightsExtension:${var.lambda_insights_extension_version}"
-      : null
+      :
+      null
   ])
+
 
   tracing_config {
     mode = "Active"
@@ -49,7 +51,7 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
 
 # lambda alias required for provisioning concurrency
 resource "aws_lambda_alias" "campaign_alias" {
-  count            = var.environment == "prod" ? 1 : 0
+  count            = var.environment == "prod" || var.environment == "preprod" ? 1 : 0
   name             = "live"
   function_name    = aws_lambda_function.eligibility_signposting_lambda.function_name
   function_version = aws_lambda_function.eligibility_signposting_lambda.version
@@ -57,7 +59,7 @@ resource "aws_lambda_alias" "campaign_alias" {
 
 # provisioned concurrency - number of pre-warmed lambda containers
 resource "aws_lambda_provisioned_concurrency_config" "campaign_pc" {
-  count                             = var.environment == "prod" ? 1 : 0
+  count                             = var.environment == "prod" || var.environment == "preprod" ? 1 : 0
   function_name                     = var.lambda_func_name
   qualifier                         = aws_lambda_alias.campaign_alias[0].name
   provisioned_concurrent_executions = var.provisioned_concurrency_count
