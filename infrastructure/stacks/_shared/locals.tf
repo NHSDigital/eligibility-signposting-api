@@ -8,13 +8,32 @@ locals {
 
   # tflint-ignore: terraform_unused_declarations
   tags = {
-    TagVersion      = "1"
-    Programme       = "Vaccinations"
-    Project         = "EligibilitySignpostingAPI"
-    Environment     = var.environment
-    ServiceCategory = var.environment == "prod" ? "Bronze" : "N/A"
-    Tool            = "Terraform"
-    workspace       = lower(terraform.workspace)
+    # Billing and Identification (FinOps)
+    FinOpsTagVersion = "1"
+    Programme        = "Vaccinations"
+    Product          = "EligibilitySignpostingAPI"
+    Owner            = "edd.almond1@nhs.net" # REQUIRED - distribution list recommended
+    CostCentre       = "129117"              # REQUIRED - your cost centre code
+    Customer         = "NHS England"         # Optional but recommended
+
+    # Environment Information (SecOps)
+    data_classification = "5"             # REQUIRED - 1-5 based on Cloud Risk Model
+    DataType            = "PII"           # REQUIRED - adjust based on your data
+    Environment         = var.environment # REQUIRED - Development/Testing/Preproduction/Production
+    ProjectType         = "Production"    # REQUIRED - PoC/Pilot/Production
+    PublicFacing        = "Y"             # REQUIRED - Y/N for internet-facing
+
+    # Technical Operations (TechOps)
+    ServiceCategory = "Silver"   # REQUIRED - Bronze/Silver/Gold/Platinum
+    OnOffPattern    = "AlwaysOn" # REQUIRED - AlwaysOn/OfficeHours/MF86/MF95/MF77
+
+    # Application Information (DevOps)
+    ApplicationRole = "API"       # REQUIRED - Web/App/DB/WebServer/Firewall/LoadBalancer
+    Tool            = "Terraform" # Optional - None/Terraform/Packer/CloudFormation/ARM
+
+    # Custom/Internal
+    workspace = lower(terraform.workspace)
+    Stack     = local.stack_name
   }
 
   terraform_state_bucket_name = "eligibility-signposting-api-${var.environment}-tfstate"
