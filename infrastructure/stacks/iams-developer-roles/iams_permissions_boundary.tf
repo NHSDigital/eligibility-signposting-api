@@ -36,6 +36,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "dynamodb:CreateTable",
       "dynamodb:TagResource",
       "dynamodb:ListTagsOfResource",
+      "dynamodb:UpdateTable",
 
       # EC2 - networking infrastructure
       "ec2:Describe*",
