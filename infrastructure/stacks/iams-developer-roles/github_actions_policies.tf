@@ -105,6 +105,7 @@ resource "aws_iam_policy" "dynamodb_management" {
             "dynamodb:CreateTable",
             "dynamodb:TagResource",
             "dynamodb:ListTagsOfResource",
+            "dynamodb:UpdateTable",
           ],
           Resource = [
             "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
