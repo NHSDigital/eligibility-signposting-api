@@ -329,9 +329,7 @@ def test_status_on_target_based_on_last_successful_date(
     nhs_number = NHSNumber(faker.nhs_number())
 
     target_rows = person_rows_builder(
-        nhs_number,
-        cohorts=["cohort1"],
-        vaccines={vaccine: {"LAST_SUCCESSFUL_DATE": last_successful_date}}
+        nhs_number, cohorts=["cohort1"], vaccines={vaccine: {"LAST_SUCCESSFUL_DATE": last_successful_date}}
     )
 
     campaign_configs = [
@@ -721,8 +719,7 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
 @freeze_time("2025-04-25")
 def test_no_active_iteration_returns_empty_conditions_with_single_active_campaign(faker: Faker):
     # Given
-    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()),
-                                      cohorts=[],)
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()), cohorts=[])
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
             target="RSV",
@@ -751,8 +748,7 @@ def test_no_active_iteration_returns_empty_conditions_with_single_active_campaig
 @freeze_time("2025-04-25")
 def test_returns_no_condition_data_for_campaign_without_active_iteration(faker: Faker, caplog):
     # Given
-    person_rows = person_rows_builder(NHSNumber(faker.nhs_number())
-                                      ,cohorts=[],)
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()), cohorts=[])
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
             target="RSV",
@@ -796,8 +792,7 @@ def test_returns_no_condition_data_for_campaign_without_active_iteration(faker: 
 @freeze_time("2025-04-25")
 def test_no_active_campaign(faker: Faker):
     # Given
-    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()),
-                                      cohorts=[],)
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()), cohorts=[])
     campaign_configs = [rule_builder.CampaignConfigFactory.build()]
     # Need to set the campaign dates to override CampaignConfigFactory.fix_iteration_date_invariants behavior
     campaign_configs[0].start_date = datetime.date(2025, 5, 10)
@@ -1162,18 +1157,16 @@ def test_virtual_cohorts_when_person_has_no_existing_cohorts(faker: Faker):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
     date_of_birth = DateOfBirth(datetime.date(1980, 10, 2))
-    vacc = {
-        "RSV": {
-            "LAST_SUCCESSFUL_DATE": datetime.date(2025, 9, 25).strftime("%Y%m%d"),
-            "BOOKED_APPOINTMENT_DATE": datetime.date(2025, 10, 9).strftime("%Y%m%d"),
-        },
-    }
-
     person_rows = person_rows_builder(
         nhs_number,
         date_of_birth=date_of_birth,
         cohorts=[],
-        vaccines=vacc,
+        vaccines={
+            "RSV": {
+                "LAST_SUCCESSFUL_DATE": datetime.date(2025, 9, 25).strftime("%Y%m%d"),
+                "BOOKED_APPOINTMENT_DATE": datetime.date(2025, 10, 9).strftime("%Y%m%d"),
+            },
+        },
     )
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
@@ -1186,14 +1179,14 @@ def test_virtual_cohorts_when_person_has_no_existing_cohorts(faker: Faker):
                             cohort_group="rsv_age",
                             positive_description="In rsv_75to79",
                             negative_description="Out rsv_75to79",
-                            priority=0
+                            priority=0,
                         ),
                         rule_builder.IterationCohortFactory.build(
                             cohort_label="rsv_80_since_02_Sept_2024",
                             cohort_group="rsv_age_catchup",
                             positive_description="In rsv_80_since_02_Sept_2024",
                             negative_description="Out rsv_80_since_02_Sept_2024",
-                            priority=10
+                            priority=10,
                         ),
                         rule_builder.IterationCohortFactory.build(
                             cohort_label="elid_all_people",
@@ -1211,10 +1204,22 @@ def test_virtual_cohorts_when_person_has_no_existing_cohorts(faker: Faker):
                             attribute_target="RSV",
                             cohort_label="elid_all_people",
                             comparator="-25[[NVL:18000101]]",
-                            description="Remove anyone NOT already vaccinated within the last 25 years and do not have a future booking from the magic cohort",
+                            description="Remove anyone NOT already vaccinated within the last 25 years",
                             name="Remove from magic cohort unless already vaccinated or have future booking",
                             operator=RuleOperator.year_lte,
                             priority=100,
+                            type=RuleType.filter,
+                        ),
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            attribute_level=RuleAttributeLevel.TARGET,
+                            attribute_name="BOOKED_APPOINTMENT_DATE",
+                            attribute_target="RSV",
+                            cohort_label="elid_all_people",
+                            comparator="0[[NVL:18000101]]",
+                            description="Remove anyone without a future booking from magic cohort",
+                            name="Remove from magic cohort unless already vaccinated or have future booking",
+                            operator=RuleOperator.day_lt,
+                            priority=110,
                             type=RuleType.filter,
                         ),
                         rule_builder.PersonAgeSuppressionRuleFactory.build(
@@ -1227,7 +1232,7 @@ def test_virtual_cohorts_when_person_has_no_existing_cohorts(faker: Faker):
                             operator=RuleOperator.year_gte,
                             priority=200,
                             rule_stop=True,
-                            type=RuleType.suppression
+                            type=RuleType.suppression,
                         ),
                     ],
                 )
@@ -1366,7 +1371,9 @@ def test_eligibility_status_with_invalid_tokens_raises_attribute_error(faker: Fa
     date_of_birth = DateOfBirth(datetime.date(2025, 5, 10))
 
     person_rows = person_rows_builder(
-        nhs_number, date_of_birth=date_of_birth, cohorts=["cohort_1"],
+        nhs_number,
+        date_of_birth=date_of_birth,
+        cohorts=["cohort_1"],
         vaccines={"RSV": {"LAST_SUCCESSFUL_DATE": datetime.date(2024, 1, 3).strftime("%Y%m%d")}},
     )
 
@@ -1399,8 +1406,10 @@ def test_eligibility_status_with_invalid_person_attribute_name_raises_value_erro
     date_of_birth = DateOfBirth(datetime.date(2025, 5, 10))
 
     person_rows = person_rows_builder(
-        nhs_number, date_of_birth=date_of_birth, cohorts=["cohort_1"],
-        vaccines={"RSV": {"LAST_SUCCESSFUL_DATE": datetime.date(2024, 1, 3).strftime("%Y%m%d")}}
+        nhs_number,
+        date_of_birth=date_of_birth,
+        cohorts=["cohort_1"],
+        vaccines={"RSV": {"LAST_SUCCESSFUL_DATE": datetime.date(2024, 1, 3).strftime("%Y%m%d")}},
     )
 
     target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.ICECREAM]]"  # noqa: S105
