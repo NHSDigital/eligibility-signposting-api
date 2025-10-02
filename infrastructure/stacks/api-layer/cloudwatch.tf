@@ -21,7 +21,7 @@ resource "aws_cloudwatch_log_group" "firehose_audit" {
   }
 
   depends_on = [
-    module.eligibility_audit_firehose_delivery_stream
+    module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk_arn
   ]
 }
 
@@ -30,7 +30,6 @@ resource "aws_cloudwatch_log_stream" "firehose_audit_stream" {
   log_group_name = aws_cloudwatch_log_group.firehose_audit.name
 
   depends_on = [
-    aws_cloudwatch_log_group.firehose_audit,
-    module.eligibility_audit_firehose_delivery_stream
+    aws_cloudwatch_log_group.firehose_audit
   ]
 }
