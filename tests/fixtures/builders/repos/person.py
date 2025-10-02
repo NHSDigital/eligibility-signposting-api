@@ -1,4 +1,3 @@
-import datetime
 from collections.abc import Sequence
 from datetime import date
 from random import choice, shuffle
@@ -19,7 +18,7 @@ def person_rows_builder(  # noqa:PLR0913
     gender: Gender | None = ...,
     postcode: str | None = ...,
     cohorts: Sequence[str] | None = ...,
-    vaccines: dict[str, dict[str, str]] | None = ...,
+    vaccines: dict[str, dict[str, str | None]] | None = ...,
     icb: str | None = ...,
     gp_practice: str | None = ...,
     pcn: str | None = ...,
