@@ -1,3 +1,4 @@
+import datetime
 from collections.abc import Sequence
 from datetime import date
 from random import choice, shuffle
@@ -18,7 +19,7 @@ def person_rows_builder(  # noqa:PLR0913
     gender: Gender | None = ...,
     postcode: str | None = ...,
     cohorts: Sequence[str] | None = ...,
-    vaccines: Sequence[tuple[str, date]] | None = ...,
+    vaccines: dict[str, dict[str, str]] | None = ...,
     icb: str | None = ...,
     gp_practice: str | None = ...,
     pcn: str | None = ...,
@@ -36,8 +37,6 @@ def person_rows_builder(  # noqa:PLR0913
     date_of_birth = date_of_birth if date_of_birth is not ... else faker.date_of_birth(minimum_age=18, maximum_age=99)
     gender = gender if gender is not ... else choice(get_args(Gender))
     postcode = postcode if postcode is not ... else faker.postcode()
-    cohorts = cohorts if cohorts is not ... else ["cohort-a", "cohort-b"]
-    vaccines = vaccines if vaccines is not ... else [("RSV", faker.past_date("-5y")), ("COVID", faker.past_date("-5y"))]
     icb = icb if icb is not ... else faker.icb()
     gp_practice = gp_practice if gp_practice is not ... else faker.gp_practice()
     pcn = pcn if pcn is not ... else faker.pcn()
@@ -64,26 +63,28 @@ def person_rows_builder(  # noqa:PLR0913
             "MSOA": msoa,
             "LSOA": lsoa,
         },
-        {
-            "NHS_NUMBER": key,
-            "ATTRIBUTE_TYPE": "COHORTS",
-            "COHORT_MEMBERSHIPS": [
-                {"COHORT_LABEL": cohort, "DATE_JOINED": faker.past_date().strftime("%Y%m%d")} for cohort in cohorts
-            ],
-        },
     ]
-    rows.extend(
-        {
-            "NHS_NUMBER": key,
-            "ATTRIBUTE_TYPE": vaccine,
-            "LAST_SUCCESSFUL_DATE": (
-                last_successful_date.strftime("%Y%m%d") if last_successful_date else last_successful_date
-            ),
-            "OPTOUT": choice(["Y", "N"]),
-            "LAST_INVITE_DATE": faker.past_date("-5y").strftime("%Y%m%d"),
-        }
-        for vaccine, last_successful_date in vaccines
-    )
+
+    if cohorts is not ... and cohorts:
+        rows.append(
+            {
+                "NHS_NUMBER": key,
+                "ATTRIBUTE_TYPE": "COHORTS",
+                "COHORT_MEMBERSHIPS": [
+                    {"COHORT_LABEL": cohort, "DATE_JOINED": faker.past_date().strftime("%Y%m%d")} for cohort in cohorts
+                ],
+            }
+        )
+
+    if vaccines is not ... and vaccines:
+        rows.extend(
+            {
+                "NHS_NUMBER": key,
+                "ATTRIBUTE_TYPE": vaccine_name,
+                **details,
+            }
+            for vaccine_name, details in vaccines.items()
+        )
 
     shuffle(rows)
 
