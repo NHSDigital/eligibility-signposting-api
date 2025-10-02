@@ -19,9 +19,18 @@ resource "aws_cloudwatch_log_group" "firehose_audit" {
     Name  = "kinesis-firehose-logs"
     Stack = local.stack_name
   }
+
+  depends_on = [
+    module.eligibility_audit_firehose_delivery_stream
+  ]
 }
 
 resource "aws_cloudwatch_log_stream" "firehose_audit_stream" {
   name           = "audit_stream_log"
   log_group_name = aws_cloudwatch_log_group.firehose_audit.name
+
+  depends_on = [
+    aws_cloudwatch_log_group.firehose_audit,
+    module.eligibility_audit_firehose_delivery_stream
+  ]
 }
