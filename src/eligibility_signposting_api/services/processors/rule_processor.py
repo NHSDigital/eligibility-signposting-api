@@ -39,9 +39,13 @@ class RuleProcessor:
 
     def is_base_eligible(self, person: Person, cohort: IterationCohort) -> bool:
         if cohort.is_virtual_cohort:
-            for row in person.data:
-                if row.get("ATTRIBUTE_TYPE", "") == "COHORTS":
-                    row["COHORT_MEMBERSHIPS"].append({"COHORT_LABEL": cohort.cohort_label})
+            cohorts_data = next((row for row in person.data if row.get("ATTRIBUTE_TYPE") == "COHORTS"), None)
+
+            if cohorts_data is None:
+                cohorts_data = {"ATTRIBUTE_TYPE": "COHORTS", "COHORT_MEMBERSHIPS": []}
+                person.data.append(cohorts_data)
+
+            cohorts_data.setdefault("COHORT_MEMBERSHIPS", []).append({"COHORT_LABEL": cohort.cohort_label})
 
         person_cohorts = self.person_data_reader.get_person_cohorts(person)
 
