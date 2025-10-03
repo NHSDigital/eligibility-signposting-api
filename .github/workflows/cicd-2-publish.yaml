@@ -118,12 +118,12 @@ jobs:
 #          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
 #        working-directory: ./infrastructure
 #
-#      - name: "Tag the dev deployment"
-#        run: |
-#          git config user.name "github-actions"
-#          git config user.email "github-actions@github.com"
-#          git tag ${{ needs.metadata.outputs.version }}
-#          git push origin ${{ needs.metadata.outputs.version }}
+      - name: "Tag the dev deployment"
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ needs.metadata.outputs.version }}
+          git push origin ${{ needs.metadata.outputs.version }}
 #
 #      - name: "Notify Slack on PR merge"
 #        uses: slackapi/slack-github-action@v2.1.1
