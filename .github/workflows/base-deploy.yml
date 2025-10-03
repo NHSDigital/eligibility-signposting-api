@@ -32,8 +32,6 @@ jobs:
       terraform_version: ${{ steps.variables.outputs.terraform_version }}
       ref: ${{ steps.variables.outputs.ref }}
       environment: ${{ steps.variables.outputs.environment }}
-      tag: ${{ steps.tag.outputs.name }}
-      promoted_environment: ${{ steps.promoted_env.outputs.promoted_environment }}
     steps:
       - name: "Checkout ref"
         uses: actions/checkout@v5
@@ -76,74 +74,6 @@ jobs:
           echo "ref=$REF"
           echo "environment=$ENVIRONMENT"
 
-      - name: "Resolve the dev-* tag for this commit"
-        id: tag
-        run: |
-          git fetch --tags --force
-          SHA="${{ github.event.workflow_run.head_sha }}"
-          TAG=$(git tag --points-at "$SHA" | grep '^dev-' | head -n1 || true)
-          if [ -z "$TAG" ]; then
-            echo "No dev-* tag found on $SHA" >&2
-            exit 1
-          fi
-          echo "name=$TAG" >> $GITHUB_OUTPUT
-          echo "Resolved tag: $TAG"
-
-      - name: "Resolve promoted environment"
-        id: promoted_env
-        run: |
-          ENV="${{ steps.variables.outputs.environment }}"
-          if [[ "$ENV" == "preprod" ]]; then
-            echo "promoted_environment=test" >> $GITHUB_OUTPUT
-          elif [[ "$ENV" == "prod" ]]; then
-            echo "promoted_environment=preprod" >> $GITHUB_OUTPUT
-          else
-            echo "promoted_environment=$ENV" >> $GITHUB_OUTPUT
-          fi
-
-  download-lambda-artifact:
-      name: "Fetch the lambda artifact from previous stage"
-      runs-on: ubuntu-latest
-      needs: [metadata]
-      timeout-minutes: 45
-      permissions:
-        id-token: write
-        contents: write
-      environment: ${{ needs.metadata.outputs.promoted_environment }}
-      steps:
-        - name: "Checkout repository at ref"
-          uses: actions/checkout@v5
-          with:
-            ref: ${{ needs.metadata.outputs.ref }}
-            fetch-depth: 0
-
-        - name: "Configure AWS Credentials"
-          uses: aws-actions/configure-aws-credentials@v5
-          with:
-            role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
-            aws-region: eu-west-2
-
-        - name: "Extract S3 bucket name from Terraform output"
-          id: tf_output
-          run: |
-            BUCKET=$(terraform output -raw lambda_artifact_bucket)
-            echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
-          working-directory: ./infrastructure/stacks/api-layer
-
-        - name: "Download lambda artifact from S3"
-          run: |
-            aws s3 cp \
-              s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
-              ./build/lambda.zip \
-              --region eu-west-2
-
-        - name: "Upload lambda artifact for the current workflow"
-          uses: actions/upload-artifact@v4
-          with:
-            name: lambda-${{ needs.metadata.outputs.tag }}
-            path: ./build/lambda.zip
-
-
   deploy:
     name: "Deploy to ${{ needs.metadata.outputs.environment }}"
     runs-on: ubuntu-latest
@@ -165,10 +95,36 @@ jobs:
         with:
           terraform_version: ${{ needs.metadata.outputs.terraform_version }}
 
-      - name: "Download Lambda Artifact"
+      - name: "Install Poetry"
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: 'poetry'
+
+      - name: "Install dependencies"
+        run: poetry install
+
+      - name: "Build lambda artefact"
+        shell: bash
+        run: |
+          make dependencies install-python
+          make build
+
+      - name: "Upload lambda artefact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda
+          path: dist/lambda.zip
+
+      - name: "Download Built Lambdas"
         uses: actions/download-artifact@v5
         with:
-          name: lambda-${{ needs.metadata.outputs.tag }}
+          name: lambda
           path: ./build
 
       - name: "Configure AWS Credentials"
@@ -196,19 +152,6 @@ jobs:
           make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
-
-      - name: "Extract S3 bucket name from Terraform output"
-        id: tf_output
-        run: |
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
-          echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
-        working-directory: ./infrastructure/stacks/api-layer
-
-      - name: "Upload lambda artifact to S3"
-        run: |
-          aws s3 cp ./build/lambda.zip \
-            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
-            --region eu-west-2
 
       - name: "Validate Feature Toggles"
         env:
