@@ -67,18 +67,21 @@ jobs:
         with:
           terraform_version: ${{ needs.metadata.outputs.terraform_version }}
 
+      - name: "Set up Python"
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
       - name: "Configure AWS Credentials"
         uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
           aws-region: eu-west-2
 
-      - name: "Download lambda artefact from dev workflow"
-        uses: actions/download-artifact@v5
-        with:
-          name: lambda-${{ needs.metadata.outputs.tag }}
-          path: ./build
-          run-id: ${{ github.event.workflow_run.id }}
+      - name: "Build lambda artefact (rebuild in TEST)"
+        run: |
+          make dependencies install-python
+          make build
 
       - name: "Terraform Apply (TEST)"
         env:
@@ -97,19 +100,6 @@ jobs:
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
         working-directory: ./infrastructure
-
-      - name: "Extract S3 bucket name from Terraform output"
-        id: tf_output
-        run: |
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
-          echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
-        working-directory: ./infrastructure/stacks/api-layer
-
-      - name: "Upload lambda artifact to S3"
-        run: |
-          aws s3 cp ./build/lambda.zip \
-            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
-            --region eu-west-2
 
   regression-tests:
     name: "Regression Tests"
