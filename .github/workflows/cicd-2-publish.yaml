@@ -91,7 +91,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: lambda-${{ needs.metadata.outputs.version }}
-          path: ./build
+          path: dist1
 
       - name: "Configure AWS Credentials"
         uses: aws-actions/configure-aws-credentials@v5
