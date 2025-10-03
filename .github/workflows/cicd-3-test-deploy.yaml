@@ -1,4 +1,4 @@
-name: "3. CD | Deploy to Test"
+name: "mocking Deploy to Test"
 
 on:
   workflow_run:
@@ -81,42 +81,42 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
 
-      - name: "Terraform Apply (TEST)"
-        env:
-          ENVIRONMENT: test
-          WORKSPACE: "default"
-          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
-          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
-          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
-          TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
-          TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
-        run: |
-          mkdir -p ./build
-          echo "Deploying tag: ${{ needs.metadata.outputs.tag }}"
-          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=apply"
-          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
-          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
-          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
-        working-directory: ./infrastructure
-
-      - name: "Extract S3 bucket name from Terraform output"
-        id: tf_output
-        run: |
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
-          echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
-        working-directory: ./infrastructure/stacks/api-layer
-
-      - name: "Upload lambda artifact to S3"
-        run: |
-          aws s3 cp ./build/lambda.zip \
-            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
-            --region eu-west-2
-
-#  regression-tests:
-#    name: "Regression Tests"
-#    needs: deploy
-#    uses: ./.github/workflows/regression-tests.yml
-#    with:
-#      ENVIRONMENT: "test"
-#      VERSION_NUMBER: "main"
-#    secrets: inherit
+#      - name: "Terraform Apply (TEST)"
+#        env:
+#          ENVIRONMENT: test
+#          WORKSPACE: "default"
+#          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
+#          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
+#          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+#          TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
+#          TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
+#        run: |
+#          mkdir -p ./build
+#          echo "Deploying tag: ${{ needs.metadata.outputs.tag }}"
+#          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=apply"
+#          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
+#          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
+#          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
+#        working-directory: ./infrastructure
+#
+#      - name: "Extract S3 bucket name from Terraform output"
+#        id: tf_output
+#        run: |
+#          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+#          echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
+#        working-directory: ./infrastructure/stacks/api-layer
+#
+#      - name: "Upload lambda artifact to S3"
+#        run: |
+#          aws s3 cp ./build/lambda.zip \
+#            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
+#            --region eu-west-2
+#
+##  regression-tests:
+##    name: "Regression Tests"
+##    needs: deploy
+##    uses: ./.github/workflows/regression-tests.yml
+##    with:
+##      ENVIRONMENT: "test"
+##      VERSION_NUMBER: "main"
+##    secrets: inherit
