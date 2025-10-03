@@ -409,7 +409,7 @@ def person_with_all_data(person_table: Any, faker: Faker) -> Generator[eligibili
             gender="0",
             postcode="SW18",
             cohorts=["cohort_label1", "cohort_label2"],
-            vaccines=[("RSV", None)],
+            vaccines={"RSV": {"LAST_SUCCESSFUL_DATE": None}},
             icb="QE1",
             gp_practice="C81002",
             pcn="U78207",
