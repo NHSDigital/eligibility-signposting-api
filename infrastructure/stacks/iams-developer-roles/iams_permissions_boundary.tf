@@ -35,6 +35,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "dynamodb:DeleteTable",
       "dynamodb:CreateTable",
       "dynamodb:TagResource",
+      "dynamodb:UntagResource",
       "dynamodb:ListTagsOfResource",
       "dynamodb:UpdateTable",
 

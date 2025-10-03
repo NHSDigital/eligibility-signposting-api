@@ -104,6 +104,7 @@ resource "aws_iam_policy" "dynamodb_management" {
             "dynamodb:DeleteTable",
             "dynamodb:CreateTable",
             "dynamodb:TagResource",
+            "dynamodb:UntagResource",
             "dynamodb:ListTagsOfResource",
             "dynamodb:UpdateTable",
           ],
@@ -570,6 +571,7 @@ resource "aws_iam_policy" "cloudwatch_management" {
           "logs:ListTagsForResource",
           "logs:DescribeLogGroups",
           "logs:PutRetentionPolicy",
+          "logs:TagResource",
           "logs:UntagResource",
 
           "cloudwatch:PutMetricAlarm",
@@ -596,7 +598,8 @@ resource "aws_iam_policy" "cloudwatch_management" {
         Resource = [
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
           "arn:aws:cloudwatch:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alarm:*",
-          "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*"
+          "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/default-eligibility-signposting-api*",
         ]
       }
     ]

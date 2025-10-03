@@ -54,6 +54,12 @@ resource "aws_s3_object" "pem_file" {
   key     = "truststore.pem"
   content = local.pem_file_content
 
-  acl  = "private"
-  tags = null # Exclude from default_tags due to S3 object 10-tag limit
+  acl = "private"
+
+  # Explicitly set empty tags to override default_tags due to S3 object 10-tag limit
+  tags = {}
+
+  lifecycle {
+    ignore_changes = [tags_all]
+  }
 }
