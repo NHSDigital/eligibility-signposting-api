@@ -331,6 +331,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "ssm:ListTagsForResource",
           "ssm:PutParameter",
           "ssm:AddTagsToResource",
+          "ssm:DeleteParameter",
 
           # acm
           "acm:ListTagsForCertificate",

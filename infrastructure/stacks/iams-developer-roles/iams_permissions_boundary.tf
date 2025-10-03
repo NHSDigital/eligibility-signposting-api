@@ -232,7 +232,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "ssm:GetParameters",
       "ssm:ListTagsForResource",
       "ssm:PutParameter",
-      "ssm:AddTagsToResource"
+      "ssm:AddTagsToResource",
+      "ssm:DeleteParameter"
     ]
 
     resources = ["*"]
