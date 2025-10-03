@@ -104,6 +104,7 @@ resource "aws_iam_policy" "dynamodb_management" {
             "dynamodb:DeleteTable",
             "dynamodb:CreateTable",
             "dynamodb:TagResource",
+            "dynamodb:UntagResource",
             "dynamodb:ListTagsOfResource",
             "dynamodb:UpdateTable",
           ],
@@ -178,7 +179,8 @@ resource "aws_iam_policy" "s3_management" {
           "s3:PutBucketLogging",
           "s3:GetObjectTagging",
           "s3:PutObjectTagging",
-          "s3:GetObjectVersion"
+          "s3:GetObjectVersion",
+          "s3:PutBucketTagging",
         ],
         Resource = [
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules",
@@ -299,9 +301,11 @@ resource "aws_iam_policy" "api_infrastructure" {
           "logs:AssociateKmsKey",
           "logs:CreateLogGroup",
           "logs:PutMetricFilter",
+          "logs:TagResource",
 
           # EC2 permissions
           "ec2:CreateTags",
+          "ec2:DeleteTags",
           "ec2:CreateNetworkAclEntry",
           "ec2:CreateNetworkAcl",
           "ec2:AssociateRouteTable",
@@ -357,6 +361,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/vpc/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/eligibility-signposting-api-${var.environment}-audit/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:NHSDAudit_trail_log_group*",
           "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/*",
           "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/splunk/*",
@@ -411,6 +416,7 @@ resource "aws_iam_policy" "kms_creation" {
           "kms:UpdateKeyDescription",
           "kms:CreateGrant",
           "kms:TagResource",
+          "kms:UntagResource",
           "kms:EnableKeyRotation",
           "kms:ScheduleKeyDeletion",
           "kms:PutKeyPolicy",
@@ -459,6 +465,7 @@ resource "aws_iam_policy" "iam_management" {
           "iam:TagRole",
           "iam:PassRole",
           "iam:TagPolicy",
+          "iam:UntagPolicy",
         ],
         Resource = [
           # Lambda role
@@ -564,6 +571,8 @@ resource "aws_iam_policy" "cloudwatch_management" {
           "logs:ListTagsForResource",
           "logs:DescribeLogGroups",
           "logs:PutRetentionPolicy",
+          "logs:TagResource",
+          "logs:UntagResource",
 
           "cloudwatch:PutMetricAlarm",
           "cloudwatch:DeleteAlarms",
@@ -589,7 +598,8 @@ resource "aws_iam_policy" "cloudwatch_management" {
         Resource = [
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
           "arn:aws:cloudwatch:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alarm:*",
-          "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*"
+          "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/default-eligibility-signposting-api*",
         ]
       }
     ]
