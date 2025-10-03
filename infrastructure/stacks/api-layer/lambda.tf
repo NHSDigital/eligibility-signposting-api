@@ -20,7 +20,7 @@ module "eligibility_signposting_lambda_function" {
   lambda_func_name                  = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}eligibility_signposting_api"
   security_group_ids = [data.aws_security_group.main_sg.id]
   vpc_intra_subnets                 = [for v in data.aws_subnet.private_subnets : v.id]
-  file_name                         = "../../../dist/lambda.zip"
+  file_name                         = "../../../build/lambda.zip"
   handler                           = "eligibility_signposting_api.app.lambda_handler"
   eligibility_rules_bucket_name     = module.s3_rules_bucket.storage_bucket_name
   eligibility_status_table_name     = module.eligibility_status_table.table_name
