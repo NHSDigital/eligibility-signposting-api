@@ -42,6 +42,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "ec2:Describe*",
       "ec2:ModifyVpcBlockPublicAccessOptions",
       "ec2:CreateTags",
+      "ec2:DeleteTags",
       "ec2:CreateNetworkAclEntry",
       "ec2:CreateNetworkAcl",
       "ec2:AssociateRouteTable",
@@ -105,6 +106,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "iam:CreatePolicy",
       "iam:CreatePolicyVersion",
       "iam:TagRole",
+      "iam:UntagPolicy",
       "iam:PassRole",
       "iam:TagPolicy",
 
@@ -123,6 +125,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "kms:UpdateKeyDescription",
       "kms:CreateGrant",
       "kms:TagResource",
+      "kms:UntagResource",
       "kms:EnableKeyRotation",
       "kms:ScheduleKeyDeletion",
       "kms:PutKeyPolicy",
@@ -167,6 +170,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "logs:DescribeLogStreams",
       "logs:Describe*",
       "logs:ListTagsForResource",
+      "logs:TagResource",
+      "logs:UntagResource",
       "logs:PutRetentionPolicy",
       "logs:AssociateKmsKey",
       "logs:PutMetricFilter",
@@ -204,6 +209,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "s3:GetObjectTagging",
       "s3:PutObjectTagging",
       "s3:GetObjectVersion",
+      "s3:PutBucketTagging",
 
       # SNS - notification management
       "sns:CreateTopic",
