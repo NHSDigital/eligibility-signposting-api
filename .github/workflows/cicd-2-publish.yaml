@@ -79,7 +79,6 @@ jobs:
 
       - name: "Build lambda artefact"
         run: |
-          make dependencies install-python
           make build
 
       - name: "Upload lambda artefact for cross-workflow use"
@@ -88,35 +87,35 @@ jobs:
           name: lambda-${{ needs.metadata.outputs.version }}
           path: dist/lambda.zip
 
-      - name: "Download Built Lambdas"
-        uses: actions/download-artifact@v5
-        with:
-          name: lambda-${{ needs.metadata.outputs.version }}
-          path: ./build
-
-      - name: "Configure AWS Credentials"
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
-          aws-region: eu-west-2
-
-      - name: "Terraform Apply"
-        env:
-          ENVIRONMENT: dev
-          WORKSPACE: "default"
-          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
-          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
-          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
-          TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
-          TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
-
-        run: |
-          mkdir -p ./build
-          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=apply"
-          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
-          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
-          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
-        working-directory: ./infrastructure
+#      - name: "Download Built Lambdas"
+#        uses: actions/download-artifact@v5
+#        with:
+#          name: lambda-${{ needs.metadata.outputs.version }}
+#          path: ./build
+#
+#      - name: "Configure AWS Credentials"
+#        uses: aws-actions/configure-aws-credentials@v5
+#        with:
+#          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+#          aws-region: eu-west-2
+#
+#      - name: "Terraform Apply"
+#        env:
+#          ENVIRONMENT: dev
+#          WORKSPACE: "default"
+#          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
+#          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
+#          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+#          TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
+#          TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
+#
+#        run: |
+#          mkdir -p ./build
+#          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=apply"
+#          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
+#          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
+#          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
+#        working-directory: ./infrastructure
 
       - name: "Tag the dev deployment"
         run: |
@@ -125,17 +124,17 @@ jobs:
           git tag ${{ needs.metadata.outputs.version }}
           git push origin ${{ needs.metadata.outputs.version }}
 
-      - name: "Notify Slack on PR merge"
-        uses: slackapi/slack-github-action@v2.1.1
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: webhook-trigger
-          payload: |
-            status: "${{ job.status }}"
-            link: "https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
-            Author: "${{ github.actor }}"
-            title: "Pushed to main"
-            version: "${{ needs.metadata.outputs.version }}"
+#      - name: "Notify Slack on PR merge"
+#        uses: slackapi/slack-github-action@v2.1.1
+#        with:
+#          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+#          webhook-type: webhook-trigger
+#          payload: |
+#            status: "${{ job.status }}"
+#            link: "https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+#            Author: "${{ github.actor }}"
+#            title: "Pushed to main"
+#            version: "${{ needs.metadata.outputs.version }}"
 
 #  regression-tests:
 #    name: "Regression Tests"
