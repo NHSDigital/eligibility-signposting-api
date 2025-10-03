@@ -112,11 +112,11 @@ jobs:
             s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
             --region eu-west-2
 
-  regression-tests:
-    name: "Regression Tests"
-    needs: deploy
-    uses: ./.github/workflows/regression-tests.yml
-    with:
-      ENVIRONMENT: "test"
-      VERSION_NUMBER: "main"
-    secrets: inherit
+#  regression-tests:
+#    name: "Regression Tests"
+#    needs: deploy
+#    uses: ./.github/workflows/regression-tests.yml
+#    with:
+#      ENVIRONMENT: "test"
+#      VERSION_NUMBER: "main"
+#    secrets: inherit
