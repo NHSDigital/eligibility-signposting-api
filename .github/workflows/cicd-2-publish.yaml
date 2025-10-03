@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - hotfix/*
+      - fix/bring_back_github_artifacts
   workflow_dispatch: {}
 
 concurrency:

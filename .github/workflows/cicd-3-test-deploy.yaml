@@ -79,6 +79,7 @@ jobs:
           name: lambda-${{ needs.metadata.outputs.tag }}
           path: ./build
           run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
 
       - name: "Terraform Apply (TEST)"
         env:
