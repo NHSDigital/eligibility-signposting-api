@@ -77,7 +77,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: lambda-${{ needs.metadata.outputs.tag }}
-          path: ./build
+          path: ./dist
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
 
@@ -108,7 +108,7 @@ jobs:
 
       - name: "Upload lambda artifact to S3"
         run: |
-          aws s3 cp ./build/lambda.zip \
+          aws s3 cp ./dist/lambda.zip \
             s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
             --region eu-west-2
 

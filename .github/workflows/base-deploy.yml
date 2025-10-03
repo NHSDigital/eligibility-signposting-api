@@ -134,14 +134,14 @@ jobs:
           run: |
             aws s3 cp \
               s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
-              ./build/lambda.zip \
+              ./dist/lambda.zip \
               --region eu-west-2
 
         - name: "Upload lambda artifact for the current workflow"
           uses: actions/upload-artifact@v4
           with:
             name: lambda-${{ needs.metadata.outputs.tag }}
-            path: ./build/lambda.zip
+            path: ./dist/lambda.zip
 
 
   deploy:
@@ -169,7 +169,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: lambda-${{ needs.metadata.outputs.tag }}
-          path: ./build
+          path: ./dist
 
       - name: "Configure AWS Credentials"
         uses: aws-actions/configure-aws-credentials@v5
@@ -206,7 +206,7 @@ jobs:
 
       - name: "Upload lambda artifact to S3"
         run: |
-          aws s3 cp ./build/lambda.zip \
+          aws s3 cp ./dist/lambda.zip \
             s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
             --region eu-west-2
 

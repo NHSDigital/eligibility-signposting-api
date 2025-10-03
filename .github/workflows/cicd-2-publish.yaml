@@ -87,12 +87,6 @@ jobs:
           name: lambda-${{ needs.metadata.outputs.version }}
           path: dist/lambda.zip
 
-      - name: "Download Built Lambdas"
-        uses: actions/download-artifact@v5
-        with:
-          name: lambda-${{ needs.metadata.outputs.version }}
-          path: ./build
-
       - name: "Configure AWS Credentials"
         uses: aws-actions/configure-aws-credentials@v5
         with:
