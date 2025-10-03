@@ -329,16 +329,7 @@ def test_status_on_target_based_on_last_successful_date(
     nhs_number = NHSNumber(faker.nhs_number())
 
     target_rows = person_rows_builder(
-        nhs_number,
-        cohorts=["cohort1"],
-        vaccines=[
-            (
-                vaccine,
-                datetime.datetime.strptime(last_successful_date, "%Y%m%d").replace(tzinfo=datetime.UTC)
-                if last_successful_date
-                else None,
-            )
-        ],
+        nhs_number, cohorts=["cohort1"], vaccines={vaccine: {"LAST_SUCCESSFUL_DATE": last_successful_date}}
     )
 
     campaign_configs = [
@@ -728,7 +719,7 @@ def test_cohort_group_descriptions_are_selected_based_on_priority_when_cohorts_h
 @freeze_time("2025-04-25")
 def test_no_active_iteration_returns_empty_conditions_with_single_active_campaign(faker: Faker):
     # Given
-    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()))
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()), cohorts=[])
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
             target="RSV",
@@ -757,7 +748,7 @@ def test_no_active_iteration_returns_empty_conditions_with_single_active_campaig
 @freeze_time("2025-04-25")
 def test_returns_no_condition_data_for_campaign_without_active_iteration(faker: Faker, caplog):
     # Given
-    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()))
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()), cohorts=[])
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
             target="RSV",
@@ -801,7 +792,7 @@ def test_returns_no_condition_data_for_campaign_without_active_iteration(faker: 
 @freeze_time("2025-04-25")
 def test_no_active_campaign(faker: Faker):
     # Given
-    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()))
+    person_rows = person_rows_builder(NHSNumber(faker.nhs_number()), cohorts=[])
     campaign_configs = [rule_builder.CampaignConfigFactory.build()]
     # Need to set the campaign dates to override CampaignConfigFactory.fix_iteration_date_invariants behavior
     campaign_configs[0].start_date = datetime.date(2025, 5, 10)
@@ -824,7 +815,7 @@ def test_eligibility_status_replaces_tokens_with_attribute_data(faker: Faker):
         nhs_number,
         date_of_birth=date_of_birth,
         cohorts=["cohort_1", "cohort_2", "cohort_3"],
-        vaccines=[("RSV", datetime.date(2024, 1, 3))],
+        vaccines={"RSV": {"LAST_SUCCESSFUL_DATE": datetime.date(2024, 1, 3).strftime("%Y%m%d")}},
         icb="QE1",
         gp_practice=None,
     )
@@ -1161,6 +1152,109 @@ def test_multiple_virtual_cohorts(faker: Faker):
     )
 
 
+@freeze_time("2025-10-02")
+def test_virtual_cohorts_when_person_has_no_existing_cohorts(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    date_of_birth = DateOfBirth(datetime.date(1980, 10, 2))
+    person_rows = person_rows_builder(
+        nhs_number,
+        date_of_birth=date_of_birth,
+        cohorts=[],
+        vaccines={
+            "RSV": {
+                "LAST_SUCCESSFUL_DATE": datetime.date(2025, 9, 25).strftime("%Y%m%d"),
+                "BOOKED_APPOINTMENT_DATE": datetime.date(2025, 10, 9).strftime("%Y%m%d"),
+            },
+        },
+    )
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="rsv_75to79",
+                            cohort_group="rsv_age",
+                            positive_description="In rsv_75to79",
+                            negative_description="Out rsv_75to79",
+                            priority=0,
+                        ),
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="rsv_80_since_02_Sept_2024",
+                            cohort_group="rsv_age_catchup",
+                            positive_description="In rsv_80_since_02_Sept_2024",
+                            negative_description="Out rsv_80_since_02_Sept_2024",
+                            priority=10,
+                        ),
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="elid_all_people",
+                            cohort_group="magic_cohort",
+                            positive_description="In elid_all_people",
+                            negative_description="Out elid_all_people",
+                            priority=20,
+                            virtual="Y",
+                        ),
+                    ],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            attribute_level=RuleAttributeLevel.TARGET,
+                            attribute_name="LAST_SUCCESSFUL_DATE",
+                            attribute_target="RSV",
+                            cohort_label="elid_all_people",
+                            comparator="-25[[NVL:18000101]]",
+                            description="Remove anyone NOT already vaccinated within the last 25 years",
+                            name="Remove from magic cohort unless already vaccinated or have future booking",
+                            operator=RuleOperator.year_lte,
+                            priority=100,
+                            type=RuleType.filter,
+                        ),
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            attribute_level=RuleAttributeLevel.TARGET,
+                            attribute_name="BOOKED_APPOINTMENT_DATE",
+                            attribute_target="RSV",
+                            cohort_label="elid_all_people",
+                            comparator="0[[NVL:18000101]]",
+                            description="Remove anyone without a future booking from magic cohort",
+                            name="Remove from magic cohort unless already vaccinated or have future booking",
+                            operator=RuleOperator.day_lt,
+                            priority=110,
+                            type=RuleType.filter,
+                        ),
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            attribute_level=RuleAttributeLevel.TARGET,
+                            attribute_name="LAST_SUCCESSFUL_DATE",
+                            attribute_target="RSV",
+                            comparator="-25[[NVL:18000101]]",
+                            description="## You've had your RSV vaccination\n\nWe believe you had your vaccination.",
+                            name="Already Vaccinated",
+                            operator=RuleOperator.year_gte,
+                            priority=200,
+                            rule_stop=True,
+                            type=RuleType.suppression,
+                        ),
+                    ],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(
+                is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_actionable),
+            )
+        ),
+    )
+
+
 def test_regardless_of_final_status_audit_all_types_of_cohort_status_rules(faker: Faker):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
@@ -1277,7 +1371,10 @@ def test_eligibility_status_with_invalid_tokens_raises_attribute_error(faker: Fa
     date_of_birth = DateOfBirth(datetime.date(2025, 5, 10))
 
     person_rows = person_rows_builder(
-        nhs_number, date_of_birth=date_of_birth, cohorts=["cohort_1"], vaccines=[("RSV", datetime.date(2024, 1, 3))]
+        nhs_number,
+        date_of_birth=date_of_birth,
+        cohorts=["cohort_1"],
+        vaccines={"RSV": {"LAST_SUCCESSFUL_DATE": datetime.date(2024, 1, 3).strftime("%Y%m%d")}},
     )
 
     target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE:INVALID_DATE_FORMAT(%d %B %Y)]]"  # noqa: S105
@@ -1309,7 +1406,10 @@ def test_eligibility_status_with_invalid_person_attribute_name_raises_value_erro
     date_of_birth = DateOfBirth(datetime.date(2025, 5, 10))
 
     person_rows = person_rows_builder(
-        nhs_number, date_of_birth=date_of_birth, cohorts=["cohort_1"], vaccines=[("RSV", datetime.date(2024, 1, 3))]
+        nhs_number,
+        date_of_birth=date_of_birth,
+        cohorts=["cohort_1"],
+        vaccines={"RSV": {"LAST_SUCCESSFUL_DATE": datetime.date(2024, 1, 3).strftime("%Y%m%d")}},
     )
 
     target_attribute_token = "LAST_SUCCESSFUL_DATE: [[TARGET.RSV.ICECREAM]]"  # noqa: S105
