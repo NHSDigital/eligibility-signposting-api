@@ -198,7 +198,11 @@ resource "aws_iam_policy" "s3_management" {
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-access-logs",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-access-logs/*"
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts-access-logs/*",
         ]
       }
     ]
