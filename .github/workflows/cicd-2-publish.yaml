@@ -79,6 +79,7 @@ jobs:
 
       - name: "Build lambda artefact"
         run: |
+          make dependencies install-python
           make build
 
       - name: "Upload lambda artefact for cross-workflow use"
