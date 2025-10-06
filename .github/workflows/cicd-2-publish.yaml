@@ -111,6 +111,13 @@ jobs:
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
         working-directory: ./infrastructure
 
+      - name: "Validate Feature Toggles"
+        env:
+          ENV: ${{ needs.metadata.outputs.environment }}
+        run: |
+          pip install boto3
+          python scripts/feature_toggle/validate_toggles.py
+
       - name: "Tag the dev deployment"
         run: |
           git config user.name "github-actions"
