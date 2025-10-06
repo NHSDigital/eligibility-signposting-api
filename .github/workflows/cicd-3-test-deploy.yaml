@@ -101,7 +101,7 @@ jobs:
 
       - name: "Validate Feature Toggles"
         env:
-          ENV: ${{ needs.metadata.outputs.environment }}
+          ENV: test
         run: |
           pip install boto3
           python scripts/feature_toggle/validate_toggles.py
