@@ -10,6 +10,17 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
   }
 }
 
+resource "null_resource" "kms_policy_propagation_delay" {
+  depends_on = [
+    module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk,
+    # Add any KMS key policy resource if you manage separately
+  ]
+
+  provisioner "local-exec" {
+    command = "sleep 15"  # 15 seconds delay
+  }
+}
+
 resource "aws_cloudwatch_log_group" "firehose_audit" {
   name              = "/aws/kinesisfirehose/${var.project_name}-${var.environment}-audit"
   retention_in_days = 365
@@ -21,7 +32,8 @@ resource "aws_cloudwatch_log_group" "firehose_audit" {
   }
 
   depends_on = [
-    module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk
+    module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk,
+    null_resource.kms_policy_propagation_delay
   ]
 }
 
