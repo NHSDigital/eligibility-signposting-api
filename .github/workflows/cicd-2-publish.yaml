@@ -87,12 +87,6 @@ jobs:
           name: lambda-${{ needs.metadata.outputs.version }}
           path: dist/lambda.zip
 
-      - name: "Download Built Lambdas"
-        uses: actions/download-artifact@v5
-        with:
-          name: lambda-${{ needs.metadata.outputs.version }}
-          path: ./build
-
       - name: "Configure AWS Credentials"
         uses: aws-actions/configure-aws-credentials@v5
         with:
@@ -116,6 +110,13 @@ jobs:
           echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
         working-directory: ./infrastructure
+
+      - name: "Validate Feature Toggles"
+        env:
+          ENV: dev
+        run: |
+          pip install boto3
+          python scripts/feature_toggle/validate_toggles.py
 
       - name: "Tag the dev deployment"
         run: |

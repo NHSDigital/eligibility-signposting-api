@@ -77,8 +77,9 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: lambda-${{ needs.metadata.outputs.tag }}
-          path: ./build
+          path: ./dist
           run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
 
       - name: "Terraform Apply (TEST)"
         env:
@@ -98,6 +99,13 @@ jobs:
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
         working-directory: ./infrastructure
 
+      - name: "Validate Feature Toggles"
+        env:
+          ENV: test
+        run: |
+          pip install boto3
+          python scripts/feature_toggle/validate_toggles.py
+
       - name: "Extract S3 bucket name from Terraform output"
         id: tf_output
         run: |
@@ -107,7 +115,7 @@ jobs:
 
       - name: "Upload lambda artifact to S3"
         run: |
-          aws s3 cp ./build/lambda.zip \
+          aws s3 cp ./dist/lambda.zip \
             s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
             --region eu-west-2
 
