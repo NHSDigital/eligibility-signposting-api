@@ -13,7 +13,6 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
 resource "null_resource" "kms_policy_propagation_delay" {
   depends_on = [
     module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk,
-    # Add any KMS key policy resource if you manage separately
   ]
 
   provisioner "local-exec" {
