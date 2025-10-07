@@ -56,10 +56,17 @@ resource "aws_s3_object" "pem_file" {
 
   acl = "private"
 
+  override_provider {
+    default_tags {
+      tags = {}
+    }
+  }
+
   # Explicitly set empty tags to override default_tags due to S3 object 10-tag limit
   tags = {}
 
   lifecycle {
     ignore_changes = [tags_all]
   }
+
 }

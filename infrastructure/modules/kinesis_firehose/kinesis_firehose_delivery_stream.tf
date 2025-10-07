@@ -14,8 +14,8 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
 
     cloudwatch_logging_options {
       enabled         = true
-      log_group_name  = var.kinesis_cloud_watch_log_group_name
-      log_stream_name = var.kinesis_cloud_watch_log_stream
+      log_group_name  = aws_cloudwatch_log_group.firehose_audit.name
+      log_stream_name = aws_cloudwatch_log_stream.firehose_audit_stream.name
     }
   }
 

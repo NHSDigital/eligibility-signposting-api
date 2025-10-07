@@ -13,16 +13,6 @@ variable "s3_audit_bucket_arn" {
   type        = string
 }
 
-variable "kinesis_cloud_watch_log_group_name" {
-  description = "kinesis cloud watch log group name"
-  type        = string
-}
-
-variable "kinesis_cloud_watch_log_stream" {
-  description = "kinesis cloud watch log stream"
-  type        = string
-}
-
 variable "eligibility_lambda_role_arn" {
   description = "iam role of eligibility lambda"
   type        = any
