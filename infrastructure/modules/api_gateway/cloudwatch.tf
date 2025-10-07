@@ -4,7 +4,7 @@ resource "null_resource" "kms_policy_propagation_delay" {
   ]
 
   provisioner "local-exec" {
-    command = "sleep 15"  # 15 seconds delay
+    command = "sleep 15" # 15 seconds delay
   }
 }
 
@@ -18,7 +18,7 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
     prevent_destroy = false
   }
 
-   depends_on = [
+  depends_on = [
     null_resource.kms_policy_propagation_delay
   ]
 
