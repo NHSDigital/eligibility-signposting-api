@@ -1,3 +1,13 @@
+resource "null_resource" "kms_policy_propagation_delay" {
+  depends_on = [
+    aws_kms_key.api_gateway
+  ]
+
+  provisioner "local-exec" {
+    command = "sleep 15"  # 15 seconds delay
+  }
+}
+
 resource "aws_cloudwatch_log_group" "api_gateway" {
   name              = "/aws/apigateway/${var.workspace}-${var.api_gateway_name}"
   retention_in_days = 365
@@ -7,4 +17,9 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
   lifecycle {
     prevent_destroy = false
   }
+
+   depends_on = [
+    null_resource.kms_policy_propagation_delay
+  ]
+
 }
