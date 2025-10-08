@@ -15,21 +15,21 @@ resource "aws_s3_bucket_policy" "truststore" {
 data "aws_iam_policy_document" "truststore_api_gateway" {
   # Deny non-SSL
   statement {
-    sid     = "AllowSslRequestsOnly"
+    sid    = "AllowSslRequestsOnly"
     actions = ["s3:*"]
-    effect  = "Deny"
+    effect = "Deny"
     resources = [
       module.s3_truststore_bucket.storage_bucket_arn,
       "${module.s3_truststore_bucket.storage_bucket_arn}/*"
     ]
     principals {
-      type        = "*"
+      type = "*"
       identifiers = ["*"]
     }
     condition {
       test     = "Bool"
       variable = "aws:SecureTransport"
-      values   = ["false"]
+      values = ["false"]
     }
   }
   statement {
@@ -37,7 +37,7 @@ data "aws_iam_policy_document" "truststore_api_gateway" {
     effect = "Allow"
 
     principals {
-      type        = "Service"
+      type = "Service"
       identifiers = ["apigateway.amazonaws.com"]
     }
 
@@ -55,6 +55,12 @@ resource "aws_s3_object" "pem_file" {
   content = local.pem_file_content
 
   acl = "private"
+
+  override_provider {
+    default_tags {
+      tags = {}
+    }
+  }
 
   # Explicitly set empty tags to override default_tags due to S3 object 10-tag limit
   tags = {}

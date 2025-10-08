@@ -4,6 +4,11 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
   tags              = var.tags
   kms_key_id        = aws_kms_key.api_gateway.arn
 
+  depends_on = [
+    aws_kms_key.api_gateway,
+    aws_kms_key_policy.api_gateway
+  ]
+
   lifecycle {
     prevent_destroy = false
   }

@@ -21,7 +21,8 @@ resource "aws_cloudwatch_log_group" "firehose_audit" {
   }
 
   depends_on = [
-    module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk_arn
+    module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_cmk,
+    module.eligibility_audit_firehose_delivery_stream.kinesis_firehose_key_policy,
   ]
 }
 
