@@ -67,6 +67,7 @@ jobs:
           export TERRAFORM_VERSION="${{ steps.variables.outputs.terraform_version }}"
           export REF="${{ steps.variables.outputs.ref }}"
           export ENVIRONMENT="${{ steps.variables.outputs.environment }}"
+          export $PROMOTED_ENVIRONMENT="${{ steps.variables.outputs.promoted_environment }}"
           echo "build_datetime=$BUILD_DATETIME"
           echo "build_timestamp=$BUILD_TIMESTAMP"
           echo "build_epoch=$BUILD_EPOCH"
@@ -75,6 +76,7 @@ jobs:
           echo "terraform_version=$TERRAFORM_VERSION"
           echo "ref=$REF"
           echo "environment=$ENVIRONMENT"
+          echo "promoted_environment=$PROMOTED_ENVIRONMENT"
 
       - name: "Resolve the dev-* tag for this commit"
         id: tag
@@ -127,6 +129,20 @@ jobs:
           with:
             role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
             aws-region: eu-west-2
+
+        - name: "Terraform Init"
+          env:
+            ENVIRONMENT: test
+            WORKSPACE: "default"
+            TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
+            TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
+            TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+            TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
+            TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
+          run: |
+            echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=init"
+            make terraform env=$ENVIRONMENT stack=api-layer tf-command=init workspace=$WORKSPACE
+          working-directory: ./infrastructure
 
         - name: "Extract S3 bucket name from Terraform output"
           id: tf_output
