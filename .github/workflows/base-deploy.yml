@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       ref:
-        description: "Git ref to deploy (branch/tag/SHA). For prod, supply the RC tag to promote."
+        description: "Git ref to deploy (dev-tag). For prod, supply the RC tag to promote."
         required: true
         type: string
       release_type:
@@ -83,8 +83,8 @@ jobs:
           SHA="${{ github.event.workflow_run.head_sha }}"
           TAG=$(git tag --points-at "$SHA" | grep '^dev-' | head -n1 || true)
           if [ -z "$TAG" ]; then
-            echo "No dev-* tag found on $SHA" >&2
-            exit 1
+            echo "Using the dev tag provided in the input field" >&2
+            TAG="${{ inputs.ref }}"
           fi
           echo "name=$TAG" >> $GITHUB_OUTPUT
           echo "Resolved tag: $TAG"
