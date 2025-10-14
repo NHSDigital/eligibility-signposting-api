@@ -147,7 +147,7 @@ jobs:
   deploy:
     name: "Deploy to ${{ needs.metadata.outputs.environment }}"
     runs-on: ubuntu-latest
-    needs: [metadata]
+    needs: [metadata, download-lambda-artifact]
     timeout-minutes: 45
     permissions:
       id-token: write
