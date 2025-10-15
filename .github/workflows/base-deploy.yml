@@ -67,6 +67,7 @@ jobs:
           export TERRAFORM_VERSION="${{ steps.variables.outputs.terraform_version }}"
           export REF="${{ steps.variables.outputs.ref }}"
           export ENVIRONMENT="${{ steps.variables.outputs.environment }}"
+          export PROMOTED_ENVIRONMENT="${{ steps.variables.outputs.promoted_environment }}"
           echo "build_datetime=$BUILD_DATETIME"
           echo "build_timestamp=$BUILD_TIMESTAMP"
           echo "build_epoch=$BUILD_EPOCH"
@@ -75,6 +76,7 @@ jobs:
           echo "terraform_version=$TERRAFORM_VERSION"
           echo "ref=$REF"
           echo "environment=$ENVIRONMENT"
+          echo "promoted_environment=$PROMOTED_ENVIRONMENT"
 
       - name: "Resolve the dev-* tag for this commit"
         id: tag
@@ -117,11 +119,25 @@ jobs:
             ref: ${{ needs.metadata.outputs.ref }}
             fetch-depth: 0
 
+        - name: "Setup Terraform"
+          uses: hashicorp/setup-terraform@v3
+          with:
+            terraform_version: ${{ needs.metadata.outputs.terraform_version }}
+
         - name: "Configure AWS Credentials"
           uses: aws-actions/configure-aws-credentials@v5
           with:
             role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
             aws-region: eu-west-2
+
+        - name: "Terraform Init"
+          env:
+            ENVIRONMENT: ${{ needs.metadata.outputs.promoted_environment }}
+            WORKSPACE: "default"
+          run: |
+            echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=init"
+            make terraform env=$ENVIRONMENT stack=api-layer tf-command=init workspace=$WORKSPACE
+          working-directory: ./infrastructure
 
         - name: "Extract S3 bucket name from Terraform output"
           id: tf_output
@@ -147,7 +163,7 @@ jobs:
   deploy:
     name: "Deploy to ${{ needs.metadata.outputs.environment }}"
     runs-on: ubuntu-latest
-    needs: [metadata]
+    needs: [metadata, download-lambda-artifact]
     timeout-minutes: 45
     permissions:
       id-token: write

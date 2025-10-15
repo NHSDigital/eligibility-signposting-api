@@ -26,6 +26,13 @@ Releases are immutable and auditable:
 
 > **Note:** The Preprod/prod entry workflows are thin wrappers around a **reusable** workflow (`base-deploy.yml`).
 
+### Lambda Artifact management
+
+1. `Dev deploy` → artifact is created and stored in GitHub actions.
+2. `Test deploy` → downloads the artifact from GitHub actions, uploads it to `Test` S3 and deploys to lambda.
+3. `Preprod deploy` → downloads the artifact from `Test` S3, uploads it to `Preprod` S3 and deploys to lambda.
+4. `Prod deploy` → downloads the artifact from `Preprod` s3, uploads it to `Prod` S3 and deploys to lambda.
+
 ---
 
 ## Pull Request Workflow (CI)
