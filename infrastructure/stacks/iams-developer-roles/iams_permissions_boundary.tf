@@ -38,6 +38,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "dynamodb:UntagResource",
       "dynamodb:ListTagsOfResource",
       "dynamodb:UpdateTable",
+      "dynamodb:UpdateContinuousBackups",
 
       # EC2 - networking infrastructure
       "ec2:Describe*",
