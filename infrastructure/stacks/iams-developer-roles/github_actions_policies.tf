@@ -100,6 +100,7 @@ resource "aws_iam_policy" "dynamodb_management" {
             "dynamodb:DescribeTimeToLive",
             "dynamodb:DescribeTable",
             "dynamodb:DescribeContinuousBackups",
+            "dynamodb:UpdateContinuousBackups",
             "dynamodb:ListTables",
             "dynamodb:DeleteTable",
             "dynamodb:CreateTable",
