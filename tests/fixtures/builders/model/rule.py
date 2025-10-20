@@ -49,6 +49,7 @@ class IterationRuleFactory(ModelFactory[IterationRule]):
     comparator = "-1"
     cohort_label = None
     rule_stop = False
+    rule_code = None
 
 
 class AvailableActionDetailFactory(ModelFactory[AvailableAction]):
