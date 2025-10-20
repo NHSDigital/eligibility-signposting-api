@@ -50,6 +50,7 @@ class TestTokenProcessor:
         reason1 = Reason(
             RuleType.suppression,
             eligibility_status.RuleName("Rule1"),
+            None,
             RulePriority("1"),
             RuleDescription("This is a rule."),
             matcher_matched=False,
@@ -57,6 +58,7 @@ class TestTokenProcessor:
         reason2 = Reason(
             RuleType.filter,
             eligibility_status.RuleName("Rule2"),
+            None,
             RulePriority("1"),
             RuleDescription("Rule [[PERSON.AGE]] here."),
             matcher_matched=True,

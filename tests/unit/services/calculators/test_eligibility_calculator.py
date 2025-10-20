@@ -1837,6 +1837,7 @@ class TestEligibilityResultBuilder:
         reason_1 = Reason(
             RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 1"),
+            None,
             RulePriority("1"),
             RuleDescription("Filter Rule Description 2"),
             matcher_matched=True,
@@ -1844,6 +1845,7 @@ class TestEligibilityResultBuilder:
         reason_2 = Reason(
             RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 2"),
+            None,
             RulePriority("2"),
             RuleDescription("Filter Rule Description 2"),
             matcher_matched=True,
@@ -1882,6 +1884,7 @@ class TestEligibilityResultBuilder:
         reason_1 = Reason(
             RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 1"),
+            None,
             RulePriority("1"),
             RuleDescription("Filter Rule Description 2"),
             matcher_matched=True,
@@ -1889,6 +1892,7 @@ class TestEligibilityResultBuilder:
         reason_2 = Reason(
             RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 2"),
+            None,
             RulePriority("2"),
             RuleDescription("Filter Rule Description 2"),
             matcher_matched=True,
@@ -1923,6 +1927,7 @@ class TestEligibilityResultBuilder:
         reason_1 = Reason(
             RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 1"),
+            None,
             RulePriority("1"),
             RuleDescription("Matching"),
             matcher_matched=True,
@@ -1930,6 +1935,7 @@ class TestEligibilityResultBuilder:
         reason_2 = Reason(
             RuleType.suppression,
             eligibility_status.RuleName("Filter Rule 2"),
+            None,
             RulePriority("2"),
             RuleDescription("Not matching"),
             matcher_matched=True,

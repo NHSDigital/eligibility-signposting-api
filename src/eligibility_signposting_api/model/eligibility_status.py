@@ -18,6 +18,7 @@ Postcode = NewType("Postcode", str)
 ConditionName = NewType("ConditionName", str)
 
 RuleName = NewType("RuleName", str)
+RuleCode = NewType("RuleCode", str)
 RuleDescription = NewType("RuleDescription", str)
 RulePriority = NewType("RulePriority", str)
 
@@ -93,6 +94,7 @@ class Status(Enum):
 class Reason:
     rule_type: RuleType
     rule_name: RuleName
+    rule_code: RuleCode | None
     rule_priority: RulePriority
     rule_description: RuleDescription | None
     matcher_matched: bool

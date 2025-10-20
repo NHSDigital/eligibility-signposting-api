@@ -172,7 +172,7 @@ def build_suitability_results(condition: Condition) -> list[eligibility_response
     return [
         eligibility_response.SuitabilityRule(
             ruleType=eligibility_response.RuleType(reason.rule_type.value),
-            ruleCode=eligibility_response.RuleCode(reason.rule_name),
+            ruleCode=eligibility_response.RuleCode(reason.rule_code or reason.rule_name),
             ruleText=eligibility_response.RuleText(reason.rule_description),
         )
         for reason in condition.suitability_rules
