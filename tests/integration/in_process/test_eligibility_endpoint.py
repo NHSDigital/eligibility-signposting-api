@@ -161,7 +161,7 @@ class TestStandardResponse:
             ),
         )
 
-    def test_not_actionable(
+    def test_not_actionable_and_check_response_when_no_rule_code_given(
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
@@ -701,3 +701,55 @@ class TestResponseOnMissingAttributes:
         )
 
         assert_that(response.headers, has_entry("Content-Type", "application/json"))
+
+
+class TestEligibilityResponseWithVariousInputs:
+    def test_not_actionable_and_check_response_when_rule_code_given(
+        self,
+        client: FlaskClient,
+        persisted_person: NHSNumber,
+        campaign_config_with_rules_having_rule_code: CampaignConfig,  # noqa: ARG002
+    ):
+        # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(
+                is_json_that(
+                    has_entry(
+                        "processedSuggestions",
+                        equal_to(
+                            [
+                                {
+                                    "condition": "RSV",
+                                    "status": "NotActionable",
+                                    "eligibilityCohorts": [
+                                        {
+                                            "cohortCode": "cohort_group1",
+                                            "cohortStatus": "NotActionable",
+                                            "cohortText": "positive_description",
+                                        }
+                                    ],
+                                    "actions": [],
+                                    "suitabilityRules": [
+                                        {
+                                            "ruleCode": "Rule Code Excluded age less than 75",
+                                            "ruleText": "Exclude too young less than 75",
+                                            "ruleType": "S",
+                                        }
+                                    ],
+                                    "statusText": "You should have the RSV vaccine",
+                                }
+                            ]
+                        ),
+                    )
+                )
+            ),
+        )
