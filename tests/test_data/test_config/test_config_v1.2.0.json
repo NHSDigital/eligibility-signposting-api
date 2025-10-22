@@ -190,7 +190,7 @@
             "RuleNames": [
               "In Supressed Cohort"
             ],
-             "RuleCode": "Present in Supressed Cohort"
+            "RuleCode": "Present in Supressed Cohort"
           }
         }
       }
