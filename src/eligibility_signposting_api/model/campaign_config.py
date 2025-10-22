@@ -9,7 +9,8 @@ from functools import cached_property
 from operator import attrgetter
 from typing import Literal, NewType
 
-from pydantic import BaseModel, Field, HttpUrl, RootModel, field_serializer, field_validator, model_validator
+from pydantic import BaseModel, Field, HttpUrl, RootModel, field_serializer, field_validator, model_validator, \
+    PrivateAttr
 
 from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS, RULE_STOP_DEFAULT
 
@@ -24,7 +25,6 @@ IterationVersion = NewType("IterationVersion", int)
 IterationID = NewType("IterationID", str)
 IterationDate = NewType("IterationDate", date)
 RuleName = NewType("RuleName", str)
-RuleCode = NewType("RuleCode", str)
 RuleDescription = NewType("RuleDescription", str)
 RulePriority = NewType("RulePriority", int)
 RuleAttributeName = NewType("RuleAttributeName", str)
@@ -37,6 +37,8 @@ CohortGroup = NewType("CohortGroup", str)
 Description = NewType("Description", str)
 RuleStop = NewType("RuleStop", bool)
 CommsRouting = NewType("CommsRouting", str)
+RuleCode = NewType("RuleCode", str)
+RuleText = NewType("RuleText", str)
 
 
 class RuleType(StrEnum):
@@ -148,6 +150,20 @@ class IterationRule(BaseModel):
             return v.upper() == "Y"
         return v
 
+    _parent: Iteration | None = PrivateAttr(default=None)
+
+    def set_parent(self, parent: Iteration) -> None:
+        self._parent = parent
+
+    @property
+    def get_rule_code(self) -> str:
+        if self._parent and self._parent.rules_mapper:
+            for entry in self._parent.rules_mapper.model_fields.values():
+                rule_entry = getattr(self._parent.rules_mapper, entry.alias)
+                if self.name in rule_entry.rule_names:
+                    return rule_entry.rule_code
+        return self.name
+
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
 
@@ -175,6 +191,21 @@ class StatusText(BaseModel):
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
 
+class RuleEntry(BaseModel):
+    rule_names: list[RuleName] = Field(..., alias="RuleNames")
+    rule_code: RuleCode = Field(..., alias="RuleCode")
+    rule_text: RuleText = Field(..., alias="RuleText")
+
+    model_config = {"populate_by_name": True}
+
+
+class RulesMapper(BaseModel):
+    other_setting: RuleEntry = Field(..., alias="OTHER_SETTING")
+    already_jabbed: RuleEntry = Field(..., alias="ALREADY_JABBED")
+
+    model_config = {"populate_by_name": True}
+
+
 class Iteration(BaseModel):
     id: IterationID = Field(..., alias="ID")
     version: IterationVersion = Field(..., alias="Version")
@@ -190,6 +221,7 @@ class Iteration(BaseModel):
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
     actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
+    rules_mapper: RulesMapper | None = Field(None, alias="RulesMapper")
     status_text: StatusText | None = Field(None, alias="StatusText")
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
@@ -205,6 +237,12 @@ class Iteration(BaseModel):
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
+
+    @model_validator(mode="after")
+    def attach_rule_parents(self) -> Iteration:
+        for rule in self.iteration_rules:
+            rule.set_parent(self)
+        return self
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
