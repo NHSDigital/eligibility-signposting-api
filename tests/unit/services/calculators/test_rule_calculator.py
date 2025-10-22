@@ -1,15 +1,20 @@
 from unittest.mock import patch
 
 import pytest
-from hamcrest import assert_that, is_, equal_to
+from hamcrest import assert_that, equal_to, is_
 
 from eligibility_signposting_api.model import eligibility_status
-from eligibility_signposting_api.model.campaign_config import IterationRule, RuleAttributeLevel, RuleEntry, \
-    RuleName, RuleCode
+from eligibility_signposting_api.model.campaign_config import (
+    IterationRule,
+    RuleAttributeLevel,
+    RuleCode,
+    RuleEntry,
+    RuleName,
+    RuleText,
+)
 from eligibility_signposting_api.model.eligibility_status import Status
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.calculators.rule_calculator import RuleCalculator
-from eligibility_signposting_api.model.campaign_config import RuleText
 from tests.fixtures.builders.model import rule as rule_builder
 
 
@@ -18,29 +23,29 @@ from tests.fixtures.builders.model import rule as rule_builder
     [
         # PERSON attribute level
         (
-                Person([{"ATTRIBUTE_TYPE": "PERSON", "POSTCODE": "SW19"}]),
-                rule_builder.IterationRuleFactory.build(
-                    attribute_level=RuleAttributeLevel.PERSON, attribute_name="POSTCODE"
-                ),
-                "SW19",
+            Person([{"ATTRIBUTE_TYPE": "PERSON", "POSTCODE": "SW19"}]),
+            rule_builder.IterationRuleFactory.build(
+                attribute_level=RuleAttributeLevel.PERSON, attribute_name="POSTCODE"
+            ),
+            "SW19",
         ),
         # TARGET attribute level
         (
-                Person([{"ATTRIBUTE_TYPE": "RSV", "LAST_SUCCESSFUL_DATE": "20240101"}]),
-                rule_builder.IterationRuleFactory.build(
-                    attribute_level=RuleAttributeLevel.TARGET,
-                    attribute_name="LAST_SUCCESSFUL_DATE",
-                    attribute_target="RSV",
-                ),
-                "20240101",
+            Person([{"ATTRIBUTE_TYPE": "RSV", "LAST_SUCCESSFUL_DATE": "20240101"}]),
+            rule_builder.IterationRuleFactory.build(
+                attribute_level=RuleAttributeLevel.TARGET,
+                attribute_name="LAST_SUCCESSFUL_DATE",
+                attribute_target="RSV",
+            ),
+            "20240101",
         ),
         # COHORT attribute level
         (
-                Person([{"ATTRIBUTE_TYPE": "COHORTS", "COHORT_LABEL": ""}]),
-                rule_builder.IterationRuleFactory.build(
-                    attribute_level=RuleAttributeLevel.COHORT, attribute_name="COHORT_LABEL"
-                ),
-                "",
+            Person([{"ATTRIBUTE_TYPE": "COHORTS", "COHORT_LABEL": ""}]),
+            rule_builder.IterationRuleFactory.build(
+                attribute_level=RuleAttributeLevel.COHORT, attribute_name="COHORT_LABEL"
+            ),
+            "",
         ),
     ],
 )
@@ -59,33 +64,32 @@ def test_get_attribute_value_for_all_attribute_levels(person_data: Person, rule:
         ("NO_MATCHING", None, "POSTCODE_RULE_NAME", "Neither rule mapper nor rule code provided"),
         ("NO_MATCHING", "postcode is M4", "postcode is M4", "Rule code provided, rule mapper not matched"),
         ("POSTCODE_RULE_NAME", "postcode is M4", "POSTCODE_RULE_CODE_FROM_MAPPER", "Rule mapper matched"),
-    ]
+    ],
 )
 @patch.object(RuleCalculator, "get_attribute_value")
 @patch.object(RuleCalculator, "evaluate_rule")
-def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_code_input(
+def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_code_input(  # noqa : PLR0913
     mock_evaluate_rule,
     mock_get_attribute_value,
     mapper_rule_entry_name,
     rule_code,
     expected_rule_code,
-    comment
+    comment,
 ):
     # Given
     person_data = Person([{"ATTRIBUTE_TYPE": "PERSON", "POSTCODE": "SW19"}])
-    rule_entry = RuleEntry(RuleNames=[RuleName(mapper_rule_entry_name), RuleName("ADDRESS_RULE_NAME")],
-                           RuleCode=RuleCode("POSTCODE_RULE_CODE_FROM_MAPPER"),
-                           RuleText=RuleText("some text"))
+    rule_entry = RuleEntry(
+        RuleNames=[RuleName(mapper_rule_entry_name), RuleName("ADDRESS_RULE_NAME")],
+        RuleCode=RuleCode("POSTCODE_RULE_CODE_FROM_MAPPER"),
+        RuleText=RuleText("some text"),
+    )
     rules_mapper = {
         "OTHER_SETTINGS": rule_entry,
-        "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=RuleCode(""), RuleText=RuleText(""))
+        "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=RuleCode(""), RuleText=RuleText("")),
     }
 
     rule = rule_builder.IterationRuleFactory.build(
-        name="POSTCODE_RULE_NAME",
-        attribute_level=RuleAttributeLevel.PERSON,
-        attribute_name="POSTCODE",
-        code=rule_code
+        name="POSTCODE_RULE_NAME", attribute_level=RuleAttributeLevel.PERSON, attribute_name="POSTCODE", code=rule_code
     )
     rule_builder.IterationFactory.build(iteration_rules=[rule], rules_mapper=rules_mapper)
 
@@ -105,26 +109,21 @@ def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_code_input
     ("rule_mapper", "comment"),
     [
         (
-                {
-                    "OTHER_SETTINGS": RuleEntry(RuleNames=[RuleName("NOT_MATCHED")], RuleCode=RuleCode(""),
-                                                RuleText=RuleText("")),
-                    "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=RuleCode(""), RuleText=RuleText(""))
-                },
-                "Rule mapper not matched"
+            {
+                "OTHER_SETTINGS": RuleEntry(
+                    RuleNames=[RuleName("NOT_MATCHED")], RuleCode=RuleCode(""), RuleText=RuleText("")
+                ),
+                "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=RuleCode(""), RuleText=RuleText("")),
+            },
+            "Rule mapper not matched",
         ),
-        (
-                None,
-                "Rule mapper None"
-        ),
-    ]
+        (None, "Rule mapper None"),
+    ],
 )
 @patch.object(RuleCalculator, "get_attribute_value")
 @patch.object(RuleCalculator, "evaluate_rule")
 def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_mappers_input(
-    mock_evaluate_rule,
-    mock_get_attribute_value,
-    rule_mapper,
-    comment
+    mock_evaluate_rule, mock_get_attribute_value, rule_mapper, comment
 ):
     # Given
     person_data = Person([{"ATTRIBUTE_TYPE": "PERSON", "POSTCODE": "SW19"}])
@@ -133,7 +132,7 @@ def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_mappers_in
         name="POSTCODE_RULE_NAME",
         attribute_level=RuleAttributeLevel.PERSON,
         attribute_name="POSTCODE",
-        code="postcode is M4"
+        code="postcode is M4",
     )
     rule_builder.IterationFactory.build(iteration_rules=[rule], rules_mapper=rule_mapper)
 

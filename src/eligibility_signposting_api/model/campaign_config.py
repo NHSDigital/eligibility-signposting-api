@@ -175,9 +175,9 @@ class IterationRule(BaseModel):
         """
         rule_code = None
         if self._parent and self._parent.rules_mapper:
-            for key, rule_entry in self._parent.rules_mapper.items():
+            for rule_entry in self._parent.rules_mapper.values():
                 if rule_entry and self.name in rule_entry.rule_names:
-                        rule_code = rule_entry.rule_code
+                    rule_code = rule_entry.rule_code
         return rule_code or self.code or self.name
 
     def __str__(self) -> str:

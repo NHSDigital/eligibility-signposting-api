@@ -22,6 +22,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     IterationResult,
     MatchedActionDetail,
     Reason,
+    RuleCode,
     RuleDescription,
     RuleName,
     RulePriority,
@@ -29,7 +30,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     StatusText,
     SuggestedAction,
     UrlLabel,
-    UrlLink, RuleCode,
+    UrlLink,
 )
 from tests.fixtures.builders.model.rule import IterationFactory
 

@@ -20,12 +20,13 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleAttributeName,
     RuleComparator,
     RuleDescription,
+    RuleEntry,
     RuleName,
     RuleOperator,
     RulePriority,
     RuleType,
     StatusText,
-    Virtual, RuleEntry
+    Virtual,
 )
 
 
@@ -69,7 +70,9 @@ class StatusTextFactory(ModelFactory[StatusText]):
     not_actionable = "Not actionable status text"
     actionable = "Actionable status text"
 
+
 class RuleEntryFactory(ModelFactory[RuleEntry]): ...
+
 
 class IterationFactory(ModelFactory[Iteration]):
     iteration_cohorts = Use(IterationCohortFactory.batch, size=2)

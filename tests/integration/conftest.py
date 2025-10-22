@@ -22,9 +22,13 @@ from eligibility_signposting_api.model.campaign_config import (
     AvailableAction,
     CampaignConfig,
     EndDate,
+    RuleCode,
+    RuleEntry,
+    RuleName,
+    RuleText,
     RuleType,
     StartDate,
-    StatusText, RuleEntry, RuleName, RuleCode, RuleText,
+    StatusText,
 )
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
@@ -541,7 +545,7 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def campaign_config_with_rules_having_rule_code(
     s3_client: BaseClient, rules_bucket: BucketName
 ) -> Generator[CampaignConfig]:
@@ -575,7 +579,7 @@ def campaign_config_with_rules_having_rule_code(
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def campaign_config_with_rules_having_rule_mapper(
     s3_client: BaseClient, rules_bucket: BucketName
 ) -> Generator[CampaignConfig]:
@@ -587,8 +591,9 @@ def campaign_config_with_rules_having_rule_mapper(
                     rule.PostcodeSuppressionRuleFactory.build(
                         type=RuleType.filter, code="Rule Code Excluded postcode In SW19"
                     ),
-                    rule.PersonAgeSuppressionRuleFactory.build(name = "age_rule_name1",
-                                                               code="Rule Code Excluded age less than 75"),
+                    rule.PersonAgeSuppressionRuleFactory.build(
+                        name="age_rule_name1", code="Rule Code Excluded age less than 75"
+                    ),
                 ],
                 iteration_cohorts=[
                     rule.IterationCohortFactory.build(
@@ -598,14 +603,14 @@ def campaign_config_with_rules_having_rule_mapper(
                         negative_description="negative_description",
                     )
                 ],
-                rules_mapper =  {
-                        "OTHER_SETTINGS": RuleEntry(RuleNames=[RuleName("age_rule_name1")],
-                                                    RuleCode=RuleCode("Age rule code from mapper"),
-                                                    RuleText=RuleText("some text")),
-                        "ALREADY_JABBED": RuleEntry(RuleNames=[],
-                                                    RuleCode=RuleCode(""),
-                                                    RuleText=RuleText(""))
-                    },
+                rules_mapper={
+                    "OTHER_SETTINGS": RuleEntry(
+                        RuleNames=[RuleName("age_rule_name1")],
+                        RuleCode=RuleCode("Age rule code from mapper"),
+                        RuleText=RuleText("some text"),
+                    ),
+                    "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=RuleCode(""), RuleText=RuleText("")),
+                },
                 status_text=None,
             )
         ],

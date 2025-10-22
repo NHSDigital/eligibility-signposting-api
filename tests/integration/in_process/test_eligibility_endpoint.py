@@ -1,6 +1,5 @@
 from http import HTTPStatus
 
-import pytest
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask.testing import FlaskClient
@@ -705,7 +704,6 @@ class TestResponseOnMissingAttributes:
 
 
 class TestEligibilityResponseWithVariousInputs:
-
     def test_not_actionable_and_check_response_when_rule_mapper_is_absent_but_rule_code_given(
         self,
         client: FlaskClient,
@@ -755,7 +753,6 @@ class TestEligibilityResponseWithVariousInputs:
                 )
             ),
         )
-
 
     def test_not_actionable_and_check_response_when_rule_mapper_is_given(
         self,
