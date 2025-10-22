@@ -209,8 +209,8 @@ class StatusText(BaseModel):
 
 class RuleEntry(BaseModel):
     rule_names: list[RuleName] = Field(..., alias="RuleNames")
-    rule_code: RuleCode = Field(..., alias="RuleCode")
-    rule_text: RuleText = Field(..., alias="RuleText")
+    rule_code: RuleCode | None = Field(None, alias="RuleCode")
+    rule_text: RuleText | None = Field(None, alias="RuleText")
 
     model_config = {"populate_by_name": True}
 

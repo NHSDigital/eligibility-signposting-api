@@ -117,6 +117,13 @@ def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_code_input
             },
             "Rule mapper not matched",
         ),
+        (
+            {
+                "OTHER_SETTINGS": RuleEntry(RuleNames=[RuleName("NOT_MATCHED")], RuleCode=None, RuleText=None),
+                "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=None, RuleText=None),
+            },
+            "Rule mapper not matched",
+        ),
         (None, "Rule mapper None"),
     ],
 )
