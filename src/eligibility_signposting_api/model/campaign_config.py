@@ -9,8 +9,16 @@ from functools import cached_property
 from operator import attrgetter
 from typing import Literal, NewType
 
-from pydantic import BaseModel, Field, HttpUrl, RootModel, field_serializer, field_validator, model_validator, \
-    PrivateAttr
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    PrivateAttr,
+    RootModel,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS, RULE_STOP_DEFAULT
 
@@ -155,14 +163,23 @@ class IterationRule(BaseModel):
     def set_parent(self, parent: Iteration) -> None:
         self._parent = parent
 
-    @property
+    @cached_property
     def get_rule_code(self) -> str:
+        """
+        Resolves the rule code using the parent Iteration's rules_mapper.
+
+        If the rule name matches any entry in the rules_mapper, the corresponding
+        rule_code is returned.
+
+        If no match is found, rule code is returned if it exists, otherwise the rule name is returned.
+        """
+        rule_code = None
         if self._parent and self._parent.rules_mapper:
             for entry in self._parent.rules_mapper.model_fields.values():
                 rule_entry = getattr(self._parent.rules_mapper, entry.alias)
                 if self.name in rule_entry.rule_names:
-                    return rule_entry.rule_code
-        return self.name
+                    rule_code = rule_entry.rule_code
+        return rule_code or self.code or self.name
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)

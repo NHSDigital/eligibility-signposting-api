@@ -76,6 +76,7 @@ class IterationFactory(ModelFactory[Iteration]):
     iteration_date = Use(past_date)
     default_comms_routing = "defaultcomms"
     actions_mapper = Use(ActionsMapperFactory.build)
+    rules_mapper = None
 
 
 class RawCampaignConfigFactory(ModelFactory[CampaignConfig]):

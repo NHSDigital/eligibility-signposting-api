@@ -52,7 +52,7 @@ def test_get_attribute_value_for_all_attribute_levels(person_data: Person, rule:
 
 @patch.object(RuleCalculator, "get_attribute_value")
 @patch.object(RuleCalculator, "evaluate_rule")
-def test_returns_expected_status_and_reason_when_rule_code_is_not_provided(
+def test_returns_expected_status_and_reason_when_both_rule_mapper_and_rule_code_not_provided(
     mock_evaluate_rule, mock_get_attribute_value
 ):
     person_data = Person([{"ATTRIBUTE_TYPE": "PERSON", "POSTCODE": "SW19"}])
@@ -64,13 +64,15 @@ def test_returns_expected_status_and_reason_when_rule_code_is_not_provided(
     mock_evaluate_rule.return_value = (eligibility_status.Status.not_eligible, "reason", False)
 
     status, reason = calc.evaluate_exclusion()
-    assert reason.rule_code is None
+    assert reason.rule_code is rule.name
     assert status == Status.not_eligible
 
 
 @patch.object(RuleCalculator, "get_attribute_value")
 @patch.object(RuleCalculator, "evaluate_rule")
-def test_returns_expected_status_and_reason_when_rule_code_is_provided(mock_evaluate_rule, mock_get_attribute_value):
+def test_returns_expected_status_and_reason_when_rule_mapper_is_not_provided_but_rule_code_is_provided(
+    mock_evaluate_rule, mock_get_attribute_value
+):
     person_data = Person([{"ATTRIBUTE_TYPE": "PERSON", "POSTCODE": "SW19"}])
     rule = rule_builder.IterationRuleFactory.build(
         attribute_level=RuleAttributeLevel.PERSON, attribute_name="POSTCODE", code="post code is M4"
