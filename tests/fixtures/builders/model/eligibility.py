@@ -21,7 +21,7 @@ class SuggestedActionFactory(DataclassFactory[eligibility_status.SuggestedAction
 class ReasonFactory(DataclassFactory[eligibility_status.Reason]):
     rule_type = RuleType.filter
     rule_name = RuleName("name")
-    rule_code = None
+    rule_code = RuleName("code")
     rule_priority = RulePriority("1")
     rule_description = RuleDescription("description")
     matcher_matched = False

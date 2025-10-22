@@ -29,7 +29,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     StatusText,
     SuggestedAction,
     UrlLabel,
-    UrlLink,
+    UrlLink, RuleCode,
 )
 from tests.fixtures.builders.model.rule import IterationFactory
 
@@ -106,7 +106,7 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g_for_actionable_
         Reason(
             rule_type=RuleType.redirect,
             rule_name=RuleName("RedirectRuleName1"),
-            rule_code=None,
+            rule_code=RuleCode("RedirectRuleCode1"),
             rule_description=RuleDescription("RedirectRuleDescription1"),
             matcher_matched=True,
             rule_priority=RulePriority("1"),
@@ -114,7 +114,7 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g_for_actionable_
         Reason(
             rule_type=RuleType.filter,
             rule_name=RuleName("FilterRuleName1"),
-            rule_code=None,
+            rule_code=RuleCode("FilterRuleCode1"),
             rule_description=RuleDescription("FilterRuleDescription1"),
             matcher_matched=True,
             rule_priority=RulePriority("1"),
@@ -122,7 +122,7 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g_for_actionable_
         Reason(
             rule_type=RuleType.suppression,
             rule_name=RuleName("SuppressionRuleName1"),
-            rule_code=None,
+            rule_code=RuleCode("SuppressionRuleCode1"),
             rule_description=RuleDescription("SuppressionRuleDescription1"),
             matcher_matched=True,
             rule_priority=RulePriority("1"),
@@ -205,7 +205,7 @@ def test_should_append_audit_suppression_rules_for_actionable_status(app):
         Reason(
             rule_type=RuleType.suppression,
             rule_name=RuleName("SuppressionRuleName1"),
-            rule_code=None,
+            rule_code=RuleCode("SuppressionRuleCode1"),
             rule_description=RuleDescription("SuppressionRuleDescription1"),
             matcher_matched=True,
             rule_priority=RulePriority("1"),
@@ -266,7 +266,7 @@ def test_should_append_audit_filter_rules_for_not_actionable_status(app):
         Reason(
             rule_type=RuleType.filter,
             rule_name=RuleName("FilterRuleName1"),
-            rule_code=None,
+            rule_code=RuleCode("FilterRuleCode1"),
             rule_description=RuleDescription("FilterRuleDescription1"),
             matcher_matched=True,
             rule_priority=RulePriority("1"),
