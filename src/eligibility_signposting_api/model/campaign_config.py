@@ -176,9 +176,10 @@ class IterationRule(BaseModel):
         rule_code = None
         if self._parent and self._parent.rules_mapper:
             for entry in self._parent.rules_mapper.model_fields.values():
-                rule_entry = getattr(self._parent.rules_mapper, entry.alias)
-                if self.name in rule_entry.rule_names:
-                    rule_code = rule_entry.rule_code
+                if entry.alias is not None:
+                    rule_entry = getattr(self._parent.rules_mapper, entry.alias)
+                    if self.name in rule_entry.rule_names:
+                        rule_code = rule_entry.rule_code
         return rule_code or self.code or self.name
 
     def __str__(self) -> str:

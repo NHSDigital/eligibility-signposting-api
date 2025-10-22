@@ -27,7 +27,7 @@ class RuleCalculator:
         """Evaluate if a particular rule excludes this person. Return the result, and the reason for the result."""
         attribute_value = self.get_attribute_value()
         status, reason, matcher_matched = self.evaluate_rule(attribute_value)
-        rule_code = eligibility_status.RuleCode(self.rule.get_rule_code) if self.rule.get_rule_code is not None else None
+        rule_code = eligibility_status.RuleCode(self.rule.get_rule_code)
         reason = eligibility_status.Reason(
             rule_name=eligibility_status.RuleName(self.rule.name),
             rule_code=rule_code,
