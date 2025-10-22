@@ -175,10 +175,8 @@ class IterationRule(BaseModel):
         """
         rule_code = None
         if self._parent and self._parent.rules_mapper:
-            for entry in self._parent.rules_mapper.model_fields.values():
-                if entry.alias is not None:
-                    rule_entry = getattr(self._parent.rules_mapper, entry.alias)
-                    if self.name in rule_entry.rule_names:
+            for key, rule_entry in self._parent.rules_mapper.items():
+                if rule_entry and self.name in rule_entry.rule_names:
                         rule_code = rule_entry.rule_code
         return rule_code or self.code or self.name
 
@@ -217,13 +215,6 @@ class RuleEntry(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-class RulesMapper(BaseModel):
-    other_setting: RuleEntry = Field(..., alias="OTHER_SETTING")
-    already_jabbed: RuleEntry = Field(..., alias="ALREADY_JABBED")
-
-    model_config = {"populate_by_name": True}
-
-
 class Iteration(BaseModel):
     id: IterationID = Field(..., alias="ID")
     version: IterationVersion = Field(..., alias="Version")
@@ -239,7 +230,7 @@ class Iteration(BaseModel):
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
     actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
-    rules_mapper: RulesMapper | None = Field(None, alias="RulesMapper")
+    rules_mapper: dict[str, RuleEntry] | None = Field(None, alias="RulesMapper")
     status_text: StatusText | None = Field(None, alias="StatusText")
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
