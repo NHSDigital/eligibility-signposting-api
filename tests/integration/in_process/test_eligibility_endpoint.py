@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+import pytest
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask.testing import FlaskClient
@@ -704,7 +705,8 @@ class TestResponseOnMissingAttributes:
 
 
 class TestEligibilityResponseWithVariousInputs:
-    def test_not_actionable_and_check_response_when_rule_code_given(
+
+    def test_not_actionable_and_check_response_when_rule_mapper_is_absent_but_rule_code_given(
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
@@ -741,6 +743,57 @@ class TestEligibilityResponseWithVariousInputs:
                                     "suitabilityRules": [
                                         {
                                             "ruleCode": "Rule Code Excluded age less than 75",
+                                            "ruleText": "Exclude too young less than 75",
+                                            "ruleType": "S",
+                                        }
+                                    ],
+                                    "statusText": "You should have the RSV vaccine",
+                                }
+                            ]
+                        ),
+                    )
+                )
+            ),
+        )
+
+
+    def test_not_actionable_and_check_response_when_rule_mapper_is_given(
+        self,
+        client: FlaskClient,
+        persisted_person: NHSNumber,
+        campaign_config_with_rules_having_rule_mapper: CampaignConfig,  # noqa: ARG002
+    ):
+        # Given
+        headers = {"nhs-login-nhs-number": str(persisted_person)}
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(
+                is_json_that(
+                    has_entry(
+                        "processedSuggestions",
+                        equal_to(
+                            [
+                                {
+                                    "condition": "RSV",
+                                    "status": "NotActionable",
+                                    "eligibilityCohorts": [
+                                        {
+                                            "cohortCode": "cohort_group1",
+                                            "cohortStatus": "NotActionable",
+                                            "cohortText": "positive_description",
+                                        }
+                                    ],
+                                    "actions": [],
+                                    "suitabilityRules": [
+                                        {
+                                            "ruleCode": "Age rule code from mapper",
                                             "ruleText": "Exclude too young less than 75",
                                             "ruleType": "S",
                                         }
