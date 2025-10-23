@@ -186,7 +186,7 @@ class IterationRule(BaseModel):
         Resolves the rule text using the parent Iteration's rules_mapper.
 
         If the rule name matches any entry in the rules_mapper, the corresponding
-        rule_code is returned.
+        rule_text is returned.
 
         If no match is found, the rule description is returned.
         """
