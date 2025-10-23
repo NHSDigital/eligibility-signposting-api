@@ -23,9 +23,9 @@ from eligibility_signposting_api.model.eligibility_status import (
     MatchedActionDetail,
     Reason,
     RuleCode,
-    RuleText,
     RuleName,
     RulePriority,
+    RuleText,
     Status,
     StatusText,
     SuggestedAction,
@@ -349,12 +349,8 @@ def test_write_to_firehose_calls_audit_service_with_correct_data_from_g(app):
 
 def test_no_duplicates_returns_same_list():
     reasons = [
-        Reason(
-            RuleType("F"), RuleName("code1"), None, RulePriority("1"), RuleText("desc1"), matcher_matched=True
-        ),
-        Reason(
-            RuleType("S"), RuleName("code2"), None, RulePriority("2"), RuleText("desc2"), matcher_matched=False
-        ),
+        Reason(RuleType("F"), RuleName("code1"), None, RulePriority("1"), RuleText("desc1"), matcher_matched=True),
+        Reason(RuleType("S"), RuleName("code2"), None, RulePriority("2"), RuleText("desc2"), matcher_matched=False),
     ]
     expected = reasons
     assert AuditContext.deduplicate_reasons(reasons) == expected
@@ -362,23 +358,13 @@ def test_no_duplicates_returns_same_list():
 
 def test_duplicates_are_removed():
     reasons = [
-        Reason(
-            RuleType("F"), RuleName("code1"), None, RulePriority("1"), RuleText("desc1"), matcher_matched=True
-        ),
-        Reason(
-            RuleType("F"), RuleName("code2"), None, RulePriority("1"), RuleText("desc2"), matcher_matched=False
-        ),
-        Reason(
-            RuleType("R"), RuleName("code3"), None, RulePriority("3"), RuleText("desc3"), matcher_matched=True
-        ),
+        Reason(RuleType("F"), RuleName("code1"), None, RulePriority("1"), RuleText("desc1"), matcher_matched=True),
+        Reason(RuleType("F"), RuleName("code2"), None, RulePriority("1"), RuleText("desc2"), matcher_matched=False),
+        Reason(RuleType("R"), RuleName("code3"), None, RulePriority("3"), RuleText("desc3"), matcher_matched=True),
     ]
     expected = [
-        Reason(
-            RuleType("F"), RuleName("code1"), None, RulePriority("1"), RuleText("desc1"), matcher_matched=True
-        ),
-        Reason(
-            RuleType("R"), RuleName("code3"), None, RulePriority("3"), RuleText("desc3"), matcher_matched=True
-        ),
+        Reason(RuleType("F"), RuleName("code1"), None, RulePriority("1"), RuleText("desc1"), matcher_matched=True),
+        Reason(RuleType("R"), RuleName("code3"), None, RulePriority("3"), RuleText("desc3"), matcher_matched=True),
     ]
     assert AuditContext.deduplicate_reasons(reasons) == expected
 

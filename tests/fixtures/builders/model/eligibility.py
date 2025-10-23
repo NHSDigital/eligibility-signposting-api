@@ -6,9 +6,9 @@ from polyfactory.factories import DataclassFactory
 
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.eligibility_status import (
-    RuleText,
     RuleName,
     RulePriority,
+    RuleText,
     RuleType,
     UrlLink,
 )

@@ -19,7 +19,7 @@ ConditionName = NewType("ConditionName", str)
 
 RuleName = NewType("RuleName", str)
 RuleCode = NewType("RuleCode", str)
-RuleText = NewType("RuleDescription", str)
+RuleText = NewType("RuleText", str)
 RulePriority = NewType("RulePriority", str)
 
 InternalActionCode = NewType("InternalActionCode", str)

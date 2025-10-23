@@ -36,8 +36,8 @@ from eligibility_signposting_api.model.eligibility_status import (
     NHSNumber,
     Postcode,
     Reason,
-    RuleText,
     RulePriority,
+    RuleText,
     Status,
     StatusText,
     SuggestedAction,
@@ -1968,11 +1968,7 @@ class TestEligibilityResultBuilder:
                 ReasonFactory.build(rule_name="Supress Rule 1", rule_text="description1", matcher_matched=True),
                 ReasonFactory.build(rule_name="Supress Rule 2", rule_text="description2", matcher_matched=True),
                 ReasonFactory.build(rule_name="Supress Rule 1", rule_text="description3", matcher_matched=True),
-                [
-                    ReasonFactory.build(
-                        rule_name="Supress Rule 1", rule_text="description1", matcher_matched=True
-                    )
-                ],
+                [ReasonFactory.build(rule_name="Supress Rule 1", rule_text="description1", matcher_matched=True)],
             ),
             # Same rule name, same type, different priority
             (
@@ -1986,20 +1982,12 @@ class TestEligibilityResultBuilder:
             ),
             # Same rule name, same priority, different type
             (
-                ReasonFactory.build(
-                    rule_type=RuleType.suppression, rule_text="description1", matcher_matched=True
-                ),
+                ReasonFactory.build(rule_type=RuleType.suppression, rule_text="description1", matcher_matched=True),
                 ReasonFactory.build(rule_type=RuleType.filter, rule_text="description2", matcher_matched=True),
-                ReasonFactory.build(
-                    rule_type=RuleType.suppression, rule_text="description3", matcher_matched=True
-                ),
+                ReasonFactory.build(rule_type=RuleType.suppression, rule_text="description3", matcher_matched=True),
                 [
-                    ReasonFactory.build(
-                        rule_type=RuleType.suppression, rule_text="description1", matcher_matched=True
-                    ),
-                    ReasonFactory.build(
-                        rule_type=RuleType.filter, rule_text="description2", matcher_matched=True
-                    ),
+                    ReasonFactory.build(rule_type=RuleType.suppression, rule_text="description1", matcher_matched=True),
+                    ReasonFactory.build(rule_type=RuleType.filter, rule_text="description2", matcher_matched=True),
                 ],
             ),
         ],
