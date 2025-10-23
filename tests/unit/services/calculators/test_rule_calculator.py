@@ -86,7 +86,7 @@ def test_get_attribute_value_for_all_attribute_levels(person_data: Person, rule:
 )
 @patch.object(RuleCalculator, "get_attribute_value")
 @patch.object(RuleCalculator, "evaluate_rule")
-def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_code_input(  # noqa : PLR0913
+def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_code_and_rule_text_input(  # noqa : PLR0913
     mock_evaluate_rule,
     mock_get_attribute_value,
     mapper_rule_entry_name,
@@ -143,7 +143,9 @@ def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_code_input
         ),
         (
             {
-                "OTHER_SETTINGS": RuleEntry(RuleNames=[RuleName("NOT_MATCHED")], RuleCode=None, RuleText=None),
+                "OTHER_SETTINGS": RuleEntry(
+                    RuleNames=[RuleName("NOT_MATCHED")], RuleCode=None, RuleText=None
+                ),
                 "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=None, RuleText=None),
             },
             "Rule mapper not matched",
@@ -153,7 +155,7 @@ def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_code_input
 )
 @patch.object(RuleCalculator, "get_attribute_value")
 @patch.object(RuleCalculator, "evaluate_rule")
-def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_mappers_input(
+def test_rule_code_and_rule_text_resolution_in_evaluate_exclusion_function_for_rule_mappers_having_none_or_empty(
     mock_evaluate_rule, mock_get_attribute_value, rule_mapper, comment
 ):
     # Given

@@ -163,7 +163,7 @@ class IterationRule(BaseModel):
     def set_parent(self, parent: Iteration) -> None:
         self._parent = parent
 
-    @cached_property
+    @property
     def rule_code(self) -> str:
         """
         Resolves the rule code using the parent Iteration's rules_mapper.
@@ -180,7 +180,7 @@ class IterationRule(BaseModel):
                     rule_code = rule_entry.rule_code
         return rule_code or self.code or self.name
 
-    @cached_property
+    @property
     def rule_text(self) -> str:
         """
         Resolves the rule text using the parent Iteration's rules_mapper.
