@@ -33,7 +33,7 @@ class RuleCalculator:
             rule_code=rule_code,
             rule_type=eligibility_status.RuleType(self.rule.type),
             rule_priority=eligibility_status.RulePriority(str(self.rule.priority)),
-            rule_description=eligibility_status.RuleDescription(self.rule.rule_text),
+            rule_text=eligibility_status.RuleText(self.rule.rule_text),
             matcher_matched=matcher_matched,
         )
         return status, reason

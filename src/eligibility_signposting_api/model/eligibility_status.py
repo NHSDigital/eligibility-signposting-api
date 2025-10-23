@@ -19,7 +19,7 @@ ConditionName = NewType("ConditionName", str)
 
 RuleName = NewType("RuleName", str)
 RuleCode = NewType("RuleCode", str)
-RuleDescription = NewType("RuleDescription", str)
+RuleText = NewType("RuleDescription", str)
 RulePriority = NewType("RulePriority", str)
 
 InternalActionCode = NewType("InternalActionCode", str)
@@ -96,7 +96,7 @@ class Reason:
     rule_name: RuleName
     rule_code: RuleCode
     rule_priority: RulePriority
-    rule_description: RuleDescription | None
+    rule_text: RuleText | None
     matcher_matched: bool
 
 

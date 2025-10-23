@@ -36,7 +36,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     NHSNumber,
     Postcode,
     Reason,
-    RuleDescription,
+    RuleText,
     RulePriority,
     Status,
     StatusText,
@@ -341,7 +341,7 @@ def test_status_on_target_based_on_last_successful_date(
                         rule_builder.IterationRuleFactory.build(
                             type=RuleType.suppression,
                             name=RuleName("You have already been vaccinated against RSV in the last year"),
-                            description=RuleDescription("Exclude anyone Completed RSV Vaccination in the last year"),
+                            description=RuleText("Exclude anyone Completed RSV Vaccination in the last year"),
                             priority=10,
                             operator=RuleOperator.day_gte,
                             attribute_level=RuleAttributeLevel.TARGET,
@@ -352,7 +352,7 @@ def test_status_on_target_based_on_last_successful_date(
                         rule_builder.IterationRuleFactory.build(
                             type=RuleType.suppression,
                             name=RuleName("You have a vaccination date in the future for RSV"),
-                            description=RuleDescription("Exclude anyone with future Completed RSV Vaccination"),
+                            description=RuleText("Exclude anyone with future Completed RSV Vaccination"),
                             priority=10,
                             operator=RuleOperator.day_lte,
                             attribute_level=RuleAttributeLevel.TARGET,
@@ -1314,7 +1314,7 @@ def test_regardless_of_final_status_audit_all_types_of_cohort_status_rules(faker
                         rule_builder.PersonAgeSuppressionRuleFactory.build(
                             type=RuleType.filter,
                             name=RuleName("NotEligible Reason 1"),
-                            description=RuleDescription("NotEligible Description 1"),
+                            description=RuleText("NotEligible Description 1"),
                             priority=RulePriority("100"),
                             operator=RuleOperator.year_lte,
                             attribute_level=RuleAttributeLevel.PERSON,
@@ -1328,7 +1328,7 @@ def test_regardless_of_final_status_audit_all_types_of_cohort_status_rules(faker
                         rule_builder.PersonAgeSuppressionRuleFactory.build(
                             type=RuleType.suppression,
                             name=RuleName("NotActionable Reason 1"),
-                            description=RuleDescription("NotActionable Description 1"),
+                            description=RuleText("NotActionable Description 1"),
                             priority=RulePriority("110"),
                             operator=RuleOperator.year_lte,
                             attribute_level=RuleAttributeLevel.PERSON,
@@ -1839,7 +1839,7 @@ class TestEligibilityResultBuilder:
             eligibility_status.RuleName("Filter Rule 1"),
             None,
             RulePriority("1"),
-            RuleDescription("Filter Rule Description 2"),
+            RuleText("Filter Rule Description 2"),
             matcher_matched=True,
         )
         reason_2 = Reason(
@@ -1847,7 +1847,7 @@ class TestEligibilityResultBuilder:
             eligibility_status.RuleName("Filter Rule 2"),
             None,
             RulePriority("2"),
-            RuleDescription("Filter Rule Description 2"),
+            RuleText("Filter Rule Description 2"),
             matcher_matched=True,
         )
         cohort_group_results = [
@@ -1886,7 +1886,7 @@ class TestEligibilityResultBuilder:
             eligibility_status.RuleName("Filter Rule 1"),
             None,
             RulePriority("1"),
-            RuleDescription("Filter Rule Description 2"),
+            RuleText("Filter Rule Description 2"),
             matcher_matched=True,
         )
         reason_2 = Reason(
@@ -1894,7 +1894,7 @@ class TestEligibilityResultBuilder:
             eligibility_status.RuleName("Filter Rule 2"),
             None,
             RulePriority("2"),
-            RuleDescription("Filter Rule Description 2"),
+            RuleText("Filter Rule Description 2"),
             matcher_matched=True,
         )
         cohort_group_results = [
@@ -1929,7 +1929,7 @@ class TestEligibilityResultBuilder:
             eligibility_status.RuleName("Filter Rule 1"),
             None,
             RulePriority("1"),
-            RuleDescription("Matching"),
+            RuleText("Matching"),
             matcher_matched=True,
         )
         reason_2 = Reason(
@@ -1937,7 +1937,7 @@ class TestEligibilityResultBuilder:
             eligibility_status.RuleName("Filter Rule 2"),
             None,
             RulePriority("2"),
-            RuleDescription("Not matching"),
+            RuleText("Not matching"),
             matcher_matched=True,
         )
         cohort_group_results = [
@@ -1958,47 +1958,47 @@ class TestEligibilityResultBuilder:
         [
             # Same rule name, type, and priority, different description
             (
-                ReasonFactory.build(rule_description="description1", matcher_matched=True),
-                ReasonFactory.build(rule_description="description2", matcher_matched=True),
-                ReasonFactory.build(rule_description="description3", matcher_matched=True),
-                [ReasonFactory.build(rule_description="description1", matcher_matched=True)],
+                ReasonFactory.build(rule_text="description1", matcher_matched=True),
+                ReasonFactory.build(rule_text="description2", matcher_matched=True),
+                ReasonFactory.build(rule_text="description3", matcher_matched=True),
+                [ReasonFactory.build(rule_text="description1", matcher_matched=True)],
             ),
             # Different rule name, same type, same priority
             (
-                ReasonFactory.build(rule_name="Supress Rule 1", rule_description="description1", matcher_matched=True),
-                ReasonFactory.build(rule_name="Supress Rule 2", rule_description="description2", matcher_matched=True),
-                ReasonFactory.build(rule_name="Supress Rule 1", rule_description="description3", matcher_matched=True),
+                ReasonFactory.build(rule_name="Supress Rule 1", rule_text="description1", matcher_matched=True),
+                ReasonFactory.build(rule_name="Supress Rule 2", rule_text="description2", matcher_matched=True),
+                ReasonFactory.build(rule_name="Supress Rule 1", rule_text="description3", matcher_matched=True),
                 [
                     ReasonFactory.build(
-                        rule_name="Supress Rule 1", rule_description="description1", matcher_matched=True
+                        rule_name="Supress Rule 1", rule_text="description1", matcher_matched=True
                     )
                 ],
             ),
             # Same rule name, same type, different priority
             (
-                ReasonFactory.build(rule_priority="1", rule_description="description1", matcher_matched=True),
-                ReasonFactory.build(rule_priority="2", rule_description="description2", matcher_matched=True),
-                ReasonFactory.build(rule_priority="1", rule_description="description3", matcher_matched=True),
+                ReasonFactory.build(rule_priority="1", rule_text="description1", matcher_matched=True),
+                ReasonFactory.build(rule_priority="2", rule_text="description2", matcher_matched=True),
+                ReasonFactory.build(rule_priority="1", rule_text="description3", matcher_matched=True),
                 [
-                    ReasonFactory.build(rule_priority="1", rule_description="description1", matcher_matched=True),
-                    ReasonFactory.build(rule_priority="2", rule_description="description2", matcher_matched=True),
+                    ReasonFactory.build(rule_priority="1", rule_text="description1", matcher_matched=True),
+                    ReasonFactory.build(rule_priority="2", rule_text="description2", matcher_matched=True),
                 ],
             ),
             # Same rule name, same priority, different type
             (
                 ReasonFactory.build(
-                    rule_type=RuleType.suppression, rule_description="description1", matcher_matched=True
+                    rule_type=RuleType.suppression, rule_text="description1", matcher_matched=True
                 ),
-                ReasonFactory.build(rule_type=RuleType.filter, rule_description="description2", matcher_matched=True),
+                ReasonFactory.build(rule_type=RuleType.filter, rule_text="description2", matcher_matched=True),
                 ReasonFactory.build(
-                    rule_type=RuleType.suppression, rule_description="description3", matcher_matched=True
+                    rule_type=RuleType.suppression, rule_text="description3", matcher_matched=True
                 ),
                 [
                     ReasonFactory.build(
-                        rule_type=RuleType.suppression, rule_description="description1", matcher_matched=True
+                        rule_type=RuleType.suppression, rule_text="description1", matcher_matched=True
                     ),
                     ReasonFactory.build(
-                        rule_type=RuleType.filter, rule_description="description2", matcher_matched=True
+                        rule_type=RuleType.filter, rule_text="description2", matcher_matched=True
                     ),
                 ],
             ),
@@ -2035,7 +2035,7 @@ class TestEligibilityResultBuilder:
             (
                 ReasonFactory.build(
                     rule_type=RuleType.suppression,
-                    rule_description="Matching",
+                    rule_text="Matching",
                     rule_name="Supress Rule 1",
                     rule_priority="1",
                     matcher_matched=True,
@@ -2043,7 +2043,7 @@ class TestEligibilityResultBuilder:
                 [
                     ReasonFactory.build(
                         rule_type=RuleType.suppression,
-                        rule_description="Not matching",
+                        rule_text="Not matching",
                         rule_name="Supress Rule 1",
                         rule_priority="1",
                         matcher_matched=True,
@@ -2054,7 +2054,7 @@ class TestEligibilityResultBuilder:
             (
                 ReasonFactory.build(
                     rule_type=RuleType.suppression,
-                    rule_description="Matching",
+                    rule_text="Matching",
                     rule_name="Supress Rule 2",
                     rule_priority="1",
                     matcher_matched=True,
@@ -2062,7 +2062,7 @@ class TestEligibilityResultBuilder:
                 [
                     ReasonFactory.build(
                         rule_type=RuleType.suppression,
-                        rule_description="Not matching",
+                        rule_text="Not matching",
                         rule_name="Supress Rule 1",
                         rule_priority="1",
                         matcher_matched=True,
@@ -2073,7 +2073,7 @@ class TestEligibilityResultBuilder:
             (
                 ReasonFactory.build(
                     rule_type=RuleType.suppression,
-                    rule_description="Matching",
+                    rule_text="Matching",
                     rule_name="Supress Rule 1",
                     rule_priority="2",
                     matcher_matched=True,
@@ -2081,14 +2081,14 @@ class TestEligibilityResultBuilder:
                 [
                     ReasonFactory.build(
                         rule_type=RuleType.suppression,
-                        rule_description="Not matching",
+                        rule_text="Not matching",
                         rule_name="Supress Rule 1",
                         rule_priority="1",
                         matcher_matched=True,
                     ),
                     ReasonFactory.build(
                         rule_type=RuleType.suppression,
-                        rule_description="Matching",
+                        rule_text="Matching",
                         rule_name="Supress Rule 1",
                         rule_priority="2",
                         matcher_matched=True,
@@ -2099,7 +2099,7 @@ class TestEligibilityResultBuilder:
             (
                 ReasonFactory.build(
                     rule_type=RuleType.filter,
-                    rule_description="Matching",
+                    rule_text="Matching",
                     rule_name="Supress Rule 1",
                     rule_priority="2",
                     matcher_matched=True,
@@ -2107,14 +2107,14 @@ class TestEligibilityResultBuilder:
                 [
                     ReasonFactory.build(
                         rule_type=RuleType.suppression,
-                        rule_description="Not matching",
+                        rule_text="Not matching",
                         rule_name="Supress Rule 1",
                         rule_priority="1",
                         matcher_matched=True,
                     ),
                     ReasonFactory.build(
                         rule_type=RuleType.filter,
-                        rule_description="Matching",
+                        rule_text="Matching",
                         rule_name="Supress Rule 1",
                         rule_priority="2",
                         matcher_matched=True,
@@ -2126,7 +2126,7 @@ class TestEligibilityResultBuilder:
     def test_build_condition_results_single_cohort(self, reason_2, expected_reasons):
         reason_1 = ReasonFactory.build(
             rule_type=RuleType.suppression,
-            rule_description="Not matching",
+            rule_text="Not matching",
             rule_name="Supress Rule 1",
             rule_priority="1",
             matcher_matched=True,

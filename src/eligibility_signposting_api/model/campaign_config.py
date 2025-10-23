@@ -138,8 +138,8 @@ class IterationCohort(BaseModel):
 class IterationRule(BaseModel):
     type: RuleType = Field(..., alias="Type")
     name: RuleName = Field(..., alias="Name")
-    code: RuleCode | None = Field(None, alias="Code")
-    description: RuleDescription = Field(..., alias="Description")
+    code: RuleCode | None = Field(None, alias="Code", description="use the `rule_code` property instead.")
+    description: RuleDescription = Field(..., alias="Description", description="use the `rule_text` property instead.")
     priority: RulePriority = Field(..., alias="Priority")
     attribute_level: RuleAttributeLevel = Field(..., alias="AttributeLevel")
     attribute_name: RuleAttributeName | None = Field(None, alias="AttributeName")

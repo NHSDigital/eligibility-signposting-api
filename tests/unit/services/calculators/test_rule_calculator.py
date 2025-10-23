@@ -126,7 +126,7 @@ def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_code_input
     # Then
     assert_that(status, is_(Status.not_eligible))
     assert_that(reason.rule_code, equal_to(expected_rule_code), comment)
-    assert_that(reason.rule_description, equal_to(expected_rule_text), comment)
+    assert_that(reason.rule_text, equal_to(expected_rule_text), comment)
 
 
 @pytest.mark.parametrize(
@@ -178,4 +178,4 @@ def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_mappers_in
     # Then
     assert_that(status, is_(Status.not_eligible))
     assert_that(reason.rule_code, equal_to("postcode is M4"), comment)
-    assert_that(reason.rule_description, equal_to("post code rule description"), comment)
+    assert_that(reason.rule_text, equal_to("post code rule description"), comment)
