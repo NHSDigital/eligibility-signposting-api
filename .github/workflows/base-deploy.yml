@@ -220,12 +220,6 @@ jobs:
           echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
         working-directory: ./infrastructure/stacks/api-layer
 
-      - name: "Upload lambda artifact to S3"
-        run: |
-          aws s3 cp ./dist/lambda.zip \
-            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
-            --region eu-west-2
-
       - name: "Validate Feature Toggles"
         env:
           ENV: ${{ needs.metadata.outputs.environment }}
@@ -244,6 +238,17 @@ jobs:
         run: |
           pip install requests
           python scripts/workflow/tag_and_release.py
+
+      - name: "Capture release tag"
+        id: release_tag
+        run: |
+          echo "release_tag=$(cat release_tag.txt)" >> $GITHUB_OUTPUT
+
+      - name: "Upload lambda artifact to S3"
+        run: |
+          aws s3 cp ./dist/lambda.zip \
+            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ steps.release_tag.outputs.release_tag }}/lambda.zip \
+            --region eu-west-2
 
 
   regression-tests:

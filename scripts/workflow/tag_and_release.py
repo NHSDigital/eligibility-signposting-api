@@ -58,6 +58,8 @@ def create_github_release(tag_name, prerelease, token):
 
     if response.status_code == 201:
         print(f"Successfully created GitHub release for tag {tag_name}.")
+        with open("release_tag.txt", "w") as f:
+            f.write(tag_name)
     else:
         print(f"Error creating GitHub release: {response.status_code} {response.text}", file=sys.stderr)
         sys.exit(1)
