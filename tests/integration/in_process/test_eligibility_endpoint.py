@@ -791,7 +791,7 @@ class TestEligibilityResponseWithVariousInputs:
                                     "suitabilityRules": [
                                         {
                                             "ruleCode": "Age rule code from mapper",
-                                            "ruleText": "Exclude too young less than 75",
+                                            "ruleText": "Age Rule Description from mapper",
                                             "ruleType": "S",
                                         }
                                     ],

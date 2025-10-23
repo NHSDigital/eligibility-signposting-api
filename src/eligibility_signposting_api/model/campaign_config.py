@@ -164,7 +164,7 @@ class IterationRule(BaseModel):
         self._parent = parent
 
     @cached_property
-    def get_rule_code(self) -> str:
+    def rule_code(self) -> str:
         """
         Resolves the rule code using the parent Iteration's rules_mapper.
 
@@ -179,6 +179,23 @@ class IterationRule(BaseModel):
                 if rule_entry and self.name in rule_entry.rule_names:
                     rule_code = rule_entry.rule_code
         return rule_code or self.code or self.name
+
+    @cached_property
+    def rule_text(self) -> str:
+        """
+        Resolves the rule text using the parent Iteration's rules_mapper.
+
+        If the rule name matches any entry in the rules_mapper, the corresponding
+        rule_code is returned.
+
+        If no match is found, the rule description is returned.
+        """
+        rule_text = None
+        if self._parent and self._parent.rules_mapper:
+            for rule_entry in self._parent.rules_mapper.values():
+                if rule_entry and self.name in rule_entry.rule_names:
+                    rule_text = rule_entry.rule_text
+        return rule_text or self.description
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)

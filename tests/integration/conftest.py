@@ -607,7 +607,7 @@ def campaign_config_with_rules_having_rule_mapper(
                     "OTHER_SETTINGS": RuleEntry(
                         RuleNames=[RuleName("age_rule_name1")],
                         RuleCode=RuleCode("Age rule code from mapper"),
-                        RuleText=RuleText("some text"),
+                        RuleText=RuleText("Age Rule Description from mapper"),
                     ),
                     "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=RuleCode(""), RuleText=RuleText("")),
                 },
