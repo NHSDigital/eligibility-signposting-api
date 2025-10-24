@@ -8,9 +8,8 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Branch/Tag/SHA to deploy to preprod (dev tag)"
+        description: "Tag to deploy to preprod (dev tag)"
         required: true
-        default: "main"
       release_type:
         description: "Version bump type (use 'rc' to keep the same base and just increment RC)"
         required: true
