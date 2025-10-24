@@ -293,7 +293,50 @@ locals {
       actions_enabled     = false       # Disable until service is live
     }
   }
+
+  # ACM alarm configuration
+  acm_alarm_config = {
+    "CertificateExpiry44Days" = {
+      metric_name         = "DaysToExpiry"
+      namespace           = "AWS/CertificateManager"
+      statistic           = "Minimum"
+      threshold           = 44
+      comparison_operator = "LessThanThreshold"
+      evaluation_periods  = 1
+      period              = 86400 # one day in seconds
+      alarm_description   = "ACM Certificate expiring within 44 days"
+      severity            = "medium"
+      treat_missing_data  = "notBreaching"
+    }
+
+    "CertificateExpiry30Days" = {
+      metric_name         = "DaysToExpiry"
+      namespace           = "AWS/CertificateManager"
+      statistic           = "Minimum"
+      threshold           = 30
+      comparison_operator = "LessThanThreshold"
+      evaluation_periods  = 1
+      period              = 86400 # one day in seconds
+      alarm_description   = "ACM Certificate expiring within 30 days"
+      severity            = "high"
+      treat_missing_data  = "notBreaching"
+    }
+
+    "CertificateExpiry7Days" = {
+      metric_name         = "DaysToExpiry"
+      namespace           = "AWS/CertificateManager"
+      statistic           = "Minimum"
+      threshold           = 7
+      comparison_operator = "LessThanThreshold"
+      evaluation_periods  = 1
+      period              = 86400 # one day in seconds
+      alarm_description   = "ACM Certificate expiring within 7 days"
+      severity            = "critical"
+      treat_missing_data  = "notBreaching"
+    }
+  }
 }
+
 
 # SNS Topic for CloudWatch Alarms
 resource "aws_sns_topic" "cloudwatch_alarms" {
@@ -412,6 +455,32 @@ resource "aws_cloudwatch_metric_alarm" "lambda_alarms" {
     Environment = var.environment
     AlertType   = "performance"
     Service     = "lambda"
+    Severity    = each.value.severity
+    ManagedBy   = "terraform"
+  }
+
+  alarm_actions = [aws_sns_topic.cloudwatch_alarms.arn]
+}
+
+# ACM CloudWatch Alarms
+resource "aws_cloudwatch_metric_alarm" "acm_expiry_alarms" {
+  for_each = local.acm_alarm_config
+
+  alarm_name          = "ACM-${each.key}"
+  alarm_description   = each.value.alarm_description
+  namespace           = each.value.namespace
+  metric_name         = each.value.metric_name
+  statistic           = each.value.statistic
+  threshold           = each.value.threshold
+  comparison_operator = each.value.comparison_operator
+  evaluation_periods  = each.value.evaluation_periods
+  period              = each.value.period
+  treat_missing_data  = each.value.treat_missing_data
+
+  tags = {
+    Environment = var.environment
+    AlertType   = "security"
+    Service     = "acm"
     Severity    = each.value.severity
     ManagedBy   = "terraform"
   }
