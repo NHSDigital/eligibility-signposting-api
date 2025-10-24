@@ -305,7 +305,7 @@ locals {
       evaluation_periods  = 1
       period              = 86400 # one day in seconds
       alarm_description   = "ACM Certificate expiring within 44 days"
-      severity            = "medium"
+      severity            = "warning"
       treat_missing_data  = "notBreaching"
     }
 
