@@ -1,122 +1,109 @@
 name: "4. CD | Deploy to PreProd"
 
 concurrency:
-  group: terraform-deploy-preprod
+  group: preprod-deploy
   cancel-in-progress: false
 
 on:
-  # Auto promote after TEST succeeds
   workflow_run:
     workflows: ["3. CD | Deploy to Test"]
     types: [completed]
-
-  # Manual override path (kept)
   workflow_dispatch:
     inputs:
       ref:
-        description: "Branch/Tag/SHA to deploy to preprod (dev tag)"
-        required: false
-        default: ""
+        description: "dev-* tag to deploy to PreProd"
+        required: true
       release_type:
-        description: "Version bump (rc|patch|minor|major)"
+        description: "rc|patch|minor|major"
+        required: true
+        default: "rc"
+      allow_older:
+        description: "Allow deploying older than latest tested on main?"
         required: false
-        default: ""
         type: choice
-        options: [rc, patch, minor, major]
+        options: ["false","true"]
+        default: "false"
+      reason:
+        description: "Why are you doing a manual deployment?"
+        required: true
+        default: "To roll back to a previous commit"
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   metadata:
-    name: "Resolve ref + release_type"
+    name: "Resolve ref + stale guard + release type"
     runs-on: ubuntu-latest
-
-    # Only run automatically if TEST succeeded,
-    # or always if this is a manual dispatch
-    if: >
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success')
-      || github.event_name == 'workflow_dispatch'
-
     outputs:
-      ref: ${{ steps.resolve_ref.outputs.ref }}
-      release_type: ${{ steps.resolve_release_type.outputs.release_type }}
+      ref:          ${{ steps.resolver.outputs.this_ref }}
+      this_sha:     ${{ steps.resolver.outputs.this_sha }}
+      latest_sha:   ${{ steps.resolver.outputs.latest_test_sha }}
+      release_type: ${{ steps.release_type.outputs.release_type }}
 
     steps:
-      - name: "Checkout exact commit (auto path) or repo (manual path)"
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'main' }}
-          fetch-depth: 0
+      - name: Checkout (full history & tags)
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
-      - name: "Resolve the dev-* tag for this commit (auto path)"
-        id: resolve_ref
+      - name: Announce candidate ref
+        id: announce
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            # manual override provided?
-            if [[ -n "${{ github.event.inputs.ref }}" ]]; then
-              echo "ref=${{ github.event.inputs.ref }}" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-            echo "No manual ref provided; attempting to derive from HEAD of default branch."
-            SHA=$(git rev-parse HEAD)
+          git fetch --tags --force --quiet
+
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            HEAD="${{ github.event.workflow_run.head_sha }}"
+            TAG="$(git tag --points-at "$HEAD" | grep '^dev-' | head -n1 || true)"
           else
-            SHA="${{ github.event.workflow_run.head_sha }}"
+            HEAD="$(git rev-list -n1 "${{ github.event.inputs.ref }}")"
+            TAG="${{ github.event.inputs.ref }}"
           fi
 
-          git fetch --tags --force
-          TAG=$(git tag --points-at "$SHA" | grep '^dev-' | head -n1 || true)
-          if [[ -z "$TAG" ]]; then
-            echo "ERROR: No dev-* tag found on $SHA=$SHA and no manual ref provided." >&2
-            exit 1
-          fi
-          echo "ref=$TAG" >> $GITHUB_OUTPUT
-          echo "Resolved ref: $TAG"
+          echo "CANDIDATE_TAG=$TAG"
+          echo "CANDIDATE_SHA=$HEAD"
 
-      - name: "Infer release_type from PR labels (fallback to rc)"
-        id: resolve_release_type
+          # Nice UI hints
+          echo "::notice title=PreProd candidate::dev tag: ${TAG} | sha: ${HEAD}"
+          {
+            echo "### PreProd candidate"
+            echo ""
+            echo "- dev tag: \`${TAG:-<none>}\`"
+            echo "- head sha: \`${HEAD:-<none>}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Resolve THIS vs LATEST TEST + stale guard (auto only)
+        id: resolver
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          set -euo pipefail
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          MANUAL_REF: ${{ github.event.inputs.ref }}
+          ALLOW_OLDER: ${{ github.event.inputs.allow_older }}
+          WORKFLOW_NAME: "3. CD | Deploy to Test"
+          BRANCH: "main"
+          LIMIT: "30"
+        run: python3 scripts/version_resolver.py
 
-          # manual override wins
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.release_type }}" ]]; then
-            echo "release_type=${{ github.event.inputs.release_type }}" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+      - name: Resolve release_type (labels → default rc)
+        id: release_type
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: "main"
+          AGGREGATE: "true"
+          THIS_SHA: ${{ steps.resolver.outputs.this_sha }}
+          LATEST_TEST_SHA: ${{ steps.resolver.outputs.latest_test_sha }}
+          MANUAL_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+        run: python3 scripts/release_type_resolver.py
 
-          # find PR for the commit that went to TEST
-          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
-            SHA="${{ github.event.workflow_run.head_sha }}"
-          else
-            SHA=$(git rev-parse HEAD)
-          fi
-
-          # Use the commits->pulls API to get the PR number
-          PR_NUM=$(gh api \
-            -H "Accept: application/vnd.github.groot-preview+json" \
-            /repos/${{ github.repository }}/commits/$SHA/pulls \
-            --jq '.[0].number // empty')
-
-          RELEASE_TYPE="rc"  # safe default
-          if [[ -n "$PR_NUM" ]]; then
-            LABELS=$(gh api /repos/${{ github.repository }}/issues/$PR_NUM/labels --jq '.[].name')
-            if echo "$LABELS" | grep -q '^release:major$'; then RELEASE_TYPE="major"; fi
-            if echo "$LABELS" | grep -q '^release:minor$'; then RELEASE_TYPE="minor"; fi
-            if echo "$LABELS" | grep -q '^release:patch$'; then RELEASE_TYPE="patch"; fi
-            if echo "$LABELS" | grep -q '^release:rc$';    then RELEASE_TYPE="rc";    fi
-          fi
-
-          echo "release_type=$RELEASE_TYPE" >> $GITHUB_OUTPUT
-          echo "Resolved release_type: $RELEASE_TYPE"
-
-  call:
+  deploy:
+    name: "Call base-deploy.yml (PreProd)"
     needs: [metadata]
     uses: ./.github/workflows/base-deploy.yml
     with:
       environment: preprod
-      ref: ${{ needs.metadata.outputs.ref }}
+      ref:          ${{ needs.metadata.outputs.ref }}
       release_type: ${{ needs.metadata.outputs.release_type }}
     secrets: inherit
