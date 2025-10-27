@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 PreProd resolver:
 - Determines the furthest-ahead successful TEST commit on main (sha + dev-* tag).
