@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Resolve release_type from PR labels with safe defaults.
 
