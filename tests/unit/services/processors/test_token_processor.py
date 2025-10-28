@@ -8,8 +8,8 @@ from eligibility_signposting_api.model.eligibility_status import (
     Condition,
     ConditionName,
     Reason,
-    RuleDescription,
     RulePriority,
+    RuleText,
     RuleType,
     Status,
     StatusText,
@@ -50,15 +50,17 @@ class TestTokenProcessor:
         reason1 = Reason(
             RuleType.suppression,
             eligibility_status.RuleName("Rule1"),
+            None,
             RulePriority("1"),
-            RuleDescription("This is a rule."),
+            RuleText("This is a rule."),
             matcher_matched=False,
         )
         reason2 = Reason(
             RuleType.filter,
             eligibility_status.RuleName("Rule2"),
+            None,
             RulePriority("1"),
-            RuleDescription("Rule [[PERSON.AGE]] here."),
+            RuleText("Rule [[PERSON.AGE]] here."),
             matcher_matched=True,
         )
 
@@ -82,7 +84,7 @@ class TestTokenProcessor:
         actual = TokenProcessor.find_and_replace_tokens(person, condition)
 
         assert actual.cohort_results[0].description == "Results for cohort 30."
-        assert actual.cohort_results[0].reasons[1].rule_description == "Rule 30 here."
+        assert actual.cohort_results[0].reasons[1].rule_text == "Rule 30 here."
         assert actual.status_text == StatusText("Everything is NICE.")
 
     def test_invalid_token_on_person_attribute_should_raise_error(self):

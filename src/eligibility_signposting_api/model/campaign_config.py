@@ -9,7 +9,16 @@ from functools import cached_property
 from operator import attrgetter
 from typing import Literal, NewType
 
-from pydantic import BaseModel, Field, HttpUrl, RootModel, field_serializer, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    PrivateAttr,
+    RootModel,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS, RULE_STOP_DEFAULT
 
@@ -36,6 +45,8 @@ CohortGroup = NewType("CohortGroup", str)
 Description = NewType("Description", str)
 RuleStop = NewType("RuleStop", bool)
 CommsRouting = NewType("CommsRouting", str)
+RuleCode = NewType("RuleCode", str)
+RuleText = NewType("RuleText", str)
 
 
 class RuleType(StrEnum):
@@ -127,7 +138,8 @@ class IterationCohort(BaseModel):
 class IterationRule(BaseModel):
     type: RuleType = Field(..., alias="Type")
     name: RuleName = Field(..., alias="Name")
-    description: RuleDescription = Field(..., alias="Description")
+    code: RuleCode | None = Field(None, alias="Code", description="use the `rule_code` property instead.")
+    description: RuleDescription = Field(..., alias="Description", description="use the `rule_text` property instead.")
     priority: RulePriority = Field(..., alias="Priority")
     attribute_level: RuleAttributeLevel = Field(..., alias="AttributeLevel")
     attribute_name: RuleAttributeName | None = Field(None, alias="AttributeName")
@@ -145,6 +157,45 @@ class IterationRule(BaseModel):
         if isinstance(v, str):
             return v.upper() == "Y"
         return v
+
+    _parent: Iteration | None = PrivateAttr(default=None)
+
+    def set_parent(self, parent: Iteration) -> None:
+        self._parent = parent
+
+    @property
+    def rule_code(self) -> str:
+        """
+        Resolves the rule code using the parent Iteration's rules_mapper.
+
+        If the rule name matches any entry in the rules_mapper, the corresponding
+        rule_code is returned.
+
+        If no match is found, rule code is returned if it exists, otherwise the rule name is returned.
+        """
+        rule_code = None
+        if self._parent and self._parent.rules_mapper:
+            for rule_entry in self._parent.rules_mapper.values():
+                if rule_entry and self.name in rule_entry.rule_names:
+                    rule_code = rule_entry.rule_code
+        return rule_code or self.code or self.name
+
+    @property
+    def rule_text(self) -> str:
+        """
+        Resolves the rule text using the parent Iteration's rules_mapper.
+
+        If the rule name matches any entry in the rules_mapper, the corresponding
+        rule_text is returned.
+
+        If no match is found, the rule description is returned.
+        """
+        rule_text = None
+        if self._parent and self._parent.rules_mapper:
+            for rule_entry in self._parent.rules_mapper.values():
+                if rule_entry and self.name in rule_entry.rule_names:
+                    rule_text = rule_entry.rule_text
+        return rule_text or self.description
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
@@ -173,6 +224,14 @@ class StatusText(BaseModel):
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
 
+class RuleEntry(BaseModel):
+    rule_names: list[RuleName] = Field(..., alias="RuleNames")
+    rule_code: RuleCode | None = Field(None, alias="RuleCode")
+    rule_text: RuleText | None = Field(None, alias="RuleText")
+
+    model_config = {"populate_by_name": True}
+
+
 class Iteration(BaseModel):
     id: IterationID = Field(..., alias="ID")
     version: IterationVersion = Field(..., alias="Version")
@@ -188,6 +247,7 @@ class Iteration(BaseModel):
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
     actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
+    rules_mapper: dict[str, RuleEntry] | None = Field(None, alias="RulesMapper")
     status_text: StatusText | None = Field(None, alias="StatusText")
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
@@ -203,6 +263,12 @@ class Iteration(BaseModel):
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
+
+    @model_validator(mode="after")
+    def attach_rule_parents(self) -> Iteration:
+        for rule in self.iteration_rules:
+            rule.set_parent(self)
+        return self
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
