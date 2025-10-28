@@ -61,9 +61,16 @@ def latest_final_tag() -> str | None:
     return tags[0] if tags else None
 
 def first_commit() -> str:
+    """
+    Returns the first commit of the current branch.
+
+    We will never use this for our project since we
+    already have a release but can be used as a
+    fallback for new projects.
+    """
     return run(["git","rev-list","--max-parents=0","HEAD"], check=True).stdout.strip()
 
-def first_parent_merges(base: str, head: str) -> List[str]:
+def list_merged_pr_commits(base: str, head: str) -> List[str]:
     rng = f"{base}..{head}"
     cp = run(["git","rev-list","--merges","--first-parent", rng], check=False)
     return [x for x in cp.stdout.splitlines() if x]
