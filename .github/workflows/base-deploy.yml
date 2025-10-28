@@ -19,6 +19,13 @@ on:
     secrets: {}
 
 jobs:
+  act_guard:
+    steps:
+      - name: Dry run guard
+        if: env.DRY_RUN == 'true'
+        run: |
+          echo "DRY RUN: would deploy ${INPUT_environment} ref ${INPUT_ref} release_type ${INPUT_release_type}"
+          exit 0
   metadata:
     name: "Set CI/CD metadata"
     runs-on: ubuntu-latest
