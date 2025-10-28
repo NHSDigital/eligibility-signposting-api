@@ -37,7 +37,7 @@ def fail(msg: str) -> int:
     print(f"::error::{msg}", file=sys.stderr)
     return 1
 
-def ensure_graph():
+def fetch_latest_from_remote():
     run(["git","fetch","origin", BRANCH, "--quiet"], check=True)
     run(["git","fetch","--tags","--force","--quiet"], check=True)
 
@@ -112,9 +112,9 @@ def main() -> int:
 
     this_sha = (os.getenv("THIS_SHA") or "").strip()
     if not this_sha:
-        return fail("THIS_SHA is required when no MANUAL_RELEASE_TYPE is provided")
+        return fail("Cannot determine sha")
 
-    ensure_graph()
+    fetch_latest_from_remote()
 
     aggregate = (os.getenv("AGGREGATE","false").lower() == "true")
     pr_nums: Set[int] = set()
@@ -126,7 +126,7 @@ def main() -> int:
         if not latest_test_sha:
             return fail("LATEST_TEST_SHA is required when AGGREGATE=true")
         base = latest_final_tag() or first_commit()
-        merges = first_parent_merges(base, latest_test_sha)
+        merges = list_merged_pr_commits(base, latest_test_sha)
         for m in merges:
             for n in prs_for_commit(m):
                 pr_nums.add(n)

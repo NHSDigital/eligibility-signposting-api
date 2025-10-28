@@ -43,7 +43,7 @@ def git_ok(args: List[str]) -> bool:
 def is_ancestor(older: str, newer: str) -> bool:
     return subprocess.run(["git", "merge-base", "--is-ancestor", older, newer]).returncode == 0
 
-def fetch_graph() -> None:
+def fetch_latest_from_remote() -> None:
     run(["git", "fetch", "origin", BRANCH, "--quiet"])
     run(["git", "fetch", "--tags", "--force", "--quiet"])
 
@@ -158,7 +158,7 @@ def write_outputs(current: RefInfo, latest: RefInfo) -> None:
 
 def main() -> int:
     require_token()
-    fetch_graph()
+    fetch_latest_from_remote()
     latest = resolve_latest_test()
     current = resolve_this_run()
     enforce_guard(current, latest)
