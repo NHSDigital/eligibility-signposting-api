@@ -1,8 +1,9 @@
 """
-PreProd resolver:
-- Determines the furthest-ahead successful TEST commit on main (sha + dev-* tag).
+Pre-release resolver:
+- Determines the furthest-ahead successful (TEST env deployed) commit on main (sha + dev-* tag).
 - Resolves THIS run's sha + dev-* tag (auto via workflow_run, or manual via input tag).
 - Applies the stale-run guard (auto blocks older; manual requires allow_older=true).
+- Fails if the commit being run is not the furthest-ahead successful
 - Emits outputs for later steps.
 
 Outputs (via $GITHUB_OUTPUT):
@@ -16,17 +17,16 @@ import re
 import subprocess
 import sys
 from dataclasses import dataclass
-from typing import List, Optional
-
+from typing import List, Optional, NoReturn
 
 WORKFLOW_NAME = os.getenv("WORKFLOW_NAME", "3. CD | Deploy to Test")
-BRANCH        = os.getenv("BRANCH", "main")
-LIMIT         = int(os.getenv("LIMIT", "30"))
+BRANCH = os.getenv("BRANCH", "main")
+LIMIT = int(os.getenv("LIMIT", "30")) #how many previous successful test deployed commits to consider
 
-EVENT_NAME    = os.getenv("EVENT_NAME", "")
+EVENT_NAME = os.getenv("EVENT_NAME", "")
 HEAD_SHA_AUTO = os.getenv("WORKFLOW_RUN_HEAD_SHA", "")
-MANUAL_REF    = os.getenv("MANUAL_REF", "")
-ALLOW_OLDER   = os.getenv("ALLOW_OLDER", "false").lower()
+MANUAL_REF = os.getenv("MANUAL_REF", "")
+ALLOW_OLDER = os.getenv("ALLOW_OLDER", "true").lower()
 
 
 def fail(msg: str) -> "NoReturn":
@@ -34,6 +34,7 @@ def fail(msg: str) -> "NoReturn":
     sys.exit(1)
 
 def run(cmd: List[str], *, check: bool = True) -> subprocess.CompletedProcess:
+    # cp = completed process (will use this to refer)
     return subprocess.run(cmd, check=check, capture_output=True, text=True)
 
 def git_ok(args: List[str]) -> bool:
@@ -53,9 +54,9 @@ def gh_json(args: List[str]) -> list:
 
 def dev_tag_for_sha(sha: str) -> Optional[str]:
     cp = run(["git", "tag", "--points-at", sha], check=False)
-    for t in cp.stdout.splitlines():
-        if t.startswith("dev-"):
-            return t
+    for tag in cp.stdout.splitlines():
+        if tag.startswith("dev-"):
+            return tag
     return None
 
 def sha_for_tag(tag: str) -> Optional[str]:
@@ -74,6 +75,10 @@ def require_token() -> None:
         fail("GH_TOKEN/GITHUB_TOKEN is required")
 
 def list_successful_test_shas() -> List[str]:
+    """
+    These are commits that have been deployed into
+    the test env successfully
+    """
     data = gh_json([
         "run", "list",
         "--workflow", WORKFLOW_NAME,
@@ -82,13 +87,13 @@ def list_successful_test_shas() -> List[str]:
         "--json", "headSha",
         "--limit", str(LIMIT),
     ])
-    return [it["headSha"] for it in data if it.get("headSha")]
+    return [commit["headSha"] for commit in data if commit.get("headSha")]
 
 def pick_furthest_ahead(shas: List[str]) -> str:
     latest: Optional[str] = None
-    for cand in shas:
-        if latest is None or is_ancestor(latest, cand):
-            latest = cand
+    for candidate in shas:
+        if latest is None or is_ancestor(latest, candidate):
+            latest = candidate
     return latest or ""
 
 def resolve_latest_test() -> RefInfo:
@@ -106,7 +111,7 @@ def resolve_latest_test() -> RefInfo:
         fail(f"No dev-* tag found on latest TEST SHA ({latest_sha})")
     return RefInfo(sha=latest_sha, ref=latest_ref)
 
-def resolve_this_run() -> RefInfo:
+def resolve_this_run() -> RefInfo | None:
     if EVENT_NAME == "workflow_run":
         if not HEAD_SHA_AUTO:
             fail("WORKFLOW_RUN_HEAD_SHA missing for workflow_run event")
@@ -118,8 +123,6 @@ def resolve_this_run() -> RefInfo:
     if EVENT_NAME == "workflow_dispatch":
         if not MANUAL_REF:
             fail("MANUAL_REF (inputs.ref) is required for manual dispatch")
-        if not re.match(r"^dev-\d{14}$", MANUAL_REF):
-            fail(f"Invalid dev-* tag format: {MANUAL_REF}")
         if not git_ok(["rev-parse", "-q", "--verify", f"refs/tags/{MANUAL_REF}"]):
             fail(f"Tag not found: {MANUAL_REF}")
         sha = sha_for_tag(MANUAL_REF)
@@ -129,29 +132,26 @@ def resolve_this_run() -> RefInfo:
             fail(f"Chosen tag {MANUAL_REF} is not on origin/{BRANCH} history")
         return RefInfo(sha=sha, ref=MANUAL_REF)
 
-    fail(f"Unsupported EVENT_NAME: {EVENT_NAME}")
-    raise AssertionError("unreachable")
-
-def enforce_guard(this_: RefInfo, latest: RefInfo) -> None:
-    older_than_latest = (this_.sha != latest.sha) and is_ancestor(this_.sha, latest.sha)
+def enforce_guard(current: RefInfo, latest: RefInfo) -> None:
+    older_than_latest = (current.sha != latest.sha) and is_ancestor(current.sha, latest.sha)
 
     if EVENT_NAME == "workflow_run":
         if older_than_latest:
             fail(
                 f"Stale PreProd approval. Latest tested is {latest.ref} ({latest.sha}); "
-                f"this run is {this_.ref} ({this_.sha})."
+                f"this run is {current.ref} ({current.sha})."
             )
     else:
         if ALLOW_OLDER != "true" and older_than_latest:
             fail("Older than latest tested. Set allow_older=true if you intend to backdeploy.")
 
-def write_outputs(this_: RefInfo, latest: RefInfo) -> None:
+def write_outputs(current: RefInfo, latest: RefInfo) -> None:
     out = os.getenv("GITHUB_OUTPUT")
     if not out:
         return
     with open(out, "a") as f:
-        f.write(f"this_sha={this_.sha}\n")
-        f.write(f"this_ref={this_.ref}\n")
+        f.write(f"this_sha={current.sha}\n")
+        f.write(f"this_ref={current.ref}\n")
         f.write(f"latest_test_sha={latest.sha}\n")
         f.write(f"latest_test_ref={latest.ref}\n")
 

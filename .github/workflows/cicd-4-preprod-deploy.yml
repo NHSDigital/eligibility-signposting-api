@@ -85,7 +85,7 @@ jobs:
           WORKFLOW_NAME: "3. CD | Deploy to Test"
           BRANCH: "main"
           LIMIT: "30"
-        run: python3 scripts/version_resolver.py
+        run: python3 scripts/pre-release_resolver.py
 
       - name: Resolve release_type (labels → default rc)
         id: release_type
