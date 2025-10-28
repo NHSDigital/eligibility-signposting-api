@@ -11,74 +11,37 @@ Outputs (via $GITHUB_OUTPUT):
 """
 
 from __future__ import annotations
-import json
 import os
 import re
-import subprocess
 import sys
 from dataclasses import dataclass
 from typing import List, Optional, NoReturn
 
-WORKFLOW_NAME = os.getenv("WORKFLOW_NAME", "3. CD | Deploy to Test")
-BRANCH = os.getenv("BRANCH", "main")
-LIMIT = int(os.getenv("LIMIT", "30")) #how many previous successful test deployed commits to consider
+from ci_utils import (
+    BRANCH,
+    fail,
+    ensure_token,
+    fetch_latest_from_remote,
+    gh_json,
+    dev_tag_for_sha,
+    sha_for_tag,
+    is_ancestor,
+    git_ok,
+)
 
+WORKFLOW_NAME = os.getenv("WORKFLOW_NAME", "3. CD | Deploy to Test")
+LIMIT = int(os.getenv("LIMIT", "30"))
 EVENT_NAME = os.getenv("EVENT_NAME", "")
 HEAD_SHA_AUTO = os.getenv("WORKFLOW_RUN_HEAD_SHA", "")
 MANUAL_REF = os.getenv("MANUAL_REF", "")
 ALLOW_OLDER = os.getenv("ALLOW_OLDER", "true").lower()
-
-
-def fail(msg: str) -> "NoReturn":
-    print(f"::error::{msg}", file=sys.stderr)
-    sys.exit(1)
-
-def run(cmd: List[str], *, check: bool = True) -> subprocess.CompletedProcess:
-    # cp = completed process (will use this to refer)
-    return subprocess.run(cmd, check=check, capture_output=True, text=True)
-
-def git_ok(args: List[str]) -> bool:
-    return subprocess.run(["git", *args]).returncode == 0
-
-def is_ancestor(older: str, newer: str) -> bool:
-    return subprocess.run(["git", "merge-base", "--is-ancestor", older, newer]).returncode == 0
-
-def fetch_latest_from_remote() -> None:
-    run(["git", "fetch", "origin", BRANCH, "--quiet"])
-    run(["git", "fetch", "--tags", "--force", "--quiet"])
-
-def gh_json(args: List[str]) -> list:
-    cp = run(["gh", *args])
-    raw = cp.stdout.strip()
-    return json.loads(raw) if raw else []
-
-def dev_tag_for_sha(sha: str) -> Optional[str]:
-    cp = run(["git", "tag", "--points-at", sha], check=False)
-    for tag in cp.stdout.splitlines():
-        if tag.startswith("dev-"):
-            return tag
-    return None
-
-def sha_for_tag(tag: str) -> Optional[str]:
-    cp = run(["git", "rev-list", "-n1", tag], check=False)
-    return cp.stdout.strip() or None
-
 
 @dataclass(frozen=True)
 class RefInfo:
     sha: str
     ref: str
 
-
-def require_token() -> None:
-    if not (os.getenv("GH_TOKEN") or os.getenv("GITHUB_TOKEN")):
-        fail("GH_TOKEN/GITHUB_TOKEN is required")
-
 def list_successful_test_shas() -> List[str]:
-    """
-    These are commits that have been deployed into
-    the test env successfully
-    """
     data = gh_json([
         "run", "list",
         "--workflow", WORKFLOW_NAME,
@@ -87,7 +50,7 @@ def list_successful_test_shas() -> List[str]:
         "--json", "headSha",
         "--limit", str(LIMIT),
     ])
-    return [commit["headSha"] for commit in data if commit.get("headSha")]
+    return [c["headSha"] for c in data if c.get("headSha")]
 
 def pick_furthest_ahead(shas: List[str]) -> str:
     latest: Optional[str] = None
@@ -111,7 +74,7 @@ def resolve_latest_test() -> RefInfo:
         fail(f"No dev-* tag found on latest TEST SHA ({latest_sha})")
     return RefInfo(sha=latest_sha, ref=latest_ref)
 
-def resolve_this_run() -> RefInfo | None:
+def resolve_this_run() -> RefInfo:
     if EVENT_NAME == "workflow_run":
         if not HEAD_SHA_AUTO:
             fail("WORKFLOW_RUN_HEAD_SHA missing for workflow_run event")
@@ -123,6 +86,8 @@ def resolve_this_run() -> RefInfo | None:
     if EVENT_NAME == "workflow_dispatch":
         if not MANUAL_REF:
             fail("MANUAL_REF (inputs.ref) is required for manual dispatch")
+        if not re.match(r"^dev-\d{14}$", MANUAL_REF):
+            fail(f"Invalid dev-* tag format: {MANUAL_REF}")
         if not git_ok(["rev-parse", "-q", "--verify", f"refs/tags/{MANUAL_REF}"]):
             fail(f"Tag not found: {MANUAL_REF}")
         sha = sha_for_tag(MANUAL_REF)
@@ -132,9 +97,10 @@ def resolve_this_run() -> RefInfo | None:
             fail(f"Chosen tag {MANUAL_REF} is not on origin/{BRANCH} history")
         return RefInfo(sha=sha, ref=MANUAL_REF)
 
+    fail(f"Unsupported EVENT_NAME: {EVENT_NAME}")
+
 def enforce_guard(current: RefInfo, latest: RefInfo) -> None:
     older_than_latest = (current.sha != latest.sha) and is_ancestor(current.sha, latest.sha)
-
     if EVENT_NAME == "workflow_run":
         if older_than_latest:
             fail(
@@ -155,9 +121,8 @@ def write_outputs(current: RefInfo, latest: RefInfo) -> None:
         f.write(f"latest_test_sha={latest.sha}\n")
         f.write(f"latest_test_ref={latest.ref}\n")
 
-
 def main() -> int:
-    require_token()
+    ensure_token()
     fetch_latest_from_remote()
     latest = resolve_latest_test()
     current = resolve_this_run()
@@ -166,7 +131,6 @@ def main() -> int:
     print(f"THIS: {current.ref} ({current.sha})")
     print(f"LATEST TEST: {latest.ref} ({latest.sha})")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())
