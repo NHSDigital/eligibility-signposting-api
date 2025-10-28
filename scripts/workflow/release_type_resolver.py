@@ -2,26 +2,26 @@
 Resolve release_type from PR labels with safe defaults.
 
 Modes
------
-1) Manual override (MANUAL_RELEASE_TYPE): emit that and exit.
-2) Single-PR mode (default): inspect PR labels for THIS_SHA; default "rc".
-3) Aggregate mode (AGGREGATE=true): consider *all PRs merged since latest final tag*
-   up to LATEST_TEST_SHA (BOUNDARY), and pick highest of {major > minor > patch > rc}.
+
+- Manual override (MANUAL_RELEASE_TYPE): emit that and exit.
+- Single-PR mode (default): inspect PR labels for THIS_SHA; default "rc".
+- Aggregate mode (AGGREGATE=true): consider TEST deployed PRs merged since latest final tag*
+   up to LATEST_TEST_SHA (BOUNDARY), and pick highest of major > minor > patch > rc
 
 Env inputs
-----------
-GH_TOKEN / GITHUB_TOKEN : required
-THIS_SHA                : SHA being promoted (required unless manual override)
-LATEST_TEST_SHA         : required when AGGREGATE=true
-MANUAL_RELEASE_TYPE     : optional (rc|patch|minor|major)
-AGGREGATE               : "true"|"false" (default "false")
-BRANCH                  : branch (default "main")
 
-Outputs (GITHUB_OUTPUT)
------------------------
-release_type : rc|patch|minor|major
-basis        : manual|single-pr|aggregate
-pr_numbers   : comma-separated PR numbers considered
+GH_TOKEN / GITHUB_TOKEN: required
+THIS_SHA: SHA being promoted (required unless manual override)
+LATEST_TEST_SHA: required when AGGREGATE=true
+MANUAL_RELEASE_TYPE: (rc|patch|minor|major)
+AGGREGATE: "true"|"false" (default "false")
+BRANCH: branch (default "main")
+
+Outputs
+
+release_type: rc|patch|minor|major
+basis: manual|single-pr|aggregate
+pr_numbers: comma-separated PR numbers considered
 """
 
 import os, subprocess, sys
@@ -30,6 +30,7 @@ from typing import List, Set
 BRANCH = os.getenv("BRANCH", "main")
 
 def run(cmd: List[str], check=True, capture=True) -> subprocess.CompletedProcess:
+    # cp = completed process (will use this to refer)
     return subprocess.run(cmd, check=check, capture_output=capture, text=True)
 
 def fail(msg: str) -> int:
@@ -41,6 +42,10 @@ def ensure_graph():
     run(["git","fetch","--tags","--force","--quiet"], check=True)
 
 def gh_api(path: str, jq: str | None = None) -> List[str]:
+    """
+    A simple python wrapper around the GitHub API
+    to make it a callable function.
+    """
     args = ["gh","api", path]
     if jq:
         args += ["--jq", jq]
@@ -48,6 +53,9 @@ def gh_api(path: str, jq: str | None = None) -> List[str]:
     return [x for x in cp.stdout.splitlines() if x]
 
 def latest_final_tag() -> str | None:
+    """
+    Grabs the version tags and sorts semantically desc
+    """
     cp = run(["git","tag","--list","v[0-9]*.[0-9]*.[0-9]*","--sort=-v:refname"], check=True)
     tags = cp.stdout.splitlines()
     return tags[0] if tags else None
