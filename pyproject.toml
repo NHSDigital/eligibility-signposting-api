@@ -73,6 +73,9 @@ docker-platform = "linux/x86_64"
 package-artifact-path = "dist/lambda.zip"
 without = "dev"
 
+[tool.poetry.scripts]
+clean-lambda = "scripts.lambda.clean_lambda:main"
+
 [tool.ruff]
 line-length = 120
 exclude = ["docs/", "scripts/"]
