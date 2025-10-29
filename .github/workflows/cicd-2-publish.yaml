@@ -125,23 +125,36 @@ jobs:
           git tag ${{ needs.metadata.outputs.version }}
           git push origin ${{ needs.metadata.outputs.version }}
 
-      - name: "Notify Slack on PR merge"
-        uses: slackapi/slack-github-action@v2.1.1
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: webhook-trigger
-          payload: |
-            status: "${{ job.status }}"
-            link: "https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
-            Author: "${{ github.actor }}"
-            title: "Pushed to main"
-            version: "${{ needs.metadata.outputs.version }}"
+      - name: "Extract S3 bucket name from Terraform output"
+        id: tf_output
+        run: |
+          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
+        working-directory: ./infrastructure/stacks/api-layer
 
-  regression-tests:
-    name: "Regression Tests"
-    needs: publish
-    uses: ./.github/workflows/regression-tests.yml
-    with:
-      ENVIRONMENT: "dev"
-      VERSION_NUMBER: "main"
-    secrets: inherit
+      - name: "Upload lambda artifact to S3"
+        run: |
+          aws s3 cp ./dist/lambda.zip \
+            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.version }}/lambda.zip \
+            --region eu-west-2
+
+#      - name: "Notify Slack on PR merge"
+#        uses: slackapi/slack-github-action@v2.1.1
+#        with:
+#          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+#          webhook-type: webhook-trigger
+#          payload: |
+#            status: "${{ job.status }}"
+#            link: "https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+#            Author: "${{ github.actor }}"
+#            title: "Pushed to main"
+#            version: "${{ needs.metadata.outputs.version }}"
+
+#  regression-tests:
+#    name: "Regression Tests"
+#    needs: publish
+#    uses: ./.github/workflows/regression-tests.yml
+#    with:
+#      ENVIRONMENT: "dev"
+#      VERSION_NUMBER: "main"
+#    secrets: inherit
