@@ -43,8 +43,7 @@ check-licenses:
 build: dist/lambda.zip # Build lambda.zip in dist/
 
 dist/lambda.zip: $(MAKE_DIR)/pyproject.toml $(MAKE_DIR)/poetry.lock $(shell find src -type f)
-	poetry build-lambda -vv
-	poetry run clean-lambda
+	poetry build-lambda -vv && poetry run clean-lambda
 
 deploy: # Deploy the project artefact to the target environment @Pipeline
 	# TODO: Implement the artefact deployment step
