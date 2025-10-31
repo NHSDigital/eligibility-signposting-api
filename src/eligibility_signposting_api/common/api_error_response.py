@@ -5,9 +5,10 @@ from datetime import UTC, datetime
 from enum import Enum
 from http import HTTPStatus
 
-from fhir.resources.operationoutcome import OperationOutcome, OperationOutcomeIssue
 from flask import make_response
 from flask.typing import ResponseReturnValue
+
+from eligibility_signposting_api.model.operation_outcome import OperationOutcome, OperationOutcomeIssue
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ class APIErrorResponse:
             diagnostics=diagnostics,
             location=location,
             details=details,
-        )  # pyright: ignore[reportCallIssue]
+        )
 
     def generate_response(self, diagnostics: str, location_param: str | None = None) -> ResponseReturnValue:
         issue_location = [f"parameters/{location_param}"] if location_param else None
@@ -73,9 +74,9 @@ class APIErrorResponse:
             id=str(uuid.uuid4()),
             meta={"lastUpdated": datetime.now(UTC)},
             issue=[self.build_operation_outcome_issue(diagnostics, issue_location)],
-        )  # pyright: ignore[reportCallIssue]
+        )
 
-        response_body = json.dumps(problem.model_dump(by_alias=True, mode="json"))
+        response_body = json.dumps(problem.model_dump(mode="json", exclude_none=True))
         return make_response(response_body, self.status_code, {"Content-Type": "application/fhir+json"})
 
     def log_and_generate_response(
