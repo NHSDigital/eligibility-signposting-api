@@ -2997,14 +2997,14 @@ pytest = ">=3.6"
 
 [[package]]
 name = "pytest-nhsd-apim"
-version = "5.0.4"
+version = "5.0.14"
 description = "Pytest plugin accessing NHSDigital's APIM proxies"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.13"
 groups = ["dev"]
 files = [
-    {file = "pytest_nhsd_apim-5.0.4-py3-none-any.whl", hash = "sha256:04a17d90ec85958cb9823db29a798a42ab8cfd37c3c36379294e0eb0a60e0815"},
-    {file = "pytest_nhsd_apim-5.0.4.tar.gz", hash = "sha256:9b8d1c2d6fe69dcffd148fc3102e43bf0be2b39c6db950f7ae82711f3b58bfbc"},
+    {file = "pytest_nhsd_apim-5.0.14-py3-none-any.whl", hash = "sha256:f21a4b299cc28d031ea671a6ad524fff269193d5e4a09a516cd3fb3879f9fb18"},
+    {file = "pytest_nhsd_apim-5.0.14.tar.gz", hash = "sha256:aca221f772e9cb763d2e5addca4000e2d9eb343ec05a8e32ffc6362442a913c5"},
 ]
 
 [package.dependencies]
@@ -3018,8 +3018,9 @@ PyJWT = ">=2.8.0,<3.0.0"
 pyotp = ">=2.9.0,<3.0.0"
 pytest = ">=8.2.0,<9.0.0"
 requests = ">=2.32.0,<3.0.0"
+setuptools = ">=78.1.1,<79.0.0"
 toml = ">=0.10.2,<0.11.0"
-typing-extensions = ">=4.11.0,<5.0.0"
+typing-extensions = ">=4.12.2,<5.0.0"
 wheel = ">=0.37.1,<0.39.0"
 
 [[package]]
@@ -3421,6 +3422,27 @@ files = [
     {file = "semver-3.0.4-py3-none-any.whl", hash = "sha256:9c824d87ba7f7ab4a1890799cec8596f15c1241cb473404ea1cb0c55e4b04746"},
     {file = "semver-3.0.4.tar.gz", hash = "sha256:afc7d8c584a5ed0a11033af086e8af226a9c0b206f313e0301f8dd7b6b589602"},
 ]
+
+[[package]]
+name = "setuptools"
+version = "78.1.1"
+description = "Easily download, build, install, upgrade, and uninstall Python packages"
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+files = [
+    {file = "setuptools-78.1.1-py3-none-any.whl", hash = "sha256:c3a9c4211ff4c309edb8b8c4f1cbfa7ae324c4ba9f91ff254e3d305b9fd54561"},
+    {file = "setuptools-78.1.1.tar.gz", hash = "sha256:fcc17fd9cd898242f6b4adfaca46137a9edef687f43e6f78469692a5e70d851d"},
+]
+
+[package.extras]
+check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\"", "ruff (>=0.8.0) ; sys_platform != \"cygwin\""]
+core = ["importlib_metadata (>=6) ; python_version < \"3.10\"", "jaraco.functools (>=4)", "jaraco.text (>=3.7)", "more_itertools", "more_itertools (>=8.8)", "packaging (>=24.2)", "platformdirs (>=4.2.2)", "tomli (>=2.0.1) ; python_version < \"3.11\"", "wheel (>=0.43.0)"]
+cover = ["pytest-cov"]
+doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "pyproject-hooks (!=1.1)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier", "towncrier (<24.7)"]
+enabler = ["pytest-enabler (>=2.2)"]
+test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21) ; python_version >= \"3.9\" and sys_platform != \"cygwin\"", "jaraco.envs (>=2.2)", "jaraco.path (>=3.7.2)", "jaraco.test (>=5.5)", "packaging (>=24.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-home (>=0.5)", "pytest-perf ; sys_platform != \"cygwin\"", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel (>=0.44.0)"]
+type = ["importlib_metadata (>=7.0.2) ; python_version < \"3.10\"", "jaraco.develop (>=7.21) ; sys_platform != \"cygwin\"", "mypy (==1.14.*)", "pytest-mypy"]
 
 [[package]]
 name = "six"
@@ -3973,4 +3995,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "75c785ee65ceaed05aefbfa747cf0d9bc2eed8b52a9b0a4b6186a1b6de5625f8"
+content-hash = "a320645f0b9e5500c052be18dc45b5a905d63c07fae691a51ac2f5a68800abbc"
