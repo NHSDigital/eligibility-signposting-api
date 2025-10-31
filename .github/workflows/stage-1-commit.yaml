@@ -101,7 +101,7 @@ jobs:
           output_format: sarif
           output_file_path: checkov-report.sarif
       - name: Upload Checkov results to GitHub Security tab
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: checkov_results
           path: checkov-report.sarif

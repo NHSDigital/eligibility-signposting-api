@@ -132,7 +132,7 @@ jobs:
           echo "Nothing to save"
       - name: Upload Integration Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: integration-test-results
           path: integration-test-results.xml
