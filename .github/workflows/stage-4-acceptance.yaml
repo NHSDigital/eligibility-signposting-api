@@ -120,7 +120,7 @@ jobs:
         with:
           python-version: '3.13'
       - name: "Get lambda artefact"
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: lambda
           path: dist
@@ -132,13 +132,13 @@ jobs:
           echo "Nothing to save"
       - name: Upload Integration Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: integration-test-results
           path: integration-test-results.xml
       - name: Gather Integration Test Summaries
         if: always()
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           path: summary
           pattern: ci-summary-*
