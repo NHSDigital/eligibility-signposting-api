@@ -108,6 +108,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "iam:DetachRolePolicy",
       "iam:CreatePolicy",
       "iam:CreatePolicyVersion",
+      "iam:DeletePolicy",
+      "iam:DeletePolicyVersion",
       "iam:TagRole",
       "iam:UntagPolicy",
       "iam:PassRole",

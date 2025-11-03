@@ -482,6 +482,8 @@ resource "aws_iam_policy" "iam_management" {
           "iam:DetachRolePolicy",
           "iam:CreatePolicy",
           "iam:CreatePolicyVersion",
+          "iam:DeletePolicy",
+          "iam:DeletePolicyVersion",
           "iam:TagRole",
           "iam:PassRole",
           "iam:TagPolicy",
@@ -502,6 +504,7 @@ resource "aws_iam_policy" "iam_management" {
           "arn:aws:iam::*:policy/*api-gateway-logging-policy",
           "arn:aws:iam::*:policy/*PermissionsBoundary",
           "arn:aws:iam::*:policy/*PutSubscriptionFilterPolicy",
+          "arn:aws:iam::*:policy/*CWLogsToCSOCDestinationPolicy",
           # VPC flow logs role
           "arn:aws:iam::*:role/vpc-flow-logs-role",
           # API role
