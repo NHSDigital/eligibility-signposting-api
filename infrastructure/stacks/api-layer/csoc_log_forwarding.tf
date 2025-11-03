@@ -39,39 +39,39 @@ resource "aws_iam_role" "cwl_subscription_role" {
   )
 }
 
-# IAM policy to allow PutSubscriptionFilter on the existing API Gateway log group and CSOC destination
-data "aws_iam_policy_document" "put_subscription_filter" {
+# IAM policy to allow CloudWatch Logs to write to the CSOC destination
+# This is the permission policy for the role that CloudWatch Logs assumes
+data "aws_iam_policy_document" "cwl_to_csoc_destination" {
   statement {
-    sid    = "AllowPutAPIGSubFilter"
+    sid    = "AllowPutLogEventsToDestination"
     effect = "Allow"
     actions = [
-      "logs:PutSubscriptionFilter"
+      "logs:PutLogEvents"
     ]
     resources = [
-      "${module.eligibility_signposting_api_gateway.cloudwatch_destination_arn}:*",
       "arn:aws:logs:${var.default_aws_region}:693466633220:destination:api_gateway_log_destination"
     ]
   }
 }
 
-resource "aws_iam_policy" "put_subscription_filter" {
-  name        = "${var.environment}-${local.workspace}-PutSubscriptionFilterPolicy"
-  description = "Policy to allow creating subscription filters for CSOC log forwarding"
-  policy      = data.aws_iam_policy_document.put_subscription_filter.json
+resource "aws_iam_policy" "cwl_to_csoc_destination" {
+  name        = "${var.environment}-${local.workspace}-CWLogsToCSOCDestinationPolicy"
+  description = "Policy to allow CloudWatch Logs to write to CSOC destination"
+  policy      = data.aws_iam_policy_document.cwl_to_csoc_destination.json
 
   tags = merge(
     local.tags,
     {
-      Name    = "${var.environment}-${local.workspace}-PutSubscriptionFilterPolicy"
+      Name    = "${var.environment}-${local.workspace}-CWLogsToCSOCDestinationPolicy"
       Purpose = "CSOC log forwarding"
     }
   )
 }
 
 # Attach the policy to the subscription role
-resource "aws_iam_role_policy_attachment" "put_subscription_filter" {
+resource "aws_iam_role_policy_attachment" "cwl_to_csoc_destination" {
   role       = aws_iam_role.cwl_subscription_role.name
-  policy_arn = aws_iam_policy.put_subscription_filter.arn
+  policy_arn = aws_iam_policy.cwl_to_csoc_destination.arn
 }
 
 # Create the subscription filter to forward logs to CSOC
@@ -87,6 +87,6 @@ resource "aws_cloudwatch_log_subscription_filter" "csoc_forwarding" {
   depends_on = [
     module.eligibility_signposting_api_gateway,
     aws_iam_role.cwl_subscription_role,
-    aws_iam_role_policy_attachment.put_subscription_filter
+    aws_iam_role_policy_attachment.cwl_to_csoc_destination
   ]
 }
