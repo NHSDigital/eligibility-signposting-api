@@ -101,6 +101,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "iam:CreateRole",
       "iam:DeleteRole",
       "iam:UpdateRole",
+      "iam:UpdateAssumeRolePolicy",
       "iam:PutRolePolicy",
       "iam:PutRolePermissionsBoundary",
       "iam:AttachRolePolicy",
