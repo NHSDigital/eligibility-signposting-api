@@ -269,6 +269,17 @@ resource "aws_iam_policy" "api_infrastructure" {
       {
         Effect = "Allow",
         Action = [
+          # CloudWatch Logs subscription to CSOC cross-account destination
+          "logs:PutSubscriptionFilter"
+        ],
+        Resource = [
+          # CSOC cross-account destination for API Gateway logs
+          "arn:aws:logs:${var.default_aws_region}:693466633220:destination:api_gateway_log_destination"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
           # IAM PassRole for specific service roles only
           "iam:PassRole"
         ],
@@ -464,12 +475,15 @@ resource "aws_iam_policy" "iam_management" {
           "iam:CreateRole",
           "iam:DeleteRole",
           "iam:UpdateRole",
+          "iam:UpdateAssumeRolePolicy",
           "iam:PutRolePolicy",
           "iam:PutRolePermissionsBoundary",
           "iam:AttachRolePolicy",
           "iam:DetachRolePolicy",
           "iam:CreatePolicy",
           "iam:CreatePolicyVersion",
+          "iam:DeletePolicy",
+          "iam:DeletePolicyVersion",
           "iam:TagRole",
           "iam:PassRole",
           "iam:TagPolicy",
@@ -490,6 +504,7 @@ resource "aws_iam_policy" "iam_management" {
           "arn:aws:iam::*:policy/*api-gateway-logging-policy",
           "arn:aws:iam::*:policy/*PermissionsBoundary",
           "arn:aws:iam::*:policy/*PutSubscriptionFilterPolicy",
+          "arn:aws:iam::*:policy/*CWLogsToCSOCDestinationPolicy",
           # VPC flow logs role
           "arn:aws:iam::*:role/vpc-flow-logs-role",
           # API role
