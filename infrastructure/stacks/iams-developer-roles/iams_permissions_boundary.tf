@@ -177,6 +177,9 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "logs:PutRetentionPolicy",
       "logs:AssociateKmsKey",
       "logs:PutMetricFilter",
+      "logs:PutSubscriptionFilter",
+      "logs:DeleteSubscriptionFilter",
+      "logs:DescribeSubscriptionFilters",
 
       # S3 - bucket and object management
       "s3:GetLifecycleConfiguration",
