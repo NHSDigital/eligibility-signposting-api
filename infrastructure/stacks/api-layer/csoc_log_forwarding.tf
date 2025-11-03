@@ -17,7 +17,7 @@ data "aws_iam_policy_document" "cwl_subscription_assume_role" {
       identifiers = ["logs.${var.default_aws_region}.amazonaws.com"]
     }
 
-    condition { # Forcing github
+    condition {
       test     = "StringLike"
       variable = "aws:SourceArn"
       values   = ["${module.eligibility_signposting_api_gateway.cloudwatch_destination_arn}:*"]
