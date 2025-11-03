@@ -16,6 +16,18 @@ data "aws_iam_policy_document" "cwl_subscription_assume_role" {
       type        = "Service"
       identifiers = ["logs.${var.default_aws_region}.amazonaws.com"]
     }
+
+    condition {
+      test     = "StringLike"
+      variable = "aws:SourceArn"
+      values   = ["${module.eligibility_signposting_api_gateway.cloudwatch_destination_arn}:*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
   }
 }
 
