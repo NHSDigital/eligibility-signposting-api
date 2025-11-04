@@ -1,5 +1,4 @@
 resource "aws_vpc" "main" {
-  #checkov:skip=CKV2_AWS_11: "Ensure VPC flow logging is enabled in all VPCs"
   cidr_block           = local.vpc_cidr_block
   enable_dns_support   = true
   enable_dns_hostnames = true

@@ -20,12 +20,12 @@ resource "aws_security_group_rule" "main_https_in" {
 }
 
 resource "aws_security_group_rule" "main_https_out" {
-  description       = "Allow VPC Endpoint to access the actual AWS Service Endpoints"
+  description       = "Allow VPC Endpoint to access the actual AWS Service Endpoints within VPC"
   type              = "egress"
   from_port         = local.default_port
   to_port           = local.default_port
   protocol          = "tcp"
-  cidr_blocks       = [local.any_ip_cidr]
+  cidr_blocks       = [local.vpc_cidr_block]
   security_group_id = aws_security_group.main.id
 }
 

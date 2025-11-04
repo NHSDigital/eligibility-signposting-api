@@ -7,11 +7,11 @@ resource "aws_network_acl" "private" {
     aws_subnet.private_3.id
   ]
 
-  # Allow all outbound traffic from private subnets
+  # Allow outbound traffic from private subnets to VPC CIDR only
   egress {
     rule_no    = 100
     action     = "allow"
-    cidr_block = "0.0.0.0/0"
+    cidr_block = local.vpc_cidr_block
     protocol   = -1
     from_port  = 0
     to_port    = 0
@@ -29,19 +29,19 @@ resource "aws_network_acl" "private" {
 
   # Block RDP access
   ingress {
-  rule_no    = 150
-  action     = "deny"
-  cidr_block = "0.0.0.0/0"
-  protocol   = "tcp"
-  from_port  = 3389
-  to_port    = 3389
+    rule_no    = 150
+    action     = "deny"
+    cidr_block = "0.0.0.0/0"
+    protocol   = "tcp"
+    from_port  = 3389
+    to_port    = 3389
   }
 
-  # Allow responses to outbound requests (ephemeral ports)
+  # Allow responses to outbound requests (ephemeral ports) from VPC endpoints
   ingress {
     rule_no    = 200
     action     = "allow"
-    cidr_block = "0.0.0.0/0"
+    cidr_block = local.vpc_cidr_block
     protocol   = "tcp"
     from_port  = 1024
     to_port    = 65535
