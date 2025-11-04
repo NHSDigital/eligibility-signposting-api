@@ -22,6 +22,12 @@ data "aws_iam_policy_document" "cwl_subscription_assume_role" {
       variable = "aws:SourceAccount"
       values   = [data.aws_caller_identity.current.account_id]
     }
+
+    condition {
+      test     = "StringLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:*"]
+    }
   }
 }
 
