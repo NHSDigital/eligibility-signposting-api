@@ -64,6 +64,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "ec2:CreateFlowLogs",
       "ec2:ReplaceNetworkAclAssociation",
       "ec2:DeleteSecurityGroup",
+      "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
 
       # EventBridge - alarm forwarding to Splunk
       "events:PutRule",
