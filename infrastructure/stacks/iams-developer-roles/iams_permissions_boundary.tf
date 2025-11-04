@@ -46,7 +46,9 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "ec2:CreateTags",
       "ec2:DeleteTags",
       "ec2:CreateNetworkAclEntry",
+      "ec2:DeleteNetworkAclEntry",
       "ec2:CreateNetworkAcl",
+      "ec2:DeleteNetworkAcl",
       "ec2:AssociateRouteTable",
       "ec2:CreateVpc",
       "ec2:ModifyVpcAttribute",
@@ -62,7 +64,6 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "ec2:CreateFlowLogs",
       "ec2:ReplaceNetworkAclAssociation",
       "ec2:DeleteSecurityGroup",
-      "ec2:DeleteNetworkAcl",
 
       # EventBridge - alarm forwarding to Splunk
       "events:PutRule",
