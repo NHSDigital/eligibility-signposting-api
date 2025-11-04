@@ -17,14 +17,13 @@ import os
 import re
 import sys
 from dataclasses import dataclass
-from typing import List, Optional, NoReturn
+from typing import List, Optional
 
 from ci_utils import (
     BRANCH,
     fail,
     ensure_token,
     fetch_latest_from_remote,
-    gh_json,
     dev_tag_for_sha,
     sha_for_tag,
     is_ancestor,
@@ -85,8 +84,7 @@ def _run_gh(args: list[str]) -> str:
 
 def list_successful_test_shas() -> List[str]:
     """
-    Return SHAs for successful runs of the PreProd deploy workflow on BRANCH.
-    Uses `gh run list` with workflow **ID** for maximum CLI compatibility.
+    Return SHAs for successful runs of the test deploy workflow on BRANCH.
     """
     out = _run_gh([
         "run", "list",

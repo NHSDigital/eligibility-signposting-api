@@ -54,14 +54,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Mask the token in logs (defense in depth)
           echo "::add-mask::${GITHUB_TOKEN}"
-          # Option 1: rewrite just 'origin' to tokenized HTTPS
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
-          # Sanity check (will fail if token is missing/insufficient)
           git ls-remote --tags origin >/dev/null
 
       - name: Debug event
+        if: env.ACT == 'true'
         run: |
           echo "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}"
           echo "Payload:" && cat "$GITHUB_EVENT_PATH" || true
