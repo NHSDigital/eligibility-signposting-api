@@ -62,9 +62,9 @@ class APIErrorResponse:
         return OperationOutcomeIssue(
             severity=self.fhir_issue_severity,
             code=self.fhir_issue_code,
+            details=details,
             diagnostics=diagnostics,
             location=location,
-            details=details,
         )
 
     def generate_response(self, diagnostics: str, location_param: str | None = None) -> ResponseReturnValue:

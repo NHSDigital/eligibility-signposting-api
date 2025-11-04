@@ -36,8 +36,8 @@ class TestOperationOutcomeIssue:
         issue = OperationOutcomeIssue(
             severity="error",
             code="forbidden",
-            diagnostics="Access denied",
             details=coding_details,
+            diagnostics="Access denied",
             location=["parameters/nhs-number"],
         )
 
@@ -58,8 +58,8 @@ class TestOperationOutcomeIssue:
         issue = OperationOutcomeIssue(
             severity="warning",
             code="processing",
-            diagnostics="Some warning",
             details={"coding": []},
+            diagnostics="Some warning",
         )
 
         # Then
@@ -71,8 +71,8 @@ class TestOperationOutcomeIssue:
         issue = OperationOutcomeIssue(
             severity="error",
             code="value",
-            diagnostics="Invalid value",
             details={"coding": []},
+            diagnostics="Invalid value",
             location=["parameters/condition"],
         )
 
@@ -94,7 +94,7 @@ class TestOperationOutcomeIssue:
     def test_model_dump_excludes_none_excludes_none_location(self):
         """Test that model_dump(exclude_none=True) excludes location field when it's None."""
         # Given
-        issue = OperationOutcomeIssue(severity="error", code="processing", diagnostics="Error", details={})
+        issue = OperationOutcomeIssue(severity="error", code="processing", details={}, diagnostics="Error")
 
         # When
         result = issue.model_dump(exclude_none=True)
@@ -123,8 +123,8 @@ class TestOperationOutcomeIssue:
             OperationOutcomeIssue(
                 severity="error",
                 code="processing",
-                diagnostics="Error",
                 details={},
+                diagnostics="Error",
                 unexpected_field="value",
             )
 
@@ -137,7 +137,7 @@ class TestOperationOutcome:
     def test_create_operation_outcome_with_required_fields(self):
         """Test creating an OperationOutcome with only required fields."""
         # Given
-        issue = OperationOutcomeIssue(severity="error", code="processing", diagnostics="Error", details={})
+        issue = OperationOutcomeIssue(severity="error", code="processing", details={}, diagnostics="Error")
 
         # When
         outcome = OperationOutcome(issue=[issue])
@@ -155,7 +155,7 @@ class TestOperationOutcome:
     def test_create_operation_outcome_with_all_fields(self):
         """Test creating an OperationOutcome with all fields."""
         # Given
-        issue = OperationOutcomeIssue(severity="error", code="processing", diagnostics="Error", details={})
+        issue = OperationOutcomeIssue(severity="error", code="processing", details={}, diagnostics="Error")
         test_id = "test-id-123"
         test_meta = {"lastUpdated": datetime.now(UTC)}
 
@@ -171,7 +171,7 @@ class TestOperationOutcome:
     def test_resource_type_is_always_operation_outcome(self):
         """Test that resourceType is always 'OperationOutcome' and cannot be changed."""
         # Given
-        issue = OperationOutcomeIssue(severity="error", code="processing", diagnostics="Error", details={})
+        issue = OperationOutcomeIssue(severity="error", code="processing", details={}, diagnostics="Error")
         outcome = OperationOutcome(issue=[issue])
 
         # When, Then
@@ -186,8 +186,8 @@ class TestOperationOutcome:
         issue = OperationOutcomeIssue(
             severity="error",
             code="processing",
-            diagnostics="Error message",
             details={"coding": []},
+            diagnostics="Error message",
             location=["param"],
         )
         outcome = OperationOutcome(issue=[issue], id="abc-123", meta={"version": "1"})
@@ -209,7 +209,7 @@ class TestOperationOutcome:
     def test_model_dump_exclude_none_excludes_none_id(self):
         """Test that model_dump(exclude_none=True) excludes id field when it's None."""
         # Given
-        issue = OperationOutcomeIssue(severity="error", code="processing", diagnostics="Error", details={})
+        issue = OperationOutcomeIssue(severity="error", code="processing", details={}, diagnostics="Error")
         outcome = OperationOutcome(issue=[issue])
 
         # When
@@ -223,7 +223,7 @@ class TestOperationOutcome:
     def test_model_dump_mode_json_with_datetime(self):
         """Test that mode='json' serializes datetime objects to ISO strings."""
         # Given
-        issue = OperationOutcomeIssue(severity="error", code="processing", diagnostics="Error", details={})
+        issue = OperationOutcomeIssue(severity="error", code="processing", details={}, diagnostics="Error")
         test_datetime = datetime(2024, 1, 15, 10, 30, 45, tzinfo=UTC)
         outcome = OperationOutcome(issue=[issue], meta={"lastUpdated": test_datetime})
 
@@ -237,7 +237,7 @@ class TestOperationOutcome:
     def test_model_dump_exclude_defaults_removes_empty_meta(self):
         """Test that model_dump with exclude_defaults removes default empty meta."""
         # Given
-        issue = OperationOutcomeIssue(severity="error", code="processing", diagnostics="Error", details={})
+        issue = OperationOutcomeIssue(severity="error", code="processing", details={}, diagnostics="Error")
         outcome = OperationOutcome(issue=[issue])
 
         # When
@@ -249,8 +249,8 @@ class TestOperationOutcome:
     def test_multiple_issues(self):
         """Test OperationOutcome with multiple issues."""
         # Given
-        issue1 = OperationOutcomeIssue(severity="error", code="processing", diagnostics="Error 1", details={})
-        issue2 = OperationOutcomeIssue(severity="warning", code="value", diagnostics="Warning 1", details={})
+        issue1 = OperationOutcomeIssue(severity="error", code="processing", details={}, diagnostics="Error 1")
+        issue2 = OperationOutcomeIssue(severity="warning", code="value", details={}, diagnostics="Warning 1")
 
         # When
         outcome = OperationOutcome(issue=[issue1, issue2])
@@ -273,7 +273,6 @@ class TestOperationOutcome:
         issue = OperationOutcomeIssue(
             severity="error",
             code="forbidden",
-            diagnostics="Access denied",
             details={
                 "coding": [
                     {
@@ -283,6 +282,7 @@ class TestOperationOutcome:
                     }
                 ]
             },
+            diagnostics="Access denied",
             location=["parameters/nhs-number"],
         )
         outcome = OperationOutcome(issue=[issue], id="test-id", meta={"lastUpdated": datetime.now(UTC)})
@@ -301,7 +301,6 @@ class TestOperationOutcome:
         issue = OperationOutcomeIssue(
             severity="error",
             code="forbidden",
-            diagnostics="You are not authorised",
             details={
                 "coding": [
                     {
@@ -311,6 +310,7 @@ class TestOperationOutcome:
                     }
                 ]
             },
+            diagnostics="You are not authorised",
             location=["parameters/nhs-number"],
         )
         outcome = OperationOutcome(issue=[issue], id="123e4567-e89b-12d3-a456-426614174000")
@@ -340,7 +340,7 @@ class TestOperationOutcome:
     def test_model_validation_with_pydantic(self):
         """Test that pydantic validation works correctly."""
         # Given, When
-        issue = OperationOutcomeIssue(severity="error", code="processing", diagnostics="Error", details={})
+        issue = OperationOutcomeIssue(severity="error", code="processing", details={}, diagnostics="Error")
         outcome = OperationOutcome(issue=[issue])
 
         # Then
@@ -351,7 +351,7 @@ class TestOperationOutcome:
 
     def test_validation_error_on_extra_field(self):
         """Test that extra fields are rejected due to extra='forbid'."""
-        issue = OperationOutcomeIssue(severity="error", code="processing", diagnostics="Error", details={})
+        issue = OperationOutcomeIssue(severity="error", code="processing", details={}, diagnostics="Error")
 
         with pytest.raises(ValidationError) as exc_info:
             OperationOutcome(issue=[issue], unexpected_field="value")

@@ -27,13 +27,13 @@ class OperationOutcomeIssue(BaseModel):
         ...,
         description="FHIR issue type code",
     )
-    diagnostics: str = Field(
-        ...,
-        description="Additional diagnostic information about the issue",
-    )
     details: dict[str, Any] = Field(
         ...,
         description="Additional details about the error (CodeableConcept)",
+    )
+    diagnostics: str = Field(
+        ...,
+        description="Additional diagnostic information about the issue",
     )
     location: list[str] | None = Field(
         default=None,
