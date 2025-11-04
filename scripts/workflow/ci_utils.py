@@ -10,17 +10,22 @@ import json
 import os
 import subprocess
 import sys
-from typing import List, Optional, NoReturn
+from typing import List, Optional, NoReturn, Any
 
 BRANCH = os.getenv("BRANCH", "main")
+REPO_FALLBACK = "NHSDigital/eligibility-signposting-api"
 
 def fail(msg: str) -> NoReturn:
     print(f"::error::{msg}", file=sys.stderr)
     sys.exit(1)
 
-def run(cmd: List[str], *, check: bool = True) -> subprocess.CompletedProcess:
-    # cp = completed process (will use this to refer)
-    return subprocess.run(cmd, check=check, capture_output=True, text=True)
+def run(cmd: List[str], check: bool = True, **kwargs) -> subprocess.CompletedProcess:
+    cp = subprocess.run(cmd, check=False, capture_output=True, text=True, **kwargs)
+    if check and cp.returncode != 0:
+        raise subprocess.CalledProcessError(
+            cp.returncode, cmd, output=cp.stdout, stderr=cp.stderr
+        )
+    return cp
 
 def ensure_token() -> None:
     if not (os.getenv("GH_TOKEN") or os.getenv("GITHUB_TOKEN")):
@@ -36,10 +41,22 @@ def git_ok(args: List[str]) -> bool:
 def is_ancestor(older: str, newer: str) -> bool:
     return subprocess.run(["git", "merge-base", "--is-ancestor", older, newer]).returncode == 0
 
-def gh_json(args: List[str]) -> list:
-    cp = run(["gh", *args])
-    raw = cp.stdout.strip()
-    return json.loads(raw) if raw else []
+def gh_json(args: List[str]) -> Any:
+    # Map GITHUB_TOKEN -> GH_TOKEN (gh prefers GH_TOKEN)
+    if "GH_TOKEN" not in os.environ and os.environ.get("GITHUB_TOKEN"):
+        os.environ["GH_TOKEN"] = os.environ["GITHUB_TOKEN"]
+
+    # Ensure repo is explicit (act containers often need this)
+    repo = os.environ.get("GITHUB_REPOSITORY") or REPO_FALLBACK
+    base = ["gh", *args]
+    if "--repo" not in args and "-R" not in args:
+        base.extend(["--repo", repo])
+
+    cp = run(base, check=True)
+    try:
+        return json.loads(cp.stdout or "null")
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"Failed to parse gh JSON: {e}\nSTDOUT:\n{cp.stdout}\nSTDERR:\n{cp.stderr}")
 
 def gh_api(path: str, jq: Optional[str] = None) -> List[str]:
     """

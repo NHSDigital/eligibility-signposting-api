@@ -1,0 +1,17 @@
+{
+  "event_name": "workflow_dispatch",
+  "ref": "refs/heads/main",
+  "inputs": {
+    "ref": "dev-20251015111601",
+    "release_type": "minor",
+    "reason": "manual promotion from test to pre-prod"
+  },
+  "repository": {
+    "full_name": "NHSDigital/eligibility-signposting-api",
+    "name": "eligibility-signposting-api",
+    "owner": { "login": "NHSDigital" }
+  },
+  "sender": {
+    "login": "tome"
+  }
+}

@@ -5,6 +5,10 @@ on:
     workflows: ["2. CD | Deploy to Dev"]
     types: [completed]
 
+concurrency:
+  group: test-deployments
+  cancel-in-progress: false
+
 permissions:
   contents: read
   id-token: write
@@ -52,11 +56,6 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: "Acquire deploy lock"
-        uses: softprops/turnstyle@v3
-        with:
-          poll-interval-seconds: 10
-
       - name: "Checkout same commit"
         uses: actions/checkout@v5
         with:

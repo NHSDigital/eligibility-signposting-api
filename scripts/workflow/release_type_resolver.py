@@ -3,7 +3,6 @@ Resolve release_type from PR labels with safe defaults.
 
 Modes
 - Manual override (MANUAL_RELEASE_TYPE): emit that and exit.
-- Single-PR mode (default): inspect PR labels for THIS_SHA; default "rc".
 - Aggregate mode (AGGREGATE=true): consider TEST-deployed PRs merged since latest final tag
   up to LATEST_TEST_SHA (BOUNDARY), and pick highest of major > minor > patch > rc.
 

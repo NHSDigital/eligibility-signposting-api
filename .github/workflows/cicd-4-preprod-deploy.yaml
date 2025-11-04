@@ -17,12 +17,6 @@ on:
         description: "rc|patch|minor|major"
         required: true
         default: "rc"
-      allow_older:
-        description: "Allow deploying older than latest tested on main?"
-        required: false
-        type: choice
-        options: ["false","true"]
-        default: "false"
       reason:
         description: "Why are you doing a manual deployment?"
         required: true
@@ -42,37 +36,35 @@ jobs:
       latest_sha:   ${{ steps.resolver.outputs.latest_test_sha }}
       release_type: ${{ steps.release_type.outputs.release_type }}
 
+    env:
+      PREPROD_WORKFLOW_ID: "182365668"
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
       - name: Checkout (full history & tags)
         uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
-      - name: Announce candidate ref
-        id: announce
+      - name: Force HTTPS remote for act
+        if: env.ACT == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --tags --force --quiet
+          # Mask the token in logs (defense in depth)
+          echo "::add-mask::${GITHUB_TOKEN}"
+          # Option 1: rewrite just 'origin' to tokenized HTTPS
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          # Sanity check (will fail if token is missing/insufficient)
+          git ls-remote --tags origin >/dev/null
 
-          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
-            HEAD="${{ github.event.workflow_run.head_sha }}"
-            TAG="$(git tag --points-at "$HEAD" | grep '^dev-' | head -n1 || true)"
-          else
-            HEAD="$(git rev-list -n1 "${{ github.event.inputs.ref }}")"
-            TAG="${{ github.event.inputs.ref }}"
-          fi
-
-          echo "CANDIDATE_TAG=$TAG"
-          echo "CANDIDATE_SHA=$HEAD"
-
-          # Nice UI hints
-          echo "::notice title=PreProd candidate::dev tag: ${TAG} | sha: ${HEAD}"
-          {
-            echo "### PreProd candidate"
-            echo ""
-            echo "- dev tag: \`${TAG:-<none>}\`"
-            echo "- head sha: \`${HEAD:-<none>}\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Debug event
+        run: |
+          echo "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}"
+          echo "Payload:" && cat "$GITHUB_EVENT_PATH" || true
 
       - name: Resolve THIS vs LATEST TEST + stale guard (auto only)
         id: resolver
@@ -81,11 +73,10 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           MANUAL_REF: ${{ github.event.inputs.ref }}
-          ALLOW_OLDER: ${{ github.event.inputs.allow_older }}
           WORKFLOW_NAME: "3. CD | Deploy to Test"
           BRANCH: "main"
           LIMIT: "30"
-        run: python3 scripts/pre-release_resolver.py
+        run: python3 scripts/workflow/pre-release_resolver.py
 
       - name: Resolve release_type (labels → default rc)
         id: release_type
@@ -96,7 +87,7 @@ jobs:
           THIS_SHA: ${{ steps.resolver.outputs.this_sha }}
           LATEST_TEST_SHA: ${{ steps.resolver.outputs.latest_test_sha }}
           MANUAL_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
-        run: python3 scripts/release_type_resolver.py
+        run: python3 scripts/workflow/release_type_resolver.py
 
   deploy:
     name: "Call base-deploy.yml (PreProd)"

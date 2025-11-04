@@ -2,7 +2,7 @@
 Pre-release resolver:
 - Determines the furthest-ahead successful (TEST env deployed) commit on main (sha + dev-* tag).
 - Resolves THIS run's sha + dev-* tag (auto via workflow_run, or manual via input tag).
-- Applies the stale-run guard (auto blocks older; manual requires allow_older=true).
+- Applies the stale-run guard (auto blocks older).
 - Fails if the commit being run is not the furthest-ahead successful
 - Emits outputs for later steps.
 
@@ -11,6 +11,8 @@ Outputs (via $GITHUB_OUTPUT):
 """
 
 from __future__ import annotations
+
+import json
 import os
 import re
 import sys
@@ -27,30 +29,85 @@ from ci_utils import (
     sha_for_tag,
     is_ancestor,
     git_ok,
+    run
 )
 
-WORKFLOW_NAME = os.getenv("WORKFLOW_NAME", "3. CD | Deploy to Test")
+WORKFLOW_ID = os.getenv("PREPROD_WORKFLOW_ID", "182365668")
 LIMIT = int(os.getenv("LIMIT", "30"))
-EVENT_NAME = os.getenv("EVENT_NAME", "")
+
 HEAD_SHA_AUTO = os.getenv("WORKFLOW_RUN_HEAD_SHA", "")
 MANUAL_REF = os.getenv("MANUAL_REF", "")
-ALLOW_OLDER = os.getenv("ALLOW_OLDER", "true").lower()
+REPO = "NHSDigital/eligibility-signposting-api"
 
 @dataclass(frozen=True)
 class RefInfo:
     sha: str
     ref: str
 
+def get_event_name() -> str:
+    """Determine the effective event name, correcting for act quirks."""
+    evt_env = os.getenv("GITHUB_EVENT_NAME", "")
+    evt_payload = None
+    path = os.getenv("GITHUB_EVENT_PATH")
+    if path and os.path.exists(path):
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                evt_payload = data.get("event_name")
+        except Exception:
+            pass
+
+    # If running under act, prefer payload’s event_name if present
+    if os.getenv("ACT") == "true" and evt_payload:
+        return evt_payload
+
+    return evt_payload or evt_env or ""
+
+EVENT_NAME = get_event_name()
+
+def _ensure_gh_token_env() -> None:
+    # gh prefers GH_TOKEN; GitHub Actions provides GITHUB_TOKEN
+    if "GH_TOKEN" not in os.environ and os.environ.get("GITHUB_TOKEN"):
+        os.environ["GH_TOKEN"] = os.environ["GITHUB_TOKEN"]
+
+def _run_gh(args: list[str]) -> str:
+    _ensure_gh_token_env()
+    cmd = ["gh", *args, "--repo", REPO]
+    cp = run(cmd, check=False)
+    if cp.returncode != 0:
+        # surface errors for act logs
+        print("---- gh STDOUT ----\n", cp.stdout or "")
+        print("---- gh STDERR ----\n", cp.stderr or "")
+        raise RuntimeError(f"Command failed: {' '.join(cmd)}")
+    return cp.stdout
+
+
 def list_successful_test_shas() -> List[str]:
-    data = gh_json([
+    """
+    Return SHAs for successful runs of the PreProd deploy workflow on BRANCH.
+    Uses `gh run list` with workflow **ID** for maximum CLI compatibility.
+    """
+    out = _run_gh([
         "run", "list",
-        "--workflow", WORKFLOW_NAME,
-        "--branch", BRANCH,
-        "--status", "success",
-        "--json", "headSha",
+        "--workflow", str(WORKFLOW_ID),
+        "--json", "headBranch,headSha,conclusion,createdAt",
         "--limit", str(LIMIT),
     ])
-    return [c["headSha"] for c in data if c.get("headSha")]
+    rows = json.loads(out or "[]")
+
+    # keep successful runs on the target branch with a SHA
+    rows = [
+        r for r in rows
+        if r.get("conclusion") == "success"
+        and r.get("headBranch") == BRANCH
+        and r.get("headSha")
+    ]
+
+    # newest first (ISO timestamps sort lexicographically)
+    rows.sort(key=lambda r: r.get("createdAt", ""), reverse=True)
+
+    return [r["headSha"] for r in rows]
 
 def pick_furthest_ahead(shas: List[str]) -> str:
     latest: Optional[str] = None
@@ -101,15 +158,11 @@ def resolve_this_run() -> RefInfo:
 
 def enforce_guard(current: RefInfo, latest: RefInfo) -> None:
     older_than_latest = (current.sha != latest.sha) and is_ancestor(current.sha, latest.sha)
-    if EVENT_NAME == "workflow_run":
-        if older_than_latest:
-            fail(
-                f"Stale PreProd approval. Latest tested is {latest.ref} ({latest.sha}); "
-                f"this run is {current.ref} ({current.sha})."
+    if EVENT_NAME == "workflow_run" and older_than_latest:
+        fail(
+            f"Stale PreProd approval. Latest tested is {latest.ref} ({latest.sha}); "
+            f"this run is {current.ref} ({current.sha})."
             )
-    else:
-        if ALLOW_OLDER != "true" and older_than_latest:
-            fail("Older than latest tested. Set allow_older=true if you intend to backdeploy.")
 
 def write_outputs(current: RefInfo, latest: RefInfo) -> None:
     out = os.getenv("GITHUB_OUTPUT")
