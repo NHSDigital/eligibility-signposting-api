@@ -326,6 +326,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "ec2:CreateTags",
           "ec2:DeleteTags",
           "ec2:CreateNetworkAclEntry",
+          "ec2:DeleteNetworkAclEntry",
           "ec2:CreateNetworkAcl",
           "ec2:AssociateRouteTable",
           "ec2:CreateVpc",
@@ -343,6 +344,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "ec2:ReplaceNetworkAclAssociation",
           "ec2:DeleteSecurityGroup",
           "ec2:DeleteNetworkAcl",
+          "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
 
           # ssm
           "ssm:GetParameter",
