@@ -8,6 +8,8 @@ Gitleaks
 Grype
 idempotence
 Makefile
+Middleware
+middleware
 OAuth
 Octokit
 onboarding
