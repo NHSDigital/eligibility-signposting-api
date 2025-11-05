@@ -5,12 +5,13 @@ from http import HTTPStatus
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
+from hamcrest import assert_that, contains_string, equal_to, has_entries, is_
 
 from eligibility_signposting_api.middleware import SecurityHeadersMiddleware
 
 
-class TestError(Exception):
-    """Test exception for error handling tests."""
+class MiddlewareTestError(Exception):
+    """Custom exception for middleware error handling tests."""
 
 
 @pytest.fixture
@@ -26,9 +27,9 @@ def test_app() -> Flask:
     @app.route("/error")
     def error_route():
         msg = "Test error"
-        raise TestError(msg)
+        raise MiddlewareTestError(msg)
 
-    @app.errorhandler(TestError)
+    @app.errorhandler(MiddlewareTestError)
     def handle_value_error(e):
         return {"error": str(e)}, HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -48,28 +49,49 @@ class TestSecurityHeadersMiddleware:
         """Test that security headers are added to successful responses."""
         response = client.get("/test")
 
-        assert response.status_code == HTTPStatus.OK
-        assert response.headers.get("Cache-Control") == "no-store, private"
-        assert response.headers.get("Strict-Transport-Security") == "max-age=31536000; includeSubDomains"
-        assert response.headers.get("X-Content-Type-Options") == "nosniff"
+        assert_that(response.status_code, is_(equal_to(HTTPStatus.OK)))
+        assert_that(
+            dict(response.headers),
+            has_entries(
+                {
+                    "Cache-Control": "no-store, private",
+                    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+                    "X-Content-Type-Options": "nosniff",
+                }
+            ),
+        )
 
     def test_security_headers_present_on_error_response(self, client: FlaskClient) -> None:
         """Test that security headers are added to error responses."""
         response = client.get("/error")
 
-        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-        assert response.headers.get("Cache-Control") == "no-store, private"
-        assert response.headers.get("Strict-Transport-Security") == "max-age=31536000; includeSubDomains"
-        assert response.headers.get("X-Content-Type-Options") == "nosniff"
+        assert_that(response.status_code, is_(equal_to(HTTPStatus.INTERNAL_SERVER_ERROR)))
+        assert_that(
+            dict(response.headers),
+            has_entries(
+                {
+                    "Cache-Control": "no-store, private",
+                    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+                    "X-Content-Type-Options": "nosniff",
+                }
+            ),
+        )
 
     def test_security_headers_present_on_404(self, client: FlaskClient) -> None:
         """Test that security headers are added to 404 responses."""
         response = client.get("/nonexistent")
 
-        assert response.status_code == HTTPStatus.NOT_FOUND
-        assert response.headers.get("Cache-Control") == "no-store, private"
-        assert response.headers.get("Strict-Transport-Security") == "max-age=31536000; includeSubDomains"
-        assert response.headers.get("X-Content-Type-Options") == "nosniff"
+        assert_that(response.status_code, is_(equal_to(HTTPStatus.NOT_FOUND)))
+        assert_that(
+            dict(response.headers),
+            has_entries(
+                {
+                    "Cache-Control": "no-store, private",
+                    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+                    "X-Content-Type-Options": "nosniff",
+                }
+            ),
+        )
 
     def test_all_expected_headers_are_present(self, client: FlaskClient) -> None:
         """Test that all expected security headers are present."""
@@ -91,25 +113,23 @@ class TestSecurityHeadersMiddleware:
         response = client.get("/test")
 
         cache_control = response.headers.get("Cache-Control")
-        assert cache_control is not None
-        assert "no-store" in cache_control, "Response should not be stored in any cache"
-        assert "private" in cache_control, "Response should be marked as private"
+        assert_that(cache_control, contains_string("no-store"))
+        assert_that(cache_control, contains_string("private"))
 
     def test_hsts_header_enforces_https(self, client: FlaskClient) -> None:
         """Test that HSTS header is properly configured."""
         response = client.get("/test")
 
         hsts = response.headers.get("Strict-Transport-Security")
-        assert hsts is not None
-        assert "max-age=31536000" in hsts, "HSTS should be valid for 1 year"
-        assert "includeSubDomains" in hsts, "HSTS should apply to all subdomains"
+        assert_that(hsts, contains_string("max-age=31536000"))
+        assert_that(hsts, contains_string("includeSubDomains"))
 
     def test_content_type_options_prevents_sniffing(self, client: FlaskClient) -> None:
         """Test that X-Content-Type-Options prevents MIME sniffing."""
         response = client.get("/test")
 
         content_type_options = response.headers.get("X-Content-Type-Options")
-        assert content_type_options == "nosniff", "Should prevent MIME type sniffing"
+        assert_that(content_type_options, is_(equal_to("nosniff")))
 
     def test_middleware_init_app_method(self) -> None:
         """Test that middleware can be initialized separately using init_app."""
@@ -119,11 +139,11 @@ class TestSecurityHeadersMiddleware:
 
         @app.route("/test")
         def test_route():
-            return {"status": "ok"}, 200
+            return {"status": "ok"}, HTTPStatus.OK
 
         with app.test_client() as client:
             response = client.get("/test")
-            assert response.headers.get("Cache-Control") == "no-store, private"
+            assert_that(response.headers.get("Cache-Control"), is_(equal_to("no-store, private")))
 
     def test_existing_headers_are_not_overridden(self) -> None:
         """Test that existing headers are not overridden by middleware."""
@@ -134,13 +154,13 @@ class TestSecurityHeadersMiddleware:
         def test_route():
             from flask import make_response
 
-            resp = make_response({"status": "ok"}, 200)
+            resp = make_response({"status": "ok"}, HTTPStatus.OK)
             resp.headers["Cache-Control"] = "public, max-age=3600"
             return resp
 
         with app.test_client() as client:
             response = client.get("/test")
             # Should keep the custom Cache-Control value
-            assert response.headers.get("Cache-Control") == "public, max-age=3600"
+            assert_that(response.headers.get("Cache-Control"), is_(equal_to("public, max-age=3600")))
             # But other headers should still be added
-            assert response.headers.get("X-Content-Type-Options") == "nosniff"
+            assert_that(response.headers.get("X-Content-Type-Options"), is_(equal_to("nosniff")))
