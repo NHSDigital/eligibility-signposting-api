@@ -12,7 +12,7 @@
     "status": "completed",
     "conclusion": "success",
     "head_branch": "main",
-    "head_sha": "166abc418e62d986484c8336f06223fc9135e864"
+    "head_sha": "60d567d18eb4916e931d4bdd4e15b9639ef1a0a0"
   },
   "repository": {
     "full_name": "NHSDigital/eligibility-signposting-api",

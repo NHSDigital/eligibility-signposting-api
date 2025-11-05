@@ -37,7 +37,7 @@ jobs:
       release_type: ${{ steps.release_type.outputs.release_type }}
 
     env:
-      PREPROD_WORKFLOW_ID: "182365668"
+      TEST_WORKFLOW_ID: "190123511"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -73,7 +73,7 @@ jobs:
           MANUAL_REF: ${{ github.event.inputs.ref }}
           WORKFLOW_NAME: "3. CD | Deploy to Test"
           BRANCH: "main"
-          LIMIT: "30"
+          LIMIT: "100"
         run: python3 scripts/workflow/pre-release_resolver.py
 
       - name: Resolve release_type (labels → default rc)

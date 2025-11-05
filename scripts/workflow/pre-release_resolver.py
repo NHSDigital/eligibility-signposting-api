@@ -31,8 +31,8 @@ from ci_utils import (
     run
 )
 
-WORKFLOW_ID = os.getenv("PREPROD_WORKFLOW_ID", "182365668")
-LIMIT = int(os.getenv("LIMIT", "30"))
+WORKFLOW_ID = os.getenv("TEST_WORKFLOW_ID", "190123511")
+LIMIT = int(os.getenv("LIMIT", "100"))
 
 HEAD_SHA_AUTO = os.getenv("WORKFLOW_RUN_HEAD_SHA", "")
 MANUAL_REF = os.getenv("MANUAL_REF", "")
