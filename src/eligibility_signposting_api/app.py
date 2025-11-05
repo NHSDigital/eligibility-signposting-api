@@ -17,6 +17,7 @@ from eligibility_signposting_api.config.contants import URL_PREFIX
 from eligibility_signposting_api.logging.logs_helper import log_request_ids_from_headers
 from eligibility_signposting_api.logging.logs_manager import add_lambda_request_id_to_logger, init_logging
 from eligibility_signposting_api.logging.tracing_helper import tracing_setup
+from eligibility_signposting_api.middleware import SecurityHeadersMiddleware
 from eligibility_signposting_api.views import eligibility_blueprint
 
 if os.getenv("ENABLE_XRAY_PATCHING"):
@@ -61,6 +62,9 @@ def lambda_handler(event: LambdaEvent, context: LambdaContext) -> dict[str, Any]
 def create_app() -> Flask:
     app = Flask(__name__)
     logger.info("app created")
+
+    # Register security headers middleware
+    SecurityHeadersMiddleware(app)
 
     # Register views & error handler
     app.register_blueprint(eligibility_blueprint, url_prefix=f"/{URL_PREFIX}")
