@@ -22,6 +22,12 @@ data "aws_iam_policy_document" "cwl_subscription_assume_role" {
       variable = "aws:SourceAccount"
       values   = [data.aws_caller_identity.current.account_id]
     }
+
+    condition {
+      test     = "StringLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:*"]
+    }
   }
 }
 
@@ -74,6 +80,17 @@ resource "aws_iam_role_policy_attachment" "cwl_to_csoc_destination" {
   policy_arn = aws_iam_policy.cwl_to_csoc_destination.arn
 }
 
+# Wait for IAM role to propagate across AWS
+# This prevents "Make sure you have given CloudWatch Logs permission to assume the provided role" errors
+resource "time_sleep" "wait_for_iam_propagation" {
+  depends_on = [
+    aws_iam_role.cwl_subscription_role,
+    aws_iam_role_policy_attachment.cwl_to_csoc_destination
+  ]
+
+  create_duration = "10s"
+}
+
 # Create the subscription filter to forward logs to CSOC
 # This forwards all logs from the existing API Gateway log group to the CSOC destination
 # Note: A log group can have up to 2 subscription filters
@@ -87,6 +104,6 @@ resource "aws_cloudwatch_log_subscription_filter" "csoc_forwarding" {
   depends_on = [
     module.eligibility_signposting_api_gateway,
     aws_iam_role.cwl_subscription_role,
-    aws_iam_role_policy_attachment.cwl_to_csoc_destination
+    time_sleep.wait_for_iam_propagation
   ]
 }
