@@ -477,6 +477,10 @@ resource "aws_cloudwatch_metric_alarm" "acm_expiry_alarms" {
   period              = each.value.period
   treat_missing_data  = each.value.treat_missing_data
 
+  dimensions = {
+    CertificateArn = data.aws_acm_certificate.imported_cert.arn
+  }
+
   tags = {
     Environment = var.environment
     AlertType   = "security"
