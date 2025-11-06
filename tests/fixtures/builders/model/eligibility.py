@@ -6,9 +6,9 @@ from polyfactory.factories import DataclassFactory
 
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.eligibility_status import (
-    RuleDescription,
     RuleName,
     RulePriority,
+    RuleText,
     RuleType,
     UrlLink,
 )
@@ -21,8 +21,9 @@ class SuggestedActionFactory(DataclassFactory[eligibility_status.SuggestedAction
 class ReasonFactory(DataclassFactory[eligibility_status.Reason]):
     rule_type = RuleType.filter
     rule_name = RuleName("name")
+    rule_code = RuleName("code")
     rule_priority = RulePriority("1")
-    rule_description = RuleDescription("description")
+    rule_text = RuleText("text")
     matcher_matched = False
 
 

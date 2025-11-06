@@ -22,6 +22,10 @@ from eligibility_signposting_api.model.campaign_config import (
     AvailableAction,
     CampaignConfig,
     EndDate,
+    RuleCode,
+    RuleEntry,
+    RuleName,
+    RuleText,
     RuleType,
     StartDate,
     StatusText,
@@ -529,6 +533,84 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
                         negative_description="negative_description",
                     )
                 ],
+                status_text=None,
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture
+def campaign_config_with_rules_having_rule_code(
+    s3_client: BaseClient, rules_bucket: BucketName
+) -> Generator[CampaignConfig]:
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="RSV",
+        iterations=[
+            rule.IterationFactory.build(
+                iteration_rules=[
+                    rule.PostcodeSuppressionRuleFactory.build(
+                        type=RuleType.filter, code="Rule Code Excluded postcode In SW19"
+                    ),
+                    rule.PersonAgeSuppressionRuleFactory.build(code="Rule Code Excluded age less than 75"),
+                ],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort1",
+                        cohort_group="cohort_group1",
+                        positive_description="positive_description",
+                        negative_description="negative_description",
+                    )
+                ],
+                status_text=None,
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture
+def campaign_config_with_rules_having_rule_mapper(
+    s3_client: BaseClient, rules_bucket: BucketName
+) -> Generator[CampaignConfig]:
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="RSV",
+        iterations=[
+            rule.IterationFactory.build(
+                iteration_rules=[
+                    rule.PostcodeSuppressionRuleFactory.build(
+                        type=RuleType.filter, code="Rule Code Excluded postcode In SW19"
+                    ),
+                    rule.PersonAgeSuppressionRuleFactory.build(
+                        name="age_rule_name1", code="Rule Code Excluded age less than 75"
+                    ),
+                ],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort1",
+                        cohort_group="cohort_group1",
+                        positive_description="positive_description",
+                        negative_description="negative_description",
+                    )
+                ],
+                rules_mapper={
+                    "OTHER_SETTINGS": RuleEntry(
+                        RuleNames=[RuleName("age_rule_name1")],
+                        RuleCode=RuleCode("Age rule code from mapper"),
+                        RuleText=RuleText("Age Rule Description from mapper"),
+                    ),
+                    "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=RuleCode(""), RuleText=RuleText("")),
+                },
                 status_text=None,
             )
         ],

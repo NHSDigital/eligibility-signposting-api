@@ -20,12 +20,34 @@ resource "aws_security_group_rule" "main_https_in" {
 }
 
 resource "aws_security_group_rule" "main_https_out" {
-  description       = "Allow VPC Endpoint to access the actual AWS Service Endpoints"
+  description       = "Allow HTTPS access to Interface VPC Endpoints within VPC"
   type              = "egress"
   from_port         = local.default_port
   to_port           = local.default_port
   protocol          = "tcp"
-  cidr_blocks       = [local.any_ip_cidr]
+  cidr_blocks       = [local.vpc_cidr_block]
+  security_group_id = aws_security_group.main.id
+}
+
+# Allow egress to S3 via Gateway endpoint prefix list
+resource "aws_security_group_rule" "main_s3_prefix_out" {
+  description       = "Allow HTTPS access to S3 via Gateway endpoint"
+  type              = "egress"
+  from_port         = local.default_port
+  to_port           = local.default_port
+  protocol          = "tcp"
+  prefix_list_ids   = [aws_vpc_endpoint.gateways["s3"].prefix_list_id]
+  security_group_id = aws_security_group.main.id
+}
+
+# Allow egress to DynamoDB via Gateway endpoint prefix list
+resource "aws_security_group_rule" "main_dynamodb_prefix_out" {
+  description       = "Allow HTTPS access to DynamoDB via Gateway endpoint"
+  type              = "egress"
+  from_port         = local.default_port
+  to_port           = local.default_port
+  protocol          = "tcp"
+  prefix_list_ids   = [aws_vpc_endpoint.gateways["dynamodb"].prefix_list_id]
   security_group_id = aws_security_group.main.id
 }
 
