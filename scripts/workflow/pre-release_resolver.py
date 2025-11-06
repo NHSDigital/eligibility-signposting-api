@@ -44,7 +44,8 @@ class RefInfo:
     ref: str
 
 def get_event_name() -> str:
-    """Determine the effective event name, correcting for act quirks."""
+    """Determine the effective event name,
+     correcting for act quirks."""
     evt_env = os.getenv("GITHUB_EVENT_NAME", "")
     evt_payload = None
     path = os.getenv("GITHUB_EVENT_PATH")
@@ -80,7 +81,6 @@ def _run_gh(args: list[str]) -> str:
         print("---- gh STDERR ----\n", cp.stderr or "")
         raise RuntimeError(f"Command failed: {' '.join(cmd)}")
     return cp.stdout
-
 
 def list_successful_test_shas() -> List[str]:
     """
