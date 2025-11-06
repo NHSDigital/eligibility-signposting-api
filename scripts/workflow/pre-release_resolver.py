@@ -67,7 +67,6 @@ def get_event_name() -> str:
 EVENT_NAME = get_event_name()
 
 def _ensure_gh_token_env() -> None:
-    # gh prefers GH_TOKEN; GitHub Actions provides GITHUB_TOKEN
     if "GH_TOKEN" not in os.environ and os.environ.get("GITHUB_TOKEN"):
         os.environ["GH_TOKEN"] = os.environ["GITHUB_TOKEN"]
 

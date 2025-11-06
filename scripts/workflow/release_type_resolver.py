@@ -36,7 +36,6 @@ from ci_utils import (
     parse_merge_subject_for_pr_numbers,
     labels_for_pr,
     fail,
-    # title_for_pr is optional; we’ll try to use it if present
 )
 
 def pick_highest(labels: Iterable[str]) -> str | None:
