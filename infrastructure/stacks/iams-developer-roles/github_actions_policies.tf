@@ -115,7 +115,7 @@ resource "aws_iam_policy" "dynamodb_management" {
         }
       ],
       # to create test users in preprod
-        var.environment == "preprod" ? [
+      var.environment == "preprod" ? [
         {
           Effect = "Allow",
           Action = [
@@ -249,7 +249,11 @@ resource "aws_iam_policy" "api_infrastructure" {
           # CloudWatch Logs creation and management
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
-          "logs:PutLogEvents"
+          "logs:PutLogEvents",
+          # CloudWatch Logs subscription filters for CSOC forwarding
+          "logs:PutSubscriptionFilter",
+          "logs:DeleteSubscriptionFilter",
+          "logs:DescribeSubscriptionFilters"
         ],
         Resource = [
           # VPC Flow Logs
@@ -260,6 +264,17 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/*",
           # Kinesis Firehose logs
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          # CloudWatch Logs subscription to CSOC cross-account destination
+          "logs:PutSubscriptionFilter"
+        ],
+        Resource = [
+          # CSOC cross-account destination for API Gateway logs
+          "arn:aws:logs:${var.default_aws_region}:693466633220:destination:api_gateway_log_destination"
         ]
       },
       {
@@ -279,7 +294,9 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/eventbridge-firehose-role*",
           # Kinesis Firehose S3 backup roles
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*firehose*role*",
-          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/splunk-firehose-assume-role*"
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/splunk-firehose-assume-role*",
+          # CSOC CloudWatch Logs subscription role
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*-CWLogsSubscriptionRole"
         ],
         Condition = {
           StringEquals = {
@@ -288,7 +305,8 @@ resource "aws_iam_policy" "api_infrastructure" {
               "apigateway.amazonaws.com",
               "vpc-flow-logs.amazonaws.com",
               "events.amazonaws.com",
-              "firehose.amazonaws.com"
+              "firehose.amazonaws.com",
+              "logs.amazonaws.com"
             ]
           }
         }
@@ -308,6 +326,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "ec2:CreateTags",
           "ec2:DeleteTags",
           "ec2:CreateNetworkAclEntry",
+          "ec2:DeleteNetworkAclEntry",
           "ec2:CreateNetworkAcl",
           "ec2:AssociateRouteTable",
           "ec2:CreateVpc",
@@ -325,6 +344,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "ec2:ReplaceNetworkAclAssociation",
           "ec2:DeleteSecurityGroup",
           "ec2:DeleteNetworkAcl",
+          "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
 
           # ssm
           "ssm:GetParameter",
@@ -457,12 +477,15 @@ resource "aws_iam_policy" "iam_management" {
           "iam:CreateRole",
           "iam:DeleteRole",
           "iam:UpdateRole",
+          "iam:UpdateAssumeRolePolicy",
           "iam:PutRolePolicy",
           "iam:PutRolePermissionsBoundary",
           "iam:AttachRolePolicy",
           "iam:DetachRolePolicy",
           "iam:CreatePolicy",
           "iam:CreatePolicyVersion",
+          "iam:DeletePolicy",
+          "iam:DeletePolicyVersion",
           "iam:TagRole",
           "iam:PassRole",
           "iam:TagPolicy",
@@ -477,9 +500,13 @@ resource "aws_iam_policy" "iam_management" {
           "arn:aws:iam::*:role/*-api-gateway-*-role",
           # External write role
           "arn:aws:iam::*:role/eligibility-signposting-api-*-external-write-role",
+          # CSOC CloudWatch Logs subscription role
+          "arn:aws:iam::*:role/*-CWLogsSubscriptionRole",
           # Project policies
           "arn:aws:iam::*:policy/*api-gateway-logging-policy",
           "arn:aws:iam::*:policy/*PermissionsBoundary",
+          "arn:aws:iam::*:policy/*PutSubscriptionFilterPolicy",
+          "arn:aws:iam::*:policy/*CWLogsToCSOCDestinationPolicy",
           # VPC flow logs role
           "arn:aws:iam::*:role/vpc-flow-logs-role",
           # API role
@@ -500,8 +527,8 @@ resource "aws_iam_policy" "iam_management" {
 # Assume role policy document for GitHub Actions
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
-    sid    = "OidcAssumeRoleWithWebIdentity"
-    effect = "Allow"
+    sid     = "OidcAssumeRoleWithWebIdentity"
+    effect  = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
 
     principals {
@@ -514,13 +541,13 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values = ["repo:${var.github_org}/${var.github_repo}:*"]
+      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
     }
 
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
-      values = ["sts.amazonaws.com"]
+      values   = ["sts.amazonaws.com"]
     }
   }
 }

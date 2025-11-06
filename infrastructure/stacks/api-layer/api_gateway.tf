@@ -51,9 +51,11 @@ resource "aws_api_gateway_stage" "eligibility-signposting-api" {
   stage_name           = "${local.workspace}-eligibility-signposting-api-live"
   xray_tracing_enabled = true
 
+  # Access log settings
+  # A subscription filter (see csoc_log_forwarding.tf) forwards these logs to CSOC
   access_log_settings {
     destination_arn = module.eligibility_signposting_api_gateway.cloudwatch_destination_arn
-    format          = "{ \"requestId\":\"$context.requestId\", \"ip\": \"$context.identity.sourceIp\", \"caller\":\"$context.identity.caller\", \"user\":\"$context.identity.user\", \"requestTime\":\"$context.requestTime\", \"httpMethod\":\"$context.httpMethod\", \"resourcePath\":\"$context.resourcePath\", \"status\":\"$context.status\", \"protocol\":\"$context.protocol\", \"responseLength\":\"$context.responseLength\", \"accountId\":\"$context.accountId\", \"apiId\":\"$context.apiId\", \"stage\":\"$context.stage\", \"domainName\":\"$context.domainName\", \"error_message\":\"$context.error.message\", \"clientCertSerialNumber\":\"$context.identity.clientCert.serialNumber\", \"clientCertValidityNotBefore\":\"$context.identity.clientCert.validity.notBefore\", \"clientCertValidityNotAfter\":\"$context.identity.clientCert.validity.notAfter\" }"
+    format          = "{ \"requestId\":\"$context.requestId\", \"ip\": \"$context.identity.sourceIp\", \"caller\":\"$context.identity.caller\", \"user\":\"$context.identity.user\", \"requestTime\":\"$context.requestTime\", \"httpMethod\":\"$context.httpMethod\", \"resourcePath\":\"$context.resourcePath\", \"status\":\"$context.status\", \"protocol\":\"$context.protocol\", \"responseLength\":\"$context.responseLength\", \"accountId\":\"$context.accountId\", \"apiId\":\"$context.apiId\", \"stage\":\"$context.stage\", \"api_key\":\"$context.identity.apiKey\" }"
   }
 
   depends_on = [

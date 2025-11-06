@@ -169,7 +169,7 @@ class AuditContext:
             AuditSuitabilityRule(
                 rule_priority=rule.rule_priority,
                 rule_name=rule.rule_name,
-                rule_message=rule.rule_description,
+                rule_message=rule.rule_text,
             )
             for rule in unique_reasons
         ]

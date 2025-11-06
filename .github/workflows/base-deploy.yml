@@ -154,7 +154,7 @@ jobs:
               --region eu-west-2
 
         - name: "Upload lambda artifact for the current workflow"
-          uses: actions/upload-artifact@v4
+          uses: actions/upload-artifact@v5
           with:
             name: lambda-${{ needs.metadata.outputs.tag }}
             path: ./dist/lambda.zip
@@ -182,7 +182,7 @@ jobs:
           terraform_version: ${{ needs.metadata.outputs.terraform_version }}
 
       - name: "Download Lambda Artifact"
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: lambda-${{ needs.metadata.outputs.tag }}
           path: ./dist

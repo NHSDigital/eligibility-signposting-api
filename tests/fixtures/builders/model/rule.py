@@ -20,6 +20,7 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleAttributeName,
     RuleComparator,
     RuleDescription,
+    RuleEntry,
     RuleName,
     RuleOperator,
     RulePriority,
@@ -49,6 +50,7 @@ class IterationRuleFactory(ModelFactory[IterationRule]):
     comparator = "-1"
     cohort_label = None
     rule_stop = False
+    code = None
 
 
 class AvailableActionDetailFactory(ModelFactory[AvailableAction]):
@@ -69,12 +71,16 @@ class StatusTextFactory(ModelFactory[StatusText]):
     actionable = "Actionable status text"
 
 
+class RuleEntryFactory(ModelFactory[RuleEntry]): ...
+
+
 class IterationFactory(ModelFactory[Iteration]):
     iteration_cohorts = Use(IterationCohortFactory.batch, size=2)
     iteration_rules = Use(IterationRuleFactory.batch, size=2)
     iteration_date = Use(past_date)
     default_comms_routing = "defaultcomms"
     actions_mapper = Use(ActionsMapperFactory.build)
+    rules_mapper = None
 
 
 class RawCampaignConfigFactory(ModelFactory[CampaignConfig]):
@@ -156,6 +162,7 @@ class RsvPretendClinicalCohortFactory(IterationCohortFactory):
 class PersonAgeSuppressionRuleFactory(IterationRuleFactory):
     type = RuleType.suppression
     name = RuleName("Exclude too young less than 75")
+    code = None
     description = RuleDescription("Exclude too young less than 75")
     priority = RulePriority(10)
     operator = RuleOperator.year_gt
@@ -167,6 +174,7 @@ class PersonAgeSuppressionRuleFactory(IterationRuleFactory):
 class PostcodeSuppressionRuleFactory(IterationRuleFactory):
     type = RuleType.suppression
     name = RuleName("Excluded postcode In SW19")
+    code = None
     description = RuleDescription("In SW19")
     priority = RulePriority(10)
     operator = RuleOperator.starts_with
@@ -178,6 +186,7 @@ class PostcodeSuppressionRuleFactory(IterationRuleFactory):
 class DetainedEstateSuppressionRuleFactory(IterationRuleFactory):
     type = RuleType.suppression
     name = RuleName("Detained - Suppress Individuals In Detained Estates")
+    code = None
     description = RuleDescription("Suppress where individual is identified as being in a Detained Estate")
     priority = RulePriority(160)
     attribute_level = RuleAttributeLevel.PERSON
@@ -189,6 +198,7 @@ class DetainedEstateSuppressionRuleFactory(IterationRuleFactory):
 class ICBFilterRuleFactory(IterationRuleFactory):
     type = RuleType.filter
     name = RuleName("Not in QE1")
+    code = None
     description = RuleDescription("Not in QE1")
     priority = RulePriority(10)
     operator = RuleOperator.ne
@@ -200,6 +210,7 @@ class ICBFilterRuleFactory(IterationRuleFactory):
 class ICBRedirectRuleFactory(IterationRuleFactory):
     type = RuleType.redirect
     name = RuleName("In QE1")
+    code = None
     description = RuleDescription("In QE1")
     priority = RulePriority(20)
     operator = RuleOperator.equals
@@ -212,6 +223,7 @@ class ICBRedirectRuleFactory(IterationRuleFactory):
 class ICBNonEligibleActionRuleFactory(IterationRuleFactory):
     type = RuleType.not_eligible_actions
     name = RuleName("In QE1")
+    code = None
     description = RuleDescription("In QE1")
     priority = RulePriority(20)
     operator = RuleOperator.equals
@@ -224,6 +236,7 @@ class ICBNonEligibleActionRuleFactory(IterationRuleFactory):
 class ICBNonActionableActionRuleFactory(IterationRuleFactory):
     type = RuleType.not_actionable_actions
     name = RuleName("In QE1")
+    code = None
     description = RuleDescription("In QE1")
     priority = RulePriority(20)
     operator = RuleOperator.equals
