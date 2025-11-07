@@ -92,6 +92,84 @@ class FakeUnexpectedErrorEligibilityService(EligibilityService):
         raise ValueError
 
 
+def test_security_headers_present_on_successful_response(app: Flask, client: FlaskClient):
+    """Test that security headers are present on successful eligibility check response."""
+    # Given
+    with (
+        get_app_container(app).override.service(EligibilityService, new=FakeEligibilityService()),
+        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
+    ):
+        # When
+        headers = {"nhs-login-nhs-number": "9876543210"}
+        response = client.get("/patient-check/9876543210", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .with_headers(
+                has_entries(
+                    {
+                        "Cache-Control": "no-store, private",
+                        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+                        "X-Content-Type-Options": "nosniff",
+                    }
+                )
+            ),
+        )
+
+
+def test_security_headers_present_on_error_response(app: Flask, client: FlaskClient):
+    """Test that security headers are present on error response."""
+    # Given
+    with (
+        get_app_container(app).override.service(EligibilityService, new=FakeUnknownPersonEligibilityService()),
+        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
+    ):
+        # When
+        headers = {"nhs-login-nhs-number": "9876543210"}
+        response = client.get("/patient-check/9876543210", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.NOT_FOUND)
+            .with_headers(
+                has_entries(
+                    {
+                        "Cache-Control": "no-store, private",
+                        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+                        "X-Content-Type-Options": "nosniff",
+                    }
+                )
+            ),
+        )
+
+
+def test_security_headers_present_on_status_endpoint(client: FlaskClient):
+    """Test that security headers are present on health check endpoint."""
+    # When
+    response = client.get("/patient-check/_status")
+
+    # Then
+    assert_that(
+        response,
+        is_response()
+        .with_status_code(HTTPStatus.OK)
+        .with_headers(
+            has_entries(
+                {
+                    "Cache-Control": "no-store, private",
+                    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+                    "X-Content-Type-Options": "nosniff",
+                }
+            )
+        ),
+    )
+
+
 def test_nhs_number_given(app: Flask, client: FlaskClient):
     # Given
     with (

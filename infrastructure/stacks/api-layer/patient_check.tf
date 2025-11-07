@@ -112,5 +112,8 @@ resource "aws_api_gateway_gateway_response" "bad_request_parameters" {
   response_parameters = {
     "gatewayresponse.header.Access-Control-Allow-Origin" = "'*'"
     "gatewayresponse.header.Content-Type"                = "'application/fhir+json'"
+    "gatewayresponse.header.Cache-Control"               = "'no-store, private'"
+    "gatewayresponse.header.Strict-Transport-Security"   = "'max-age=31536000; includeSubDomains'"
+    "gatewayresponse.header.X-Content-Type-Options"      = "'nosniff'"
   }
 }
