@@ -7,7 +7,7 @@ Pre-release resolver:
 - Emits outputs for later steps.
 
 Outputs (via $GITHUB_OUTPUT):
-  this_sha, this_ref, latest_test_sha, latest_test_ref
+this_sha, this_ref, latest_test_sha, latest_test_ref
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ class RefInfo:
 
 def get_event_name() -> str:
     """Determine the effective event name,
-     correcting for act quirks."""
+    correcting for act quirks."""
     evt_env = os.getenv("GITHUB_EVENT_NAME", "")
     evt_payload = None
     path = os.getenv("GITHUB_EVENT_PATH")

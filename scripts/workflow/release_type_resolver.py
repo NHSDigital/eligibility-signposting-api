@@ -4,7 +4,7 @@ Resolve release_type with manual override or aggregate-only mode.
 Behaviour
 - Manual override: if MANUAL_RELEASE_TYPE is set (rc|patch|minor|major), emit that and exit.
 - Otherwise aggregate: scan PRs merged since latest final tag up to LATEST_TEST_SHA
-  and pick the highest label: major > minor > patch > rc.
+and pick the highest label: major > minor > patch > rc.
 
 Env inputs (required)
 - GH_TOKEN / GITHUB_TOKEN
@@ -57,9 +57,9 @@ def manual_override() -> str | None:
 def discover_prs(base: str, head: str) -> Set[int]:
     """
     Three-stage PR discovery in base..head:
-      1) merge commits → commits/{sha}/pulls
-      2) parse 'Merge pull request #123' subjects
-      3) all commits → commits/{sha}/pulls (covers squash/rebase)
+    1) merge commits → commits/{sha}/pulls
+    2) parse 'Merge pull request #123' subjects
+    3) all commits → commits/{sha}/pulls (covers squash/rebase)
     """
     pr_nums: Set[int] = set()
 
