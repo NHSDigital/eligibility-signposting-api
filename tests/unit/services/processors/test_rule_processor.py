@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from hamcrest import assert_that, empty, is_
 
-from eligibility_signposting_api.model.campaign_config import CohortLabel, RuleType
+from eligibility_signposting_api.model.campaign_config import CohortLabel, IterationCohort, RuleType
 from eligibility_signposting_api.model.eligibility_status import CohortGroupResult, Reason, RuleName, Status
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.person_data_reader import PersonDataReader
@@ -48,9 +48,25 @@ def test_get_exclusion_rules_matching_cohort_label():
     assert_that(result, is_([matching_rule]))
 
 
+def test_get_exclusion_rules_matching_cohort_label_when_it_contains_multiple_cohort_labels():
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
+    matching_rule = rule_builder.IterationRuleFactory.build(cohort_label="COHORT_A,COHORT_B")
+    rules_to_filter = [matching_rule]
+    result = list(RuleProcessor.get_exclusion_rules(cohort, rules_to_filter))
+    assert_that(result, is_([matching_rule]))
+
+
 def test_get_exclusion_rules_non_matching_cohort_label():
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
     non_matching_rule = rule_builder.IterationRuleFactory.build(cohort_label="COHORT_B")
+    rules_to_filter = [non_matching_rule]
+    result = list(RuleProcessor.get_exclusion_rules(cohort, rules_to_filter))
+    assert_that(result, is_([]))
+
+
+def test_get_exclusion_rules_non_matching_cohort_label_when_it_contains_multiple_cohort_labels():
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
+    non_matching_rule = rule_builder.IterationRuleFactory.build(cohort_label="COHORT_B,COHORT_C")
     rules_to_filter = [non_matching_rule]
     result = list(RuleProcessor.get_exclusion_rules(cohort, rules_to_filter))
     assert_that(result, is_([]))
@@ -65,11 +81,31 @@ def test_get_exclusion_rules_matching_from_list_cohort_label():
     assert_that(result, is_([rule1]))
 
 
+def test_get_exclusion_rules_matching_from_list_cohort_label_when_it_contains_multiple_cohort_labels():
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
+    rule1 = rule_builder.IterationRuleFactory.build(cohort_label="COHORT_A")
+    rule2 = rule_builder.IterationRuleFactory.build(cohort_label="COHORT_B,COHORT_C")
+    rules_to_filter = [rule1, rule2]
+    result = list(RuleProcessor.get_exclusion_rules(cohort, rules_to_filter))
+    assert_that(result, is_([rule1]))
+
+
 def test_get_exclusion_rules_mixed_rules():
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
     no_cohort_label_rule = rule_builder.IterationRuleFactory.build(cohort_label=None, name="General")
     matching_rule = rule_builder.IterationRuleFactory.build(cohort_label="COHORT_A", name="Matching")
     non_matching_rule = rule_builder.IterationRuleFactory.build(cohort_label="COHORT_B", name="NonMatching")
+
+    rules_to_filter = [no_cohort_label_rule, matching_rule, non_matching_rule]
+    result = list(RuleProcessor.get_exclusion_rules(cohort, rules_to_filter))
+    assert_that({r.name for r in result}, is_({"General", "Matching"}))
+
+
+def test_get_exclusion_rules_mixed_rules_when_it_contains_multiple_cohort_labels():
+    cohort = rule_builder.IterationCohortFactory.build(cohort_label="COHORT_A")
+    no_cohort_label_rule = rule_builder.IterationRuleFactory.build(cohort_label=None, name="General")
+    matching_rule = rule_builder.IterationRuleFactory.build(cohort_label="COHORT_A,COHORT_C", name="Matching")
+    non_matching_rule = rule_builder.IterationRuleFactory.build(cohort_label="COHORT_B,COHORT_C", name="NonMatching")
 
     rules_to_filter = [no_cohort_label_rule, matching_rule, non_matching_rule]
     result = list(RuleProcessor.get_exclusion_rules(cohort, rules_to_filter))
@@ -570,9 +606,14 @@ def test_get_cohort_group_results(
     suppression_rules = (rule_builder.IterationRuleFactory.build(type=RuleType.suppression),)
     mock_get_rules_by_type.return_value = (filter_rules, suppression_rules)
 
-    def mock_handle_side_effect(person, cohort, cohort_results_dict, rule_processor_instance):  # noqa: ARG001
+    def mock_handle_side_effect(
+        person: Person,  # noqa: ARG001
+        cohort: IterationCohort,
+        cohort_results: dict[CohortLabel, CohortGroupResult],
+        rule_processor_instance: RuleProcessor,  # noqa: ARG001
+    ):
         if cohort.cohort_label == CohortLabel("COHORT_A"):
-            cohort_results_dict[CohortLabel("COHORT_A")] = CohortGroupResult(
+            cohort_results[CohortLabel("COHORT_A")] = CohortGroupResult(
                 cohort_code=cohort.cohort_group,
                 status=Status.actionable,
                 reasons=[],
@@ -580,7 +621,7 @@ def test_get_cohort_group_results(
                 audit_rules=[],
             )
         elif cohort.cohort_label == CohortLabel("COHORT_B"):
-            cohort_results_dict[CohortLabel("COHORT_B")] = CohortGroupResult(
+            cohort_results[CohortLabel("COHORT_B")] = CohortGroupResult(
                 cohort_code=cohort.cohort_group,
                 status=Status.not_eligible,
                 reasons=[],

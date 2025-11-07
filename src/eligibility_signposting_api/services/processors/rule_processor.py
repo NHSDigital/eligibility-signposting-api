@@ -124,7 +124,9 @@ class RuleProcessor:
     @staticmethod
     def _should_skip_rule_group(cohort: IterationCohort, group_rules: list[IterationRule]) -> bool:
         cohort_specific_rules = [rule for rule in group_rules if rule.parsed_cohort_labels]
-        matching_specific_rules = [rule for rule in cohort_specific_rules if cohort.cohort_label in rule.parsed_cohort_labels]
+        matching_specific_rules = [
+            rule for rule in cohort_specific_rules if cohort.cohort_label in rule.parsed_cohort_labels
+        ]
         return bool(cohort_specific_rules and not matching_specific_rules)
 
     def evaluate_rules_priority_group(
@@ -148,12 +150,7 @@ class RuleProcessor:
 
     @staticmethod
     def get_exclusion_rules(cohort: IterationCohort, rules: Iterable[IterationRule]) -> Iterator[IterationRule]:
-        return (
-            ir
-            for ir in rules
-            if not ir.parsed_cohort_labels
-               or cohort.cohort_label in ir.parsed_cohort_labels
-        )
+        return (ir for ir in rules if not ir.parsed_cohort_labels or cohort.cohort_label in ir.parsed_cohort_labels)
 
     def get_cohort_group_results(
         self, person: Person, active_iteration: Iteration
