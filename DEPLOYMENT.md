@@ -4,7 +4,7 @@ This repo uses GitHub Actions to deploy through four environments:
 
 - **Dev** – continuous integration deploys on push to `main`. Creates a `Dev-<timestamp>` tag.
 - **test** – Auto deploys the same commit that just deployed to Dev (but waits for approval). No releases or SemVer tags.
-- **Preprod** – Auto deploys the commit sha that just deployed to test (but waits for approval)  **cuts/bumps a Release Candidate (RC)** tag (`vX.Y.Z-rc.N`) and creates a **GitHub pre-release**.
+- **Preprod** – Auto deploys the commit that just deployed to test (but waits for approval)  **cuts/bumps a Release Candidate (RC)** tag (`vX.Y.Z-rc.N`) and creates a **GitHub pre-release**.
 - **prod** – manual promotion of a specific RC to a **final SemVer tag** (`vX.Y.Z`) and a **GitHub Release**.
 
 Releases are immutable and auditable:
