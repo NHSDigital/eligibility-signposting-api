@@ -235,8 +235,30 @@ data "aws_iam_policy_document" "waf_logs_kms" {
       type        = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-    actions   = ["kms:*"]
-    resources = ["*"]
+    actions = [
+      "kms:DescribeKey",
+      "kms:GetKeyPolicy",
+      "kms:GetKeyRotationStatus",
+      "kms:ListAliases",
+      "kms:ListGrants",
+      "kms:ListKeyPolicies",
+      "kms:ListResourceTags",
+      "kms:PutKeyPolicy",
+      "kms:ScheduleKeyDeletion",
+      "kms:CancelKeyDeletion",
+      "kms:UpdateKeyDescription",
+      "kms:EnableKeyRotation",
+      "kms:DisableKeyRotation",
+      "kms:EnableKey",
+      "kms:DisableKey",
+      "kms:TagResource",
+      "kms:UntagResource",
+      "kms:CreateGrant",
+      "kms:RevokeGrant",
+      "kms:RetireGrant",
+      "kms:ListGrants"
+    ]
+    resources = [aws_kms_key.waf_logs[0].arn]
   }
 
   statement {
@@ -254,7 +276,7 @@ data "aws_iam_policy_document" "waf_logs_kms" {
       "kms:CreateGrant",
       "kms:DescribeKey"
     ]
-    resources = ["*"]
+    resources = [aws_kms_key.waf_logs[0].arn]
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
