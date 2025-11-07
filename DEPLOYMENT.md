@@ -3,8 +3,8 @@
 This repo uses GitHub Actions to deploy through four environments:
 
 - **Dev** – continuous integration deploys on push to `main`. Creates a `Dev-<timestamp>` tag.
-- **test** – Auto deploys the same sha that just deployed to dev (but waits for approval). No releases or SemVer tags.
-- **Preprod** – Auto deploys the same sha that just deployed to test (but waits for approval)  **cuts/bumps a Release Candidate (RC)** tag (`vX.Y.Z-rc.N`) and creates a **GitHub pre-release**.
+- **test** – Auto deploys the same commit that just deployed to Dev (but waits for approval). No releases or SemVer tags.
+- **Preprod** – Auto deploys the commit sha that just deployed to test (but waits for approval)  **cuts/bumps a Release Candidate (RC)** tag (`vX.Y.Z-rc.N`) and creates a **GitHub pre-release**.
 - **prod** – manual promotion of a specific RC to a **final SemVer tag** (`vX.Y.Z`) and a **GitHub Release**.
 
 Releases are immutable and auditable:
@@ -16,13 +16,13 @@ Releases are immutable and auditable:
 
 ## Workflow Map
 
-| Stage            | Workflow file                                                           | Trigger                               | What it does                                                      | Tags / Releases                             |
-|------------------|-------------------------------------------------------------------------|---------------------------------------|-------------------------------------------------------------------|---------------------------------------------|
-| **Pull Request** | `.github/workflows/cicd-1-pull-request.yml`                             | `pull_request` (opened/sync/reopened) | Commit/Test/Build/Acceptance stages                               | No tags/releases                            |
-| **Dev**          | `.github/workflows/cicd-2-publish.yml`                                  | `push` to `main`                      | Builds & deploys to Dev                                           | Creates and pushes `Dev-YYYYMMDDHHMMSS` tag |
-| **Test**         | `.github/workflows/cicd-3-test.yml`                                     | Auto (`workflow_run`)                 | Deploys the sha from the run that triggered it                    | No tags, no releases                        |
-| **Preprod**      | `.github/workflows/cicd-4-Preprod-deploy.yml` → calls `base-deploy.yml` | Auto (`workflow_run`)                 | Deploys the same sha and **creates/bumps an RC tag**; pre-release | `vX.Y.Z-rc.N` + GitHub **pre-release**      |
-| **Prod**         | `.github/workflows/cicd-5-prod-deploy.yml` → calls `base-deploy.yml`    | Manual (`workflow_dispatch`)          | Promotes a specific RC to final                                   | `vX.Y.Z` + GitHub **Release**               |
+| Stage            | Workflow file                                                           | Trigger                               | What it does                                                     | Tags / Releases                             |
+|------------------|-------------------------------------------------------------------------|---------------------------------------|------------------------------------------------------------------|---------------------------------------------|
+| **Pull Request** | `.github/workflows/cicd-1-pull-request.yml`                             | `pull_request` (opened/sync/reopened) | Commit/Test/Build/Acceptance stages                              | No tags/releases                            |
+| **Dev**          | `.github/workflows/cicd-2-publish.yml`                                  | `push` to `main`                      | Builds & deploys to Dev                                          | Creates and pushes `Dev-YYYYMMDDHHMMSS` tag |
+| **Test**         | `.github/workflows/cicd-3-test.yml`                                     | Auto (`workflow_run`)                 | Deploys the commit from the run that triggered it                | No tags, no releases                        |
+| **Preprod**      | `.github/workflows/cicd-4-Preprod-deploy.yml` → calls `base-deploy.yml` | Auto (`workflow_run`)                 | Deploys the same commit **creates/bumps an RC tag**; pre-release | `vX.Y.Z-rc.N` + GitHub **pre-release**      |
+| **Prod**         | `.github/workflows/cicd-5-prod-deploy.yml` → calls `base-deploy.yml`    | Manual (`workflow_dispatch`)          | Promotes a specific RC to final                                  | `vX.Y.Z` + GitHub **Release**               |
 
 > **Note:** The Preprod/prod entry workflows are thin wrappers around a **reusable** workflow (`base-deploy.yml`).
 
@@ -58,7 +58,7 @@ Releases are immutable and auditable:
 - Creates a timestamped **Dev tag**: `Dev-YYYYMMDDHHMMSS`
 - No SemVer, no GitHub Release.
 
-- Can be manually deployed to flow a candidate though piepline outside of merge
+- Can be manually deployed to flow a candidate though pipeline outside of merge
 
 **Why:** fast feedback and a stable pointer (the Dev tag) you can later promote to **test** or use as the **Preprod ref**.
 
@@ -90,7 +90,7 @@ Releases are immutable and auditable:
 
 - If Auto then no inputs needed at this point
 - Auto will determine the release type from the label given to the PR linked to the commit being promoted
-- If no Label is given it defaults to rc
+- If no Label is given it defaults to release candidate
 - If Manual:
 - **`ref`**: branch/tag/SHA to deploy (`Dev-<timestamp>` tag).
 - **`release_type`**: one of:
