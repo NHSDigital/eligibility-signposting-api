@@ -75,8 +75,9 @@ resource "aws_wafv2_web_acl" "api_gateway" {
     name     = "AWSManagedRulesKnownBadInputsRuleSet"
     priority = 30
 
+    # Enforce BLOCK for Known Bad Inputs to mitigate Log4j (CKV_AWS_192)
     override_action {
-      count {} # Start in count mode - change to none {} when ready to block
+      none {}
     }
 
     statement {
@@ -179,7 +180,7 @@ resource "aws_wafv2_web_acl_association" "api_gateway" {
 resource "aws_cloudwatch_log_group" "waf" {
   count             = local.waf_enabled ? 1 : 0
   name              = "/aws/wafv2/${local.workspace}-eligibility-signposting-api"
-  retention_in_days = 90 # Adjust based on compliance requirements
+  retention_in_days = 365
   kms_key_id        = aws_kms_key.waf_logs[0].arn
 
   tags = merge(
