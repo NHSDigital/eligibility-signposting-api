@@ -1,0 +1,20 @@
+name: "OWASP Dependency Scan"
+description: "Scan dependencies for known vulnerabilities using OWASP Dependency-Check"
+runs:
+  using: "composite"
+  steps:
+    - name: "Run OWASP Dependency-Check"
+      uses: dependency-check/Dependency-Check_Action@main
+      id: Depcheck
+      with:
+        project: "eligibility-signposting-api"
+        path: "."
+        format: "SARIF"
+        out: "reports"
+        args: >
+          --failOnCVSS 7
+          --enableRetired
+    - name: "Upload OWASP results to GitHub Security tab"
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: reports/dependency-check-report.sarif
