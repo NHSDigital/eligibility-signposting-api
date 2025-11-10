@@ -169,6 +169,8 @@ class TestOptionalFieldsSchemaValidations:
             ("Cohort_A", ["Cohort_A"]),
             ("Cohort_A,Cohort_B", ["Cohort_A", "Cohort_B"]),
             ("Cohort_C,,,,", ["Cohort_C"]),
+            ("Cohort_D,,,,Cohort_E", ["Cohort_D", "Cohort_E"]),
+            (",,,,Cohort_E,,,,", ["Cohort_E"]),
             (",,,,", []),
             ("", []),
             (None, []),
