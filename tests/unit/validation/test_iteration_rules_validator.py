@@ -163,12 +163,26 @@ class TestOptionalFieldsSchemaValidations:
             IterationRuleValidation(**data)
 
     # CohortLabel
-    @pytest.mark.parametrize("label", ["Cohort_A", "Segment_2025", None, ""])
-    def test_valid_cohort_label(self, label, valid_iteration_rule_with_only_mandatory_fields):
+    @pytest.mark.parametrize(
+        ("label", "expected_parsed_cohort_label"),
+        [
+            ("Cohort_A", ["Cohort_A"]),
+            ("Cohort_A,Cohort_B", ["Cohort_A", "Cohort_B"]),
+            ("Cohort_C,,,,", ["Cohort_C"]),
+            ("Cohort_D,,,,Cohort_E", ["Cohort_D", "Cohort_E"]),
+            (",,,,Cohort_E,,,,", ["Cohort_E"]),
+            (",,,,", []),
+            ("", []),
+            (None, []),
+        ],
+    )
+    def test_cohort_label_parsing(
+        self, label, expected_parsed_cohort_label, valid_iteration_rule_with_only_mandatory_fields
+    ):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["CohortLabel"] = label
         result = IterationRuleValidation(**data)
-        assert result.cohort_label == label
+        assert result.parsed_cohort_labels == expected_parsed_cohort_label
 
     @pytest.mark.parametrize("label", [123, [], {}])
     def test_invalid_cohort_label(self, label, valid_iteration_rule_with_only_mandatory_fields):

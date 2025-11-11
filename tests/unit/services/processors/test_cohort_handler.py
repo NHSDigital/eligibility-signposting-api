@@ -3,6 +3,7 @@ from unittest.mock import Mock
 import pytest
 from hamcrest import assert_that, has_length, is_
 
+from eligibility_signposting_api.model.campaign_config import IterationCohort, IterationRule
 from eligibility_signposting_api.model.eligibility_status import CohortGroupResult, Status
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.cohort_handler import (
@@ -86,12 +87,22 @@ def test_filter_rule_handler_is_not_eligible(mock_rule_processor_for_handlers, m
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="cohort1", negative_description="Not Eligible")
     cohort_results = {}
 
-    mock_rule_processor_for_handlers.is_eligible.side_effect = (
-        lambda p, c, cr, fr: cr.update(  # noqa: ARG005
-            {c.cohort_label: CohortGroupResult(c.cohort_group, Status.not_eligible, [], c.negative_description, [])}
+    def mark_not_eligible_side_effect(
+        person: Person,  # noqa : ARG001
+        context: IterationCohort,
+        results: dict[str, CohortGroupResult],
+        rules: list[IterationRule],  # noqa : ARG001
+    ) -> bool:
+        results.update(
+            {
+                context.cohort_label: CohortGroupResult(
+                    context.cohort_group, Status.not_eligible, [], context.negative_description, []
+                )
+            }
         )
-        or False
-    )
+        return False
+
+    mock_rule_processor_for_handlers.is_eligible.side_effect = mark_not_eligible_side_effect
 
     handler.handle(MOCK_PERSON, cohort, cohort_results, mock_rule_processor_for_handlers)
 
@@ -109,9 +120,21 @@ def test_suppression_rule_handler_is_actionable(mock_rule_processor_for_handlers
     cohort = rule_builder.IterationCohortFactory.build(cohort_label="cohort1", positive_description="Actionable")
     cohort_results = {}
 
-    mock_rule_processor_for_handlers.is_actionable.side_effect = lambda p, c, cr, sr: cr.update(  # noqa: ARG005
-        {c.cohort_label: CohortGroupResult(c.cohort_group, Status.actionable, [], c.positive_description, [])}
-    )
+    def mark_actionable_side_effect(
+        person: Person,  # noqa : ARG001
+        context: IterationCohort,
+        results: dict[str, CohortGroupResult],
+        rules: list[IterationRule],  # noqa : ARG001
+    ) -> None:
+        results.update(
+            {
+                context.cohort_label: CohortGroupResult(
+                    context.cohort_group, Status.actionable, [], context.positive_description, []
+                )
+            }
+        )
+
+    mock_rule_processor_for_handlers.is_actionable.side_effect = mark_actionable_side_effect
 
     handler.handle(MOCK_PERSON, cohort, cohort_results, mock_rule_processor_for_handlers)
 
