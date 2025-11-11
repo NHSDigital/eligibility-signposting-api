@@ -39,11 +39,10 @@ from ci_utils import (
 )
 
 def pick_highest(labels: Iterable[str]) -> str | None:
-    labels = list(labels)
-    if any(l == "release:major" for l in labels): return "major"
-    if any(l == "release:minor" for l in labels): return "minor"
-    if any(l == "release:patch" for l in labels): return "patch"
-    if any(l == "release:rc"    for l in labels): return "rc"
+    s = set(labels)
+    for level in ("major", "minor", "patch", "rc"):
+        if level in s:
+            return level
     return None
 
 def manual_override() -> str | None:

@@ -1,8 +1,8 @@
 ACT_IMAGE = ghcr.io/nhs-england-tools/github-runner-image:20230909-321fd1e-rt
 PREPROD_WORKFLOW  = .github/workflows/cicd-4-preprod-deploy.yaml
-JOB       = metadata
+JOB       = metadata # This can be changed depending on which part of the workflow we are testing
 
-# Usage: make act EVENT=.act/workflow_run_preprod.json TRIGGER_TYPE=workflow_run
+# Usage: make act EVENT=.act/auto_preprod_trigger_*.json TRIGGER_TYPE=workflow_run
 act-preprod-deploy:
 	@if [ -z "$(EVENT)" ]; then \
 		echo "Usage: make act EVENT=<path-to-event-json>"; \

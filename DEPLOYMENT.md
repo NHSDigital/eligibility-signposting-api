@@ -109,7 +109,7 @@ Releases are immutable and auditable:
 ### When to use which `release_type`
 
 - We should not normally be manually deploying, the auto deploy should take care of it
-- Manual deploy to brake glass
+- Manual deploy to break glass
 - Use **`patch`/`minor`/`major`** when starting a **new base version** (first RC becomes `-rc.1`).
 - Use **`rc`** when you need another candidate for the **same base** (`-rc.N+1`).
 

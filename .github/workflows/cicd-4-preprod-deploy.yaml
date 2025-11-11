@@ -37,7 +37,7 @@ jobs:
       release_type: ${{ steps.release_type.outputs.release_type }}
 
     env:
-      TEST_WORKFLOW_ID: "190123511"
+      TEST_WORKFLOW_ID: "190123511" # this will need updating if the workflow is recreated
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
