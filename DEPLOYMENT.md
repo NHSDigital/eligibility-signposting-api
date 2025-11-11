@@ -3,8 +3,8 @@
 This repo uses GitHub Actions to deploy through four environments:
 
 - **Dev** – continuous integration deploys on push to `main`. Creates a `Dev-<timestamp>` tag.
-- **test** – manual deploy of an existing tag (usually a `Dev-<timestamp>` tag). No releases or SemVer tags.
-- **Preprod** – manual deploy that **cuts/bumps a Release Candidate (RC)** tag (`vX.Y.Z-rc.N`) and creates a **GitHub pre-release**.
+- **test** – Auto deploys the same commit that just deployed to Dev (but waits for approval). No releases or SemVer tags.
+- **Preprod** – Auto deploys the commit that just deployed to test (but waits for approval)  **cuts/bumps a Release Candidate (RC)** tag (`vX.Y.Z-rc.N`) and creates a **GitHub pre-release**.
 - **prod** – manual promotion of a specific RC to a **final SemVer tag** (`vX.Y.Z`) and a **GitHub Release**.
 
 Releases are immutable and auditable:
@@ -16,13 +16,13 @@ Releases are immutable and auditable:
 
 ## Workflow Map
 
-| Stage            | Workflow file                                                           | Trigger                               | What it does                                                    | Tags / Releases                             |
-|------------------|-------------------------------------------------------------------------|---------------------------------------|-----------------------------------------------------------------|---------------------------------------------|
-| **Pull Request** | `.github/workflows/cicd-1-pull-request.yml`                             | `pull_request` (opened/sync/reopened) | Commit/Test/Build/Acceptance stages                             | No tags/releases                            |
-| **Dev**          | `.github/workflows/cicd-2-publish.yml`                                  | `push` to `main`                      | Builds & deploys to Dev                                         | Creates and pushes `Dev-YYYYMMDDHHMMSS` tag |
-| **Test**         | `.github/workflows/cicd-3-test.yml`                                     | Manual (`workflow_dispatch`)          | Deploys the chosen tag to test                                  | No tags, no releases                        |
-| **Preprod**      | `.github/workflows/cicd-4-Preprod-deploy.yml` → calls `base-deploy.yml` | Manual (`workflow_dispatch`)          | Deploys chosen ref and **creates/bumps an RC tag**; pre-release | `vX.Y.Z-rc.N` + GitHub **pre-release**      |
-| **Prod**         | `.github/workflows/cicd-5-prod-deploy.yml` → calls `base-deploy.yml`    | Manual (`workflow_dispatch`)          | Promotes a specific RC to final                                 | `vX.Y.Z` + GitHub **Release**               |
+| Stage            | Workflow file                                                           | Trigger                               | What it does                                                     | Tags / Releases                             |
+|------------------|-------------------------------------------------------------------------|---------------------------------------|------------------------------------------------------------------|---------------------------------------------|
+| **Pull Request** | `.github/workflows/cicd-1-pull-request.yml`                             | `pull_request` (opened/sync/reopened) | Commit/Test/Build/Acceptance stages                              | No tags/releases                            |
+| **Dev**          | `.github/workflows/cicd-2-publish.yml`                                  | `push` to `main`                      | Builds & deploys to Dev                                          | Creates and pushes `Dev-YYYYMMDDHHMMSS` tag |
+| **Test**         | `.github/workflows/cicd-3-test.yml`                                     | Auto (`workflow_run`)                 | Deploys the commit from the run that triggered it                | No tags, no releases                        |
+| **Preprod**      | `.github/workflows/cicd-4-Preprod-deploy.yml` → calls `base-deploy.yml` | Auto (`workflow_run`)                 | Deploys the same commit **creates/bumps an RC tag**; pre-release | `vX.Y.Z-rc.N` + GitHub **pre-release**      |
+| **Prod**         | `.github/workflows/cicd-5-prod-deploy.yml` → calls `base-deploy.yml`    | Manual (`workflow_dispatch`)          | Promotes a specific RC to final                                  | `vX.Y.Z` + GitHub **Release**               |
 
 > **Note:** The Preprod/prod entry workflows are thin wrappers around a **reusable** workflow (`base-deploy.yml`).
 
@@ -58,44 +58,47 @@ Releases are immutable and auditable:
 - Creates a timestamped **Dev tag**: `Dev-YYYYMMDDHHMMSS`
 - No SemVer, no GitHub Release.
 
+- Can be manually deployed to flow a candidate though pipeline outside of merge
+
 **Why:** fast feedback and a stable pointer (the Dev tag) you can later promote to **test** or use as the **Preprod ref**.
 
 ---
 
-## Test Deployment (manual, by tag)
+## Test Deployment
 
 **File:** `CI/CD deploy to TEST`
-**Trigger:** manual (`workflow_dispatch`)
+**Trigger:** Auto (`workflow_run`)
 
 ### Inputs
 
-- `tag`: the ref to deploy (e.g., a **Dev** tag created by the Dev workflow).
-- `environment`: fixed to `test`.
+- taken from previous workflow
 
 ### Behavior
 
-- Checks out the provided tag, builds, and deploys to **test**.
+- Waits for approval to continue
+- Checks out the ref, builds, and deploys to **test**.
 - **No new tags** created. **No GitHub Releases** created.
-
-### Recommended usage
-
-- Deploy the **same commit** that was verified in Dev by supplying the `Dev-<timestamp>` tag here.
 
 ---
 
 ## Preprod (Release Candidates)
 
 **Entry workflow:** `cicd-4-Preprod-deploy.yml` → calls `base-deploy.yml`
-**Trigger:** manual (`workflow_dispatch`)
+**Trigger:** Auto (`workflow_run`) / Manual (`workflow_dispatch`)
 
 ### Inputs
 
+- If Auto then no inputs needed at this point
+- Auto will determine the release type from the label given to the PR linked to the commit being promoted
+- If no Label is given it defaults to release candidate
+- If Manual:
 - **`ref`**: branch/tag/SHA to deploy (`Dev-<timestamp>` tag).
 - **`release_type`**: one of:
   - `patch` – start a new **patch** series → `vX.Y.(Z+1)-rc.1`
   - `minor` – start a new **minor** series → `vX.(Y+1).0-rc.1`
   - `major` – start a new **major** series → `v(X+1).0.0-rc.1`
   - `rc` – **keep the same base** version and cut the **next RC** (e.g. `-rc.1` → `-rc.2`)
+- **`reason`**: A short description of why manual is being used
 
 ### Behavior
 
@@ -105,6 +108,8 @@ Releases are immutable and auditable:
 
 ### When to use which `release_type`
 
+- We should not normally be manually deploying, the auto deploy should take care of it
+- Manual deploy to break glass
 - Use **`patch`/`minor`/`major`** when starting a **new base version** (first RC becomes `-rc.1`).
 - Use **`rc`** when you need another candidate for the **same base** (`-rc.N+1`).
 
@@ -130,15 +135,16 @@ Releases are immutable and auditable:
 
 ## Decision Guide (what to pick, when)
 
-| Situation                                       | Workflow             | Input: `ref`                 | Input: `release_type` | Result                                       |
-|-------------------------------------------------|----------------------|------------------------------|-----------------------|----------------------------------------------|
-| Deploy automatically after merge to main        | **Dev** (auto)       | `main` (implicit)            | n/a                   | Deploys to Dev, creates `Dev-YYYYMMDDHHMMSS` |
-| Deploy an existing build to test                | **Test** (manual)    | a tag (e.g. `Dev-20250817…`) | n/a                   | Deploys to test (no tags/releases)           |
-| Start a **new patch release** into Preprod      | **Preprod** (manual) | branch/tag/SHA               | `patch`               | `vX.Y.(Z+1)-rc.1` + pre-release              |
-| Start a **new minor release** into Preprod      | **Preprod**          | branch/tag/SHA               | `minor`               | `vX.(Y+1).0-rc.1` + pre-release              |
-| Start a **new major release** into Preprod      | **Preprod**          | branch/tag/SHA               | `major`               | `v(X+1).0.0-rc.1` + pre-release              |
-| Cut **another candidate** for the **same base** | **Preprod**          | branch/tag/SHA (same train)  | `rc`                  | `vX.Y.Z-rc.N+1` + pre-release                |
-| Promote a **tested RC** to production           | **Prod** (manual)    | RC tag (e.g. `v1.4.0-rc.2`)  | n/a                   | `v1.4.0` + GitHub Release                    |
+| Situation                                      | Workflow             | Input: `ref`                | Input: `release_type` | Result                                       |
+|------------------------------------------------|----------------------|-----------------------------|-----------------------|----------------------------------------------|
+| Deploy automatically after merge to main       | **Dev** (auto)       | `main` (implicit)           | n/a                   | Deploys to Dev, creates `Dev-YYYYMMDDHHMMSS` |
+| Deploy an existing build to test               | **Test** (auto)      | n/a                         | n/a                   | Deploys to test (no tags/releases)           |
+| Preprod deploy                                 | **Preprod** (auto)   | n/a                         | n/a                   | tags according to pr label + pre-release     |
+| Break Glass **new patch release** into Preprod | **Preprod** (manual) | branch/tag/SHA              | `patch`               | `vX.Y.(Z+1)-rc.1` + pre-release              |
+| Break Glass **new minor release** into Preprod | **Preprod**          | branch/tag/SHA              | `minor`               | `vX.(Y+1).0-rc.1` + pre-release              |
+| Break Glass **new major release** into Preprod | **Preprod**          | branch/tag/SHA              | `major`               | `v(X+1).0.0-rc.1` + pre-release              |
+| Break Glass **another candidate**              | **Preprod**          | branch/tag/SHA (same train) | `rc`                  | `vX.Y.Z-rc.N+1` + pre-release                |
+| Promote a **tested RC** to production          | **Prod** (manual)    | RC tag (e.g. `v1.4.0-rc.2`) | n/a                   | `v1.4.0` + GitHub Release                    |
 
 ---
 

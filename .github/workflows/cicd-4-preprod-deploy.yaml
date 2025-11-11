@@ -1,0 +1,98 @@
+name: "4. CD | Deploy to PreProd"
+
+concurrency:
+  group: preprod-deploy
+  cancel-in-progress: false
+
+on:
+  workflow_run:
+    workflows: ["3. CD | Deploy to Test"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "dev-* tag to deploy to PreProd"
+        required: true
+      release_type:
+        description: "rc|patch|minor|major"
+        required: true
+        default: "rc"
+      reason:
+        description: "Why are you doing a manual deployment?"
+        required: true
+        default: "To roll back to a previous commit"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  metadata:
+    name: "Resolve ref + stale guard + release type"
+    runs-on: ubuntu-latest
+    outputs:
+      ref:          ${{ steps.resolver.outputs.this_ref }}
+      this_sha:     ${{ steps.resolver.outputs.this_sha }}
+      latest_sha:   ${{ steps.resolver.outputs.latest_test_sha }}
+      release_type: ${{ steps.release_type.outputs.release_type }}
+
+    env:
+      TEST_WORKFLOW_ID: "190123511" # this will need updating if the workflow is recreated
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout (full history & tags)
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Force HTTPS remote for act
+        if: env.ACT == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${GITHUB_TOKEN}"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          git ls-remote --tags origin >/dev/null
+
+      - name: Debug event
+        if: env.ACT == 'true'
+        run: |
+          echo "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}"
+          echo "Payload:" && cat "$GITHUB_EVENT_PATH" || true
+
+      - name: Resolve THIS vs LATEST TEST + stale guard (auto only)
+        id: resolver
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          MANUAL_REF: ${{ github.event.inputs.ref }}
+          WORKFLOW_NAME: "3. CD | Deploy to Test"
+          BRANCH: "main"
+          LIMIT: "100"
+        run: python3 scripts/workflow/pre-release_resolver.py
+
+      - name: Resolve release_type (labels → default rc)
+        id: release_type
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: "main"
+          AGGREGATE: "true"
+          THIS_SHA: ${{ steps.resolver.outputs.this_sha }}
+          LATEST_TEST_SHA: ${{ steps.resolver.outputs.latest_test_sha }}
+          MANUAL_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+        run: python3 scripts/workflow/release_type_resolver.py
+
+  deploy:
+    name: "Call base-deploy.yml (PreProd)"
+    needs: [metadata]
+    uses: ./.github/workflows/base-deploy.yml
+    with:
+      environment: preprod
+      ref:          ${{ needs.metadata.outputs.ref }}
+      release_type: ${{ needs.metadata.outputs.release_type }}
+    secrets: inherit
