@@ -148,10 +148,6 @@ class RuleProcessor:
 
         return best_status, exclusion_reasons, is_rule_stop
 
-    @staticmethod
-    def get_exclusion_rules(cohort: IterationCohort, rules: Iterable[IterationRule]) -> Iterator[IterationRule]:
-        return (ir for ir in rules if not ir.parsed_cohort_labels or cohort.cohort_label in ir.parsed_cohort_labels)
-
     def get_cohort_group_results(
         self, person: Person, active_iteration: Iteration
     ) -> dict[CohortLabel, CohortGroupResult]:
