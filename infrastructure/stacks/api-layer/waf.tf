@@ -50,15 +50,6 @@ resource "aws_wafv2_web_acl" "api_gateway" {
       managed_rule_group_statement {
         vendor_name = "AWS"
         name        = "AWSManagedRulesCommonRuleSet"
-
-        # Exclude rules that might cause false positives for healthcare APIs
-        # Uncomment and adjust based on your monitoring results
-        # rule_action_override {
-        #   name = "SizeRestrictions_BODY"
-        #   action_to_use {
-        #     count {}
-        #   }
-        # }
       }
     }
 
