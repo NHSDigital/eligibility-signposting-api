@@ -382,6 +382,46 @@ def test_status_on_target_based_on_last_successful_date(
     )
 
 
+def test_multiple_comma_seperated_cohort_labels(faker: Faker):
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=66, maximum_age=74))
+
+    person_rows = person_rows_builder(nhs_number, date_of_birth=date_of_birth, cohorts=["cohort5", "cohort6"])
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(cohort_label="cohort5", cohort_group="test1"),
+                        rule_builder.IterationCohortFactory.build(cohort_label="cohort6", cohort_group="test2"),
+                    ],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(cohort_label="cohort5, cohort6")
+                    ],
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    # Then
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_items(is_condition().with_condition_name(ConditionName("RSV")).and_status(Status.not_actionable))
+        ),
+    )
+
+    all_cohorts = [cohort.cohort_code for cohort in g.audit_log.response.condition[0].eligibility_cohorts]
+    assert_that(all_cohorts, contains_inanyorder("cohort6", "cohort5"))
+
+
 @pytest.mark.parametrize(
     ("person_cohorts", "expected_status", "test_comment"),
     [

@@ -138,12 +138,16 @@ class IterationCohort(BaseModel):
 class IterationRule(BaseModel):
     type: RuleType = Field(..., alias="Type")
     name: RuleName = Field(..., alias="Name")
-    code: RuleCode | None = Field(None, alias="Code", description="use the `rule_code` property instead.")
-    description: RuleDescription = Field(..., alias="Description", description="use the `rule_text` property instead.")
+    code: RuleCode | None = Field(None, alias="Code", description="use `rule_code` property instead.")
+    description: RuleDescription = Field(..., alias="Description", description="use `rule_text` property instead.")
     priority: RulePriority = Field(..., alias="Priority")
     attribute_level: RuleAttributeLevel = Field(..., alias="AttributeLevel")
     attribute_name: RuleAttributeName | None = Field(None, alias="AttributeName")
-    cohort_label: CohortLabel | None = Field(None, alias="CohortLabel")
+    cohort_label: CohortLabel | None = Field(
+        None,
+        alias="CohortLabel",
+        description="Raw label input. Prefer using `parsed_cohort_labels` for normalized access.",
+    )
     operator: RuleOperator = Field(..., alias="Operator")
     comparator: RuleComparator = Field(..., alias="Comparator")
     attribute_target: RuleAttributeTarget | None = Field(None, alias="AttributeTarget")
@@ -196,6 +200,18 @@ class IterationRule(BaseModel):
                 if rule_entry and self.name in rule_entry.rule_names:
                     rule_text = rule_entry.rule_text
         return rule_text or self.description
+
+    @cached_property
+    def parsed_cohort_labels(self) -> list[str]:
+        """
+        Parses the cohort_label string into a list of individual labels.
+
+        Returns:
+            A list of cohort labels, split by comma. If no label is set, returns an empty list.
+        """
+        if not self.cohort_label:
+            return []
+        return [label.strip() for label in self.cohort_label.split(",") if label.strip()]
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
