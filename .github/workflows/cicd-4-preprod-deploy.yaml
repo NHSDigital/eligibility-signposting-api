@@ -23,7 +23,8 @@ on:
         default: "To roll back to a previous commit"
 
 permissions:
-  contents: read
+  contents: write
+  id-token: write
   actions: read
 
 jobs:
