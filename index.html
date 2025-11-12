@@ -21,24 +21,28 @@
     input[type="file"]:hover { border-color: #0366d6; background: #f0f8ff; }
 
     .log { background: #24292e; color: #e1e4e8; font-family: monospace; padding: 15px; border-radius: 6px; min-height: 200px; white-space: pre-wrap; margin-top: 20px; max-height: 500px; overflow-y: auto; font-size: 0.9em; }
+    .ansi-red { color: #ff5555; font-weight: bold; }
+    .ansi-yellow { color: #f1c40f; font-weight: bold; }
+    .ansi-green { color: #2ecc71; font-weight: bold; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>✅ Campaign Config Validator</h1>
+  <h1>Campaign Config Validator</h1>
 
   <div class="status-bar">
     <span id="statusText"><div class="loader"></div> Booting Python...</span>
     <span id="versionInfo" style="font-size: 0.8em; opacity: 0.8"></span>
   </div>
 
-  <label style="font-weight:bold; display:block; margin-bottom:8px;">Upload Config JSON:</label>
+  <label style="font-weight:bold; display:block; margin-bottom:8px;">Upload Campaign Config JSON:</label>
   <input type="file" id="jsonfile" accept=".json" disabled />
 
   <button id="run" disabled>Run Validation</button>
 
-  <div id="result" class="log">Initializing environment...</div>
+  <div id="result" class="log">Initializing environment...
+  </div>
 </div>
 
 <script>
@@ -48,7 +52,21 @@
   const jsonInput = document.getElementById("jsonfile");
   const runBtn = document.getElementById("run");
 
-  function log(text) { output.innerText += text + "\n"; output.scrollTop = output.scrollHeight; }
+  function log(text) {
+    let cleanText = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    cleanText = cleanText
+      .replace(/\x1b\[92m/g, '<span class="ansi-green">')
+      .replace(/\x1b\[93m/g, '<span class="ansi-yellow">')
+      .replace(/\x1b\[91m/g, '<span class="ansi-red">')
+      .replace(/\x1b\[0m/g, '</span>');
+
+    output.innerHTML += cleanText + "\n";
+    output.scrollTop = output.scrollHeight;
+  }
   function clearLog() { output.innerText = ""; }
   function setStatus(msg, ready=false) {
     statusText.innerHTML = ready ? `✅ ${msg}` : `<div class="loader"></div> ${msg}`;
@@ -115,8 +133,6 @@
       }
 
       // 4. Ready
-      const pydVer = pyodide.runPython(`import pydantic; pydantic.VERSION`);
-      document.getElementById("versionInfo").innerText = `Pydantic v${pydVer}`;
       setStatus("System Ready", true);
       log("✅ Environment loaded. Please upload a JSON file.");
 
