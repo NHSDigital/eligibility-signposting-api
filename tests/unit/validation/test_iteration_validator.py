@@ -388,7 +388,6 @@ class TestBUCValidations:
             "AttributeTarget": "RSV",
             "AttributeLevel": "TARGET",
             "AttributeName": "LAST_SUCCESSFUL_DATE",
-
             "Priority": 100,
             "CommsRouting": default_routing,
         }
