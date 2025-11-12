@@ -2,48 +2,173 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Campaign Config Validator</title>
+  <title>Campaign Config Validator - NHS Digital</title>
   <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 2rem; background: #f4f6f8; color: #333; }
-    .container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-    h1 { margin-top: 0; color: #0366d6; font-size: 1.5rem; }
+    body {
+      margin: 0;
+      font-family: "Frutiger W01", Arial, sans-serif; /* NHS standard font stack */
+      background-color: #f0f4f5; /* NHS Light Grey */
+      color: #212b32; /* NHS Black */
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
 
-    .status-bar { background: #e1f0ff; color: #0366d6; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-weight: 500; display: flex; justify-content: space-between; align-items: center;}
-    .loader { border: 3px solid #f3f3f3; border-top: 3px solid #0366d6; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px;}
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .nhs-header {
+      background-color: #005eb8; /* NHS Blue */
+      padding: 12px 16px;
+      border-bottom: 4px solid white; /* NHS Standard header spacing */
+    }
+    .nhs-header-content {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+    }
+    .nhs-logo {
+      width: 80px;
+      height: 32px;
+    }
+    .nhs-container {
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 16px;
+      width: 100%;
+      box-sizing: border-box;
+      flex: 1;
+    }
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+    .nhs-card {
+      background: white;
+      border: 1px solid #d8dde0;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .status-bar {
+      background: #e8edee;
+      color: #212b32;
+      padding: 12px;
+      border-left: 10px solid #005eb8;
+      margin-bottom: 24px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nhs-button {
+      background-color: #007f3b; /* NHS Green */
+      color: white;
+      font-size: 19px;
+      line-height: 19px;
+      font-weight: 600;
+      padding: 12px 24px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #00401e; /* The distinct NHS button shadow */
+      margin-top: 1rem;
+      width: 100%;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .nhs-button:hover:not(:disabled) {
+      background-color: #00642e; /* Darker Green hover */
+    }
+    .nhs-button:active:not(:disabled) {
+      transform: translateY(4px); /* Button press effect */
+      box-shadow: none;
+    }
+    .nhs-button:disabled {
+      background-color: #d8dde0;
+      color: #768692;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    input[type="file"] {
+      font-size: 1.1rem;
+      padding: 10px;
+      background: #f0f4f5;
+      border: 2px solid #212b32;
+      width: 100%;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+    .log {
+      background: #212b32;
+      color: white;
+      font-family: monospace;
+      padding: 20px;
+      min-height: 250px;
+      white-space: pre-wrap;
+      margin-top: 30px;
+      font-size: 0.95rem;
+      border-left: 10px solid #768692;
+    }
 
-    button { background-color: #2da44e; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 15px; transition: background 0.2s;}
-    button:disabled { background-color: #94d3a2; cursor: not-allowed; }
-    button:hover:not(:disabled) { background-color: #2c974b; }
+    .ansi-green { color: #007f3b; font-weight: bold; background: #ccffdd; padding: 2px 5px; }
+    .ansi-red { color: #d81e05; font-weight: bold; background: #ffd1d1; padding: 2px 5px;}
+    .ansi-yellow { color: #ffb81c; font-weight: bold; }
 
-    input[type="file"] { width: 100%; padding: 10px; border: 2px dashed #ccc; border-radius: 6px; text-align: center; cursor: pointer; box-sizing: border-box; }
-    input[type="file"]:hover { border-color: #0366d6; background: #f0f8ff; }
-
-    .log { background: #24292e; color: #e1e4e8; font-family: monospace; padding: 15px; border-radius: 6px; min-height: 200px; white-space: pre-wrap; margin-top: 20px; max-height: 500px; overflow-y: auto; font-size: 0.9em; }
-    .ansi-red { color: #ff5555; font-weight: bold; }
-    .ansi-yellow { color: #f1c40f; font-weight: bold; }
-    .ansi-green { color: #2ecc71; font-weight: bold; }
+    footer {
+      background: #d8dde0;
+      padding: 2rem 0;
+      margin-top: auto;
+      font-size: 0.9rem;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
 
-<div class="container">
+<header class="nhs-header">
+  <div class="nhs-header-content">
+    <svg class="nhs-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 16" aria-hidden="true">
+      <path fill="#fff" d="M0 0h40v16H0z"></path>
+      <path fill="#005eb8" d="M3.9 1.5h4.4l2.6 9h.1l1.8-9h3.3l-2.8 13H9l-2.7-9h-.1l-1.8 9H1.1M17.3 1.5h3.6l-1 4.9h4L25 1.5h3.5l-2.7 13h-3.5l1.1-5.6h-4.1l-1.2 5.6h-3.4M37.7 4.4c-.7-.3-1.6-.6-2.9-.6-1.4 0-2.5.2-2.5 1.3 0 1.8 5.1 1.2 5.1 5.1 0 3.6-3.3 4.5-6.4 4.5-1.3 0-2.9-.3-4-.7l.8-2.7c.7.4 2.1.7 3.2.7 1.3 0 2.3-.2 2.3-1.4 0-2-5.1-1.2-5.1-5.1 0-4 3.7-4.5 6.4-4.5 1.2 0 2.7.3 3.5.6"></path>
+    </svg>
+  </div>
+</header>
+
+<div class="nhs-container">
   <h1>Campaign Config Validator</h1>
 
   <div class="status-bar">
-    <span id="statusText"><div class="loader"></div> Booting Python...</span>
-    <span id="versionInfo" style="font-size: 0.8em; opacity: 0.8"></span>
+    <span id="statusText">⏳ Booting Python Environment...</span>
+    <span id="versionInfo" style="font-size: 0.8em; opacity: 0.7"></span>
   </div>
 
-  <label style="font-weight:bold; display:block; margin-bottom:8px;">Upload Campaign Config JSON:</label>
-  <input type="file" id="jsonfile" accept=".json" disabled />
+  <div class="nhs-card">
+    <label for="jsonfile">Upload Configuration File (JSON)</label>
+    <span style="display:block; margin-bottom:10px; color:#4c6272; font-size:0.9rem;">Select the campaign configuration file you wish to validate against the rules API.</span>
 
-  <button id="run" disabled>Run Validation</button>
+    <input type="file" id="jsonfile" accept=".json" disabled />
 
-  <div id="result" class="log">Initializing environment...
+    <button id="run" class="nhs-button" disabled>
+      Run Validation
+    </button>
+  </div>
+
+  <h3>Validation Output</h3>
+  <div id="result" class="log">System initializing...
   </div>
 </div>
+
+<footer>
+  <div class="nhs-header-content" style="justify-content: center;">
+    &copy; NHS England. Intended for internal use only.
+  </div>
+</footer>
 
 <script>
   let pyodide;
@@ -53,11 +178,8 @@
   const runBtn = document.getElementById("run");
 
   function log(text) {
-    let cleanText = text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-
+    let cleanText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    // Handle ANSI Colors for Pydantic output
     cleanText = cleanText
       .replace(/\x1b\[92m/g, '<span class="ansi-green">')
       .replace(/\x1b\[93m/g, '<span class="ansi-yellow">')
@@ -67,13 +189,14 @@
     output.innerHTML += cleanText + "\n";
     output.scrollTop = output.scrollHeight;
   }
-  function clearLog() { output.innerText = ""; }
+
+  function clearLog() { output.innerHTML = ""; } // Changed to innerHTML for spans
+
   function setStatus(msg, ready=false) {
-    statusText.innerHTML = ready ? `✅ ${msg}` : `<div class="loader"></div> ${msg}`;
+    statusText.innerHTML = ready ? `✅ ${msg}` : `⏳ ${msg}`;
     if(ready) {
       jsonInput.disabled = false;
-      statusText.style.color = "#2da44e";
-      document.querySelector('.status-bar').style.background = "#dcffe4";
+      statusText.style.borderLeftColor = "#007f3b"; // Switch the status bar to green
     }
   }
 
@@ -97,26 +220,20 @@
 
   async function main() {
     try {
-      // 1. Load Pyodide
       pyodide = await loadPyodide();
       pyodide.setStdout({ batched: (msg) => log(msg) });
       pyodide.setStderr({ batched: (msg) => log("ERR: " + msg) });
 
-      // 2. Install Libraries
       setStatus("Installing Pydantic...");
       await pyodide.loadPackage("micropip");
       await pyodide.pyimport("micropip").install("pydantic");
 
-      // 3. Fetch Source Code from the Repo
       setStatus("Downloading Source Code...");
-
       for (const path of filesToFetch) {
-        // Fetch the file relative to index.html
         const response = await fetch(path);
         if (!response.ok) throw new Error(`404 Not Found: ${path}`);
         const content = await response.text();
 
-        // Ensure folders exist in Pyodide
         const dir = path.substring(0, path.lastIndexOf('/'));
         if (dir) {
           const parts = dir.split('/');
@@ -128,24 +245,20 @@
             }
           }
         }
-        // Write file
         pyodide.FS.writeFile(path, content);
       }
 
-      // 4. Ready
       setStatus("System Ready", true);
       log("✅ Environment loaded. Please upload a JSON file.");
 
     } catch (err) {
       setStatus("Error", false);
-      statusText.style.color = "red";
+      statusText.style.color = "#d81e05";
       log(`❌ FATAL ERROR: ${err.message}`);
-      console.error(err);
     }
   }
   main();
 
-  // --- UI Handlers ---
   let configContent = null;
   jsonInput.addEventListener("change", (e) => {
     const reader = new FileReader();
@@ -160,8 +273,6 @@
   runBtn.addEventListener("click", async () => {
     clearLog();
     log("🚀 Validating Configuration...\n");
-
-    // Pass config to Python
     pyodide.globals.set("raw_json", configContent);
 
     try {
@@ -171,21 +282,17 @@ import json
 import importlib
 import os
 
+
 if "src" not in sys.path: sys.path.insert(0, "src")
-
 from rules_validation_api import app
-
-# 3. Reload modules
 importlib.reload(app)
 
-# 4. Create the config file
 with open("config.json", "w") as f:
     f.write(raw_json)
 
-# 5. Run the app
 sys.argv = ["app.py", "--config_path", "config.json"]
 app.main()
-          `);
+        `);
     } catch (e) {
       log(`\n❌ EXECUTION ERROR:\n${e}`);
     }
