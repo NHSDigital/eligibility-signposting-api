@@ -45,7 +45,6 @@ def valid_iteration_rule_with_only_mandatory_fields():
         "AttributeTarget": "RSV",
         "AttributeLevel": "TARGET",
         "AttributeName": "LAST_SUCCESSFUL_DATE",
-        "CohortLabel": "elid_all_people",
         "Priority": 100,
     }
 
