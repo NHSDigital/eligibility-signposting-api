@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Campaign Config Validator</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 2rem; background: #f4f6f8; color: #333; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    h1 { margin-top: 0; color: #0366d6; font-size: 1.5rem; }
+
+    .status-bar { background: #e1f0ff; color: #0366d6; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-weight: 500; display: flex; justify-content: space-between; align-items: center;}
+    .loader { border: 3px solid #f3f3f3; border-top: 3px solid #0366d6; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px;}
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    button { background-color: #2da44e; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 15px; transition: background 0.2s;}
+    button:disabled { background-color: #94d3a2; cursor: not-allowed; }
+    button:hover:not(:disabled) { background-color: #2c974b; }
+
+    input[type="file"] { width: 100%; padding: 10px; border: 2px dashed #ccc; border-radius: 6px; text-align: center; cursor: pointer; box-sizing: border-box; }
+    input[type="file"]:hover { border-color: #0366d6; background: #f0f8ff; }
+
+    .log { background: #24292e; color: #e1e4e8; font-family: monospace; padding: 15px; border-radius: 6px; min-height: 200px; white-space: pre-wrap; margin-top: 20px; max-height: 500px; overflow-y: auto; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>✅ Campaign Config Validator</h1>
+
+  <div class="status-bar">
+    <span id="statusText"><div class="loader"></div> Booting Python...</span>
+    <span id="versionInfo" style="font-size: 0.8em; opacity: 0.8"></span>
+  </div>
+
+  <label style="font-weight:bold; display:block; margin-bottom:8px;">Upload Config JSON:</label>
+  <input type="file" id="jsonfile" accept=".json" disabled />
+
+  <button id="run" disabled>Run Validation</button>
+
+  <div id="result" class="log">Initializing environment...</div>
+</div>
+
+<script>
+  let pyodide;
+  const output = document.getElementById("result");
+  const statusText = document.getElementById("statusText");
+  const jsonInput = document.getElementById("jsonfile");
+  const runBtn = document.getElementById("run");
+
+  function log(text) { output.innerText += text + "\n"; output.scrollTop = output.scrollHeight; }
+  function clearLog() { output.innerText = ""; }
+  function setStatus(msg, ready=false) {
+    statusText.innerHTML = ready ? `✅ ${msg}` : `<div class="loader"></div> ${msg}`;
+    if(ready) {
+      jsonInput.disabled = false;
+      statusText.style.color = "#2da44e";
+      document.querySelector('.status-bar').style.background = "#dcffe4";
+    }
+  }
+
+  const filesToFetch = [
+    "src/rules_validation_api/app.py",
+    "src/eligibility_signposting_api/__init__.py",
+    "src/eligibility_signposting_api/model/__init__.py",
+    "src/eligibility_signposting_api/model/campaign_config.py",
+    "src/eligibility_signposting_api/config/__init__.py",
+    "src/eligibility_signposting_api/config/contants.py",
+    "src/rules_validation_api/__init__.py",
+    "src/rules_validation_api/validators/__init__.py",
+    "src/rules_validation_api/validators/rules_validator.py",
+    "src/rules_validation_api/validators/campaign_config_validator.py",
+    "src/rules_validation_api/validators/actions_mapper_validator.py",
+    "src/rules_validation_api/validators/available_action_validator.py",
+    "src/rules_validation_api/validators/iteration_cohort_validator.py",
+    "src/rules_validation_api/validators/iteration_rules_validator.py",
+    "src/rules_validation_api/validators/iteration_validator.py"
+  ];
+
+  async function main() {
+    try {
+      // 1. Load Pyodide
+      pyodide = await loadPyodide();
+      pyodide.setStdout({ batched: (msg) => log(msg) });
+      pyodide.setStderr({ batched: (msg) => log("ERR: " + msg) });
+
+      // 2. Install Libraries
+      setStatus("Installing Pydantic...");
+      await pyodide.loadPackage("micropip");
+      await pyodide.pyimport("micropip").install("pydantic");
+
+      // 3. Fetch Source Code from the Repo
+      setStatus("Downloading Source Code...");
+
+      for (const path of filesToFetch) {
+        // Fetch the file relative to index.html
+        const response = await fetch(path);
+        if (!response.ok) throw new Error(`404 Not Found: ${path}`);
+        const content = await response.text();
+
+        // Ensure folders exist in Pyodide
+        const dir = path.substring(0, path.lastIndexOf('/'));
+        if (dir) {
+          const parts = dir.split('/');
+          let current = "";
+          for(const part of parts) {
+            current += part + "/";
+            if(!pyodide.FS.analyzePath(current.slice(0,-1)).exists) {
+              pyodide.FS.mkdir(current.slice(0,-1));
+            }
+          }
+        }
+        // Write file
+        pyodide.FS.writeFile(path, content);
+      }
+
+      // 4. Ready
+      const pydVer = pyodide.runPython(`import pydantic; pydantic.VERSION`);
+      document.getElementById("versionInfo").innerText = `Pydantic v${pydVer}`;
+      setStatus("System Ready", true);
+      log("✅ Environment loaded. Please upload a JSON file.");
+
+    } catch (err) {
+      setStatus("Error", false);
+      statusText.style.color = "red";
+      log(`❌ FATAL ERROR: ${err.message}`);
+      console.error(err);
+    }
+  }
+  main();
+
+  // --- UI Handlers ---
+  let configContent = null;
+  jsonInput.addEventListener("change", (e) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      configContent = reader.result;
+      runBtn.disabled = false;
+      log(`\n📄 Loaded: ${e.target.files[0].name}`);
+    };
+    reader.readAsText(e.target.files[0]);
+  });
+
+  runBtn.addEventListener("click", async () => {
+    clearLog();
+    log("🚀 Validating Configuration...\n");
+
+    // Pass config to Python
+    pyodide.globals.set("raw_json", configContent);
+
+    try {
+      await pyodide.runPythonAsync(`
+import sys
+import json
+import importlib
+import os
+
+if "src" not in sys.path: sys.path.insert(0, "src")
+
+from rules_validation_api import app
+
+# 3. Reload modules
+importlib.reload(app)
+
+# 4. Create the config file
+with open("config.json", "w") as f:
+    f.write(raw_json)
+
+# 5. Run the app
+sys.argv = ["app.py", "--config_path", "config.json"]
+app.main()
+          `);
+    } catch (e) {
+      log(`\n❌ EXECUTION ERROR:\n${e}`);
+    }
+  });
+</script>
+</body>
+</html>
