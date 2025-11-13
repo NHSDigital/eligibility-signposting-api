@@ -1,0 +1,22 @@
+{
+  "event_name": "workflow_run",
+  "action": "completed",
+  "workflow": {
+    "name": "Test stage",
+    "path": ".github/workflows/cicd-3-test-deploy.yaml"
+  },
+  "workflow_run": {
+    "id": 18556637650,
+    "name": "Test stage",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "head_branch": "main",
+    "head_sha": "60d567d18eb4916e931d4bdd4e15b9639ef1a0a0"
+  },
+  "repository": {
+    "full_name": "NHSDigital/eligibility-signposting-api",
+    "name": "eligibility-signposting-api",
+    "owner": {"login": "NHSDigital"}
+  }
+}
