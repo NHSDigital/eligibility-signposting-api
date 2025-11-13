@@ -1,78 +1,77 @@
 from __future__ import annotations
-import os, sys, shutil, subprocess, tempfile, shlex, logging
-from typing import Sequence
+
+import os
+import sys
+import shutil
+import subprocess
+import tempfile
+import logging
+from typing import Iterable, Sequence
 
 log = logging.getLogger(__name__)
 
-class MarkdownLintError(ValueError):
-    pass
 
-def _resolve_pymarkdown_command() -> list[str]:
-    """
-    Priority:
-      1) PYMARKDOWN_CMD env (e.g. '/path/venv/bin/pymarkdown')
-      2) 'pymarkdown' on PATH
-      3) 'pymarkdownlnt' on PATH
-      4) python -m pymarkdown (same interpreter)
-    """
+class MarkdownLintError(ValueError):
+    """Raised when the PyMarkdown CLI reports style errors."""
+
+
+def _resolve_cmd() -> list[str]:
     env_cmd = os.environ.get("PYMARKDOWN_CMD")
     if env_cmd:
         return env_cmd.split()
 
     for exe in ("pymarkdown", "pymarkdownlnt"):
-        path = shutil.which(exe)
-        if path:
-            return [path]
+        found = shutil.which(exe)
+        if found:
+            return [found]
 
     return [sys.executable, "-m", "pymarkdown"]
 
-def _ensure_scan_subcommand(cmd: list[str]) -> list[str]:
-    # If it's 'python -m pymarkdown', keep the trio intact and then add 'scan'
-    if len(cmd) >= 3 and cmd[0].endswith("python") and cmd[1] == "-m" and cmd[2].startswith("pymarkdown"):
-        base = cmd[:3]
-        rest = cmd[3:]
-        # If user already provided a subcommand, keep it; otherwise add 'scan'
-        return base + (rest if rest else ["scan"])
-    # Otherwise plain 'pymarkdown' or 'pymarkdownlnt'
-    return cmd if (len(cmd) > 1 and cmd[1] in {"extensions","fix","plugins","scan","scan-stdin","version"}) else [*cmd, "scan"]
 
-def _sanitize_extra_args(extra_args: Sequence[str] | None) -> list[str]:
-    if not extra_args:
+def _disable_args(disable_rules: Iterable[str] | None) -> list[str]:
+    """
+    Convert a list/tuple of rule IDs into a single '-d' arg with comma-separated rules.
+    Returns [] if no rules to disable.
+    """
+    if not disable_rules:
         return []
-    allowed_prefixes = ("-e", "-d", "--enable-extensions", "--add-plugin", "--config",
-                        "--set", "--strict-config", "--no-json5", "--stack-trace",
-                        "--continue-on-error", "--log-level", "--log-file",
-                        "--return-code-scheme")
-    cleaned: list[str] = []
-    i = 0
-    while i < len(extra_args):
-        tok = str(extra_args[i])
-        if tok.startswith(allowed_prefixes):
-            cleaned.append(tok)
-            # naive: also append a following value if present and not another flag
-            if i + 1 < len(extra_args) and not str(extra_args[i+1]).startswith("-"):
-                cleaned.append(str(extra_args[i+1]))
-                i += 2
-                continue
-        # else drop unexpected tokens (e.g., a stray field name)
-        i += 1
-    return cleaned
+    rules = [r.strip() for r in disable_rules if r and str(r).strip()]
+    return ["-d", ",".join(rules)] if rules else []
 
-def lint_markdown_string_cli(value: str, field_name: str, extra_args: Sequence[str] | None = None) -> None:
+
+def lint_markdown_string_cli(
+    value: str,
+    field_name: str,
+    extra_args: Sequence[str] | None = None,
+    disable_rules: Iterable[str] | None = None,
+) -> None:
+    """
+    Lint a string with the PyMarkdown CLI. Raises MarkdownLintError on failure.
+
+    Args:
+        value: The markdown text to lint.
+        field_name: Used to label errors (replaces temp path in messages).
+        extra_args: Optional extra CLI flags (placed BEFORE 'scan').
+        disable_rules: Optional iterable of rule IDs to disable (e.g., ('MD041','MD047')).
+    """
     if value is None or not str(value).strip():
         return
 
-    cmd = _resolve_pymarkdown_command()
-    cmd = _ensure_scan_subcommand(cmd)
-    args = _sanitize_extra_args(extra_args)
+    cmd = _resolve_cmd()
+    flags = []
+    flags += _disable_args(disable_rules)
+    if extra_args:
+        flags += list(extra_args)
+
+    base_cmd = [*cmd, *flags, "scan"]
 
     with tempfile.NamedTemporaryFile("w+", suffix=".md", delete=False) as tf:
         tf.write(value)
         tf.flush()
-        path = tf.name
+        tmp_path = tf.name
 
-    full_cmd = [*cmd, *args, path]
-    log.debug("[PyMarkdown] cmd=%s", " ".join(shlex.quote(x) for x in full_cmd))
+    full_cmd = [*base_cmd, tmp_path]
+    log.debug("[PyMarkdown] cmd=%s", " ".join(full_cmd))
 
     try:
         proc = subprocess.run(
@@ -85,15 +84,14 @@ def lint_markdown_string_cli(value: str, field_name: str, extra_args: Sequence[s
     except FileNotFoundError as e:
         raise MarkdownLintError(
             "PyMarkdown CLI not found. Install `pip install pymarkdownlnt`, "
-            "or set PYMARKDOWN_CMD to the executable (e.g., '/path/to/venv/bin/pymarkdown')."
+            "or set PYMARKDOWN_CMD to the executable path."
         ) from e
     finally:
         try:
-            os.unlink(path)
+            os.unlink(tmp_path)
         except OSError:
             pass
 
     if proc.returncode != 0:
-        # replace temp path with the field name for friendlier errors
-        details = (proc.stdout or proc.stderr or "").replace(path, field_name).strip()
+        details = (proc.stdout or proc.stderr or "").replace(tmp_path, field_name).strip()
         raise MarkdownLintError(f"{field_name}: Markdown style errors:\n{details}")
