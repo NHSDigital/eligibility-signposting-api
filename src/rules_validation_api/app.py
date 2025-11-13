@@ -2,6 +2,13 @@ import argparse
 import json
 import sys
 from pathlib import Path
+import logging
+
+logging.basicConfig(
+    level=logging.DEBUG,  # or DEBUG for more detail
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    force=True
+)
 
 from rules_validation_api.validators.rules_validator import RulesValidation
 
