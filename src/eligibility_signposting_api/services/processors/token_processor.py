@@ -5,7 +5,7 @@ from typing import Any, Never
 
 from wireup import service
 
-from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS
+from eligibility_signposting_api.config.constants import ALLOWED_CONDITIONS
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.token_parser import ParsedToken, TokenParser
 

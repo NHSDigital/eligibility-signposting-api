@@ -13,7 +13,7 @@ from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.common.api_error_response import NHS_NUMBER_NOT_FOUND_ERROR
 from eligibility_signposting_api.common.request_validator import validate_request_params
-from eligibility_signposting_api.config.contants import URL_PREFIX
+from eligibility_signposting_api.config.constants import URL_PREFIX
 from eligibility_signposting_api.model.eligibility_status import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.views.response_model import eligibility_response
