@@ -5,7 +5,7 @@ from pathlib import Path
 import logging
 
 logging.basicConfig(
-    level=logging.DEBUG,  # or DEBUG for more detail
+    level=logging.INFO,  # or DEBUG for more detail
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     force=True
 )

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import logging
 import os
-import sys
 import shutil
 import subprocess
+import sys
 import tempfile
-import logging
 from typing import Iterable, Sequence
 
 log = logging.getLogger(__name__)
@@ -49,8 +49,8 @@ def lint_markdown_string_cli(
     Lint a string with the PyMarkdown CLI. Raises MarkdownLintError on failure.
 
     Args:
-        value: The markdown text to lint.
-        field_name: Used to label errors (replaces temp path in messages).
+        value: The Markdown text to lint.
+        field_name: Used to label errors (replaces a temp path in messages).
         extra_args: Optional extra CLI flags (placed BEFORE 'scan').
         disable_rules: Optional iterable of rule IDs to disable (e.g., ('MD041','MD047')).
     """
@@ -71,6 +71,7 @@ def lint_markdown_string_cli(
         tmp_path = tf.name
 
     full_cmd = [*base_cmd, tmp_path]
+    proc = None
     log.debug("[PyMarkdown] cmd=%s", " ".join(full_cmd))
 
     try:

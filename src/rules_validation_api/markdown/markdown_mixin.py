@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import ClassVar, Dict, Set, Tuple
 from pydantic import field_validator
-from rules_validation_api.validators.markdown_lint import (
+from rules_validation_api.markdown.markdown_lint import (
     lint_markdown_string_cli,
     MarkdownLintError,
 )
