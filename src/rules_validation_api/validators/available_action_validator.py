@@ -10,12 +10,13 @@ from rules_validation_api.validators.markdown_lint import (
 
 logger = logging.getLogger(__name__)
 
-MARKDOWN_FIELDS: set[str] = {"action_description"}
+MARKDOWN_FIELDS: set[str] = {"action_description", "action_code"}
 
 # Per-field rule relaxations for short snippets
 FIELD_DISABLE_RULES: dict[str, tuple[str, ...]] = {
     # no “first line must be H1”, no “must end with newline”
     "action_description": ("MD041", "MD047"),
+    "action_code": ("MD041", "MD047"),
 }
 
 class AvailableActionValidation(AvailableAction):
