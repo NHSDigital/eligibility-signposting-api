@@ -2359,14 +2359,14 @@ files = [
 
 [[package]]
 name = "polyfactory"
-version = "2.22.2"
+version = "2.22.4"
 description = "Mock data generation factories"
 optional = false
 python-versions = "<4.0,>=3.8"
 groups = ["dev"]
 files = [
-    {file = "polyfactory-2.22.2-py3-none-any.whl", hash = "sha256:9bea58ac9a80375b4153cd60820f75e558b863e567e058794d28c6a52b84118a"},
-    {file = "polyfactory-2.22.2.tar.gz", hash = "sha256:a3297aa0b004f2b26341e903795565ae88507c4d86e68b132c2622969028587a"},
+    {file = "polyfactory-2.22.4-py3-none-any.whl", hash = "sha256:6c4ebe24e16e7e8461bdd56dfd7d4df3172936a5077c5e5d3b101a5517f267dc"},
+    {file = "polyfactory-2.22.4.tar.gz", hash = "sha256:e63a5a55e8363830dfd71c0bcfc1651a29d9fc98048b54c8333de1971dc98547"},
 ]
 
 [package.dependencies]
@@ -3983,4 +3983,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "56353a5e83ab0dedefda461f24fb1d5021e079fc9323d46974886c0b6addd7c4"
+content-hash = "2a7e252475aba744e6ce9209a0e031bc003bd6ee556fff455ab2eff8657a70a5"
