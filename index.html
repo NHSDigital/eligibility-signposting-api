@@ -224,9 +224,10 @@
       pyodide.setStdout({ batched: (msg) => log(msg) });
       pyodide.setStderr({ batched: (msg) => log("ERR: " + msg) });
 
-      setStatus("Installing Pydantic...");
+      setStatus("Installing Python Libraries...");
       await pyodide.loadPackage("micropip");
       await pyodide.pyimport("micropip").install("pydantic");
+      await pyodide.pyimport("micropip").install("markdown");
 
       setStatus("Downloading Source Code...");
       for (const path of filesToFetch) {
