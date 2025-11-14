@@ -281,7 +281,7 @@ data "aws_iam_policy_document" "waf_logs_kms" {
 resource "aws_wafv2_web_acl_logging_configuration" "api_gateway" {
   count                   = local.waf_enabled ? 1 : 0
   resource_arn            = aws_wafv2_web_acl.api_gateway[0].arn
-  log_destination_configs = [aws_cloudwatch_log_group.waf[0].arn]
+  log_destination_configs = ["${aws_cloudwatch_log_group.waf[0].arn}:*"]
 
   # Redact sensitive data from logs
   redacted_fields {
