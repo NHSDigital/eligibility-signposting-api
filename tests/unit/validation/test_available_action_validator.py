@@ -54,8 +54,7 @@ class TestOptionalFieldsSchemaValidations:
             AvailableActionValidation(**data)
         assert "UrlLink" in str(exc_info.value)
 
-    @pytest.mark.parametrize("invalid_description",
-                             ["#InvalidHeader", "*InvalidListItem", "Title1\n## SubTitle"])
+    @pytest.mark.parametrize("invalid_description", ["#InvalidHeader", "*InvalidListItem", "Title1\n## SubTitle"])
     def test_invalid_action_description_raises_error(self, valid_available_action, invalid_description):
         data = copy.deepcopy(valid_available_action)
         data["ActionDescription"] = invalid_description
