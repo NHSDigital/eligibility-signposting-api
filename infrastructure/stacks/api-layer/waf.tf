@@ -272,7 +272,7 @@ data "aws_iam_policy_document" "waf_logs_kms" {
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = [
+      values = [
         "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
         "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*"
       ]
@@ -284,7 +284,7 @@ data "aws_iam_policy_document" "waf_logs_kms" {
 resource "aws_wafv2_web_acl_logging_configuration" "api_gateway" {
   count                   = local.waf_enabled ? 1 : 0
   resource_arn            = aws_wafv2_web_acl.api_gateway[0].arn
-  log_destination_configs = [aws_cloudwatch_log_group.waf[0].arn]
+  log_destination_configs = ["${aws_cloudwatch_log_group.waf[0].arn}:*"]
 
   # Redact sensitive data from logs
   redacted_fields {
