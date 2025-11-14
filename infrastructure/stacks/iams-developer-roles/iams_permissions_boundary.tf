@@ -171,6 +171,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
 
       # CloudWatch Logs - log management
       "logs:CreateLogGroup",
+      "logs:DeleteLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
       "logs:DescribeLogGroups",

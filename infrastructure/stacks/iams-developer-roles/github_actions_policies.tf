@@ -251,6 +251,7 @@ resource "aws_iam_policy" "api_infrastructure" {
         Action = [
           # CloudWatch Logs creation and management
           "logs:CreateLogGroup",
+          "logs:DeleteLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
           # CloudWatch Logs subscription filters for CSOC forwarding
@@ -267,8 +268,9 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/*",
           # Kinesis Firehose logs
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
-          # WAF v2 logs
-          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*"
+          # WAF v2 logs (both naming conventions)
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*"
         ]
       },
       {
@@ -619,6 +621,7 @@ resource "aws_iam_policy" "cloudwatch_management" {
         Action = [
           "logs:ListTagsForResource",
           "logs:DescribeLogGroups",
+          "logs:DeleteLogGroup",
           "logs:PutRetentionPolicy",
           "logs:TagResource",
           "logs:UntagResource",
@@ -647,6 +650,7 @@ resource "aws_iam_policy" "cloudwatch_management" {
         Resource = [
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*",
           "arn:aws:cloudwatch:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alarm:*",
           "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/default-eligibility-signposting-api*",
