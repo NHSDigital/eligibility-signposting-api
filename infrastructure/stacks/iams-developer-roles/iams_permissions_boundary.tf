@@ -116,6 +116,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "iam:UntagPolicy",
       "iam:PassRole",
       "iam:TagPolicy",
+      "iam:CreateServiceLinkedRole",
 
       # KMS - encryption key management
       "kms:CreateKey",
@@ -170,21 +171,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "lambda:ListProvisionedConcurrencyConfigs",
 
       # CloudWatch Logs - log management
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams",
-      "logs:Describe*",
-      "logs:ListTagsForResource",
-      "logs:TagResource",
-      "logs:UntagResource",
-      "logs:PutRetentionPolicy",
-      "logs:AssociateKmsKey",
-      "logs:PutMetricFilter",
-      "logs:PutSubscriptionFilter",
-      "logs:DeleteSubscriptionFilter",
-      "logs:DescribeSubscriptionFilters",
+      "logs:*",
 
       # S3 - bucket and object management
       "s3:GetLifecycleConfiguration",
@@ -241,7 +228,23 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "ssm:GetParameters",
       "ssm:ListTagsForResource",
       "ssm:PutParameter",
-      "ssm:AddTagsToResource"
+      "ssm:AddTagsToResource",
+
+      # WAFv2 - web application firewall management
+      "wafv2:CreateWebACL",
+      "wafv2:DeleteWebACL",
+      "wafv2:GetWebACL",
+      "wafv2:GetWebACLForResource",
+      "wafv2:UpdateWebACL",
+      "wafv2:ListWebACLs",
+      "wafv2:TagResource",
+      "wafv2:UntagResource",
+      "wafv2:ListTagsForResource",
+      "wafv2:AssociateWebACL",
+      "wafv2:DisassociateWebACL",
+      "wafv2:PutLoggingConfiguration",
+      "wafv2:GetLoggingConfiguration",
+      "wafv2:DeleteLoggingConfiguration"
     ]
 
     resources = ["*"]
