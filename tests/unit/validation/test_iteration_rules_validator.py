@@ -259,3 +259,35 @@ class TestBUCValidations:
             IterationRuleValidation(**data)
         msg = "When attribute_level is COHORT, attribute_name must be COHORT_LABEL or None (default:COHORT_LABEL)"
         assert msg in str(error.value)
+
+    @pytest.mark.parametrize("rule_type", ["F", "S"])
+    def test_valid_when_cohort_label_present_for_type_f_or_s(
+        self, rule_type, valid_iteration_rule_with_only_mandatory_fields
+    ):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["Type"] = rule_type
+        data["CohortLabel"] = "Test Cohort"
+        result = IterationRuleValidation(**data)
+        assert result.cohort_label == "Test Cohort"
+
+    @pytest.mark.parametrize("rule_type", ["R", "X", "Y"])
+    def test_invalid_when_cohort_label_present_for_non_f_s_types(
+        self, rule_type, valid_iteration_rule_with_only_mandatory_fields
+    ):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["Type"] = rule_type
+        data["CohortLabel"] = "Invalid Cohort"
+        with pytest.raises(ValidationError) as error:
+            IterationRuleValidation(**data)
+        msg = "CohortLabel is only allowed for rule types F and S."
+        assert msg in str(error.value)
+
+    @pytest.mark.parametrize("rule_type", ["R", "X", "Y"])
+    def test_valid_when_cohort_label_absent_for_non_f_s_types(
+        self, rule_type, valid_iteration_rule_with_only_mandatory_fields
+    ):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["Type"] = rule_type
+        data.pop("CohortLabel", None)
+        result = IterationRuleValidation(**data)
+        assert result.cohort_label is None

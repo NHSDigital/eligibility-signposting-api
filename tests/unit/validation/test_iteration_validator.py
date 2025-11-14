@@ -353,7 +353,6 @@ class TestBUCValidations:
             "AttributeTarget": "RSV",
             "AttributeLevel": "TARGET",
             "AttributeName": "LAST_SUCCESSFUL_DATE",
-            "CohortLabel": "elid_all_people",
             "Priority": 100,
             "CommsRouting": default_routing,
         }
@@ -389,7 +388,6 @@ class TestBUCValidations:
             "AttributeTarget": "RSV",
             "AttributeLevel": "TARGET",
             "AttributeName": "LAST_SUCCESSFUL_DATE",
-            "CohortLabel": "elid_all_people",
             "Priority": 100,
             "CommsRouting": default_routing,
         }
