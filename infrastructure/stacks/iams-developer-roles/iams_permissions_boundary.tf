@@ -170,22 +170,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "lambda:ListProvisionedConcurrencyConfigs",
 
       # CloudWatch Logs - log management
-      "logs:CreateLogGroup",
-      "logs:DeleteLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams",
-      "logs:Describe*",
-      "logs:ListTagsForResource",
-      "logs:TagResource",
-      "logs:UntagResource",
-      "logs:PutRetentionPolicy",
-      "logs:AssociateKmsKey",
-      "logs:PutMetricFilter",
-      "logs:PutSubscriptionFilter",
-      "logs:DeleteSubscriptionFilter",
-      "logs:DescribeSubscriptionFilters",
+      "logs:*",
 
       # S3 - bucket and object management
       "s3:GetLifecycleConfiguration",

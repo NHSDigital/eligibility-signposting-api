@@ -196,6 +196,7 @@ resource "aws_cloudwatch_log_resource_policy" "waf" {
     Version = "2012-10-17"
     Statement = [
       {
+        Sid    = "AWSLogDeliveryWrite"
         Effect = "Allow"
         Principal = {
           Service = "delivery.logs.amazonaws.com"
@@ -205,6 +206,23 @@ resource "aws_cloudwatch_log_resource_policy" "waf" {
           "logs:PutLogEvents"
         ]
         Resource = "${aws_cloudwatch_log_group.waf[0].arn}:*"
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
+          ArnLike = {
+            "aws:SourceArn" = "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:*"
+          }
+        }
+      },
+      {
+        Sid    = "AWSLogDeliveryAclCheck"
+        Effect = "Allow"
+        Principal = {
+          Service = "delivery.logs.amazonaws.com"
+        }
+        Action   = "logs:GetLogDelivery"
+        Resource = "*"
       }
     ]
   })

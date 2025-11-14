@@ -240,7 +240,11 @@ resource "aws_iam_policy" "api_infrastructure" {
           "acm:ListCertificates",
           # WAF v2 list operations
           "wafv2:ListWebACLs",
-          "wafv2:ListTagsForResource"
+          "wafv2:ListTagsForResource",
+          # CloudWatch Logs resource policies (require wildcard)
+          "logs:PutResourcePolicy",
+          "logs:DeleteResourcePolicy",
+          "logs:DescribeResourcePolicies"
 
         ],
         Resource = "*"
