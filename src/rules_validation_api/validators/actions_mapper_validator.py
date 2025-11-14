@@ -23,7 +23,7 @@ class ActionsMapperValidation(ActionsMapper):
             except ValidationError as e:
                 for err in e.errors():
                     msg = err.get("msg", "Unknown error").replace("Value error, ", "")
-                    error_report.append(f"\n❌ Action '{key}': {msg}")
+                    error_report.append(f"\n Action '{key}': {msg}")
 
         if error_report:
             final_msg = "Markdown Validation Issues:".join(error_report)
