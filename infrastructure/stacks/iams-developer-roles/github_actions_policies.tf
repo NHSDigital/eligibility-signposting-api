@@ -237,7 +237,10 @@ resource "aws_iam_policy" "api_infrastructure" {
           # ACM for certs
           "acm:DescribeCertificate",
           "acm:GetCertificate",
-          "acm:ListCertificates"
+          "acm:ListCertificates",
+          # WAF v2 list operations
+          "wafv2:ListWebACLs",
+          "wafv2:ListTagsForResource"
 
         ],
         Resource = "*"
@@ -367,7 +370,20 @@ resource "aws_iam_policy" "api_infrastructure" {
           "events:ListTagsForResource",
           "events:DeleteRule",
           "events:ListTargetsByRule",
-          "events:RemoveTargets"
+          "events:RemoveTargets",
+
+          # WAF v2
+          "wafv2:CreateWebACL",
+          "wafv2:DeleteWebACL",
+          "wafv2:GetWebACL",
+          "wafv2:UpdateWebACL",
+          "wafv2:TagResource",
+          "wafv2:UntagResource",
+          "wafv2:AssociateWebACL",
+          "wafv2:DisassociateWebACL",
+          "wafv2:PutLoggingConfiguration",
+          "wafv2:GetLoggingConfiguration",
+          "wafv2:DeleteLoggingConfiguration"
         ],
 
 
@@ -388,6 +404,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/splunk/*",
           "arn:aws:acm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:certificate/*",
           "arn:aws:events:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:rule/cloudwatch-alarm-state-change-to-splunk*",
+          "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/webacl/*",
         ]
       },
     ]
@@ -625,6 +642,7 @@ resource "aws_iam_policy" "cloudwatch_management" {
         ],
         Resource = [
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
           "arn:aws:cloudwatch:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alarm:*",
           "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/default-eligibility-signposting-api*",
