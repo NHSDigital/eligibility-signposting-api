@@ -170,7 +170,7 @@ resource "aws_wafv2_web_acl_association" "api_gateway" {
 # CloudWatch Log Group for WAF logs
 resource "aws_cloudwatch_log_group" "waf" {
   count             = local.waf_enabled ? 1 : 0
-  name              = "aws-wafv2-logs-${local.workspace}-eligibility-signposting-api"
+  name              = "aws-waf-logs-${local.workspace}-eligibility-signposting-api"
   retention_in_days = 365
   kms_key_id        = aws_kms_key.waf_logs[0].arn
 
