@@ -14,7 +14,11 @@ class AvailableActionValidation(AvailableAction):
     def validate_description_style(cls, text: str) -> str:
         if not text:
             return text
+        cls.validate_markdown(text)
+        return text
 
+    @classmethod
+    def validate_markdown(cls, text: str) -> None:
         try:
             markdown.markdown(text)
         except Exception as e:
@@ -22,9 +26,7 @@ class AvailableActionValidation(AvailableAction):
 
         errors = []
         lines = text.split('\n')
-
         for i, line in enumerate(lines):
-
             # Rule: Headers must have a space after the hash
             if re.compile(r'^#{1,6}(?![ #])').match(line):
                 if line.strip().replace('#', '') != '':
@@ -38,8 +40,5 @@ class AvailableActionValidation(AvailableAction):
             if re.compile(r'^#{1,6} ').match(line) or re.compile(r'^#{1,6}(?![ #])').match(line):
                 if i > 0 and lines[i - 1].strip() != "":
                     errors.append(f"Header must be preceded by a blank line.")
-
         if errors:
             raise ValueError("\n".join(errors))
-
-        return text
