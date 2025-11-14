@@ -1,6 +1,6 @@
-from pydantic import model_validator, ValidationError
+from pydantic import ValidationError, model_validator
 
-from eligibility_signposting_api.model.campaign_config import ActionsMapper, AvailableAction
+from eligibility_signposting_api.model.campaign_config import ActionsMapper
 from rules_validation_api.validators.available_action_validator import AvailableActionValidation
 
 
@@ -26,7 +26,7 @@ class ActionsMapperValidation(ActionsMapper):
                     error_report.append(f"\n❌ Action '{key}': {msg}")
 
         if error_report:
-            final_msg = "".join(error_report)
-            raise ValueError(f"Markdown Validation Issues:{final_msg}")
+            final_msg = "Markdown Validation Issues:".join(error_report)
+            raise ValueError(final_msg)
 
         return self

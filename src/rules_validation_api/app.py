@@ -1,16 +1,16 @@
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
-import logging
+
+from rules_validation_api.validators.rules_validator import RulesValidation
 
 logging.basicConfig(
     level=logging.INFO,  # or DEBUG for more detail
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-    force=True
+    force=True,
 )
-
-from rules_validation_api.validators.rules_validator import RulesValidation
 
 GREEN = "\033[92m"  # pragma: no cover
 RESET = "\033[0m"  # pragma: no cover

@@ -5,10 +5,11 @@ from pydantic_core import InitErrorDetails
 
 from eligibility_signposting_api.model.campaign_config import (
     ActionsMapper,
+    AvailableAction,
     Iteration,
     IterationCohort,
     IterationRule,
-    RuleType, AvailableAction,
+    RuleType,
 )
 from rules_validation_api.validators.actions_mapper_validator import ActionsMapperValidation
 from rules_validation_api.validators.available_action_validator import AvailableActionValidation

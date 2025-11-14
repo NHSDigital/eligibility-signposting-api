@@ -1,7 +1,6 @@
 import re
 
-import markdown
-from pydantic import field_validator, Field
+from pydantic import Field, field_validator
 
 from eligibility_signposting_api.model.campaign_config import AvailableAction
 
@@ -19,26 +18,21 @@ class AvailableActionValidation(AvailableAction):
 
     @classmethod
     def validate_markdown(cls, text: str) -> None:
-        try:
-            markdown.markdown(text)
-        except Exception as e:
-            raise ValueError(f"Critical Markdown syntax error: {str(e)}")
-
         errors = []
-        lines = text.split('\n')
+        lines = text.split("\n")
         for i, line in enumerate(lines):
             # Rule: Headers must have a space after the hash
-            if re.compile(r'^#{1,6}(?![ #])').match(line):
-                if line.strip().replace('#', '') != '':
-                    errors.append(f"Header missing space after hash (e.g., use '# Title' not '#Title').")
+            if re.compile(r"^#{1,6}(?![ #])").match(line) and line.strip().replace("#", "") != "":
+                errors.append("Header missing space after hash (e.g., use '# Title' not '#Title').")
 
             # Rule: Lists must have a space after the bullet
-            if re.compile(r'^(\s*)[*+-](?![ *+-])').match(line):
-                errors.append(f"List item missing space after bullet.")
+            if re.compile(r"^(\s*)[*+-](?![ *+-])").match(line):
+                errors.append("List item missing space after bullet.")
 
             # Rule: Headers must be surrounded by blank lines
-            if re.compile(r'^#{1,6} ').match(line) or re.compile(r'^#{1,6}(?![ #])').match(line):
-                if i > 0 and lines[i - 1].strip() != "":
-                    errors.append(f"Header must be preceded by a blank line.")
+            is_header = re.compile(r"^#{1,6} ").match(line) or re.compile(r"^#{1,6}(?![ #])").match(line)
+            is_not_empty_line = i > 0 and lines[i - 1].strip() != ""
+            if is_header and is_not_empty_line:
+                errors.append("Header must be preceded by a blank line.")
         if errors:
             raise ValueError("\n".join(errors))
