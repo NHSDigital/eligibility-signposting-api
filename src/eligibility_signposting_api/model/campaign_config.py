@@ -20,7 +20,7 @@ from pydantic import (
     model_validator,
 )
 
-from eligibility_signposting_api.config.contants import ALLOWED_CONDITIONS, RULE_STOP_DEFAULT
+from eligibility_signposting_api.config.constants import ALLOWED_CONDITIONS, RULE_STOP_DEFAULT
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from pydantic import SerializationInfo

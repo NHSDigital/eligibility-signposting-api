@@ -5,12 +5,14 @@ from pydantic_core import InitErrorDetails
 
 from eligibility_signposting_api.model.campaign_config import (
     ActionsMapper,
+    AvailableAction,
     Iteration,
     IterationCohort,
     IterationRule,
     RuleType,
 )
 from rules_validation_api.validators.actions_mapper_validator import ActionsMapperValidation
+from rules_validation_api.validators.available_action_validator import AvailableActionValidation
 from rules_validation_api.validators.iteration_cohort_validator import IterationCohortValidation
 from rules_validation_api.validators.iteration_rules_validator import IterationRuleValidation
 
@@ -49,6 +51,16 @@ class IterationValidation(Iteration):
     @classmethod
     def transform_actions_mapper(cls, action_mapper: ActionsMapper) -> ActionsMapper:
         ActionsMapperValidation.model_validate(action_mapper.model_dump())
+
+        # Iterate through each key/value in the mapper
+        new_root: dict[str, AvailableAction] = {}
+        for key, action in action_mapper.root.items():
+            # Revalidate each AvailableAction using the Markdown-aware subclass
+            validated = AvailableActionValidation(**action.model_dump())
+            new_root[key] = validated
+
+        # Replace the old dict with the new, fully-validated one
+        action_mapper.root = new_root
         return action_mapper
 
     @model_validator(mode="after")

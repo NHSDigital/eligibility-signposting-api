@@ -12,7 +12,7 @@ from eligibility_signposting_api.common.api_error_response import (
     INVALID_INCLUDE_ACTIONS_ERROR,
     NHS_NUMBER_MISMATCH_ERROR,
 )
-from eligibility_signposting_api.config.contants import NHS_NUMBER_HEADER
+from eligibility_signposting_api.config.constants import NHS_NUMBER_HEADER
 
 logger = logging.getLogger(__name__)
 

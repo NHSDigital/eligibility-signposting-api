@@ -38,3 +38,4 @@ repo
 Preprod
 Dev
 auditable
+bool

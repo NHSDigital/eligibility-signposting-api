@@ -9,7 +9,7 @@ from rules_validation_api.validators.actions_mapper_validator import ActionsMapp
 def valid_available_action():
     return {
         "ExternalRoutingCode": "BookNBS",
-        "ActionDescription": "",
+        "ActionDescription": "### Get vaccinated without an appointment",
         "ActionType": "ButtonWithAuthLink",
         "UrlLink": "http://www.nhs.uk/book-rsv",
         "UrlLabel": "Continue to booking",
@@ -62,3 +62,19 @@ class TestBUCValidations:
         with pytest.raises(ValidationError) as exc_info:
             ActionsMapperValidation(root=data)
         assert "Invalid keys found in ActionsMapper" in str(exc_info.value)
+
+    def test_invalid_value_for_action_description(self):
+        invalid_available_action = {
+            "ExternalRoutingCode": "BookNBS",
+            "ActionDescription": "###Get vaccinated without an appointment",
+            "ActionType": "ButtonWithAuthLink",
+            "UrlLink": "http://www.nhs.uk/book-rsv",
+            "UrlLabel": "Continue to booking",
+        }
+
+        data = {
+            "valid_key": self.make_action(invalid_available_action),
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            ActionsMapperValidation(root=data)
+        assert "Action 'valid_key': Header missing space after hash" in str(exc_info.value)

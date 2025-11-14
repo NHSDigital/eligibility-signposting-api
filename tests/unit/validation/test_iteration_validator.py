@@ -185,7 +185,7 @@ class TestOptionalFieldsSchemaValidations:
 class TestBUCValidations:
     book_local_1_action: ClassVar[dict] = {
         "ExternalRoutingCode": "BookLocal_1",
-        "ActionDescription": "##Getting the vaccine\n"
+        "ActionDescription": "## Getting the vaccine\n"
         "You can get an RSV vaccination at your GP surgery.\n"
         "Your GP surgery may contact you about getting the RSV vaccine. "
         "This may be by letter, text, phone call, email or through the NHS App. "
@@ -195,7 +195,7 @@ class TestBUCValidations:
 
     book_local_2_action: ClassVar[dict] = {
         "ExternalRoutingCode": "BookLocal_2",
-        "ActionDescription": "##Getting the vaccine\n"
+        "ActionDescription": "## Getting the vaccine\n"
         "You can get an RSV vaccination at your GP surgery.\n"
         "Your GP surgery may contact you about getting the RSV vaccine. "
         "This may be by letter, text, phone call, email or through the NHS App. "
