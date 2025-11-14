@@ -1,4 +1,4 @@
-### CampaignConfig Validation Rules
+# CampaignConfig Validation Rules
 
 | Key                                                                         | Validation | Data Type    | Field Uniqueness    | Enum/Allowed Values                                                                                                             | Cross-field/Conditional                                                            |
 |-----------------------------------------------------------------------------|------------|--------------|---------------------|---------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
@@ -58,4 +58,3 @@
 | CampaignConfig.Iterations[x].ActionsMapper.ACTION_ENTRY.ActionType          | Optional   | string       | -                   | -                                                                                                                               | -                                                                                  |
 | CampaignConfig.Iterations[x].ActionsMapper.ACTION_ENTRY.UrlLink             | Optional   | string       | -                   | -                                                                                                                               | -                                                                                  |
 | CampaignConfig.Iterations[x].ActionsMapper.ACTION_ENTRY.UrlLabel            | Optional   | string       | -                   | -                                                                                                                               | -                                                                                  |
-
