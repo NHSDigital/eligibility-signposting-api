@@ -244,7 +244,12 @@ resource "aws_iam_policy" "api_infrastructure" {
           # CloudWatch Logs resource policies (require wildcard)
           "logs:PutResourcePolicy",
           "logs:DeleteResourcePolicy",
-          "logs:DescribeResourcePolicies"
+          "logs:DescribeResourcePolicies",
+          # CloudWatch Logs delivery for WAF
+          "logs:CreateLogDelivery",
+          "logs:DeleteLogDelivery",
+          # IAM service-linked role for WAF logging
+          "iam:CreateServiceLinkedRole"
 
         ],
         Resource = "*"

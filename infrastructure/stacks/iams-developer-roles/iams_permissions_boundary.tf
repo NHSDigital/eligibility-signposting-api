@@ -116,6 +116,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "iam:UntagPolicy",
       "iam:PassRole",
       "iam:TagPolicy",
+      "iam:CreateServiceLinkedRole",
 
       # KMS - encryption key management
       "kms:CreateKey",
