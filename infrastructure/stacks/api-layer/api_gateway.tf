@@ -46,6 +46,7 @@ resource "aws_api_gateway_deployment" "eligibility_signposting_api" {
 resource "aws_api_gateway_stage" "eligibility-signposting-api" {
   #checkov:skip=CKV2_AWS_51: mTLS is enforced at the custom domain, not at the stage level
   #checkov:skip=CKV_AWS_120: We're not enabling caching for this API Gateway, yet
+  #checkov:skip=CKV2_AWS_77: WAF with AWSManagedRulesKnownBadInputsRuleSet (Log4j protection) is attached via aws_wafv2_web_acl_association in waf.tf
   deployment_id        = aws_api_gateway_deployment.eligibility_signposting_api.id
   rest_api_id          = module.eligibility_signposting_api_gateway.rest_api_id
   stage_name           = "${local.workspace}-eligibility-signposting-api-live"
