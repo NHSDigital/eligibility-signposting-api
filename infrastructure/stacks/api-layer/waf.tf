@@ -188,6 +188,28 @@ resource "aws_cloudwatch_log_group" "waf" {
   ]
 }
 
+# CloudWatch Logs resource policy to allow WAF to write logs
+resource "aws_cloudwatch_log_resource_policy" "waf" {
+  count       = local.waf_enabled ? 1 : 0
+  policy_name = "${local.workspace}-waf-logging-policy"
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "delivery.logs.amazonaws.com"
+        }
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "${aws_cloudwatch_log_group.waf[0].arn}:*"
+      }
+    ]
+  })
+}
+
 # KMS Key for WAF logs encryption
 resource "aws_kms_key" "waf_logs" {
   count                   = local.waf_enabled ? 1 : 0
