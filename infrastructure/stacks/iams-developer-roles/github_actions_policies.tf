@@ -270,7 +270,8 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
           # WAF v2 logs (both naming conventions)
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
-          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*"
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-waf-logs-*"
         ]
       },
       {
@@ -651,6 +652,7 @@ resource "aws_iam_policy" "cloudwatch_management" {
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-waf-logs-*",
           "arn:aws:cloudwatch:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alarm:*",
           "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/default-eligibility-signposting-api*",

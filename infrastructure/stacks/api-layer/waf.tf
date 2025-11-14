@@ -274,7 +274,8 @@ data "aws_iam_policy_document" "waf_logs_kms" {
       variable = "kms:EncryptionContext:aws:logs:arn"
       values = [
         "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
-        "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*"
+        "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*",
+        "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-waf-logs-*"
       ]
     }
   }
