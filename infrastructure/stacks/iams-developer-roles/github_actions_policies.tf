@@ -240,7 +240,16 @@ resource "aws_iam_policy" "api_infrastructure" {
           "acm:ListCertificates",
           # WAF v2 list operations
           "wafv2:ListWebACLs",
-          "wafv2:ListTagsForResource"
+          "wafv2:ListTagsForResource",
+          # CloudWatch Logs resource policies (require wildcard)
+          "logs:PutResourcePolicy",
+          "logs:DeleteResourcePolicy",
+          "logs:DescribeResourcePolicies",
+          # CloudWatch Logs delivery for WAF
+          "logs:CreateLogDelivery",
+          "logs:DeleteLogDelivery",
+          # IAM service-linked role for WAF logging
+          "iam:CreateServiceLinkedRole"
 
         ],
         Resource = "*"
@@ -251,6 +260,7 @@ resource "aws_iam_policy" "api_infrastructure" {
         Action = [
           # CloudWatch Logs creation and management
           "logs:CreateLogGroup",
+          "logs:DeleteLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
           # CloudWatch Logs subscription filters for CSOC forwarding
@@ -266,7 +276,11 @@ resource "aws_iam_policy" "api_infrastructure" {
           # API Gateway logs
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/*",
           # Kinesis Firehose logs
-          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*"
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
+          # WAF v2 logs (both naming conventions)
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-waf-logs-*"
         ]
       },
       {
@@ -376,6 +390,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "wafv2:CreateWebACL",
           "wafv2:DeleteWebACL",
           "wafv2:GetWebACL",
+          "wafv2:GetWebACLForResource",
           "wafv2:UpdateWebACL",
           "wafv2:TagResource",
           "wafv2:UntagResource",
@@ -405,6 +420,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:acm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:certificate/*",
           "arn:aws:events:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:rule/cloudwatch-alarm-state-change-to-splunk*",
           "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/webacl/*",
+          "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/managedruleset/*",
         ]
       },
     ]
@@ -615,6 +631,7 @@ resource "aws_iam_policy" "cloudwatch_management" {
         Action = [
           "logs:ListTagsForResource",
           "logs:DescribeLogGroups",
+          "logs:DeleteLogGroup",
           "logs:PutRetentionPolicy",
           "logs:TagResource",
           "logs:UntagResource",
@@ -643,6 +660,8 @@ resource "aws_iam_policy" "cloudwatch_management" {
         Resource = [
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-waf-logs-*",
           "arn:aws:cloudwatch:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alarm:*",
           "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/default-eligibility-signposting-api*",
