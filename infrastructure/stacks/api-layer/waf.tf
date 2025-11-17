@@ -170,7 +170,7 @@ resource "aws_wafv2_web_acl_association" "api_gateway" {
 # CloudWatch Log Group for WAF logs
 resource "aws_cloudwatch_log_group" "waf" {
   count             = local.waf_enabled ? 1 : 0
-  name              = "/aws/wafv2/${local.workspace}-eligibility-signposting-api"
+  name              = "aws-waf-logs-${local.workspace}-eligibility-signposting-api"
   retention_in_days = 365
   kms_key_id        = aws_kms_key.waf_logs[0].arn
 
@@ -186,6 +186,46 @@ resource "aws_cloudwatch_log_group" "waf" {
   depends_on = [
     aws_kms_key_policy.waf_logs
   ]
+}
+
+# CloudWatch Logs resource policy to allow WAF to write logs
+resource "aws_cloudwatch_log_resource_policy" "waf" {
+  count       = local.waf_enabled ? 1 : 0
+  policy_name = "${local.workspace}-waf-logging-policy"
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AWSLogDeliveryWrite"
+        Effect = "Allow"
+        Principal = {
+          Service = "delivery.logs.amazonaws.com"
+        }
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "${aws_cloudwatch_log_group.waf[0].arn}:*"
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
+          ArnLike = {
+            "aws:SourceArn" = "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:*"
+          }
+        }
+      },
+      {
+        Sid    = "AWSLogDeliveryAclCheck"
+        Effect = "Allow"
+        Principal = {
+          Service = "delivery.logs.amazonaws.com"
+        }
+        Action   = "logs:GetLogDelivery"
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 # KMS Key for WAF logs encryption
@@ -272,7 +312,11 @@ data "aws_iam_policy_document" "waf_logs_kms" {
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = ["arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*"]
+      values = [
+        "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
+        "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*",
+        "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-waf-logs-*"
+      ]
     }
   }
 }
