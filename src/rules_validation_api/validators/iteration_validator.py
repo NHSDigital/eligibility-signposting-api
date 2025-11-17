@@ -67,7 +67,9 @@ class IterationValidation(Iteration):
 
     @field_validator("rules_mapper", mode="after")
     @classmethod
-    def validate_rules_mapper(cls, rules_mapper: dict[str, RuleEntry]) -> dict[str, RuleEntry]:
+    def validate_rules_mapper(cls, rules_mapper: dict[str, RuleEntry]) -> dict[str, RuleEntry] | None:
+        if rules_mapper is None:
+            return None
         for key, value in rules_mapper.items():
             RuleEntryValidation.model_validate(value.model_dump())
 

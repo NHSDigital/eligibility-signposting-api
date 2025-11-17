@@ -5,6 +5,7 @@ from typing import ClassVar
 import pytest
 from pydantic import ValidationError
 
+from eligibility_signposting_api.model.campaign_config import RuleEntry, RuleCode, RuleName, RuleText
 from rules_validation_api.validators.iteration_validator import IterationValidation
 
 
@@ -441,3 +442,26 @@ class TestBUCValidations:
         assert label_counts["label_2"] == expected_label_2_error_count, (
             f"Expected {expected_label_2_error_count} error for label_2, got {label_counts['label_2']}"
         )
+
+
+    def test_valid_rules_mapper(self, valid_campaign_config_with_only_mandatory_fields):
+        rules_mapper = {
+            "ALREADY_JABBED": {
+                "RuleNames": [
+                    "Already Vaccinated"
+                ],
+                "RuleCode": "Already Jabbed",
+                "RuleText": "### Already Vaccinated"
+            }
+        }
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "RulesMapper": rules_mapper,
+        }
+        model = IterationValidation(**data)
+
+        expected = {"ALREADY_JABBED": RuleEntry(RuleNames=[RuleName("Already Vaccinated")], RuleCode=RuleCode("Already Jabbed"),
+                                 RuleText=RuleText("### Already Vaccinated"))}
+
+        assert model.rules_mapper == expected
+
