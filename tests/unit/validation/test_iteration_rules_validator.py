@@ -38,7 +38,7 @@ class TestMandatoryFieldsSchemaValidations:
         with pytest.raises(ValidationError):
             IterationRuleValidation(**data)
 
-    @pytest.mark.parametrize("name_value", ["", "ValidName", "Test_Rule_01"])
+    @pytest.mark.parametrize("name_value", ["", "ValidName", "Test_Rule_01", "##Invalid Header does not matter here"])
     def test_valid_name(self, name_value, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["Name"] = name_value
@@ -52,14 +52,14 @@ class TestMandatoryFieldsSchemaValidations:
         with pytest.raises(ValidationError):
             IterationRuleValidation(**data)
 
-    @pytest.mark.parametrize("description_value", ["", "A rule description", "Sample text"])
+    @pytest.mark.parametrize("description_value", ["", "A rule description", "Sample text", "### Header"])
     def test_valid_description(self, description_value, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["Description"] = description_value
         result = IterationRuleValidation(**data)
         assert result.description == description_value
 
-    @pytest.mark.parametrize("description_value", [None])
+    @pytest.mark.parametrize("description_value", [None, "##Header without space"])
     def test_invalid_description(self, description_value, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["Description"] = description_value

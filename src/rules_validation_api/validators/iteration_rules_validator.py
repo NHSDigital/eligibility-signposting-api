@@ -1,16 +1,20 @@
+from pydantic import Field
 from typing import Self
 
-from pydantic import model_validator
+from pydantic import model_validator, field_validator
 
 from eligibility_signposting_api.model.campaign_config import (
     IterationRule,
     RuleAttributeLevel,
     RuleAttributeName,
-    RuleType,
+    RuleType, RuleDescription,
 )
+from rules_validation_api.validators.custom_markdown_linter import validate_markdown
 
 
 class IterationRuleValidation(IterationRule):
+    description: RuleDescription = Field(..., alias="Description", description="use `rule_text` property instead.")
+
     @model_validator(mode="after")
     def check_cohort_attribute_name(self) -> Self:
         if (
@@ -32,3 +36,11 @@ class IterationRuleValidation(IterationRule):
             )
             raise ValueError(msg)
         return self
+
+    @field_validator("description")
+    @classmethod
+    def validate_description_style(cls, text: str) -> str:
+        if not text:
+            return text
+        validate_markdown(text)
+        return text

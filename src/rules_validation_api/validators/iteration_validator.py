@@ -9,18 +9,20 @@ from eligibility_signposting_api.model.campaign_config import (
     Iteration,
     IterationCohort,
     IterationRule,
-    RuleType,
+    RuleType, RuleEntry,
 )
 from rules_validation_api.validators.actions_mapper_validator import ActionsMapperValidation
 from rules_validation_api.validators.available_action_validator import AvailableActionValidation
 from rules_validation_api.validators.iteration_cohort_validator import IterationCohortValidation
 from rules_validation_api.validators.iteration_rules_validator import IterationRuleValidation
+from rules_validation_api.validators.rule_entry_validator import RuleEntryValidation
 
 
 class IterationValidation(Iteration):
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
     actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
+    rules_mapper: dict[str, RuleEntry] | None = Field(None, alias="RulesMapper")
 
     @field_validator("iteration_rules")
     @classmethod
@@ -49,7 +51,7 @@ class IterationValidation(Iteration):
 
     @field_validator("actions_mapper", mode="after")
     @classmethod
-    def transform_actions_mapper(cls, action_mapper: ActionsMapper) -> ActionsMapper:
+    def validate_actions_mapper(cls, action_mapper: ActionsMapper) -> ActionsMapper:
         ActionsMapperValidation.model_validate(action_mapper.model_dump())
 
         # Iterate through each key/value in the mapper
@@ -62,6 +64,14 @@ class IterationValidation(Iteration):
         # Replace the old dict with the new, fully-validated one
         action_mapper.root = new_root
         return action_mapper
+
+    @field_validator("rules_mapper", mode="after")
+    @classmethod
+    def validate_rules_mapper(cls, rules_mapper: dict[str, RuleEntry]) -> dict[str, RuleEntry]:
+        for key, value in rules_mapper.items():
+            RuleEntryValidation.model_validate(value.model_dump())
+
+        return rules_mapper
 
     @model_validator(mode="after")
     def action_mapper_validation(self) -> typing.Self:
