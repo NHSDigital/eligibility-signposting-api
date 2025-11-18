@@ -1,0 +1,110 @@
+name: "Status Endpoint Monitoring"
+
+# Monitor the status endpoint on preprod/int environment
+# Runs on a schedule and can be manually triggered
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  monitor-status:
+    name: "Check PreProd Status Endpoint"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: "Set environment URL"
+        id: set-url
+        run: |
+          echo "url=https://int.api.service.nhs.uk/eligibility-signposting-api/patient-check/_status" >> $GITHUB_OUTPUT
+          echo "env_display=PreProd (Int)" >> $GITHUB_OUTPUT
+
+      - name: "Check status endpoint"
+        id: health-check
+        continue-on-error: true
+        run: |
+          URL="${{ steps.set-url.outputs.url }}"
+          echo "Checking status endpoint: $URL"
+
+          # Make the request and capture response
+          HTTP_CODE=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            --max-time 30 \
+            --connect-timeout 10 \
+            "$URL")
+
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          # Check if we got a successful response
+          if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 300 ]]; then
+            echo "✅ Status endpoint returned $HTTP_CODE"
+
+            # Validate response contains expected fields
+            if command -v jq &> /dev/null; then
+              STATUS=$(jq -r '.status // "unknown"' /tmp/response.json)
+              echo "response_status=$STATUS" >> $GITHUB_OUTPUT
+
+              if [[ "$STATUS" == "pass" ]]; then
+                echo "status=success" >> $GITHUB_OUTPUT
+                echo "✅ Health check passed"
+              else
+                echo "status=failed" >> $GITHUB_OUTPUT
+                echo "❌ Health check status is not 'pass': $STATUS"
+              fi
+            else
+              echo "status=success" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "❌ Status endpoint returned $HTTP_CODE"
+          fi
+
+          # Save response for debugging
+          if [ -f /tmp/response.json ]; then
+            echo "Response body:"
+            cat /tmp/response.json
+            echo "response_body<<EOF" >> $GITHUB_OUTPUT
+            cat /tmp/response.json >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: "Notify Slack on Failure"
+        if: steps.health-check.outputs.status == 'failed'
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "alert_type": "failure",
+              "environment": "${{ steps.set-url.outputs.env_display }}",
+              "status": "Failed",
+              "http_code": "${{ steps.health-check.outputs.http_code || 'No response' }}",
+              "response_status": "${{ steps.health-check.outputs.response_status || 'No response received' }}",
+              "endpoint_url": "${{ steps.set-url.outputs.url }}",
+              "workflow_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "timestamp": "${{ github.event.repository.updated_at }}"
+            }
+
+      - name: "Notify Slack on Recovery"
+        if: steps.health-check.outputs.status == 'success' && github.event_name == 'workflow_dispatch'
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "alert_type": "success",
+              "environment": "${{ steps.set-url.outputs.env_display }}",
+              "status": "Healthy",
+              "http_code": "${{ steps.health-check.outputs.http_code }}",
+              "response_status": "${{ steps.health-check.outputs.response_status }}",
+              "endpoint_url": "${{ steps.set-url.outputs.url }}",
+              "workflow_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "timestamp": "${{ github.event.repository.updated_at }}"
+            }
+
+      - name: "Fail job if health check failed"
+        if: steps.health-check.outputs.status == 'failed'
+        run: |
+          echo "❌ Health check failed for ${{ steps.set-url.outputs.env_display }} environment"
+          exit 1
