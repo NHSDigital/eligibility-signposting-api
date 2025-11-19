@@ -104,7 +104,7 @@ jobs:
           output_format: sarif
           output_file_path: checkov-report.sarif
       - name: "Upload Checkov results to GitHub Security tab"
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: checkov-report.sarif
   count-lines-of-code:
