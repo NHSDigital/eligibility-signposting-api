@@ -36,12 +36,17 @@ jobs:
 
           echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
 
-          # Check if we got a successful response
-          if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 300 ]]; then
+          # Check if we got a successful response or 401 (which means service is up, just needs auth)
+          if [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 300 ]] || [[ "$HTTP_CODE" -eq 401 ]]; then
             echo "✅ Status endpoint returned $HTTP_CODE"
 
-            # Validate response contains expected fields
-            if command -v jq &> /dev/null; then
+            # For 401, service is up but requires authentication - this is expected
+            if [[ "$HTTP_CODE" -eq 401 ]]; then
+              echo "response_status=unauthorized_but_healthy" >> $GITHUB_OUTPUT
+              echo "status=success" >> $GITHUB_OUTPUT
+              echo "✅ Health check passed - Service responding (requires authentication)"
+            # For 2xx responses, validate JSON
+            elif command -v jq &> /dev/null; then
               STATUS=$(jq -r '.status // "unknown"' /tmp/response.json)
               echo "response_status=$STATUS" >> $GITHUB_OUTPUT
 
