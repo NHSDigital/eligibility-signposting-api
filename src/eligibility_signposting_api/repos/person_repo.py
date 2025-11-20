@@ -9,6 +9,9 @@ from eligibility_signposting_api.model.eligibility_status import NHSNumber
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.repos.exceptions import NotFoundError
 
+import hashlib
+import hmac
+
 logger = logging.getLogger(__name__)
 
 TableName = NewType("TableName", str)
@@ -36,8 +39,22 @@ class PersonRepo:
         super().__init__()
         self.table = table
 
+    def _hash_nhs_number(self, nhs_number: NHSNumber) -> str:
+        nhs_str = str(nhs_number)
+
+        hmac_key= "abc123" # salt
+
+        digest = hmac.new(
+            hmac_key,
+            nhs_str.encode("utf-8"),
+            hashlib.sha512,
+        ).hexdigest()
+
+        return digest
+
     def get_eligibility_data(self, nhs_number: NHSNumber) -> Person:
-        response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(nhs_number))
+        nhs_hash = self._hash_nhs_number(nhs_number)
+        response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(nhs_hash))
 
         if not (items := response.get("Items")) or not next(
             (item for item in items if item.get("ATTRIBUTE_TYPE") == "PERSON"), None
