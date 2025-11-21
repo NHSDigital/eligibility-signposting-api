@@ -12,12 +12,7 @@ resource "aws_secretsmanager_secret" "hashing_secret" {
 # Initial secrets
 resource "aws_secretsmanager_secret_version" "hashing_secrets_test" {
   secret_id = aws_secretsmanager_secret.hashing_secret.id
-  secret_string = jsonencode(
-    {
-      v1_test_salt = "",
-      v2_test_salt = "this_is_a_test"
-    }
-  )
+  secret_string = "this_is_a_test_secret"
 }
 
 # Resource-based policy attached to the secret
