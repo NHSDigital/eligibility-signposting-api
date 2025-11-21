@@ -57,7 +57,6 @@ class PersonRepo:
     def get_eligibility_data(self, nhs_number: NHSNumber) -> Person:
         nhs_hash = self._hash_nhs_number(nhs_number)
 
-        # feature switch? but what about the tests?
         # response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(nhs_number))
         response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(nhs_hash))
 
