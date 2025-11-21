@@ -244,7 +244,12 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "wafv2:DisassociateWebACL",
       "wafv2:PutLoggingConfiguration",
       "wafv2:GetLoggingConfiguration",
-      "wafv2:DeleteLoggingConfiguration"
+      "wafv2:DeleteLoggingConfiguration",
+
+      # Secret Manager
+      "secretsmanager:CreateSecret",
+      "secretsmanager:DeleteSecret",
+      "secretsmanager:PutSecretValue"
     ]
 
     resources = ["*"]
