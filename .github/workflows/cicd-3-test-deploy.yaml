@@ -24,7 +24,7 @@ jobs:
       tag: ${{ steps.tag.outputs.name }}
     steps:
       - name: "Checkout exact commit from CI/CD publish"
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
@@ -57,7 +57,7 @@ jobs:
       contents: read
     steps:
       - name: "Checkout same commit"
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
