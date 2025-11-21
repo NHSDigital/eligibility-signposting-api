@@ -35,17 +35,19 @@ class PersonRepo:
     This data is held in a handful of records in a single Dynamodb table.
     """
 
-    def __init__(self, table: Annotated[Any, Inject(qualifier="person_table")]) -> None:
+    def __init__(self,
+                 table: Annotated[Any, Inject(qualifier="person_table")],
+                 hmac_key: Annotated[bytes, Inject(qualifier="nhs_hmac_key")],
+                 ) -> None:
         super().__init__()
         self.table = table
+        self._hmac_key = hmac_key
 
     def _hash_nhs_number(self, nhs_number: NHSNumber) -> str:
         nhs_str = str(nhs_number)
 
-        hmac_key= "abc123" # salt
-
         digest = hmac.new(
-            hmac_key,
+            self._hmac_key,
             nhs_str.encode("utf-8"),
             hashlib.sha512,
         ).hexdigest()
@@ -54,6 +56,9 @@ class PersonRepo:
 
     def get_eligibility_data(self, nhs_number: NHSNumber) -> Person:
         nhs_hash = self._hash_nhs_number(nhs_number)
+
+        # feature switch? but what about the tests?
+        # response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(nhs_number))
         response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(nhs_hash))
 
         if not (items := response.get("Items")) or not next(
