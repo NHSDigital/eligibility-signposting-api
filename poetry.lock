@@ -2359,14 +2359,14 @@ files = [
 
 [[package]]
 name = "polyfactory"
-version = "2.22.2"
+version = "3.0.0"
 description = "Mock data generation factories"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0,>=3.9"
 groups = ["dev"]
 files = [
-    {file = "polyfactory-2.22.2-py3-none-any.whl", hash = "sha256:9bea58ac9a80375b4153cd60820f75e558b863e567e058794d28c6a52b84118a"},
-    {file = "polyfactory-2.22.2.tar.gz", hash = "sha256:a3297aa0b004f2b26341e903795565ae88507c4d86e68b132c2622969028587a"},
+    {file = "polyfactory-3.0.0-py3-none-any.whl", hash = "sha256:ad9ba3b3f04c292d30673587946e1c5d18e249074368b09abb7c9455288cfc37"},
+    {file = "polyfactory-3.0.0.tar.gz", hash = "sha256:c1be54fc10fe738415eef2248bcfc687e3d74634f5e73b70e4ba58952df31363"},
 ]
 
 [package.dependencies]
@@ -2379,7 +2379,7 @@ beanie = ["beanie", "pydantic[email]", "pymongo (<4.9)"]
 full = ["attrs", "beanie", "msgspec", "odmantic", "pydantic", "sqlalchemy"]
 msgspec = ["msgspec"]
 odmantic = ["odmantic (<1.0.0)", "pydantic[email]"]
-pydantic = ["pydantic[email] (>=1.10)"]
+pydantic = ["eval-type-backport (>=0.2.2)", "pydantic[email] (>=1.10)"]
 sqlalchemy = ["sqlalchemy (>=1.4.29)"]
 
 [[package]]
@@ -2867,14 +2867,14 @@ files = [
 
 [[package]]
 name = "pyright"
-version = "1.1.403"
+version = "1.1.407"
 description = "Command line wrapper for pyright"
 optional = false
 python-versions = ">=3.7"
 groups = ["dev"]
 files = [
-    {file = "pyright-1.1.403-py3-none-any.whl", hash = "sha256:c0eeca5aa76cbef3fcc271259bbd785753c7ad7bcac99a9162b4c4c7daed23b3"},
-    {file = "pyright-1.1.403.tar.gz", hash = "sha256:3ab69b9f41c67fb5bbb4d7a36243256f0d549ed3608678d381d5f51863921104"},
+    {file = "pyright-1.1.407-py3-none-any.whl", hash = "sha256:6dd419f54fcc13f03b52285796d65e639786373f433e243f8b94cf93a7444d21"},
+    {file = "pyright-1.1.407.tar.gz", hash = "sha256:099674dba5c10489832d4a4b2d302636152a9a42d317986c38474c76fe562262"},
 ]
 
 [package.dependencies]
@@ -3983,4 +3983,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "56353a5e83ab0dedefda461f24fb1d5021e079fc9323d46974886c0b6addd7c4"
+content-hash = "d6b681f8af8157db23d558c605f5d23b5795290a4e28cd5b1a7c5a04069472b4"
