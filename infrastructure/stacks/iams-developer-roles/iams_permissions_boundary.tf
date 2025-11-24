@@ -254,7 +254,9 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "secretsmanager:UntagResource",
       "secretsmanager:ListTagsOfResource",
       "secretsmanager:DescribeSecret",
-      "secretsmanager:GetResourcePolicy"
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:PutResourcePolicy",
+      "secretsmanager:DeleteResourcePolicy"
     ]
 
     resources = ["*"]

@@ -124,7 +124,9 @@ resource "aws_iam_policy" "dynamodb_management" {
             "secretsmanager:UntagResource",
             "secretsmanager:ListTagsOfResource",
             "secretsmanager:DescribeSecret",
-            "secretsmanager:GetResourcePolicy"
+            "secretsmanager:GetResourcePolicy",
+            "secretsmanager:PutResourcePolicy",
+            "secretsmanager:DeleteResourcePolicy"
           ],
           Resource = [
             "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:eligibility-signposting-api-${var.environment}/*"
