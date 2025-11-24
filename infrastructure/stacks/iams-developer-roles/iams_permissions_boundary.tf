@@ -249,6 +249,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       # Secret Manager
       "secretsmanager:CreateSecret",
       "secretsmanager:DeleteSecret",
+      "secretsmanager:GetSecretValue",
       "secretsmanager:PutSecretValue",
       "secretsmanager:TagResource",
       "secretsmanager:UntagResource",

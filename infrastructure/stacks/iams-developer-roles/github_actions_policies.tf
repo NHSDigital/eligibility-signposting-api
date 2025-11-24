@@ -119,6 +119,7 @@ resource "aws_iam_policy" "dynamodb_management" {
           Action = [
             "secretsmanager:CreateSecret",
             "secretsmanager:DeleteSecret",
+            "secretsmanager:GetSecretValue",
             "secretsmanager:PutSecretValue",
             "secretsmanager:TagResource",
             "secretsmanager:UntagResource",
