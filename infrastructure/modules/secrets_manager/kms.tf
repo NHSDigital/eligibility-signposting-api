@@ -1,5 +1,8 @@
 # KMS CMK to encrypt/decrypt secrets
 resource "aws_kms_key" "secrets_cmk" {
+  #checkov:skip=CKV_AWS_111: Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_356: Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_109: Root user needs full KMS key management
   description             = "CMK for Secrets Manager - ${var.project_name}-${var.environment}"
   enable_key_rotation     = true
   deletion_window_in_days = 30
@@ -8,11 +11,11 @@ resource "aws_kms_key" "secrets_cmk" {
     Statement = [
       # Allow your account root full control
       {
-        Sid      = "AllowAccountAdminsFullAccess"
-        Effect   = "Allow"
+        Sid    = "AllowAccountAdminsFullAccess"
+        Effect = "Allow"
         Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
-        Action   = "kms:*"
-        Resource = "*"
+        actions = ["kms:*"]
+        resources = ["*"]
       },
       # Allow Secrets Manager service to use the key
       {
