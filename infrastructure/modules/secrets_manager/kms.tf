@@ -38,6 +38,17 @@ resource "aws_kms_key" "secrets_cmk" {
           "kms:DescribeKey"
         ]
         Resource = "*"
+      },
+      # Allow Lambda role to decrypt for reading the secret
+      {
+        Sid    = "AllowLambdaRoleDecrypt"
+        Effect = "Allow"
+        Principal = { AWS = var.eligibility_lambda_role_arn }
+        Action = [
+          "kms:Decrypt",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
       }
     ]
   })

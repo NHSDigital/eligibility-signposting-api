@@ -5,4 +5,5 @@ module "secrets_manager" {
   environment  = var.environment
   stack_name   = local.stack_name
   workspace    = terraform.workspace
+  eligibility_lambda_role_arn = aws_iam_role.eligibility_lambda_role.arn
 }

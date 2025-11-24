@@ -31,7 +31,18 @@ resource "aws_secretsmanager_secret_policy" "hashing_secret_policy" {
           "secretsmanager:DescribeSecret"
         ],
         Resource = "*"
+      },
+      {
+        Sid    = "LambdaAccess",
+        Effect = "Allow",
+        Principal = { AWS = var.eligibility_lambda_role_arn },
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ],
+        Resource = "*"
       }
     ]
   })
 }
+
