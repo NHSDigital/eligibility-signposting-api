@@ -123,7 +123,7 @@ resource "aws_iam_policy" "dynamodb_management" {
             "secretsmanager:GetSecretValue"
           ],
           Resource = [
-            "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:eligibility-signposting-api-${var.environment}-hashing_secret"
+            "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:eligibility-signposting-api-${var.environment}/hashing_secret"
           ]
         }
       ],
