@@ -112,6 +112,19 @@ resource "aws_iam_policy" "dynamodb_management" {
           Resource = [
             "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
           ]
+        },
+
+        {
+          Effect = "Allow",
+          Action = [
+            "secretsmanager:CreateSecret",
+            "secretsmanager:DeleteSecret",
+            "secretsmanager:PutSecretValue",
+            "secretsmanager:GetSecretValue"
+          ],
+          Resource = [
+            "arn:aws:secretsmanager:*:${data.aws_caller_identity.current.account_id}:secret:eligibility-signposting-api-${var.environment}-hashing_secret"
+          ]
         }
       ],
       # to create test users in preprod
