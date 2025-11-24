@@ -1,5 +1,6 @@
 # Secret definition in your account
 resource "aws_secretsmanager_secret" "hashing_secret" {
+  #checkov:skip=CKV2_AWS_57: Secret rotations are handled manually
   name        = "${var.project_name}-${var.environment}/hashing_secret"
   description = "cross account hashing secrets"
   kms_key_id  = aws_kms_key.secrets_cmk.arn
