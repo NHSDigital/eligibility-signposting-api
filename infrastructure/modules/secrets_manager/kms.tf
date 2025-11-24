@@ -14,8 +14,8 @@ resource "aws_kms_key" "secrets_cmk" {
         Sid    = "AllowAccountAdminsFullAccess"
         Effect = "Allow"
         Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root" }
-        actions = ["kms:*"]
-        resources = ["*"]
+        Action   = "kms:*"
+        Resource = "*"
       },
       # Allow Secrets Manager service to use the key
       {

@@ -13,7 +13,7 @@ resource "aws_secretsmanager_secret" "hashing_secret" {
 # Initial secrets
 resource "aws_secretsmanager_secret_version" "hashing_secrets_test" {
   secret_id = aws_secretsmanager_secret.hashing_secret.id
-  secret_string = "this_is_a_test_secret"
+  secret_string = "initial_secret"
 }
 
 # Resource-based policy attached to the secret
