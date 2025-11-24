@@ -14,6 +14,9 @@ resource "aws_secretsmanager_secret" "hashing_secret" {
 resource "aws_secretsmanager_secret_version" "hashing_secrets_test" {
   secret_id = aws_secretsmanager_secret.hashing_secret.id
   secret_string = "initial_secret"
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
 }
 
 # Resource-based policy attached to the secret
