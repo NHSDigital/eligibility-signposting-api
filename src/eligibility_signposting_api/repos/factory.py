@@ -43,3 +43,9 @@ def firehose_client_factory(
 ) -> BaseClient:
     endpoint_url = str(firehose_endpoint) if firehose_endpoint is not None else None
     return session.client("firehose", endpoint_url=endpoint_url)
+
+
+# @service(qualifier="secretsmanager")
+# def secretsmanager_client_factory(session: Session) -> BaseClient:
+#     return session.client("secretsmanager")
+
