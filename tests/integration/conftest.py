@@ -114,6 +114,40 @@ def s3_client(boto3_session: Session, localstack: URL) -> BaseClient:
 def firehose_client(boto3_session: Session, localstack: URL) -> BaseClient:
     return boto3_session.client("firehose", endpoint_url=str(localstack))
 
+@pytest.fixture(scope="session")
+def secretsmanager_client(boto3_session: Session, localstack: URL) -> BaseClient:
+    """
+    Provides a boto3 Secrets Manager client bound to LocalStack.
+    Seeds a test secret for use in integration tests.
+    """
+    client:BaseClient = boto3_session.client(
+        service_name="secretsmanager",
+        endpoint_url=str(localstack),
+        region_name="eu-west-1"
+    )
+
+    secret_name = "test_secret"
+    secret_value = "test_value_old"
+
+    try:
+        client.create_secret(
+            Name=secret_name,
+            SecretString=secret_value,
+        )
+    except client.exceptions.ResourceExistsException:
+        client.put_secret_value(
+            SecretId=secret_name,
+            SecretString=secret_value,
+        )
+
+    secret_name = "test_secret"
+    secret_value = "test_value"
+
+    client.put_secret_value(
+        SecretId=secret_name,
+        SecretString=secret_value,
+    )
+    return client
 
 @pytest.fixture(scope="session")
 def iam_role(iam_client: BaseClient) -> Generator[str]:
@@ -209,6 +243,7 @@ def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -
                     "DYNAMODB_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "S3_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "FIREHOSE_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
+                    "SECRET_MANAGER_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "AWS_REGION": AWS_REGION,
                     "LOG_LEVEL": "DEBUG",
                 }
