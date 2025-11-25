@@ -1,4 +1,5 @@
 import typing
+from collections import Counter
 from operator import attrgetter
 
 from pydantic import field_validator, model_validator
@@ -12,6 +13,16 @@ class CampaignConfigValidation(CampaignConfig):
     @classmethod
     def validate_iterations(cls, iterations: list[Iteration]) -> list[IterationValidation]:
         return [IterationValidation(**i.model_dump()) for i in iterations]
+
+    @model_validator(mode="after")
+    def validate_iterations_have_unique_id(self) -> typing.Self:
+        ids = [iteration.id for iteration in self.iterations]
+        duplicates = {i_id for i_id, count in Counter(ids).items() if count > 1}
+        if duplicates:
+            raise ValueError(
+                f"Iterations contain duplicate IDs: {', '.join(duplicates)}"
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_campaign_has_iteration_within_schedule(self) -> typing.Self:

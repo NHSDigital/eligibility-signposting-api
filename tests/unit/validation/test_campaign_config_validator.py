@@ -233,3 +233,17 @@ class TestBUCValidations:
             CampaignConfigValidation(**data)
         errors = error.value.errors()
         assert any(e["loc"][-1] == "Iterations" for e in errors), "Expected validation error on 'Iterations'"
+
+    def test_unique_iteration_ids(self, valid_campaign_config_with_only_mandatory_fields, valid_iteration_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["Iterations"].append(valid_iteration_with_only_mandatory_fields.copy())
+        data["Iterations"][1]["ID"] =  data["Iterations"][0]["ID"]
+        with pytest.raises(ValidationError) as exc_info:
+            CampaignConfigValidation(**data)
+
+        # Extract the error message
+        error_message = str(exc_info.value)
+
+        # Assert that the duplicate ID appears in the message
+        duplicate_id = data["Iterations"][0]["ID"]
+        assert f"Iterations contain duplicate IDs: {duplicate_id}" in error_message
