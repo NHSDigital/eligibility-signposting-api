@@ -291,6 +291,8 @@ resource "aws_kms_key_policy" "s3_rules_kms_key" {
 }
 
 resource "aws_iam_role_policy" "splunk_firehose_policy" {
+  #checkov:skip=CKV_AWS_290: Firehose requires write access to dynamic log streams without static constraints
+  #checkov:skip=CKV_AWS_355: Firehose logging requires wildcard resource for CloudWatch log groups/streams
   name = "splunk-firehose-policy"
   role = aws_iam_role.splunk_firehose_assume_role.id
 

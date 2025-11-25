@@ -56,7 +56,11 @@ data "aws_iam_policy_document" "assumed_role_permissions_boundary" {
 
       # X-Ray - Lambda tracing
       "xray:PutTraceSegments",
-      "xray:PutTelemetryRecords"
+      "xray:PutTelemetryRecords",
+
+      # Secret Manager
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret"
     ]
 
     resources = ["*"]
