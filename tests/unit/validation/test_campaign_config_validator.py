@@ -196,8 +196,8 @@ class TestBUCValidations:
         ("start_date", "end_date"),
         [
             ("20250101", "20250331"),  # valid range
-            ("20250601", "20250630"),  # valid short range
-            ("20250101", "20250101"),  # same day
+            ("20250201", "20250228"),  # valid short range
+            ("20250202", "20250202"),  # same day
         ],
     )
     def test_valid_start_and_end_dates_and_iteration_dates_relation(
@@ -206,14 +206,14 @@ class TestBUCValidations:
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = start_date
         data["EndDate"] = end_date
-        data["Iterations"][0]["IterationDate"] = "20241231"
+        data["Iterations"][0]["IterationDate"] = "20250202"
         CampaignConfigValidation(**data)
 
     @pytest.mark.parametrize(
         ("start_date", "end_date"),
         [
-            ("20241230", "20250101"),  # campaign start date is after the iteration date
-            ("20250331", "20250101"),  # end before start
+            ("20241230", "20250101"),  # Campaign start date is after the iteration date
+            ("20240729", "20241228"),  # Campaign ends date is before the iteration date
         ],
     )
     def test_invalid_start_and_end_dates_and_iteration_dates_relation(
@@ -222,7 +222,7 @@ class TestBUCValidations:
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = start_date
         data["EndDate"] = end_date
-        data["Iterations"][0]["IterationDate"] = "20241231"
+        data["Iterations"][0]["IterationDate"] = "20241229"
         with pytest.raises(ValidationError):
             CampaignConfigValidation(**data)
 
