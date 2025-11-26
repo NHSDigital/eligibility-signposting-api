@@ -234,10 +234,12 @@ class TestBUCValidations:
         errors = error.value.errors()
         assert any(e["loc"][-1] == "Iterations" for e in errors), "Expected validation error on 'Iterations'"
 
-    def test_unique_iteration_ids(self, valid_campaign_config_with_only_mandatory_fields, valid_iteration_with_only_mandatory_fields):
+    def test_unique_iteration_ids(
+        self, valid_campaign_config_with_only_mandatory_fields, valid_iteration_with_only_mandatory_fields
+    ):
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["Iterations"].append(valid_iteration_with_only_mandatory_fields.copy())
-        data["Iterations"][1]["ID"] =  data["Iterations"][0]["ID"]
+        data["Iterations"][1]["ID"] = data["Iterations"][0]["ID"]
         with pytest.raises(ValidationError) as exc_info:
             CampaignConfigValidation(**data)
 
@@ -248,8 +250,9 @@ class TestBUCValidations:
         duplicate_id = data["Iterations"][0]["ID"]
         assert f"Iterations contain duplicate IDs: {duplicate_id}" in error_message
 
-
-    def test_error_approval_minimum_is_greater_than_approval_maximum(self, valid_campaign_config_with_only_mandatory_fields):
+    def test_error_approval_minimum_is_greater_than_approval_maximum(
+        self, valid_campaign_config_with_only_mandatory_fields
+    ):
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["ApprovalMinimum"] = 2
         data["ApprovalMaximum"] = 1
@@ -261,10 +264,11 @@ class TestBUCValidations:
         [
             (1, 2),
             (1, 1),
-        ]
+        ],
     )
     def test_approval_minimum_greater_than_approval_maximum_is_invalid(
-        self, valid_campaign_config_with_only_mandatory_fields,
+        self,
+        valid_campaign_config_with_only_mandatory_fields,
         approval_min,
         approval_max,
     ):
@@ -272,4 +276,3 @@ class TestBUCValidations:
         data["ApprovalMinimum"] = approval_min
         data["ApprovalMaximum"] = approval_max
         CampaignConfigValidation(**data)
-
