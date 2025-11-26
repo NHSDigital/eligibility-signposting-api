@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 from typing import Annotated, NewType
 
 from wireup import service, Inject
@@ -9,9 +10,13 @@ HashSecretName = NewType("HashSecretName", str)
 
 
 def _hash(nhs_number: str, secret_value: str) -> str:
-    """Internal helper to hash NHS number with a given secret value."""
-    combined = f"{nhs_number}{secret_value}"
-    return hashlib.sha256(combined.encode("utf-8")).hexdigest()
+    nhs_str = str(nhs_number)
+
+    return hmac.new(
+        secret_value.encode("utf-8"),
+        nhs_str.encode("utf-8"),
+        hashlib.sha512,
+    ).hexdigest()
 
 
 @service

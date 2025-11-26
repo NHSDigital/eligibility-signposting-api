@@ -1,4 +1,6 @@
 import datetime
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -379,11 +381,25 @@ def person_table(dynamodb_resource: ServiceResource) -> Generator[Any]:
 
 @pytest.fixture
 def persisted_person(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+
+    nhs_num_hash = hmac.new(
+        "test_value".encode("utf-8"),
+        nhs_num.encode("utf-8"),
+        hashlib.sha512,
+    ).hexdigest()
+
+    #nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    #nhs_number = eligibility_status.NHSNumber(nhs_num)
+    #nhs_number = nhs_num_hash
+
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
 
     for row in (
-        rows := person_rows_builder(nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
+        #rows := person_rows_builder(nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
+        rows := person_rows_builder(nhs_num_hash, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
     ):
         person_table.put_item(Item=row)
 
@@ -395,12 +411,23 @@ def persisted_person(person_table: Any, faker: Faker) -> Generator[eligibility_s
 
 @pytest.fixture
 def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    #nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+
+    nhs_num_hash = hmac.new(
+        "test_value".encode("utf-8"),
+        nhs_num.encode("utf-8"),
+        hashlib.sha512,
+    ).hexdigest()
+
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=77, maximum_age=77))
 
     for row in (
         rows := person_rows_builder(
-            nhs_number,
+            nhs_num_hash,
+            #nhs_number,
             date_of_birth=date_of_birth,
             postcode="hp1",
             cohorts=["cohort1", "cohort2"],
@@ -416,12 +443,23 @@ def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibil
 
 @pytest.fixture
 def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    #nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+
+    nhs_num_hash = hmac.new(
+        "test_value".encode("utf-8"),
+        nhs_num.encode("utf-8"),
+        hashlib.sha512,
+    ).hexdigest()
+
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=74, maximum_age=74))
 
     for row in (
         rows := person_rows_builder(
-            nhs_number,
+            nhs_num_hash,
+            # nhs_number,
             date_of_birth=date_of_birth,
             postcode="SW19",
             cohorts=["cohort_label1", "cohort_label2", "cohort_label3", "cohort_label4", "cohort_label5"],
@@ -438,12 +476,22 @@ def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[e
 
 @pytest.fixture
 def person_with_all_data(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    #nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+
+    nhs_num_hash = hmac.new(
+        "test_value".encode("utf-8"),
+        nhs_num.encode("utf-8"),
+        hashlib.sha512,
+    ).hexdigest()
+
     date_of_birth = eligibility_status.DateOfBirth(datetime.date(1990, 2, 28))
 
     for row in (
         rows := person_rows_builder(
-            nhs_number=nhs_number,
+            nhs_number=nhs_num_hash,
             date_of_birth=date_of_birth,
             gender="0",
             postcode="SW18",
@@ -470,9 +518,19 @@ def person_with_all_data(person_table: Any, faker: Faker) -> Generator[eligibili
 
 @pytest.fixture
 def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    #nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
 
-    for row in (rows := person_rows_builder(nhs_number).data):
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+
+    nhs_num_hash = hmac.new(
+        "test_value".encode("utf-8"),
+        nhs_num.encode("utf-8"),
+        hashlib.sha512,
+    ).hexdigest()
+
+    #for row in (rows := person_rows_builder(nhs_number).data):
+    for row in (rows := person_rows_builder(nhs_num_hash).data):
         person_table.put_item(Item=row)
 
     yield nhs_number
@@ -483,10 +541,21 @@ def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[el
 
 @pytest.fixture
 def persisted_person_pc_sw19(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(
-        faker.nhs_number(),
-    )
-    for row in (rows := person_rows_builder(nhs_number, postcode="SW19", cohorts=["cohort1"]).data):
+    # nhs_number = eligibility_status.NHSNumber(
+    #     faker.nhs_number(),
+    # )
+
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+
+    nhs_num_hash = hmac.new(
+        "test_value".encode("utf-8"),
+        nhs_num.encode("utf-8"),
+        hashlib.sha512,
+    ).hexdigest()
+
+    #for row in (rows := person_rows_builder(nhs_number, postcode="SW19", cohorts=["cohort1"]).data):
+    for row in (rows := person_rows_builder(nhs_num_hash, postcode="SW19", cohorts=["cohort1"]).data):
         person_table.put_item(Item=row)
 
     yield nhs_number
@@ -499,11 +568,21 @@ def persisted_person_pc_sw19(person_table: Any, faker: Faker) -> Generator[eligi
 def persisted_person_with_no_person_attribute_type(
     person_table: Any, faker: Faker
 ) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    #nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
 
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+
+    nhs_num_hash = hmac.new(
+        "test_value".encode("utf-8"),
+        nhs_num.encode("utf-8"),
+        hashlib.sha512,
+    ).hexdigest()
+
     for row in (
-        rows := person_rows_builder(nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
+        #rows := person_rows_builder(nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
+        rows := person_rows_builder(nhs_num_hash, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
     ):
         if row["ATTRIBUTE_TYPE"] != "PERSON":
             person_table.put_item(Item=row)
