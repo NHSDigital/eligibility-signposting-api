@@ -247,3 +247,29 @@ class TestBUCValidations:
         # Assert that the duplicate ID appears in the message
         duplicate_id = data["Iterations"][0]["ID"]
         assert f"Iterations contain duplicate IDs: {duplicate_id}" in error_message
+
+
+    def test_error_approval_minimum_is_greater_than_approval_maximum(self, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["ApprovalMinimum"] = 2
+        data["ApprovalMaximum"] = 1
+        with pytest.raises(ValidationError):
+            CampaignConfigValidation(**data)
+
+    @pytest.mark.parametrize(
+        ("approval_min", "approval_max"),
+        [
+            (1, 2),
+            (1, 1),
+        ]
+    )
+    def test_approval_minimum_greater_than_approval_maximum_is_invalid(
+        self, valid_campaign_config_with_only_mandatory_fields,
+        approval_min,
+        approval_max,
+    ):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["ApprovalMinimum"] = approval_min
+        data["ApprovalMaximum"] = approval_max
+        CampaignConfigValidation(**data)
+

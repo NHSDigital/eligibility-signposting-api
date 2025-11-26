@@ -9,10 +9,19 @@ from rules_validation_api.validators.iteration_validator import IterationValidat
 
 
 class CampaignConfigValidation(CampaignConfig):
+
     @field_validator("iterations")
     @classmethod
     def validate_iterations(cls, iterations: list[Iteration]) -> list[IterationValidation]:
         return [IterationValidation(**i.model_dump()) for i in iterations]
+
+    @model_validator(mode="after")
+    def validate_approval_minimum_is_less_than_or_equal_to_approval_maximum(self) -> typing.Self:
+        if self.approval_minimum > self.approval_maximum:
+            raise ValueError(
+                f"approval_minimum {self.approval_minimum} is greater than approval_maximum {self.approval_maximum}"
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_iterations_have_unique_id(self) -> typing.Self:
