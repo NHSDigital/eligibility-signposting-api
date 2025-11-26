@@ -7,13 +7,13 @@ from faker import Faker
 from hamcrest import assert_that, contains_inanyorder, has_entries
 
 from eligibility_signposting_api.model.eligibility_status import NHSNumber
+from eligibility_signposting_api.processors.hashing_service import HashingService
 from eligibility_signposting_api.repos import NotFoundError
 from eligibility_signposting_api.repos.person_repo import PersonRepo
-from tests.integration.conftest import StubHashingService
 
 
 def test_person_found(person_table: Any, persisted_person: NHSNumber,
-                      hashing_service: StubHashingService,):
+                      hashing_service: HashingService,):
     # Given
     #repo = PersonRepo(person_table)
     repo = PersonRepo(person_table, hashing_service)

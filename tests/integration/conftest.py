@@ -32,6 +32,8 @@ from eligibility_signposting_api.model.campaign_config import (
     StartDate,
     StatusText,
 )
+from eligibility_signposting_api.processors.hashing_service import HashingService, HashSecretName
+from eligibility_signposting_api.repos import SecretRepo
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
 from tests.fixtures.builders.model import rule
@@ -1039,21 +1041,33 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
-class StubHashingService:
-    def hash_with_current_secret(self, nhs_number: str) -> str:
-        return hmac.new(
-            "test_value".encode("utf-8"),
-            nhs_number.encode("utf-8"),
-            hashlib.sha512,
-        ).hexdigest()
 
-    def hash_with_previous_secret(self, nhs_number: str) -> str:
-        return hmac.new(
-            "test_old_value".encode("utf-8"),
-            nhs_number.encode("utf-8"),
-            hashlib.sha512,
-        ).hexdigest()
+
+# If you put StubSecretRepo in a separate module, import it instead
+class StubSecretRepo(SecretRepo):
+    def __init__(self, current: str = "test_value", previous: str = "test_value_old"):
+        self._current = current
+        self._previous = previous
+
+    def get_secret_current(self, secret_name: str) -> dict[str, str]:
+        return {"AWSCURRENT": self._current}
+
+    def get_secret_previous(self, secret_name: str) -> dict[str, str]:
+        return {"AWSPREVIOUS": self._previous}
+
 
 @pytest.fixture
-def hashing_service() -> StubHashingService:
-    return StubHashingService()
+def hashing_service() -> HashingService:
+    secret_repo = StubSecretRepo(
+        current="test_value",
+        previous="test_value_old",
+    )
+
+    # The actual value of the name does not matter for the stub,
+    # but we keep it realistic for readability.
+    hash_secret_name = HashSecretName("eligibility-signposting-api-dev/hashing_secret")
+
+    return HashingService(
+        secret_repo=secret_repo,
+        hash_secret_name=hash_secret_name,
+    )
