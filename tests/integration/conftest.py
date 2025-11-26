@@ -1037,3 +1037,23 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
     )
     yield campaign
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+class StubHashingService:
+    def hash_with_current_secret(self, nhs_number: str) -> str:
+        return hmac.new(
+            "test_value".encode("utf-8"),
+            nhs_number.encode("utf-8"),
+            hashlib.sha512,
+        ).hexdigest()
+
+    def hash_with_previous_secret(self, nhs_number: str) -> str:
+        return hmac.new(
+            "test_old_value".encode("utf-8"),
+            nhs_number.encode("utf-8"),
+            hashlib.sha512,
+        ).hexdigest()
+
+@pytest.fixture
+def hashing_service() -> StubHashingService:
+    return StubHashingService()

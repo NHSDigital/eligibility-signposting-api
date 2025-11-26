@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 from typing import Any
 
 import pytest
@@ -7,21 +9,27 @@ from hamcrest import assert_that, contains_inanyorder, has_entries
 from eligibility_signposting_api.model.eligibility_status import NHSNumber
 from eligibility_signposting_api.repos import NotFoundError
 from eligibility_signposting_api.repos.person_repo import PersonRepo
+from tests.integration.conftest import StubHashingService
 
 
-def test_person_found(person_table: Any, persisted_person: NHSNumber):
+def test_person_found(person_table: Any, persisted_person: NHSNumber,
+                      hashing_service: StubHashingService,):
     # Given
-    repo = PersonRepo(person_table)
+    #repo = PersonRepo(person_table)
+    repo = PersonRepo(person_table, hashing_service)
 
     # When
     actual = repo.get_eligibility_data(persisted_person)
 
     # Then
+    nhs_num_hash = hashing_service.hash_with_current_secret(persisted_person)
+
     assert_that(
         actual.data,
         contains_inanyorder(
-            has_entries({"NHS_NUMBER": persisted_person, "ATTRIBUTE_TYPE": "PERSON"}),
-            has_entries({"NHS_NUMBER": persisted_person, "ATTRIBUTE_TYPE": "COHORTS"}),
+            #has_entries({"NHS_NUMBER": persisted_person, "ATTRIBUTE_TYPE": "PERSON"}),
+            has_entries({"NHS_NUMBER": nhs_num_hash, "ATTRIBUTE_TYPE": "PERSON"}),
+            has_entries({"NHS_NUMBER": nhs_num_hash, "ATTRIBUTE_TYPE": "COHORTS"}),
         ),
     )
 
