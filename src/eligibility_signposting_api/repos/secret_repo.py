@@ -27,9 +27,11 @@ class SecretRepo:
                 VersionStage=stage,
             )
             return {stage: response["SecretString"]}
+        # Add in other errors for AWS Secrets Manager
         except ClientError as e:
             logger.error("Failed to get secret %s at stage %s: %s", secret_name, stage, e)
-            raise
+            #raise
+            return {}
 
     def get_secret_current(self, secret_name: str) -> dict[str, str]:
         """Fetch the AWSCURRENT version of the secret."""
