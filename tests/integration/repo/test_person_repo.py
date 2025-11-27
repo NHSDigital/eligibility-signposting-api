@@ -57,22 +57,24 @@ def test_items_found_but_person_attribute_type_not_found_raises_error(
         repo.get_eligibility_data(persisted_person_with_no_person_attribute_type)
 
 
-# def test_person_found_with_current_secret(person_table: Any,
-#                     persisted_person: NHSNumber,
-#                     hashing_service: HashingService,):
-#     # Given
-#     repo = PersonRepo(person_table, hashing_service)
-#
-#     # When
-#     actual = repo.get_eligibility_data(persisted_person)
-#
-#     # Then
-#     nhs_num_hash = hashing_service.hash_with_current_secret(persisted_person)
-#
-#     assert_that(
-#         actual.data,
-#         contains_inanyorder(
-#             has_entries({"NHS_NUMBER": nhs_num_hash, "ATTRIBUTE_TYPE": "PERSON"}),
-#             has_entries({"NHS_NUMBER": nhs_num_hash, "ATTRIBUTE_TYPE": "COHORTS"}),
-#         ),
-#     )
+def test_person_found_with_current_secret(person_table: Any,
+                    persisted_person: NHSNumber,
+                    hashing_service: HashingService):
+    # Given
+    repo = PersonRepo(person_table, hashing_service)
+
+    # When
+    actual = repo.get_eligibility_data(persisted_person)
+
+    # Then
+    nhs_num_hash = hashing_service.hash_with_current_secret(persisted_person)
+    nhs_num_hash_pre = hashing_service.hash_with_previous_secret(persisted_person)
+
+
+    assert_that(
+        actual.data,
+        contains_inanyorder(
+            has_entries({"NHS_NUMBER": nhs_num_hash, "ATTRIBUTE_TYPE": "PERSON"}),
+            has_entries({"NHS_NUMBER": nhs_num_hash, "ATTRIBUTE_TYPE": "COHORTS"}),
+        ),
+    )

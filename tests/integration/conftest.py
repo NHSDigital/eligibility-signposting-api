@@ -46,6 +46,8 @@ logger = logging.getLogger(__name__)
 
 AWS_REGION = "eu-west-1"
 
+AWS_CURRENT_SECRET = "test_value"
+AWS_PREVIOUS_SECRET = "test_value_old"
 
 @pytest.fixture(scope="session")
 def localstack(request: pytest.FixtureRequest) -> URL:
@@ -1045,7 +1047,7 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
 
 # If you put StubSecretRepo in a separate module, import it instead
 class StubSecretRepo(SecretRepo):
-    def __init__(self, current: str = "test_value", previous: str = "test_value_old"):
+    def __init__(self, current: str = AWS_CURRENT_SECRET, previous: str = AWS_PREVIOUS_SECRET):
         self._current = current
         self._previous = previous
 
@@ -1059,8 +1061,8 @@ class StubSecretRepo(SecretRepo):
 @pytest.fixture
 def hashing_service() -> HashingService:
     secret_repo = StubSecretRepo(
-        current="test_value",
-        previous="test_value_old",
+        current=AWS_CURRENT_SECRET,
+        previous=AWS_PREVIOUS_SECRET,
     )
 
     # The actual value of the name does not matter for the stub,
