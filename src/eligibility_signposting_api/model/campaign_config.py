@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import typing
 from collections import Counter
 from datetime import UTC, date, datetime
@@ -273,7 +274,12 @@ class Iteration(BaseModel):
     def parse_dates(cls, v: str | date) -> date:
         if isinstance(v, date):
             return v
-        return datetime.strptime(v, "%Y%m%d").date()  # noqa: DTZ007
+        if not re.fullmatch(r"\d{8}", str(v)):
+            raise ValueError(f"Invalid format: {v}. Must be YYYYMMDD with 8 digits.")
+        try:
+            return datetime.strptime(str(v), "%Y%m%d").date()  # noqa: DTZ007
+        except ValueError:
+            raise ValueError(f"Invalid date value: {v}. Must be a valid calendar date in YYYYMMDD format.")
 
     @field_serializer("iteration_date", when_used="always")
     @staticmethod
@@ -316,7 +322,12 @@ class CampaignConfig(BaseModel):
     def parse_dates(cls, v: str | date) -> date:
         if isinstance(v, date):
             return v
-        return datetime.strptime(v, "%Y%m%d").date()  # noqa: DTZ007
+        if not re.fullmatch(r"\d{8}", str(v)):
+            raise ValueError(f"Invalid format: {v}. Must be YYYYMMDD with 8 digits.")
+        try:
+            return datetime.strptime(str(v), "%Y%m%d").date()  # noqa: DTZ007
+        except ValueError:
+            raise ValueError(f"Invalid date value: {v}. Must be a valid calendar date in YYYYMMDD format.")
 
     @field_serializer("start_date", "end_date", when_used="always")
     @staticmethod
