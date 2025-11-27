@@ -171,7 +171,17 @@ class IterationRule(BaseModel):
             if self.attribute_level == RuleAttributeLevel.COHORT:
                 return self
             else:
-                raise ValueError(f"AttributeName must be set for {self.attribute_level} AttributeLevel.")
+                raise ValueError(f"AttributeName must be set where AttributeLevel is {self.attribute_level} .")
+
+    @model_validator(mode="after")
+    def validate_attribute_target_is_mandatory_for_target_attribute_level(self) -> typing.Self:  # noqa: N805
+        if self.attribute_target:
+            return self
+        else:
+            if self.attribute_level != RuleAttributeLevel.TARGET:
+                return self
+            else:
+                raise ValueError(f"AttributeTarget is mandatory where AttributeLevel is {self.attribute_level}.")
 
 
     _parent: Iteration | None = PrivateAttr(default=None)
