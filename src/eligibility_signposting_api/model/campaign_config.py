@@ -163,6 +163,17 @@ class IterationRule(BaseModel):
             return v.upper() == "Y"
         return v
 
+    @model_validator( mode="after")
+    def validate_attribute_name_is_optional_only_for_cohort_attribute_level(self)  -> typing.Self:  # noqa: N805
+        if self.attribute_name:
+            return self
+        else:
+            if self.attribute_level == RuleAttributeLevel.COHORT:
+                return self
+            else:
+                raise ValueError(f"AttributeName must be set for {self.attribute_level} AttributeLevel.")
+
+
     _parent: Iteration | None = PrivateAttr(default=None)
 
     def set_parent(self, parent: Iteration) -> None:
