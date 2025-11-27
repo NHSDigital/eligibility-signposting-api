@@ -78,3 +78,23 @@ def test_person_found_with_current_secret(person_table: Any,
             has_entries({"NHS_NUMBER": nhs_num_hash, "ATTRIBUTE_TYPE": "COHORTS"}),
         ),
     )
+
+def test_person_found_with_previous_secret(person_table: Any,
+                    persisted_person_previous: NHSNumber,
+                    hashing_service: HashingService):
+    # Given
+    repo = PersonRepo(person_table, hashing_service)
+
+    # When
+    actual = repo.get_eligibility_data(persisted_person_previous)
+
+    # Then
+    nhs_num_hash = hashing_service.hash_with_previous_secret(persisted_person_previous)
+
+    assert_that(
+        actual.data,
+        contains_inanyorder(
+            has_entries({"NHS_NUMBER": nhs_num_hash, "ATTRIBUTE_TYPE": "PERSON"}),
+            has_entries({"NHS_NUMBER": nhs_num_hash, "ATTRIBUTE_TYPE": "COHORTS"}),
+        ),
+    )
