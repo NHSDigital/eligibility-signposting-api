@@ -34,10 +34,11 @@ def test_person_found(person_table: Any, persisted_person: NHSNumber,
     )
 
 
-def test_items_not_found_raises_error(person_table: Any, faker: Faker):
+def test_items_not_found_raises_error(person_table: Any, faker: Faker,
+                                      hashing_service: HashingService,):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
-    repo = PersonRepo(person_table)
+    repo = PersonRepo(person_table, hashing_service)
 
     # When, Then
     with pytest.raises(NotFoundError):
@@ -45,10 +46,11 @@ def test_items_not_found_raises_error(person_table: Any, faker: Faker):
 
 
 def test_items_found_but_person_attribute_type_not_found_raises_error(
-    person_table: Any, persisted_person_with_no_person_attribute_type: NHSNumber
-):
+    person_table: Any, persisted_person_with_no_person_attribute_type: NHSNumber,
+    hashing_service: HashingService):
+
     # Given
-    repo = PersonRepo(person_table)
+    repo = PersonRepo(person_table, hashing_service)
 
     ## When, Then
     with pytest.raises(NotFoundError):
