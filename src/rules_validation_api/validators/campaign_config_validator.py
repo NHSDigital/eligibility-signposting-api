@@ -16,7 +16,7 @@ class CampaignConfigValidation(CampaignConfig):
 
     @model_validator(mode="after")
     def validate_approval_minimum_is_less_than_or_equal_to_approval_maximum(self) -> typing.Self:
-        if self.approval_minimum and self.approval_maximum:
+        if self.approval_minimum is not None and self.approval_maximum is not None:
             if self.approval_minimum > self.approval_maximum:
                 msg = f"approval_minimum {self.approval_minimum} > approval_maximum {self.approval_maximum}"
                 raise ValueError(msg)
