@@ -441,3 +441,32 @@ class TestBUCValidations:
         assert label_counts["label_2"] == expected_label_2_error_count, (
             f"Expected {expected_label_2_error_count} error for label_2, got {label_counts['label_2']}"
         )
+
+    def test_invalid_iteration_if_more_than_one_cohort_has_the_same_priority(
+        self, valid_campaign_config_with_only_mandatory_fields, valid_iteration_cohorts
+    ):
+        iteration_data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "IterationCohorts": [
+                valid_iteration_cohorts(label="label_1", priority=1, group="group_1"),
+                valid_iteration_cohorts(label="label_2", priority=1, group="group_1"),
+                valid_iteration_cohorts(label="label_3", priority=1, group="group_1"),
+            ],
+        }
+
+        with pytest.raises(ValidationError) as error:
+            IterationValidation(**iteration_data)
+
+        errors = error.value.errors()
+        # Extract all cohort_label mentions from error inputs
+        label_mentions = [err["input"] for err in errors if err.get("ctx")]
+
+        # Count occurrences
+        priority_counts = Counter(label_mentions)
+
+        # Assert expected counts
+        expected_priority_1_error_count = 2
+
+        assert priority_counts[1] == expected_priority_1_error_count, (
+            f"Expected {expected_priority_1_error_count} errors for priority '1' , got {priority_counts['label_1']}"
+        )

@@ -82,13 +82,13 @@ def valid_available_action():
 
 @pytest.fixture
 def valid_iteration_cohorts():
-    def _cohort(label: str = "label_1", group: str = "group_1"):
+    def _cohort(label: str = "label_1", group: str = "group_1", priority: int = 0):
         return {
             "CohortLabel": label,
             "CohortGroup": group,
             "PositiveDescription": "are a member of eli_399_cohort_group [[PERSON.POSTCODE:DATE(%d %B %Y)]]",
             "NegativeDescription": "are not a member of eli_399_cohort_group [[PERSON.POSTCODE:DATE(%d %B %Y)]]",
-            "Priority": 0,
+            "Priority": priority,
         }
 
     return _cohort

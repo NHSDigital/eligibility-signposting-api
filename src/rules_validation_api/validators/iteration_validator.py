@@ -25,22 +25,46 @@ class IterationValidation(Iteration):
 
     @field_validator("iteration_cohorts")
     @classmethod
-    def validate_iteration_cohorts(cls, iteration_cohorts: list[IterationCohort]) -> list[IterationCohortValidation]:
+    def validate_iteration_cohorts(
+        cls, iteration_cohorts: list[IterationCohort]
+    ) -> list[IterationCohortValidation]:
         seen_labels = set()
+        seen_priorities = set()
         errors = []
+
         for cohort in iteration_cohorts:
             label = cohort.cohort_label
+            priority = cohort.priority
+
+            # Duplicate label check
             if label in seen_labels:
-                error = InitErrorDetails(
-                    type="value_error",
-                    loc=("iteration_cohort",),
-                    input=label,
-                    ctx={"error": f"Duplicate iteration_cohort: {label}"},
+                errors.append(
+                    InitErrorDetails(
+                        type="value_error",
+                        loc=("iteration_cohort", "cohort_label"),
+                        input=label,
+                        ctx={"error": f"Duplicate iteration_cohort label: {label}"},
+                    )
                 )
-                errors.append(error)
             seen_labels.add(label)
+
+            # Duplicate priority check
+            if priority in seen_priorities:
+                errors.append(
+                    InitErrorDetails(
+                        type="value_error",
+                        loc=("iteration_cohort", "priority"),
+                        input=priority,
+                        ctx={"error": f"Duplicate iteration_cohort priority: {priority}"},
+                    )
+                )
+            seen_priorities.add(priority)
+
         if errors:
-            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=errors)
+            raise ValidationError.from_exception_data(
+                title="IterationValidation", line_errors=errors
+            )
+
         return [IterationCohortValidation(**i.model_dump()) for i in iteration_cohorts]
 
     @field_validator("actions_mapper", mode="after")
