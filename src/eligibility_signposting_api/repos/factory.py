@@ -43,3 +43,17 @@ def firehose_client_factory(
 ) -> BaseClient:
     endpoint_url = str(firehose_endpoint) if firehose_endpoint is not None else None
     return session.client("firehose", endpoint_url=endpoint_url)
+
+
+@service(qualifier="secretsmanager")
+def secretsmanager_client_factory(
+    session: Session,
+    secretsmanager_endpoint: Annotated[URL, Inject(param="secretsmanager_endpoint")],
+    aws_default_region: Annotated[AwsRegion, Inject(param="aws_default_region")],
+) -> BaseClient:
+    endpoint_url = str(secretsmanager_endpoint) if secretsmanager_endpoint is not None else None
+    return session.client(
+        service_name="secretsmanager",
+        endpoint_url=endpoint_url,
+        region_name=aws_default_region,
+    )

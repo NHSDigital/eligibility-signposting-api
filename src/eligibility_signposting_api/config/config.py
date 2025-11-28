@@ -5,6 +5,7 @@ from typing import Any, NewType
 
 from yarl import URL
 
+from eligibility_signposting_api.processors.hashing_service import HashSecretName
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
 
@@ -22,6 +23,7 @@ def config() -> dict[str, Any]:
     person_table_name = TableName(os.getenv("PERSON_TABLE_NAME", "test_eligibility_datastore"))
     rules_bucket_name = BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket"))
     audit_bucket_name = BucketName(os.getenv("AUDIT_BUCKET_NAME", "test-audit-bucket"))
+    hashing_secret_name = HashSecretName(os.getenv("HASHING_SECRET_NAME", "test_secret"))
     aws_default_region = AwsRegion(os.getenv("AWS_DEFAULT_REGION", "eu-west-1"))
     enable_xray_patching = bool(os.getenv("ENABLE_XRAY_PATCHING", "false"))
     kinesis_audit_stream_to_s3 = AwsKinesisFirehoseStreamName(
@@ -42,6 +44,8 @@ def config() -> dict[str, Any]:
             "firehose_endpoint": None,
             "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
             "enable_xray_patching": enable_xray_patching,
+            "secretsmanager_endpoint": None,
+            "hashing_secret_name": hashing_secret_name,
             "log_level": log_level,
         }
 
@@ -58,5 +62,7 @@ def config() -> dict[str, Any]:
         "firehose_endpoint": URL(os.getenv("FIREHOSE_ENDPOINT", local_stack_endpoint)),
         "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
         "enable_xray_patching": enable_xray_patching,
+        "secretsmanager_endpoint": URL(os.getenv("SECRET_MANAGER_ENDPOINT", local_stack_endpoint)),
+        "hashing_secret_name": hashing_secret_name,
         "log_level": log_level,
     }
