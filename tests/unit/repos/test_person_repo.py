@@ -62,34 +62,46 @@ def test_get_person_record_returns_none_with_attribute_type_not_person(repo, dyn
     assert result is None
 
 
-def test_get_eligibility_data_current(repo, dynamodb_setup):
-    # Person exists under hashed-current
-    dynamodb_setup.put_item(Item={"NHS_NUMBER": "hashed-current", "ATTRIBUTE_TYPE": "PERSON", "foo": "bar"})
+def test_get_eligibility_data_returns_person_with_current_hashed_nhs_number(repo, dynamodb_setup):
+    dynamodb_setup.put_item(Item={"NHS_NUMBER": "hashed-current", "ATTRIBUTE_TYPE": "PERSON"})
+
+    result = repo.get_eligibility_data("hashed-current")
+
+    assert isinstance(result, Person)
+
+
+def test_get_eligibility_data_returns_person_with_previous_hashed_nhs_number(dynamodb_setup):
+    dynamodb_setup.put_item(Item={"NHS_NUMBER": "hashed-prev", "ATTRIBUTE_TYPE": "PERSON"})
+
+    hashing_service = MagicMock()
+    hashing_service.hash_with_current_secret.return_value = None
+    hashing_service.hash_with_previous_secret.return_value = "hashed-prev"
+
+    repo = PersonRepo(
+        table=dynamodb_setup,
+        hashing_service=hashing_service,
+    )
+
+    result = repo.get_eligibility_data("hashed-prev")
+
+    assert isinstance(result, Person)
+
+
+def test_get_eligibility_data_returns_person_with_not_hashed_nhs_number(dynamodb_setup):
+    dynamodb_setup.put_item(Item={"NHS_NUMBER": "1234567890", "ATTRIBUTE_TYPE": "PERSON"})
+
+    hashing_service = MagicMock()
+    hashing_service.hash_with_current_secret.return_value = None
+    hashing_service.hash_with_previous_secret.return_value = None
+
+    repo = PersonRepo(
+        table=dynamodb_setup,
+        hashing_service=hashing_service,
+    )
 
     result = repo.get_eligibility_data("1234567890")
 
     assert isinstance(result, Person)
-    assert result.data[0]["foo"] == "bar"
-
-
-def test_get_eligibility_data_previous(repo, dynamodb_setup):
-    # No item at hashed-current
-    # Item only exists at hashed-prev
-    dynamodb_setup.put_item(Item={"NHS_NUMBER": "hashed-prev", "ATTRIBUTE_TYPE": "PERSON", "foo": "prev"})
-
-    result = repo.get_eligibility_data("1234567890")
-
-    assert isinstance(result, Person)
-    assert result.data[0]["foo"] == "prev"
-
-
-def test_get_eligibility_data_nhs_fallback(repo, dynamodb_setup):
-    dynamodb_setup.put_item(Item={"NHS_NUMBER": "1234567890", "ATTRIBUTE_TYPE": "PERSON", "value": "unhashed"})
-
-    result = repo.get_eligibility_data("1234567890")
-
-    assert isinstance(result, Person)
-    assert result.data[0]["value"] == "unhashed"
 
 
 def test_get_eligibility_data_not_found_error(repo, dynamodb_setup, caplog):
