@@ -25,9 +25,7 @@ class IterationValidation(Iteration):
 
     @field_validator("iteration_cohorts")
     @classmethod
-    def validate_iteration_cohorts(
-        cls, iteration_cohorts: list[IterationCohort]
-    ) -> list[IterationCohortValidation]:
+    def validate_iteration_cohorts(cls, iteration_cohorts: list[IterationCohort]) -> list[IterationCohortValidation]:
         seen_labels = set()
         seen_priorities = set()
         errors = []
@@ -61,9 +59,7 @@ class IterationValidation(Iteration):
             seen_priorities.add(priority)
 
         if errors:
-            raise ValidationError.from_exception_data(
-                title="IterationValidation", line_errors=errors
-            )
+            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=errors)
 
         return [IterationCohortValidation(**i.model_dump()) for i in iteration_cohorts]
 
