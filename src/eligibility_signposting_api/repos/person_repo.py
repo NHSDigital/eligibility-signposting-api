@@ -39,7 +39,7 @@ class PersonRepo:
         self.table = table
         self._hashing_service = hashing_service
 
-    def get_person_record(self, nhs_hash):
+    def get_person_record(self, nhs_hash) -> Any:
         if nhs_hash:
             response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(nhs_hash))
 
@@ -48,25 +48,29 @@ class PersonRepo:
 
             if has_person:
                 return items
-            else:
-                logger.error("No person record found for hash of nhs_number")
 
         return None
 
 
     def get_eligibility_data(self, nhs_number: NHSNumber) -> Person:
-
         # AWSCURRENT secret
         nhs_hash = self._hashing_service.hash_with_current_secret(nhs_number)
         items = self.get_person_record(nhs_hash)
 
         if not items:
+            logger.error("No person record found for hashed nhs_number using secret AWSCURRENT")
             # AWSPREVIOUS secret
             nhs_hash = self._hashing_service.hash_with_previous_secret(nhs_number)
             items = self.get_person_record(nhs_hash)
 
             if not items:
-                message = f"Person not found for NHS number hash with current or previous secret."
-                raise NotFoundError(message)
+                logger.error("No person record found for hashed nhs_number using secret AWSPREVIOUS")
+                # NHS num fallback
+                items = self.get_person_record(nhs_number)
+
+                if not items:
+                    logger.error("No person record found for not hashed nhs_number")
+                    message = f"Person not found"
+                    raise NotFoundError(message)
 
         return Person(data=items)

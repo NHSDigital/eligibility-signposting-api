@@ -68,8 +68,6 @@ def test_person_found_with_current_secret(person_table: Any,
 
     # Then
     nhs_num_hash = hashing_service.hash_with_current_secret(persisted_person)
-    nhs_num_hash_pre = hashing_service.hash_with_previous_secret(persisted_person)
-
 
     assert_that(
         actual.data,
@@ -96,5 +94,24 @@ def test_person_found_with_previous_secret(person_table: Any,
         contains_inanyorder(
             has_entries({"NHS_NUMBER": nhs_num_hash, "ATTRIBUTE_TYPE": "PERSON"}),
             has_entries({"NHS_NUMBER": nhs_num_hash, "ATTRIBUTE_TYPE": "COHORTS"}),
+        ),
+    )
+
+def test_person_found_without_hashed_nhs_num(person_table: Any,
+                    persisted_person_not_hashed: NHSNumber,
+                    hashing_service: HashingService):
+    # Given
+    repo = PersonRepo(person_table, hashing_service)
+
+    # When
+    actual = repo.get_eligibility_data(persisted_person_not_hashed)
+
+    # Then
+    nhs_number = persisted_person_not_hashed
+    assert_that(
+        actual.data,
+        contains_inanyorder(
+            has_entries({"NHS_NUMBER": nhs_number, "ATTRIBUTE_TYPE": "PERSON"}),
+            has_entries({"NHS_NUMBER": nhs_number, "ATTRIBUTE_TYPE": "COHORTS"}),
         ),
     )

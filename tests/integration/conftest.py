@@ -423,6 +423,23 @@ def persisted_person_previous(person_table: Any, faker: Faker,
     for row in rows:
         person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
 
+@pytest.fixture
+def persisted_person_not_hashed(person_table: Any, faker: Faker,
+                     ) -> Generator[eligibility_status.NHSNumber]:
+
+    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+    date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
+
+    for row in (
+        rows := person_rows_builder(nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
+    ):
+        person_table.put_item(Item=row)
+
+    yield nhs_number
+
+    for row in rows:
+        person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
+
 
 @pytest.fixture
 def persisted_77yo_person(person_table: Any, faker: Faker, hashing_service: HashingService) -> Generator[eligibility_status.NHSNumber]:

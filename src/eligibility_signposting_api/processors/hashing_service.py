@@ -39,17 +39,3 @@ class HashingService:
     def hash_with_previous_secret(self, nhs_number: str) -> str:
         secret_value = self.secret_repo.get_secret_previous(self.hash_secret_name)["AWSPREVIOUS"]
         return _hash(nhs_number, secret_value)
-
-    # def hash_with_secret(self, nhs_number: str, version_stage: str) -> str:
-    #     if version_stage == "AWSCURRENT":
-    #         secret_dict = self.secret_repo.get_secret_current(self.hash_secret_name)
-    #     elif version_stage == "AWSPREVIOUS":
-    #         secret_dict = self.secret_repo.get_secret_previous(self.hash_secret_name)
-    #     #
-    #
-    #     if secret_dict:
-    #         secret_value = secret_dict.get(version_stage)
-    #         hashed_value = _hash(nhs_number, secret_value)
-    #         return hashed_value
-    #     else:
-    #         return None
