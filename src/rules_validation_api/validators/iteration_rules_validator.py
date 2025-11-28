@@ -1,4 +1,4 @@
-from typing import Self
+import typing
 
 from pydantic import model_validator
 
@@ -12,7 +12,7 @@ from eligibility_signposting_api.model.campaign_config import (
 
 class IterationRuleValidation(IterationRule):
     @model_validator(mode="after")
-    def check_cohort_attribute_name(self) -> Self:
+    def check_cohort_attribute_name(self) -> typing.Self:
         if (
             self.attribute_level == RuleAttributeLevel.COHORT
             and self.attribute_name
@@ -23,7 +23,7 @@ class IterationRuleValidation(IterationRule):
         return self
 
     @model_validator(mode="after")
-    def check_cohort_label_for_non_f_and_s_types(self) -> Self:
+    def check_cohort_label_for_non_f_and_s_types(self) -> typing.Self:
         allowed_types = {RuleType("F"), RuleType("S")}
         if self.cohort_label is not None and self.type not in allowed_types:
             msg = (
@@ -32,3 +32,19 @@ class IterationRuleValidation(IterationRule):
             )
             raise ValueError(msg)
         return self
+
+    @model_validator(mode="after")
+    def validate_attribute_name_is_optional_only_for_cohort_attribute_level(self) -> typing.Self:
+        if self.attribute_name:
+            return self
+        if self.attribute_level == RuleAttributeLevel.COHORT:
+            return self
+        raise ValueError(f"AttributeName must be set where AttributeLevel is {self.attribute_level} .")
+
+    @model_validator(mode="after")
+    def validate_attribute_target_is_mandatory_for_target_attribute_level(self) -> typing.Self:
+        if self.attribute_target:
+            return self
+        if self.attribute_level != RuleAttributeLevel.TARGET:
+            return self
+        raise ValueError(f"AttributeTarget is mandatory where AttributeLevel is {self.attribute_level}.")
