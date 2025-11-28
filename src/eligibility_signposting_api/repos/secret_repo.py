@@ -25,8 +25,8 @@ class SecretRepo:
             )
             return {stage: response["SecretString"]}
 
-        except ClientError as e:
-            logger.error("Failed to get secret %s at stage %s: %s", secret_name, stage, e)
+        except ClientError:
+            logger.exception("Failed to get secret %s at stage %s", secret_name, stage)
             return {}
 
     def get_secret_current(self, secret_name: str) -> dict[str, str]:

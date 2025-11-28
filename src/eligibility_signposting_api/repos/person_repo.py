@@ -42,7 +42,7 @@ class PersonRepo:
         self.table = table
         self._hashing_service = hashing_service
 
-    def get_person_record(self, nhs_hash: str) -> Any:
+    def get_person_record(self, nhs_hash: str | None) -> Any:
         if nhs_hash:
             response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(nhs_hash))
 
