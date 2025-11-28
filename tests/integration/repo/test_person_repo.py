@@ -119,9 +119,6 @@ def test_person_found_without_hashed_nhs_num(
         ),
     )
 
-#
-#
-#
 
 def test_get_person_record_returns_none_when_nhs_hash_is_none(
     person_table: Any,
@@ -180,4 +177,3 @@ def test_get_person_record_returns_none_when_items_have_no_person_attribute_type
 
     # Then
     assert actual is None
-
