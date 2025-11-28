@@ -1,6 +1,6 @@
 import typing
 
-from pydantic import Field, ValidationError, field_validator, model_validator
+from pydantic import ValidationError, field_validator, model_validator
 from pydantic_core import InitErrorDetails
 
 from eligibility_signposting_api.model.campaign_config import (
@@ -18,10 +18,6 @@ from rules_validation_api.validators.iteration_rules_validator import IterationR
 
 
 class IterationValidation(Iteration):
-    iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
-    iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
-    actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
-
     @field_validator("iteration_rules")
     @classmethod
     def validate_iteration_rules(cls, iteration_rules: list[IterationRule]) -> list[IterationRuleValidation]:
