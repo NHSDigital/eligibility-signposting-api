@@ -1,4 +1,5 @@
 import typing
+from collections import Counter
 from operator import attrgetter
 
 from pydantic import field_validator, model_validator
@@ -14,16 +15,37 @@ class CampaignConfigValidation(CampaignConfig):
         return [IterationValidation(**i.model_dump()) for i in iterations]
 
     @model_validator(mode="after")
-    def check_has_iteration_from_start(self) -> typing.Self:
+    def validate_approval_minimum_is_less_than_or_equal_to_approval_maximum(self) -> typing.Self:
+        if self.approval_minimum is not None and self.approval_maximum is not None:
+            if self.approval_minimum > self.approval_maximum:
+                msg = f"approval_minimum {self.approval_minimum} > approval_maximum {self.approval_maximum}"
+                raise ValueError(msg)
+            return self
+        return self
+
+    @model_validator(mode="after")
+    def validate_iterations_have_unique_id(self) -> typing.Self:
+        ids = [iteration.id for iteration in self.iterations]
+        duplicates = {i_id for i_id, count in Counter(ids).items() if count > 1}
+        if duplicates:
+            msg = f"Iterations contain duplicate IDs: {', '.join(duplicates)}"
+            raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def validate_campaign_has_iteration_within_schedule(self) -> typing.Self:
         iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_date"))
         if first_iteration := next(iter(iterations_by_date), None):
-            if first_iteration.iteration_date > self.start_date:
-                message = (
-                    f"campaign {self.id} starts on {self.start_date}, "
-                    f"1st iteration starts later - {first_iteration.iteration_date}"
-                )
-                raise ValueError(message)
+            if first_iteration.iteration_date < self.start_date:
+                msg = f"Iteration {first_iteration.id} starts before campaign {self.id} start date {self.start_date}."
+                raise ValueError(msg)
+
+            if first_iteration.iteration_date > self.end_date:
+                msg = f"Iteration {first_iteration.id} starts after campaign {self.id} end date {self.end_date}."
+                raise ValueError(msg)
+
             return self
+
         # Should never happen, since we are constraining self.iterations with a min_length of 1
-        message = f"campaign {self.id} has no iterations."
-        raise ValueError(message)
+        msg = f"campaign {self.id} has no iterations."
+        raise ValueError(msg)
