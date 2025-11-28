@@ -24,8 +24,8 @@ class TestBaseLine:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config: CampaignConfig,
-        secretsmanager_client: BaseClient # noqa: ARG002
+        campaign_config: CampaignConfig,  # noqa: ARG002
+        secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
         headers = {"nhs-login-nhs-number": str(persisted_person)}

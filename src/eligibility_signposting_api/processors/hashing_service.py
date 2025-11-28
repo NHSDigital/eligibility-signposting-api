@@ -2,7 +2,7 @@ import hashlib
 import hmac
 from typing import Annotated, NewType
 
-from wireup import service, Inject
+from wireup import Inject, service
 
 from eligibility_signposting_api.repos.secret_repo import SecretRepo
 
@@ -10,7 +10,8 @@ HashSecretName = NewType("HashSecretName", str)
 
 
 def _hash(nhs_number: str, secret_value: str) -> str:
-    if not secret_value: return None
+    if not secret_value:
+        return None
 
     nhs_str = str(nhs_number)
 

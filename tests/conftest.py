@@ -1,5 +1,3 @@
-import hashlib
-import hmac
 import string
 from random import choice, randint
 

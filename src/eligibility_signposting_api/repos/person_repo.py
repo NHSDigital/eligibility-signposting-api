@@ -33,13 +33,16 @@ class PersonRepo:
     This data is held in a handful of records in a single Dynamodb table.
     """
 
-    def __init__(self, table: Annotated[Any, Inject(qualifier="person_table")],
-                 hashing_service: Annotated[HashingService, Inject()]) -> None:
+    def __init__(
+        self,
+        table: Annotated[Any, Inject(qualifier="person_table")],
+        hashing_service: Annotated[HashingService, Inject()],
+    ) -> None:
         super().__init__()
         self.table = table
         self._hashing_service = hashing_service
 
-    def get_person_record(self, nhs_hash) -> Any:
+    def get_person_record(self, nhs_hash: str) -> Any:
         if nhs_hash:
             response = self.table.query(KeyConditionExpression=Key("NHS_NUMBER").eq(nhs_hash))
 
@@ -50,7 +53,6 @@ class PersonRepo:
                 return items
 
         return None
-
 
     def get_eligibility_data(self, nhs_number: NHSNumber) -> Person:
         # AWSCURRENT secret
@@ -70,7 +72,7 @@ class PersonRepo:
 
                 if not items:
                     logger.error("No person record found for not hashed nhs_number")
-                    message = f"Person not found"
+                    message = "Person not found"
                     raise NotFoundError(message)
 
         return Person(data=items)

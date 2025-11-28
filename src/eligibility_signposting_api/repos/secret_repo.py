@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, Any, NewType
+from typing import Annotated, NewType
 
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
@@ -12,10 +12,7 @@ SecretName = NewType("SecretName", str)
 
 @service
 class SecretRepo:
-    def __init__(
-        self,
-        secret_manager: Annotated[BaseClient, Inject(qualifier="secretsmanager")]
-    ) -> None:
+    def __init__(self, secret_manager: Annotated[BaseClient, Inject(qualifier="secretsmanager")]) -> None:
         super().__init__()
         self.secret_manager = secret_manager
 
@@ -27,17 +24,13 @@ class SecretRepo:
                 VersionStage=stage,
             )
             return {stage: response["SecretString"]}
-        # Add in other errors for AWS Secrets Manager
+
         except ClientError as e:
             logger.error("Failed to get secret %s at stage %s: %s", secret_name, stage, e)
-            #raise
             return {}
 
     def get_secret_current(self, secret_name: str) -> dict[str, str]:
-        """Fetch the AWSCURRENT version of the secret."""
         return self._get_secret_by_stage(secret_name, "AWSCURRENT")
 
     def get_secret_previous(self, secret_name: str) -> dict[str, str]:
-        """Fetch the AWSPREVIOUS version of the secret."""
         return self._get_secret_by_stage(secret_name, "AWSPREVIOUS")
-

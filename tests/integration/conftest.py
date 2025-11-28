@@ -1,6 +1,4 @@
 import datetime
-import hashlib
-import hmac
 import json
 import logging
 import os
@@ -46,8 +44,10 @@ logger = logging.getLogger(__name__)
 
 AWS_REGION = "eu-west-1"
 
-AWS_CURRENT_SECRET = "test_value"
-AWS_PREVIOUS_SECRET = "test_value_old"
+AWS_SECRET_NAME = "test_secret"  # noqa: S105
+AWS_CURRENT_SECRET = "test_value"  # noqa: S105
+AWS_PREVIOUS_SECRET = "test_value_old"  # noqa: S105
+
 
 @pytest.fixture(scope="session")
 def localstack(request: pytest.FixtureRequest) -> URL:
@@ -120,20 +120,19 @@ def s3_client(boto3_session: Session, localstack: URL) -> BaseClient:
 def firehose_client(boto3_session: Session, localstack: URL) -> BaseClient:
     return boto3_session.client("firehose", endpoint_url=str(localstack))
 
+
 @pytest.fixture(scope="session")
 def secretsmanager_client(boto3_session: Session, localstack: URL) -> BaseClient:
     """
     Provides a boto3 Secrets Manager client bound to LocalStack.
     Seeds a test secret for use in integration tests.
     """
-    client:BaseClient = boto3_session.client(
-        service_name="secretsmanager",
-        endpoint_url=str(localstack),
-        region_name="eu-west-1"
+    client: BaseClient = boto3_session.client(
+        service_name="secretsmanager", endpoint_url=str(localstack), region_name="eu-west-1"
     )
 
-    secret_name = "test_secret"
-    secret_value = "test_value_old"
+    secret_name = AWS_SECRET_NAME
+    secret_value = AWS_PREVIOUS_SECRET
 
     try:
         client.create_secret(
@@ -146,14 +145,15 @@ def secretsmanager_client(boto3_session: Session, localstack: URL) -> BaseClient
             SecretString=secret_value,
         )
 
-    secret_name = "test_secret"
-    secret_value = "test_value"
+    secret_name = AWS_SECRET_NAME
+    secret_value = AWS_CURRENT_SECRET
 
     client.put_secret_value(
         SecretId=secret_name,
         SecretString=secret_value,
     )
     return client
+
 
 @pytest.fixture(scope="session")
 def iam_role(iam_client: BaseClient) -> Generator[str]:
@@ -384,9 +384,9 @@ def person_table(dynamodb_resource: ServiceResource) -> Generator[Any]:
 
 
 @pytest.fixture
-def persisted_person(person_table: Any, faker: Faker,
-                     hashing_service: HashingService) -> Generator[eligibility_status.NHSNumber]:
-
+def persisted_person(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
     nhs_num = faker.nhs_number()
     nhs_number = eligibility_status.NHSNumber(nhs_num)
     nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
@@ -403,13 +403,14 @@ def persisted_person(person_table: Any, faker: Faker,
     for row in rows:
         person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
 
-@pytest.fixture
-def persisted_person_previous(person_table: Any, faker: Faker,
-                     hashing_service: HashingService) -> Generator[eligibility_status.NHSNumber]:
 
+@pytest.fixture
+def persisted_person_previous(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
     nhs_num = faker.nhs_number()
     nhs_number = eligibility_status.NHSNumber(nhs_num)
-    nhs_num_hash = hashing_service.hash_with_previous_secret(nhs_num) # AWSPREVIOUS
+    nhs_num_hash = hashing_service.hash_with_previous_secret(nhs_num)  # AWSPREVIOUS
 
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
 
@@ -423,10 +424,12 @@ def persisted_person_previous(person_table: Any, faker: Faker,
     for row in rows:
         person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
 
-@pytest.fixture
-def persisted_person_not_hashed(person_table: Any, faker: Faker,
-                     ) -> Generator[eligibility_status.NHSNumber]:
 
+@pytest.fixture
+def persisted_person_not_hashed(
+    person_table: Any,
+    faker: Faker,
+) -> Generator[eligibility_status.NHSNumber]:
     nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
 
@@ -442,8 +445,9 @@ def persisted_person_not_hashed(person_table: Any, faker: Faker,
 
 
 @pytest.fixture
-def persisted_77yo_person(person_table: Any, faker: Faker, hashing_service: HashingService) -> Generator[eligibility_status.NHSNumber]:
-
+def persisted_77yo_person(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
     nhs_num = faker.nhs_number()
     nhs_number = eligibility_status.NHSNumber(nhs_num)
     nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
@@ -467,8 +471,9 @@ def persisted_77yo_person(person_table: Any, faker: Faker, hashing_service: Hash
 
 
 @pytest.fixture
-def persisted_person_all_cohorts(person_table: Any, faker: Faker, hashing_service: HashingService) -> Generator[eligibility_status.NHSNumber]:
-
+def persisted_person_all_cohorts(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
     nhs_num = faker.nhs_number()
     nhs_number = eligibility_status.NHSNumber(nhs_num)
     nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
@@ -493,8 +498,9 @@ def persisted_person_all_cohorts(person_table: Any, faker: Faker, hashing_servic
 
 
 @pytest.fixture
-def person_with_all_data(person_table: Any, faker: Faker, hashing_service: HashingService) -> Generator[eligibility_status.NHSNumber]:
-
+def person_with_all_data(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
     nhs_num = faker.nhs_number()
     nhs_number = eligibility_status.NHSNumber(nhs_num)
     nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
@@ -529,7 +535,9 @@ def person_with_all_data(person_table: Any, faker: Faker, hashing_service: Hashi
 
 
 @pytest.fixture
-def persisted_person_no_cohorts(person_table: Any, faker: Faker, hashing_service: HashingService) -> Generator[eligibility_status.NHSNumber]:
+def persisted_person_no_cohorts(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
     nhs_num = faker.nhs_number()
     nhs_number = eligibility_status.NHSNumber(nhs_num)
     nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
@@ -544,7 +552,9 @@ def persisted_person_no_cohorts(person_table: Any, faker: Faker, hashing_service
 
 
 @pytest.fixture
-def persisted_person_pc_sw19(person_table: Any, faker: Faker, hashing_service: HashingService) -> Generator[eligibility_status.NHSNumber]:
+def persisted_person_pc_sw19(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
     nhs_num = faker.nhs_number()
     nhs_number = eligibility_status.NHSNumber(nhs_num)
     nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
@@ -562,7 +572,6 @@ def persisted_person_pc_sw19(person_table: Any, faker: Faker, hashing_service: H
 def persisted_person_with_no_person_attribute_type(
     person_table: Any, faker: Faker, hashing_service: HashingService
 ) -> Generator[eligibility_status.NHSNumber]:
-
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
 
     nhs_num = faker.nhs_number()
@@ -1027,18 +1036,16 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
-
-
 # If you put StubSecretRepo in a separate module, import it instead
 class StubSecretRepo(SecretRepo):
     def __init__(self, current: str = AWS_CURRENT_SECRET, previous: str = AWS_PREVIOUS_SECRET):
         self._current = current
         self._previous = previous
 
-    def get_secret_current(self, secret_name: str) -> dict[str, str]:
+    def get_secret_current(self, secret_name: str) -> dict[str, str]:  # noqa: ARG002
         return {"AWSCURRENT": self._current}
 
-    def get_secret_previous(self, secret_name: str) -> dict[str, str]:
+    def get_secret_previous(self, secret_name: str) -> dict[str, str]:  # noqa: ARG002
         return {"AWSPREVIOUS": self._previous}
 
 
