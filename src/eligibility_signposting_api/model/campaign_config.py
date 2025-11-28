@@ -269,6 +269,12 @@ class Iteration(BaseModel):
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
+    def __init__(self, **data: dict[str, typing.Any]) -> None:
+        super().__init__(**data)
+        # Ensure each rule knows its parent iteration
+        for rule in self.iteration_rules:
+            rule.set_parent(self)
+
     @field_validator("iteration_date", mode="before")
     @classmethod
     def parse_dates(cls, v: str | date) -> date:
@@ -291,12 +297,6 @@ class Iteration(BaseModel):
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
-
-    @model_validator(mode="after")
-    def attach_rule_parents(self) -> Iteration:
-        for rule in self.iteration_rules:
-            rule.set_parent(self)
-        return self
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)

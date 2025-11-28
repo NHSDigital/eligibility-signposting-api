@@ -8,8 +8,10 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleAttributeName,
     RuleType,
 )
+from rules_validation_api.decorators.tracker import track_validators
 
 
+@track_validators
 class IterationRuleValidation(IterationRule):
     @model_validator(mode="after")
     def check_cohort_attribute_name(self) -> typing.Self:

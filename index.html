@@ -187,18 +187,28 @@
   const jsonInput = document.getElementById("jsonfile");
   const runBtn = document.getElementById("run");
 
-  function log(text) {
-    let cleanText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    // Handle ANSI Colors for Pydantic output
-    cleanText = cleanText
-      .replace(/\x1b\[92m/g, '<span class="ansi-green">')
-      .replace(/\x1b\[93m/g, '<span class="ansi-yellow">')
-      .replace(/\x1b\[91m/g, '<span class="ansi-red">')
-      .replace(/\x1b\[0m/g, '</span>');
+function log(text) {
+  let cleanText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // ANSI color replacements
+  cleanText = cleanText
+    .replace(/\x1b\[92m/g, '<span class="ansi-grey">')   // validator/method green
+    .replace(/\x1b\[93m/g, '<span class="ansi-yellow">')  // general yellow
+    .replace(/\x1b\[34m/g, '<span style="color:#005eb8;font-weight:bold">') // blue
+    .replace(/\x1b\[35m/g, '<span style="color:#800080;font-weight:bold">') // magenta
+    .replace(/\x1b\[36m/g, '<span style="color:#008080;font-weight:bold">') // cyan
+    .replace(/\x1b\[94m/g, '<span style="color:#1E90FF;font-weight:bold">') // light blue
+    .replace(/\x1b\[95m/g, '<span style="color:#EE82EE;font-weight:bold">') // light magenta
+    .replace(/\x1b\[96m/g, '<span style="color:#20B2AA;font-weight:bold">') // light cyan
+    .replace(/\x1b\[37m/g, '<span style="color:#CCCCCC;font-weight:bold">') // white/light grey
+    .replace(/\x1b\[33m/g, '<span class="ansi-yellow">')  // colon yellow
+    .replace(/\x1b\[0m/g, '</span>');                     // reset
 
-    output.innerHTML += cleanText + "\n";
-    output.scrollTop = output.scrollHeight;
+  if (cleanText.includes("Valid Config")) {
+    cleanText = cleanText.replace(/Valid Config/g, '<span style="font-size:2em;font-weight:bold;color:#007f3b">Valid Config</span>');
   }
+  output.innerHTML += cleanText + "\n";
+  output.scrollTop = output.scrollHeight;
+}
 
   function clearLog() { output.innerHTML = ""; } // Changed to innerHTML for spans
 
@@ -217,6 +227,8 @@
     "src/eligibility_signposting_api/model/campaign_config.py",
     "src/eligibility_signposting_api/config/__init__.py",
     "src/eligibility_signposting_api/config/constants.py",
+    "src/rules_validation_api/decorators/__init__.py",
+    "src/rules_validation_api/decorators/tracker.py",
     "src/rules_validation_api/__init__.py",
     "src/rules_validation_api/validators/__init__.py",
     "src/rules_validation_api/validators/rules_validator.py",
