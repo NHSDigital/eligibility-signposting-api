@@ -72,7 +72,7 @@ class PersonRepo:
 
                 if not items:
                     logger.error("No person record found for not hashed nhs_number")
-                    message = "Person not found"
+                    message = "Person not found after checking AWSCURRENT, AWSPREVIOUS, and not hashed NHS numbers."
                     raise NotFoundError(message)
 
         return Person(data=items)
