@@ -118,3 +118,66 @@ def test_person_found_without_hashed_nhs_num(
             has_entries({"NHS_NUMBER": nhs_number, "ATTRIBUTE_TYPE": "COHORTS"}),
         ),
     )
+
+#
+#
+#
+
+def test_get_person_record_returns_none_when_nhs_hash_is_none(
+    person_table: Any,
+    hashing_service: HashingService,
+) -> None:
+    # Given
+    repo = PersonRepo(person_table, hashing_service)
+
+    # When
+    actual = repo.get_person_record(None)
+
+    # Then
+    assert actual is None
+
+
+def test_get_person_record_returns_none_when_nhs_hash_is_empty_string(
+    person_table: Any,
+    hashing_service: HashingService,
+) -> None:
+    # Given
+    repo = PersonRepo(person_table, hashing_service)
+
+    # When
+    actual = repo.get_person_record("")
+
+    # Then
+    assert actual is None
+
+
+def test_get_person_record_returns_none_when_no_items_found(
+    person_table: Any,
+    hashing_service: HashingService,
+) -> None:
+    # Given
+    repo = PersonRepo(person_table, hashing_service)
+    nhs_hash_not_in_table = "nhs-number-that-does-not-exist"
+
+    # When
+    actual = repo.get_person_record(nhs_hash_not_in_table)
+
+    # Then
+    assert actual is None
+
+
+def test_get_person_record_returns_none_when_items_have_no_person_attribute_type(
+    person_table: Any,
+    persisted_person_with_no_person_attribute_type: NHSNumber,
+    hashing_service: HashingService,
+) -> None:
+    # Given
+    repo = PersonRepo(person_table, hashing_service)
+    nhs_hash = hashing_service.hash_with_current_secret(persisted_person_with_no_person_attribute_type)
+
+    # When
+    actual = repo.get_person_record(nhs_hash)
+
+    # Then
+    assert actual is None
+
