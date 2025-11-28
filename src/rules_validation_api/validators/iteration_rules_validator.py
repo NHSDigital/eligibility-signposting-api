@@ -27,7 +27,7 @@ class IterationRuleValidation(IterationRule):
         allowed_types = {RuleType("F"), RuleType("S")}
         if self.cohort_label is not None and self.type not in allowed_types:
             msg = (
-                f"CohortLabel is only allowed for rule types F and S. "
+                "CohortLabel is only allowed for rule types F and S. "
                 f"Found type: {self.type} with cohort_label: {self.cohort_label}"
             )
             raise ValueError(msg)
@@ -39,7 +39,8 @@ class IterationRuleValidation(IterationRule):
             return self
         if self.attribute_level == RuleAttributeLevel.COHORT:
             return self
-        raise ValueError(f"AttributeName must be set where AttributeLevel is {self.attribute_level} .")
+        msg = f"AttributeName must be set where AttributeLevel is {self.attribute_level}."
+        raise ValueError(msg)
 
     @model_validator(mode="after")
     def validate_attribute_target_is_mandatory_for_target_attribute_level(self) -> typing.Self:
@@ -47,4 +48,5 @@ class IterationRuleValidation(IterationRule):
             return self
         if self.attribute_level != RuleAttributeLevel.TARGET:
             return self
-        raise ValueError(f"AttributeTarget is mandatory where AttributeLevel is {self.attribute_level}.")
+        msg = f"AttributeTarget is mandatory where AttributeLevel is {self.attribute_level}."
+        raise ValueError(msg)

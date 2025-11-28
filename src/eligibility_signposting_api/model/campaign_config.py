@@ -274,12 +274,18 @@ class Iteration(BaseModel):
     def parse_dates(cls, v: str | date) -> date:
         if isinstance(v, date):
             return v
-        if not re.fullmatch(r"\d{8}", str(v)):
-            raise ValueError(f"Invalid format: {v}. Must be YYYYMMDD with 8 digits.")
+
+        v_str = str(v)
+
+        if not re.fullmatch(r"\d{8}", v_str):
+            msg = f"Invalid format: {v_str}. Must be YYYYMMDD with 8 digits."
+            raise ValueError(msg)
+
         try:
-            return datetime.strptime(str(v), "%Y%m%d").date()  # noqa: DTZ007
-        except ValueError:
-            raise ValueError(f"Invalid date value: {v}. Must be a valid calendar date in YYYYMMDD format.")
+            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
+        except ValueError as err:
+            msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
+            raise ValueError(msg) from err
 
     @field_serializer("iteration_date", when_used="always")
     @staticmethod
@@ -322,12 +328,18 @@ class CampaignConfig(BaseModel):
     def parse_dates(cls, v: str | date) -> date:
         if isinstance(v, date):
             return v
-        if not re.fullmatch(r"\d{8}", str(v)):
-            raise ValueError(f"Invalid format: {v}. Must be YYYYMMDD with 8 digits.")
+
+        v_str = str(v)
+
+        if not re.fullmatch(r"\d{8}", v_str):
+            msg = f"Invalid format: {v_str}. Must be YYYYMMDD with 8 digits."
+            raise ValueError(msg)
+
         try:
-            return datetime.strptime(str(v), "%Y%m%d").date()  # noqa: DTZ007
-        except ValueError:
-            raise ValueError(f"Invalid date value: {v}. Must be a valid calendar date in YYYYMMDD format.")
+            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
+        except ValueError as err:
+            msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
+            raise ValueError(msg) from err
 
     @field_serializer("start_date", "end_date", when_used="always")
     @staticmethod
