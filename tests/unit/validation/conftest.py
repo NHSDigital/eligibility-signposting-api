@@ -29,7 +29,23 @@ def valid_campaign_config_with_only_mandatory_fields():
                 "IterationCohorts": [],
                 "IterationRules": [],
                 "ActionsMapper": {},
-            }
+            },
+            {
+                "ID": "ITER002",
+                "Version": 1,
+                "Name": "Mid-January Push",
+                "IterationDate": "20250110",
+                "IterationNumber": 2,
+                "ApprovalMinimum": 10,
+                "ApprovalMaximum": 100,
+                "Type": "A",
+                "DefaultCommsRouting": "",
+                "DefaultNotEligibleRouting": "",
+                "DefaultNotActionableRouting": "",
+                "IterationCohorts": [],
+                "IterationRules": [],
+                "ActionsMapper": {},
+            },
         ],
     }
 

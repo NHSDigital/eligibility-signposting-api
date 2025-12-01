@@ -197,7 +197,6 @@ class TestBUCValidations:
         [
             ("20250101", "20250331"),  # valid range
             ("20250201", "20250228"),  # valid short range
-            ("20250202", "20250202"),  # same day
         ],
     )
     def test_valid_start_and_end_dates_and_iteration_dates_relation(
@@ -207,24 +206,67 @@ class TestBUCValidations:
         data["StartDate"] = start_date
         data["EndDate"] = end_date
         data["Iterations"][0]["IterationDate"] = "20250202"
+        data["Iterations"][1]["IterationDate"] = "20250203"
+        CampaignConfigValidation(**data)
+
+    # StartDate and EndDates
+    @pytest.mark.parametrize(
+        ("start_date", "end_date"),
+        [
+            ("20250202", "20250202"),  # same day
+        ],
+    )
+    def test_valid_start_and_end_dates_and_iteration_dates_relation_for_a_one_day_campaign(
+        self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields
+    ):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["StartDate"] = start_date
+        data["EndDate"] = end_date
+        data["Iterations"][0]["IterationDate"] = "20250202"
+        data["Iterations"].pop(1)
         CampaignConfigValidation(**data)
 
     @pytest.mark.parametrize(
         ("start_date", "end_date"),
         [
-            ("20241230", "20250101"),  # Campaign start date is after the iteration date
             ("20240729", "20241228"),  # Campaign ends date is before the iteration date
         ],
     )
-    def test_invalid_start_and_end_dates_and_iteration_dates_relation(
+    def test_invalid_end_dates_and_iteration_dates_relation(
         self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields
     ):
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = start_date
         data["EndDate"] = end_date
         data["Iterations"][0]["IterationDate"] = "20241229"
-        with pytest.raises(ValidationError):
+        data["Iterations"][1]["IterationDate"] = "20241230"
+        with pytest.raises(ValidationError) as exc_info:
             CampaignConfigValidation(**data)
+
+        errors = exc_info.value.errors()
+        assert "Iteration ITER001 starts after" in errors[0]["msg"]
+        assert "Iteration ITER002 starts after" in errors[0]["msg"]
+
+    @pytest.mark.parametrize(
+        ("start_date", "end_date"),
+        [
+            ("20241230", "20250101"),  # Campaign start date is after the iteration date
+        ],
+    )
+    def test_invalid_start_date_and_iteration_dates_relation(
+        self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields
+    ):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["StartDate"] = start_date
+        data["EndDate"] = end_date
+        data["Iterations"][0]["IterationDate"] = "20241229"
+        data["Iterations"][1]["IterationDate"] = "20241228"
+        with pytest.raises(ValidationError) as exc_info:
+            CampaignConfigValidation(**data)
+
+        errors = exc_info.value.errors()
+        assert "Iteration ITER001 starts before" in errors[0]["msg"]
+        assert "Iteration ITER002 starts before" in errors[0]["msg"]
 
     # Iteration
     def test_validate_iterations_non_empty(self, valid_campaign_config_with_only_mandatory_fields):

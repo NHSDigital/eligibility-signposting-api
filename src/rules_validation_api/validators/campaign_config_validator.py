@@ -34,18 +34,19 @@ class CampaignConfigValidation(CampaignConfig):
 
     @model_validator(mode="after")
     def validate_campaign_has_iteration_within_schedule(self) -> typing.Self:
+        errors: list[str] = []
         iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_date"))
-        if first_iteration := next(iter(iterations_by_date), None):
-            if first_iteration.iteration_date < self.start_date:
-                msg = f"Iteration {first_iteration.id} starts before campaign {self.id} start date {self.start_date}."
-                raise ValueError(msg)
 
-            if first_iteration.iteration_date > self.end_date:
-                msg = f"Iteration {first_iteration.id} starts after campaign {self.id} end date {self.end_date}."
-                raise ValueError(msg)
+        for iteration in iterations_by_date:
+            if iteration.iteration_date < self.start_date:
+                errors.append(
+                    f"\nIteration {iteration.id} starts before campaign {self.id} start date {self.start_date}."
+                )
+            if iteration.iteration_date > self.end_date:
+                errors.append(f"\nIteration {iteration.id} starts after campaign {self.id} end date {self.end_date}.")
 
-            return self
+        if errors:
+            # Raise one exception with all messages joined
+            raise ValueError("".join(errors))
 
-        # Should never happen, since we are constraining self.iterations with a min_length of 1
-        msg = f"campaign {self.id} has no iterations."
-        raise ValueError(msg)
+        return self

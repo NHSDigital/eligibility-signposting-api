@@ -27,7 +27,7 @@
         "Version": "1",
         "Name": "Test Config",
         "Type": "M",
-        "IterationDate": "20250101",
+        "IterationDate": "20250103",
         "IterationNumber": 1,
         "CommsType": "R",
         "ApprovalMinimum": 1,
@@ -97,7 +97,179 @@
             "CohortGroup": "rsv_age_catchup",
             "PositiveDescription": "You turned 80 after 1 September 2024, so are eligible for the RSV vaccine until 31 August 2025",
             "NegativeDescription": "You did not turn 80 after 1 September 2024 and get vaccinated by 31 August 2025",
-            "Priority": 10,
+            "Priority": 101,
+            "Virtual": "Y"
+          }
+        ],
+        "IterationRules": [
+          {
+            "Type": "F",
+            "Name": "Test Rule",
+            "Description": "Test Rule Desc",
+            "Priority": 20,
+            "AttributeLevel": "PERSON",
+            "AttributeNames": "DATE_OF_BIRTH",
+            "Operator": "=",
+            "Comparator": "19000101"
+          },
+          {
+            "Type": "F",
+            "Name": "Test Rule",
+            "Description": "Test Rule Desc",
+            "Priority": 30,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "place of birth",
+            "Operator": "=",
+            "Comparator": "london"
+          },
+          {
+            "Type": "S",
+            "Name": "Already Vaccinated",
+            "Description": "Already Vaccinated|You have already been Vaccinated",
+            "Priority": 30,
+            "AttributeLevel": "TARGET",
+            "AttributeTarget": "RSV",
+            "AttributeName": "LAST_SUCCESSFUL_DATE",
+            "CohortLabel": "rsv_75to79_2024",
+            "Operator": "is_not_null",
+            "Comparator": ""
+          },
+          {
+            "Type": "S",
+            "Name": "In Supressed Cohort",
+            "Description": "In Supressed Cohort|You Are In Supressed Cohort",
+            "Priority": 40,
+            "AttributeLevel": "COHORT",
+            "AttributeName": "COHORT_LABEL",
+            "Operator": "=",
+            "Comparator": "rsv_75to79_2024"
+          },
+          {
+            "Type": "R",
+            "Name": "Test Redirect Rule",
+            "Description": "Test Redirect Rule Desc",
+            "Priority": 20,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": ">",
+            "Comparator": "19000101",
+            "CommsRouting": "INTERNALCONTACTGP1|INTERNALTESCO"
+          },
+          {
+            "Type": "X",
+            "Name": "Test X Rule for not eligible",
+            "Description": "Test X Rule Desc",
+            "Priority": 20,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": ">",
+            "Comparator": "19000101",
+            "CommsRouting": "XRULEID1|INTERNALTESCO"
+          },
+          {
+            "Type": "Y",
+            "Name": "Test Y Rule for not actionable",
+            "Description": "Test Y Rule Desc",
+            "Priority": 20,
+            "AttributeLevel": "PERSON",
+            "AttributeName": "DATE_OF_BIRTH",
+            "Operator": ">",
+            "Comparator": "19000101",
+            "CommsRouting": "YRULEID1|INTERNALTESCO"
+          }
+        ],
+        "RulesMapper": {
+          "ALREADY_JABBED": {
+            "RuleNames": [
+              "Already Vaccinated"
+            ],
+            "RuleCode": "Already Jabbed",
+            "RuleText": "Already Vaccinated|You have already been Vaccinated"
+          },
+          "OTHER_SETTINGS": {
+            "RuleNames": [
+              "In Supressed Cohort"
+            ],
+            "RuleCode": "Present in Supressed Cohort"
+          }
+        }
+      },
+      {
+        "ID": "id_101",
+        "Version": "1",
+        "Name": "Test Config",
+        "Type": "M",
+        "IterationDate": "20250102",
+        "IterationNumber": 1,
+        "CommsType": "R",
+        "ApprovalMinimum": 1,
+        "ApprovalMaximum": 5000000,
+        "DefaultCommsRouting": "INTERNALCONTACTGP1",
+        "DefaultNotActionableRouting": "INTERNALCONTACTGP1",
+        "DefaultNotEligibleRouting": "INTERNALCONTACTGP1",
+        "StatusText": {
+          "NotEligible": "You are not eligible to take RSV vaccines",
+          "NotActionable": "You have taken RSV vaccine in the last 90 days",
+          "Actionable": "You can take RSV vaccine"
+        },
+        "ActionsMapper": {
+          "INTERNALCONTACTGP1": {
+            "ExternalRoutingCode": "CONTACTGP",
+            "ActionDescription": "Contact GP Text1 description",
+            "ActionType": "text1"
+          },
+          "INTERNALCONTACTGP2": {
+            "ExternalRoutingCode": "CONTACTGP",
+            "ActionDescription": "Contact GP Link description",
+            "ActionType": "link",
+            "UrlLink": "https://www.link123.example",
+            "UrlLabel": "link label"
+          },
+          "INTERNALTESCO": {
+            "ExternalRoutingCode": "TESCO",
+            "ActionDescription": "Tesco description",
+            "ActionType": "link",
+            "UrlLink": "https://www.tesco_link.example",
+            "UrlLabel": "link label"
+          },
+          "INTERNALFINDWALKIN": {
+            "ExternalRoutingCode": "FINDWALKIN",
+            "ActionDescription": "Find walkin description",
+            "ActionType": "button"
+          },
+          "XRULEID1": {
+            "ExternalRoutingCode": "FINDWALKIN",
+            "ActionDescription": "Find walkin description",
+            "ActionType": "button"
+          },
+          "YRULEID1": {
+            "ExternalRoutingCode": "FINDWALKIN",
+            "ActionDescription": "Find walkin description",
+            "ActionType": "button"
+          }
+        },
+        "IterationCohorts": [
+          {
+            "CohortLabel": "rsv_75_rolling",
+            "CohortGroup": "rsv_age_range",
+            "PositiveDescription": "You are currently aged 75 to 79",
+            "NegativeDescription": "You are not currently aged 75 to 79",
+            "Priority": 0,
+            "Virtual": "N"
+          },
+          {
+            "CohortLabel": "rsv_75to79_2024",
+            "CohortGroup": "rsv_catch_up_age_range",
+            "PositiveDescription": "You turned 80 after 1 September 2024, so are eligible for the RSV vaccine until 31 August 2025",
+            "NegativeDescription": "You did not turn 80 after 1 September 2024 and get vaccinated by 31 August 2025",
+            "Priority": 10
+          },
+          {
+            "CohortLabel": "virtual_rsv_80_since_02_Sept_2024",
+            "CohortGroup": "rsv_age_catchup",
+            "PositiveDescription": "You turned 80 after 1 September 2024, so are eligible for the RSV vaccine until 31 August 2025",
+            "NegativeDescription": "You did not turn 80 after 1 September 2024 and get vaccinated by 31 August 2025",
+            "Priority": 101,
             "Virtual": "Y"
           }
         ],
