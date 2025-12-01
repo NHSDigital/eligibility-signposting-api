@@ -37,16 +37,20 @@ class CampaignConfigValidation(CampaignConfig):
         errors: list[str] = []
         iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_date"))
 
-        for iteration in iterations_by_date:
+        for idx, iteration in enumerate(iterations_by_date):
             if iteration.iteration_date < self.start_date:
                 errors.append(
-                    f"\nIteration {iteration.id} starts before campaign {self.id} start date {self.start_date}."
+                    f"CampaignConfig.Iterations.{idx}.IterationDate : "
+                    f"Starts before campaign start date {self.start_date} [type=invalid]"
                 )
             if iteration.iteration_date > self.end_date:
-                errors.append(f"\nIteration {iteration.id} starts after campaign {self.id} end date {self.end_date}.")
+                errors.append(
+                    f"CampaignConfig.Iterations.{idx}.IterationDate : "
+                    f"Starts after campaign end date {self.end_date} [type=invalid]"
+                )
 
         if errors:
-            # Raise one exception with all messages joined
-            raise ValueError("".join(errors))
+            # Raise one exception with all messages joined by newlines
+            raise ValueError("\n".join(errors))
 
         return self
