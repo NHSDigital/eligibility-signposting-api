@@ -108,7 +108,7 @@
             "Description": "Test Rule Desc",
             "Priority": 20,
             "AttributeLevel": "PERSON",
-            "AttributeNames": "DATE_OF_BIRTH",
+            "AttributeName": "DATE_OF_BIRTH",
             "Operator": "=",
             "Comparator": "19000101"
           },

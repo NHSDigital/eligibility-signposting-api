@@ -21,7 +21,23 @@ class IterationValidation(Iteration):
     @field_validator("iteration_rules")
     @classmethod
     def validate_iteration_rules(cls, iteration_rules: list[IterationRule]) -> list[IterationRuleValidation]:
-        return [IterationRuleValidation(**i.model_dump()) for i in iteration_rules]
+        errors: list = []
+        validated: list[IterationRuleValidation] = []
+
+        for idx, i in enumerate(iteration_rules):
+            try:
+                validated.append(IterationRuleValidation(**i.model_dump()))
+            except ValidationError as ve:
+                for err in ve.errors():
+                    # adjust the location to include the index
+                    err["loc"] = ("iteration_rules", idx, *tuple(err["loc"]))
+                    errors.append(err)
+
+        if errors:
+            # raise one ValidationError with all collected errors
+            raise ValidationError.from_exception_data("IterationValidation", errors)  # noqa: EM101
+
+        return validated
 
     @field_validator("iteration_cohorts")
     @classmethod
