@@ -24,6 +24,7 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleName,
     RuleOperator,
     RulePriority,
+    RulesMapper,
     RuleType,
     StatusText,
     Virtual,
@@ -71,7 +72,14 @@ class StatusTextFactory(ModelFactory[StatusText]):
     actionable = "Actionable status text"
 
 
-class RuleEntryFactory(ModelFactory[RuleEntry]): ...
+class RuleEntryFactory(ModelFactory[RuleEntry]):
+    RuleNames = ([RuleName("age_rule_name1")],)
+    RuleCode = ("Age rule code from mapper",)
+    RuleText = "Age Rule Description from mapper"
+
+
+class RulesMapperFactory(ModelFactory[RulesMapper]):
+    root = Use(lambda: {"OTHER_SETTINGS": RuleEntryFactory.build()})
 
 
 class IterationFactory(ModelFactory[Iteration]):

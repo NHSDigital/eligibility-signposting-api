@@ -238,7 +238,7 @@ class StatusText(BaseModel):
     not_actionable: str | None = Field(None, alias="NotActionable")
     actionable: str | None = Field(None, alias="Actionable")
 
-    model_config = {"populate_by_name": True, "extra": "ignore"}
+    model_config = {"populate_by_name": True}
 
 
 class RuleEntry(BaseModel):
@@ -247,6 +247,14 @@ class RuleEntry(BaseModel):
     rule_text: RuleText | None = Field(None, alias="RuleText")
 
     model_config = {"populate_by_name": True}
+
+
+class RulesMapper(RootModel[dict[str, RuleEntry]]):
+    def get(self, key: str, default: RuleEntry | None = None) -> RuleEntry | None:
+        return self.root.get(key, default)
+
+    def values(self) -> list[RuleEntry]:
+        return list(self.root.values())
 
 
 class Iteration(BaseModel):
@@ -264,7 +272,7 @@ class Iteration(BaseModel):
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
     actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
-    rules_mapper: dict[str, RuleEntry] | None = Field(None, alias="RulesMapper")
+    rules_mapper: RulesMapper | None = Field(None, alias="RulesMapper")
     status_text: StatusText | None = Field(None, alias="StatusText")
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
