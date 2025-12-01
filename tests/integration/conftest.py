@@ -1038,15 +1038,20 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
 
 # If you put StubSecretRepo in a separate module, import it instead
 class StubSecretRepo(SecretRepo):
-    def __init__(self, current: str = AWS_CURRENT_SECRET, previous: str = AWS_PREVIOUS_SECRET):
+    # def __init__(self, current: str = AWS_CURRENT_SECRET, previous: str = AWS_PREVIOUS_SECRET):
+    def __init__(self, current: str | None, previous: str | None):
         self._current = current
         self._previous = previous
 
     def get_secret_current(self, secret_name: str) -> dict[str, str]:  # noqa: ARG002
-        return {"AWSCURRENT": self._current}
+        if self._current:
+            return {"AWSCURRENT": self._current}
+        return {}
 
     def get_secret_previous(self, secret_name: str) -> dict[str, str]:  # noqa: ARG002
-        return {"AWSPREVIOUS": self._previous}
+        if self._previous:
+            return {"AWSPREVIOUS": self._previous}
+        return {}
 
 
 @pytest.fixture
@@ -1058,6 +1063,18 @@ def hashing_service() -> HashingService:
 
     # The actual value of the name does not matter for the stub,
     # but we keep it realistic for readability.
+    hash_secret_name = HashSecretName("eligibility-signposting-api-dev/hashing_secret")
+
+    return HashingService(
+        secret_repo=secret_repo,
+        hash_secret_name=hash_secret_name,
+    )
+
+
+@pytest.fixture
+def hashing_service_without_previous() -> HashingService:
+    secret_repo = StubSecretRepo(current=AWS_CURRENT_SECRET, previous=None)
+
     hash_secret_name = HashSecretName("eligibility-signposting-api-dev/hashing_secret")
 
     return HashingService(

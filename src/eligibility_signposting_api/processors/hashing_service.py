@@ -34,9 +34,9 @@ class HashingService:
         self.hash_secret_name = hash_secret_name
 
     def hash_with_current_secret(self, nhs_number: str) -> str | None:
-        secret_value = self.secret_repo.get_secret_current(self.hash_secret_name)["AWSCURRENT"]
+        secret_value = self.secret_repo.get_secret_current(self.hash_secret_name).get("AWSCURRENT")
         return _hash(nhs_number, secret_value)
 
     def hash_with_previous_secret(self, nhs_number: str) -> str | None:
-        secret_value = self.secret_repo.get_secret_previous(self.hash_secret_name)["AWSPREVIOUS"]
+        secret_value = self.secret_repo.get_secret_previous(self.hash_secret_name).get("AWSPREVIOUS")
         return _hash(nhs_number, secret_value)

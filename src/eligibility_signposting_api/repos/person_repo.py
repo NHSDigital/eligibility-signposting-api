@@ -61,15 +61,19 @@ class PersonRepo:
 
         if not items:
             logger.error("No person record found for hashed nhs_number using secret AWSCURRENT")
+
             # AWSPREVIOUS secret
             nhs_hash = self._hashing_service.hash_with_previous_secret(nhs_number)
-            items = self.get_person_record(nhs_hash)
 
-            if not items:
-                logger.error("No person record found for hashed nhs_number using secret AWSPREVIOUS")
-                # NHS num fallback
+            if nhs_hash is not None:
+                items = self.get_person_record(nhs_hash)
+                if not items:
+                    logger.error("No person record found for hashed nhs_number using secret AWSPREVIOUS")
+                    message = "Person not found after checking AWSCURRENT and AWSPREVIOUS."
+                    raise NotFoundError(message)
+            else:
+                # fallback not hashed NHS number
                 items = self.get_person_record(nhs_number)
-
                 if not items:
                     logger.error("No person record found for not hashed nhs_number")
                     message = "Person not found after checking AWSCURRENT, AWSPREVIOUS, and not hashed NHS numbers."

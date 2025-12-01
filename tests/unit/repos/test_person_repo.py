@@ -114,4 +114,3 @@ def test_get_eligibility_data_not_found_error(repo, dynamodb_setup, caplog):
     log_text = caplog.text
     assert "AWSCURRENT" in log_text
     assert "AWSPREVIOUS" in log_text
-    assert "not hashed" in log_text

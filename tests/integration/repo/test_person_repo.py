@@ -101,10 +101,10 @@ def test_person_found_with_previous_secret(
 
 
 def test_person_found_without_hashed_nhs_num(
-    person_table: Any, persisted_person_not_hashed: NHSNumber, hashing_service: HashingService
+    person_table: Any, persisted_person_not_hashed: NHSNumber, hashing_service_without_previous: HashingService
 ):
     # Given
-    repo = PersonRepo(person_table, hashing_service)
+    repo = PersonRepo(person_table, hashing_service_without_previous)
 
     # When
     actual = repo.get_eligibility_data(persisted_person_not_hashed)
