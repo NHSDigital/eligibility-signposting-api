@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import subprocess
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -424,22 +424,21 @@ def persisted_person_factory(
 
     def _factory(
         *,
-        secret_key: str = "current",  # "current", "previous", "none"
+        secret_key: str = "current",  # noqa: S107
         postcode: str = "hp1",
         cohorts: list[str] | None = None,
         minimum_age: int = 18,
         maximum_age: int = 65,
     ) -> eligibility_status.NHSNumber:
-
         nhs_num = faker.nhs_number()
         nhs_number = eligibility_status.NHSNumber(nhs_num)
 
         # --- hashing selector ---
-        if secret_key == "current":
+        if secret_key == "current":  # noqa: S105
             nhs_key = hashing_service.hash_with_current_secret(nhs_num)
-        elif secret_key == "previous":
+        elif secret_key == "previous":  # noqa: S105
             nhs_key = hashing_service.hash_with_previous_secret(nhs_num)
-        elif secret_key == "none":
+        elif secret_key == "nothashed":  # noqa: S105
             nhs_key = nhs_num
 
         # --- build DOB ---
@@ -471,7 +470,7 @@ def persisted_person_factory(
                 }
             )
 
-    request.addfinalizer(cleanup)
+    request.addfinalizer(cleanup)  # noqa: PT021
 
     return _factory
 
@@ -1143,22 +1142,11 @@ def hashing_service() -> HashingService:
     )
 
 
-# @pytest.fixture
-# def hashing_service_without_previous(current:str|None,previous:str|None) -> HashingService:
-#     secret_repo = StubSecretRepo(current=current, previous=previous)
-#
-#     hash_secret_name = HashSecretName("eligibility-signposting-api-dev/hashing_secret")
-#
-#     return HashingService(
-#         secret_repo=secret_repo,
-#         hash_secret_name=hash_secret_name,
-#     )
-
-from collections.abc import Callable
-
 @pytest.fixture
 def hashing_service_factory() -> Callable[[str | None, str | None], HashingService]:
-    def _factory(current: str | None = AWS_CURRENT_SECRET, previous: str | None = AWS_PREVIOUS_SECRET) -> HashingService:
+    def _factory(
+        current: str | None = AWS_CURRENT_SECRET, previous: str | None = AWS_PREVIOUS_SECRET
+    ) -> HashingService:
         secret_repo = StubSecretRepo(current=current, previous=previous)
         hash_secret_name = HashSecretName("eligibility-signposting-api-dev/hashing_secret")
 
