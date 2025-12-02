@@ -84,17 +84,18 @@ def test_person_found_with_current_secret(
 
 
 def test_person_found_with_previous_secret(
-    person_table: Any, persisted_person_previous: NHSNumber, hashing_service_factory: HashingService
+    person_table: Any, persisted_person_factory: NHSNumber, hashing_service_factory: HashingService
 ):
     # Given
     hashing_service = hashing_service_factory()
     repo = PersonRepo(person_table, hashing_service)
 
     # When
-    actual = repo.get_eligibility_data(persisted_person_previous)
+    persisted_person = persisted_person_factory(secret_key="previous")
+    actual = repo.get_eligibility_data(persisted_person)
 
     # Then
-    nhs_num_hash = hashing_service.hash_with_previous_secret(persisted_person_previous)
+    nhs_num_hash = hashing_service.hash_with_previous_secret(persisted_person)
 
     assert_that(
         actual.data,
@@ -187,4 +188,6 @@ def test_get_person_record_returns_none_when_items_have_no_person_attribute_type
 
     # Then
     assert actual is None
+
+
 

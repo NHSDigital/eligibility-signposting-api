@@ -405,6 +405,78 @@ def persisted_person(
 
 
 @pytest.fixture
+def persisted_person_factory(
+    person_table: Any,
+    faker: Faker,
+    hashing_service: HashingService,
+    request: pytest.FixtureRequest,
+):
+    """
+    Factory to persist a PERSON/COHORT record with different hashing strategies:
+      secret_key="current"  -> hash_with_current_secret
+      secret_key="previous" -> hash_with_previous_secret
+      secret_key="none"     -> store plain NHS number (no hash)
+
+    All created rows are automatically cleaned up.
+    """
+
+    created_rows: list[dict[str, Any]] = []
+
+    def _factory(
+        *,
+        secret_key: str = "current",  # "current", "previous", "none"
+        postcode: str = "hp1",
+        cohorts: list[str] | None = None,
+        minimum_age: int = 18,
+        maximum_age: int = 65,
+    ) -> eligibility_status.NHSNumber:
+
+        nhs_num = faker.nhs_number()
+        nhs_number = eligibility_status.NHSNumber(nhs_num)
+
+        # --- hashing selector ---
+        if secret_key == "current":
+            nhs_key = hashing_service.hash_with_current_secret(nhs_num)
+        elif secret_key == "previous":
+            nhs_key = hashing_service.hash_with_previous_secret(nhs_num)
+        elif secret_key == "none":
+            nhs_key = nhs_num
+
+        # --- build DOB ---
+        date_of_birth = eligibility_status.DateOfBirth(
+            faker.date_of_birth(minimum_age=minimum_age, maximum_age=maximum_age)
+        )
+
+        rows = person_rows_builder(
+            nhs_key,
+            date_of_birth=date_of_birth,
+            postcode=postcode,
+            cohorts=cohorts or ["cohort1"],
+        ).data
+
+        # --- persist rows ---
+        for row in rows:
+            person_table.put_item(Item=row)
+            created_rows.append(row)
+
+        return nhs_number
+
+    # --- cleanup hook ---
+    def cleanup():
+        for row in created_rows:
+            person_table.delete_item(
+                Key={
+                    "NHS_NUMBER": row["NHS_NUMBER"],
+                    "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"],
+                }
+            )
+
+    request.addfinalizer(cleanup)
+
+    return _factory
+
+
+@pytest.fixture
 def persisted_person_previous(
     person_table: Any, faker: Faker, hashing_service: HashingService
 ) -> Generator[eligibility_status.NHSNumber]:
