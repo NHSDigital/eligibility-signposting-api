@@ -1,7 +1,8 @@
-from typing import Self
+import typing
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 
+from eligibility_signposting_api.config.constants import ALLOWED_CONDITIONS
 from eligibility_signposting_api.model.campaign_config import (
     IterationRule,
     RuleAttributeLevel,
@@ -11,8 +12,21 @@ from eligibility_signposting_api.model.campaign_config import (
 
 
 class IterationRuleValidation(IterationRule):
+    @field_validator("attribute_target")
+    @classmethod
+    def validate_attribute_target(cls, value: str) -> str | None:
+        if value is None:
+            return value
+
+        allowed = ALLOWED_CONDITIONS.__args__
+        if value not in allowed:
+            allowed_str = ", ".join(allowed)
+            msg = f"Invalid attribute_target value: {value}. Allowed values: {allowed_str}"
+            raise ValueError(msg)
+        return value
+
     @model_validator(mode="after")
-    def check_cohort_attribute_name(self) -> Self:
+    def check_cohort_attribute_name(self) -> typing.Self:
         if (
             self.attribute_level == RuleAttributeLevel.COHORT
             and self.attribute_name
@@ -23,12 +37,30 @@ class IterationRuleValidation(IterationRule):
         return self
 
     @model_validator(mode="after")
-    def check_cohort_label_for_non_f_and_s_types(self) -> Self:
+    def check_cohort_label_for_non_f_and_s_types(self) -> typing.Self:
         allowed_types = {RuleType("F"), RuleType("S")}
         if self.cohort_label is not None and self.type not in allowed_types:
             msg = (
-                f"CohortLabel is only allowed for rule types F and S. "
+                "CohortLabel is only allowed for rule types F and S. "
                 f"Found type: {self.type} with cohort_label: {self.cohort_label}"
             )
             raise ValueError(msg)
         return self
+
+    @model_validator(mode="after")
+    def validate_attribute_name_is_optional_only_for_cohort_attribute_level(self) -> typing.Self:
+        if self.attribute_name:
+            return self
+        if self.attribute_level == RuleAttributeLevel.COHORT:
+            return self
+        msg = f"AttributeName must be set where AttributeLevel is {self.attribute_level}."
+        raise ValueError(msg)
+
+    @model_validator(mode="after")
+    def validate_attribute_target_is_mandatory_for_target_attribute_level(self) -> typing.Self:
+        if self.attribute_target:
+            return self
+        if self.attribute_level != RuleAttributeLevel.TARGET:
+            return self
+        msg = f"AttributeTarget is mandatory where AttributeLevel is {self.attribute_level}."
+        raise ValueError(msg)

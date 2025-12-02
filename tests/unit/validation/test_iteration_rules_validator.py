@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
+from eligibility_signposting_api.model.campaign_config import RuleAttributeLevel
 from rules_validation_api.validators.iteration_validator import IterationRuleValidation
 
 
@@ -80,8 +81,18 @@ class TestMandatoryFieldsSchemaValidations:
         with pytest.raises(ValidationError):
             IterationRuleValidation(**data)
 
-    @pytest.mark.parametrize("attribute_level", ["PERSON", "TARGET", "COHORT"])
-    def test_valid_attribute_level(self, attribute_level, valid_iteration_rule_with_only_mandatory_fields):
+    @pytest.mark.parametrize("attribute_level", ["PERSON", "TARGET"])
+    def test_valid_attribute_level_person_and_targer(
+        self, attribute_level, valid_iteration_rule_with_only_mandatory_fields
+    ):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["AttributeLevel"] = attribute_level
+        data["AttributeName"] = "Something"  # Ignoring the validation constraint btw AttributeLevel and AttributeName
+        result = IterationRuleValidation(**data)
+        assert result.attribute_level == attribute_level
+
+    @pytest.mark.parametrize("attribute_level", ["COHORT"])
+    def test_valid_attribute_level_cohort(self, attribute_level, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["AttributeLevel"] = attribute_level
         data["AttributeName"] = None  # Ignoring the validation constraint btw AttributeLevel and AttributeName
@@ -148,7 +159,7 @@ class TestMandatoryFieldsSchemaValidations:
 
 class TestOptionalFieldsSchemaValidations:
     # AttributeName
-    @pytest.mark.parametrize("attr_name", ["status", "user_type", None])
+    @pytest.mark.parametrize("attr_name", ["status", "user_type"])
     def test_valid_attribute_name(self, attr_name, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["AttributeName"] = attr_name
@@ -192,14 +203,14 @@ class TestOptionalFieldsSchemaValidations:
             IterationRuleValidation(**data)
 
     # AttributeTarget
-    @pytest.mark.parametrize("target", ["target_value", None])
+    @pytest.mark.parametrize("target", ["RSV", "COVID"])
     def test_valid_attribute_target(self, target, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["AttributeTarget"] = target
         result = IterationRuleValidation(**data)
         assert result.attribute_target == target
 
-    @pytest.mark.parametrize("target", [123, [], {}])
+    @pytest.mark.parametrize("target", [123, [], {}, "RSV1"])
     def test_invalid_attribute_target(self, target, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["AttributeTarget"] = target
@@ -291,3 +302,57 @@ class TestBUCValidations:
         data.pop("CohortLabel", None)
         result = IterationRuleValidation(**data)
         assert result.cohort_label is None
+
+    @pytest.mark.parametrize(
+        ("attribute_level", "attribute_name", "is_valid"),
+        [
+            (RuleAttributeLevel.COHORT, None, True),  # Allowed: name optional for cohort
+            (RuleAttributeLevel.COHORT, "COHORT_LABEL", True),  # Allowed: name provided
+            (RuleAttributeLevel.TARGET, "RSV", True),  # Allowed: name provided for target
+            (RuleAttributeLevel.TARGET, None, False),  # NOT allowed: missing for non-cohort
+        ],
+    )
+    def test_attribute_name_optional_only_for_cohort(
+        self, attribute_level, attribute_name, is_valid, valid_iteration_rule_with_only_mandatory_fields
+    ):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["AttributeLevel"] = attribute_level
+        data["AttributeName"] = attribute_name
+
+        if is_valid:
+            # Should validate with no exceptions
+            IterationRuleValidation(**data)
+        else:
+            with pytest.raises(ValidationError) as exc:
+                IterationRuleValidation(**data)
+
+            assert "AttributeName must be set" in str(exc.value)
+
+    @pytest.mark.parametrize(
+        ("attribute_level", "attribute_target", "attribute_name", "is_valid"),
+        [
+            (RuleAttributeLevel.TARGET, "RSV", "BOOKED_APPOINTMENT_DATE", True),  # Valid: required for TARGET
+            (RuleAttributeLevel.TARGET, None, "BOOKED_APPOINTMENT_DATE", False),  # Invalid: missing
+            (RuleAttributeLevel.COHORT, None, "COHORT_LABEL", True),  # Valid: not required
+        ],
+    )
+    def test_attribute_target_mandatory_for_target_level(
+        self,
+        attribute_level,
+        attribute_target,
+        attribute_name,
+        is_valid,
+        valid_iteration_rule_with_only_mandatory_fields,
+    ):
+        data = valid_iteration_rule_with_only_mandatory_fields.copy()
+        data["AttributeLevel"] = attribute_level
+        data["AttributeTarget"] = attribute_target
+        data["AttributeName"] = attribute_name
+
+        if is_valid:
+            IterationRuleValidation(**data)
+        else:
+            with pytest.raises(ValidationError) as exc:
+                IterationRuleValidation(**data)
+
+            assert "AttributeTarget is mandatory" in str(exc.value)

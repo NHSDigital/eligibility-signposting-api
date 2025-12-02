@@ -10,6 +10,7 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleCode,
     RuleEntry,
     RuleName,
+    RulesMapper,
     RuleText,
 )
 from eligibility_signposting_api.model.eligibility_status import Status
@@ -102,10 +103,13 @@ def test_rule_code_resolution_in_evaluate_exclusion_function_for_rule_code_and_r
         RuleCode=RuleCode("POSTCODE_RULE_CODE_FROM_MAPPER"),
         RuleText=RuleText("POSTCODE_RULE_TEXT_FROM_MAPPER"),
     )
-    rules_mapper = {
+
+    rules_mapper_data = {
         "OTHER_SETTINGS": rule_entry,
         "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=RuleCode(""), RuleText=RuleText("")),
     }
+
+    rules_mapper: RulesMapper = RulesMapper(root=rules_mapper_data)
 
     rule = rule_builder.IterationRuleFactory.build(
         name="POSTCODE_RULE_NAME",

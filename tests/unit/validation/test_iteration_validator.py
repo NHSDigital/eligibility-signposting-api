@@ -441,3 +441,66 @@ class TestBUCValidations:
         assert label_counts["label_2"] == expected_label_2_error_count, (
             f"Expected {expected_label_2_error_count} error for label_2, got {label_counts['label_2']}"
         )
+
+    def test_invalid_iteration_if_more_than_one_cohort_has_the_same_priority(
+        self, valid_campaign_config_with_only_mandatory_fields, valid_iteration_cohorts
+    ):
+        iteration_data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "IterationCohorts": [
+                valid_iteration_cohorts(label="label_1", priority=1, group="group_1"),
+                valid_iteration_cohorts(label="label_2", priority=1, group="group_1"),
+                valid_iteration_cohorts(label="label_3", priority=1, group="group_1"),
+            ],
+        }
+
+        with pytest.raises(ValidationError) as error:
+            IterationValidation(**iteration_data)
+
+        errors = error.value.errors()
+        # Extract all cohort_label mentions from error inputs
+        label_mentions = [err["input"] for err in errors if err.get("ctx")]
+
+        # Count occurrences
+        priority_counts = Counter(label_mentions)
+
+        # Assert expected counts
+        expected_error_count = 2
+        expected_priority_1_error_count = expected_error_count
+
+        assert priority_counts[1] == expected_priority_1_error_count, (
+            f"Expected {expected_priority_1_error_count} errors for priority '1' , got {priority_counts['label_1']}"
+        )
+
+    def test_invalid_iteration_collects_errors_if_iteration_rules_have_invalid_data(
+        self,
+        valid_iteration_with_only_mandatory_fields,
+        valid_iteration_rule_with_only_mandatory_fields,
+    ):
+        # Create two invalid rules
+        iteration_rule_1 = valid_iteration_rule_with_only_mandatory_fields.copy()
+        iteration_rule_1["AttributeName"] = None
+        iteration_rule_2 = valid_iteration_rule_with_only_mandatory_fields.copy()
+        iteration_rule_2["AttributeName"] = None
+
+        data = {
+            **valid_iteration_with_only_mandatory_fields,
+            "IterationRules": [iteration_rule_1, iteration_rule_2],
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            IterationValidation(**data)
+
+        errors = exc_info.value.errors()
+
+        # Assert both errors are present
+        expected_error_count = 2
+        assert len(errors) == expected_error_count
+
+        # Assert locations are correct
+        assert errors[0]["loc"][0] == "IterationRules"
+        assert errors[1]["loc"][0] == "IterationRules"
+
+        # Assert messages contain the expected text
+        assert "AttributeName must be set" in errors[0]["msg"]
+        assert "AttributeName must be set" in errors[1]["msg"]

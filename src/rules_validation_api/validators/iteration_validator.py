@@ -1,6 +1,6 @@
 import typing
 
-from pydantic import Field, ValidationError, field_validator, model_validator
+from pydantic import ValidationError, field_validator, model_validator
 from pydantic_core import InitErrorDetails
 
 from eligibility_signposting_api.model.campaign_config import (
@@ -18,33 +18,65 @@ from rules_validation_api.validators.iteration_rules_validator import IterationR
 
 
 class IterationValidation(Iteration):
-    iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
-    iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
-    actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
-
     @field_validator("iteration_rules")
     @classmethod
     def validate_iteration_rules(cls, iteration_rules: list[IterationRule]) -> list[IterationRuleValidation]:
-        return [IterationRuleValidation(**i.model_dump()) for i in iteration_rules]
+        errors: list = []
+        validated: list[IterationRuleValidation] = []
+
+        for idx, i in enumerate(iteration_rules):
+            try:
+                validated.append(IterationRuleValidation(**i.model_dump()))
+            except ValidationError as ve:
+                for err in ve.errors():
+                    # adjust the location to include the index
+                    err["loc"] = ("iteration_rules", idx, *tuple(err["loc"]))
+                    errors.append(err)
+
+        if errors:
+            # raise one ValidationError with all collected errors
+            raise ValidationError.from_exception_data("IterationValidation", errors)  # noqa: EM101
+
+        return validated
 
     @field_validator("iteration_cohorts")
     @classmethod
     def validate_iteration_cohorts(cls, iteration_cohorts: list[IterationCohort]) -> list[IterationCohortValidation]:
         seen_labels = set()
+        seen_priorities = set()
         errors = []
+
         for cohort in iteration_cohorts:
             label = cohort.cohort_label
+            priority = cohort.priority
+
+            # Duplicate label check
             if label in seen_labels:
-                error = InitErrorDetails(
-                    type="value_error",
-                    loc=("iteration_cohort",),
-                    input=label,
-                    ctx={"error": f"Duplicate iteration_cohort: {label}"},
+                errors.append(
+                    InitErrorDetails(
+                        type="value_error",
+                        loc=("iteration_cohort", "cohort_label"),
+                        input=label,
+                        ctx={"error": f"Duplicate iteration_cohort label: {label}"},
+                    )
                 )
-                errors.append(error)
             seen_labels.add(label)
+
+            # Duplicate priority check
+            if priority in seen_priorities:
+                errors.append(
+                    InitErrorDetails(
+                        type="value_error",
+                        loc=("iteration_cohort", "priority"),
+                        input=priority,
+                        ctx={"error": f"Duplicate iteration_cohort priority: {priority}"},
+                    )
+                )
+            seen_priorities.add(priority)
+
         if errors:
             raise ValidationError.from_exception_data(title="IterationValidation", line_errors=errors)
+
         return [IterationCohortValidation(**i.model_dump()) for i in iteration_cohorts]
 
     @field_validator("actions_mapper", mode="after")

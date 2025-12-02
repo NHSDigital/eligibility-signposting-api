@@ -196,8 +196,7 @@ class TestBUCValidations:
         ("start_date", "end_date"),
         [
             ("20250101", "20250331"),  # valid range
-            ("20250601", "20250630"),  # valid short range
-            ("20250101", "20250101"),  # same day
+            ("20250201", "20250228"),  # valid short range
         ],
     )
     def test_valid_start_and_end_dates_and_iteration_dates_relation(
@@ -206,25 +205,68 @@ class TestBUCValidations:
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = start_date
         data["EndDate"] = end_date
-        data["Iterations"][0]["IterationDate"] = "20241231"
+        data["Iterations"][0]["IterationDate"] = "20250202"
+        data["Iterations"][1]["IterationDate"] = "20250203"
         CampaignConfigValidation(**data)
 
+    # StartDate and EndDates
     @pytest.mark.parametrize(
         ("start_date", "end_date"),
         [
-            ("20241230", "20250101"),  # campaign start date is after the iteration date
-            ("20250331", "20250101"),  # end before start
+            ("20250202", "20250202"),  # same day
         ],
     )
-    def test_invalid_start_and_end_dates_and_iteration_dates_relation(
+    def test_valid_start_and_end_dates_and_iteration_dates_relation_for_a_one_day_campaign(
         self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields
     ):
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = start_date
         data["EndDate"] = end_date
-        data["Iterations"][0]["IterationDate"] = "20241231"
-        with pytest.raises(ValidationError):
+        data["Iterations"][0]["IterationDate"] = "20250202"
+        data["Iterations"].pop(1)
+        CampaignConfigValidation(**data)
+
+    @pytest.mark.parametrize(
+        ("start_date", "end_date"),
+        [
+            ("20240729", "20241228"),  # Campaign ends date is before the iteration date
+        ],
+    )
+    def test_invalid_end_dates_and_iteration_dates_relation(
+        self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields
+    ):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["StartDate"] = start_date
+        data["EndDate"] = end_date
+        data["Iterations"][0]["IterationDate"] = "20241229"
+        data["Iterations"][1]["IterationDate"] = "20241230"
+        with pytest.raises(ValidationError) as exc_info:
             CampaignConfigValidation(**data)
+
+        errors = exc_info.value.errors()
+        assert "Starts after" in errors[0]["msg"]
+        assert "Starts after" in errors[0]["msg"]
+
+    @pytest.mark.parametrize(
+        ("start_date", "end_date"),
+        [
+            ("20241230", "20250101"),  # Campaign start date is after the iteration date
+        ],
+    )
+    def test_invalid_start_date_and_iteration_dates_relation(
+        self, start_date, end_date, valid_campaign_config_with_only_mandatory_fields
+    ):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["StartDate"] = start_date
+        data["EndDate"] = end_date
+        data["Iterations"][0]["IterationDate"] = "20241229"
+        data["Iterations"][1]["IterationDate"] = "20241228"
+        with pytest.raises(ValidationError) as exc_info:
+            CampaignConfigValidation(**data)
+
+        errors = exc_info.value.errors()
+        assert "Starts before" in errors[0]["msg"]
+        assert "Starts before" in errors[0]["msg"]
 
     # Iteration
     def test_validate_iterations_non_empty(self, valid_campaign_config_with_only_mandatory_fields):
@@ -233,3 +275,46 @@ class TestBUCValidations:
             CampaignConfigValidation(**data)
         errors = error.value.errors()
         assert any(e["loc"][-1] == "Iterations" for e in errors), "Expected validation error on 'Iterations'"
+
+    def test_unique_iteration_ids(
+        self, valid_campaign_config_with_only_mandatory_fields, valid_iteration_with_only_mandatory_fields
+    ):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["Iterations"].append(valid_iteration_with_only_mandatory_fields.copy())
+        data["Iterations"][1]["ID"] = data["Iterations"][0]["ID"]
+        with pytest.raises(ValidationError) as exc_info:
+            CampaignConfigValidation(**data)
+
+        # Extract the error message
+        error_message = str(exc_info.value)
+
+        # Assert that the duplicate ID appears in the message
+        duplicate_id = data["Iterations"][0]["ID"]
+        assert f"Iterations contain duplicate IDs: {duplicate_id}" in error_message
+
+    def test_error_approval_minimum_is_greater_than_approval_maximum(
+        self, valid_campaign_config_with_only_mandatory_fields
+    ):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["ApprovalMinimum"] = 2
+        data["ApprovalMaximum"] = 1
+        with pytest.raises(ValidationError):
+            CampaignConfigValidation(**data)
+
+    @pytest.mark.parametrize(
+        ("approval_min", "approval_max"),
+        [
+            (1, 2),
+            (1, 1),
+        ],
+    )
+    def test_approval_minimum_greater_than_approval_maximum_is_invalid(
+        self,
+        valid_campaign_config_with_only_mandatory_fields,
+        approval_min,
+        approval_max,
+    ):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["ApprovalMinimum"] = approval_min
+        data["ApprovalMaximum"] = approval_max
+        CampaignConfigValidation(**data)
