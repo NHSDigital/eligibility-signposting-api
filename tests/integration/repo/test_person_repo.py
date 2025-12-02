@@ -13,9 +13,10 @@ from eligibility_signposting_api.repos.person_repo import PersonRepo
 def test_person_found(
     person_table: Any,
     persisted_person: NHSNumber,
-    hashing_service: HashingService,
+    hashing_service_factory: HashingService,
 ):
     # Given
+    hashing_service = hashing_service_factory()
     repo = PersonRepo(person_table, hashing_service)
 
     # When
@@ -36,10 +37,11 @@ def test_person_found(
 def test_items_not_found_raises_error(
     person_table: Any,
     faker: Faker,
-    hashing_service: HashingService,
+    hashing_service_factory: HashingService,
 ):
     # Given
     nhs_number = NHSNumber(faker.nhs_number())
+    hashing_service = hashing_service_factory()
     repo = PersonRepo(person_table, hashing_service)
 
     # When, Then
@@ -48,9 +50,10 @@ def test_items_not_found_raises_error(
 
 
 def test_items_found_but_person_attribute_type_not_found_raises_error(
-    person_table: Any, persisted_person_with_no_person_attribute_type: NHSNumber, hashing_service: HashingService
+    person_table: Any, persisted_person_with_no_person_attribute_type: NHSNumber, hashing_service_factory: HashingService
 ):
     # Given
+    hashing_service = hashing_service_factory()
     repo = PersonRepo(person_table, hashing_service)
 
     ## When, Then
@@ -59,9 +62,10 @@ def test_items_found_but_person_attribute_type_not_found_raises_error(
 
 
 def test_person_found_with_current_secret(
-    person_table: Any, persisted_person: NHSNumber, hashing_service: HashingService
+    person_table: Any, persisted_person: NHSNumber, hashing_service_factory: HashingService
 ):
     # Given
+    hashing_service = hashing_service_factory()
     repo = PersonRepo(person_table, hashing_service)
 
     # When
@@ -80,9 +84,10 @@ def test_person_found_with_current_secret(
 
 
 def test_person_found_with_previous_secret(
-    person_table: Any, persisted_person_previous: NHSNumber, hashing_service: HashingService
+    person_table: Any, persisted_person_previous: NHSNumber, hashing_service_factory: HashingService
 ):
     # Given
+    hashing_service = hashing_service_factory()
     repo = PersonRepo(person_table, hashing_service)
 
     # When
@@ -101,10 +106,11 @@ def test_person_found_with_previous_secret(
 
 
 def test_person_found_without_hashed_nhs_num(
-    person_table: Any, persisted_person_not_hashed: NHSNumber, hashing_service_without_previous: HashingService
+    person_table: Any, persisted_person_not_hashed: NHSNumber, hashing_service_factory: HashingService
 ):
     # Given
-    repo = PersonRepo(person_table, hashing_service_without_previous)
+    hashing_service = hashing_service_factory(previous=None)
+    repo = PersonRepo(person_table, hashing_service)
 
     # When
     actual = repo.get_eligibility_data(persisted_person_not_hashed)
@@ -122,9 +128,10 @@ def test_person_found_without_hashed_nhs_num(
 
 def test_get_person_record_returns_none_when_nhs_hash_is_none(
     person_table: Any,
-    hashing_service: HashingService,
+    hashing_service_factory: HashingService,
 ) -> None:
     # Given
+    hashing_service = hashing_service_factory()
     repo = PersonRepo(person_table, hashing_service)
 
     # When
@@ -136,9 +143,10 @@ def test_get_person_record_returns_none_when_nhs_hash_is_none(
 
 def test_get_person_record_returns_none_when_nhs_hash_is_empty_string(
     person_table: Any,
-    hashing_service: HashingService,
+    hashing_service_factory: HashingService,
 ) -> None:
     # Given
+    hashing_service = hashing_service_factory()
     repo = PersonRepo(person_table, hashing_service)
 
     # When
@@ -150,9 +158,10 @@ def test_get_person_record_returns_none_when_nhs_hash_is_empty_string(
 
 def test_get_person_record_returns_none_when_no_items_found(
     person_table: Any,
-    hashing_service: HashingService,
+    hashing_service_factory: HashingService,
 ) -> None:
     # Given
+    hashing_service = hashing_service_factory()
     repo = PersonRepo(person_table, hashing_service)
     nhs_hash_not_in_table = "nhs-number-that-does-not-exist"
 
@@ -166,9 +175,10 @@ def test_get_person_record_returns_none_when_no_items_found(
 def test_get_person_record_returns_none_when_items_have_no_person_attribute_type(
     person_table: Any,
     persisted_person_with_no_person_attribute_type: NHSNumber,
-    hashing_service: HashingService,
+    hashing_service_factory: HashingService,
 ) -> None:
     # Given
+    hashing_service = hashing_service_factory()
     repo = PersonRepo(person_table, hashing_service)
     nhs_hash = hashing_service.hash_with_current_secret(persisted_person_with_no_person_attribute_type)
 
@@ -177,3 +187,4 @@ def test_get_person_record_returns_none_when_items_have_no_person_attribute_type
 
     # Then
     assert actual is None
+

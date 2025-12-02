@@ -1071,13 +1071,28 @@ def hashing_service() -> HashingService:
     )
 
 
+# @pytest.fixture
+# def hashing_service_without_previous(current:str|None,previous:str|None) -> HashingService:
+#     secret_repo = StubSecretRepo(current=current, previous=previous)
+#
+#     hash_secret_name = HashSecretName("eligibility-signposting-api-dev/hashing_secret")
+#
+#     return HashingService(
+#         secret_repo=secret_repo,
+#         hash_secret_name=hash_secret_name,
+#     )
+
+from collections.abc import Callable
+
 @pytest.fixture
-def hashing_service_without_previous() -> HashingService:
-    secret_repo = StubSecretRepo(current=AWS_CURRENT_SECRET, previous=None)
+def hashing_service_factory() -> Callable[[str | None, str | None], HashingService]:
+    def _factory(current: str | None = AWS_CURRENT_SECRET, previous: str | None = AWS_PREVIOUS_SECRET) -> HashingService:
+        secret_repo = StubSecretRepo(current=current, previous=previous)
+        hash_secret_name = HashSecretName("eligibility-signposting-api-dev/hashing_secret")
 
-    hash_secret_name = HashSecretName("eligibility-signposting-api-dev/hashing_secret")
+        return HashingService(
+            secret_repo=secret_repo,
+            hash_secret_name=hash_secret_name,
+        )
 
-    return HashingService(
-        secret_repo=secret_repo,
-        hash_secret_name=hash_secret_name,
-    )
+    return _factory
