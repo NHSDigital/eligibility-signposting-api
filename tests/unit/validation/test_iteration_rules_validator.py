@@ -203,14 +203,14 @@ class TestOptionalFieldsSchemaValidations:
             IterationRuleValidation(**data)
 
     # AttributeTarget
-    @pytest.mark.parametrize("target", ["target_value"])
+    @pytest.mark.parametrize("target", ["RSV", "COVID"])
     def test_valid_attribute_target(self, target, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["AttributeTarget"] = target
         result = IterationRuleValidation(**data)
         assert result.attribute_target == target
 
-    @pytest.mark.parametrize("target", [123, [], {}])
+    @pytest.mark.parametrize("target", [123, [], {}, "RSV1"])
     def test_invalid_attribute_target(self, target, valid_iteration_rule_with_only_mandatory_fields):
         data = valid_iteration_rule_with_only_mandatory_fields.copy()
         data["AttributeTarget"] = target

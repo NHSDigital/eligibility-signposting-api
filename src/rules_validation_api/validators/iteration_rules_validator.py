@@ -1,7 +1,8 @@
 import typing
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 
+from eligibility_signposting_api.config.constants import ALLOWED_CONDITIONS
 from eligibility_signposting_api.model.campaign_config import (
     IterationRule,
     RuleAttributeLevel,
@@ -11,6 +12,19 @@ from eligibility_signposting_api.model.campaign_config import (
 
 
 class IterationRuleValidation(IterationRule):
+    @field_validator("attribute_target")
+    @classmethod
+    def validate_attribute_target(cls, value: str) -> str | None:
+        if value is None:
+            return value
+
+        allowed = ALLOWED_CONDITIONS.__args__
+        if value not in allowed:
+            allowed_str = ", ".join(allowed)
+            msg = f"Invalid attribute_target value: {value}. Allowed values: {allowed_str}"
+            raise ValueError(msg)
+        return value
+
     @model_validator(mode="after")
     def check_cohort_attribute_name(self) -> typing.Self:
         if (
