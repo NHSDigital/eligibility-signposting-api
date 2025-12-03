@@ -201,51 +201,41 @@ def test_get_person_record_returns_none_when_items_have_no_person_attribute_type
         # and record plain does not exist
         # then return record AWSCurrent with key AWSCurrent
         (True, False, "current", "current_record"),
-
         # If  key AWSCURRENT exists,      record AWSCurrent not exists,
         # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
         # and record plain does not exist
         # then person not found
         (True, False, None, "person_not_found"),
-
         # If  key AWSCURRENT exists,      record AWSCurrent not exists,
         # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
         # and record plain does exist
         # then return record plain
         (True, False, "not_hashed", "not_hashed_record"),
-
-
         # If  key AWSCURRENT not exists, record AWSCurrent not exists,
         # and key AWSPREVIOUS exists,    record AWSPREVIOUS exist,
         # and record plain does not exist
         # then return record AWSPrevious with key AWSPrevious
         (False, True, "previous", "previous_record"),
-
         # If  key AWSCURRENT not exists, record AWSCurrent not exists,
         # and key AWSPREVIOUS exists,    record AWSPREVIOUS not exist,
         # and record plain does not exist
         # then person not found
         (False, True, None, "person_not_found"),
-
         # If  key AWSCURRENT not exists, record AWSCurrent not exists,
         # and key AWSPREVIOUS exists,    record AWSPREVIOUS not exist,
         # and record plain does exist
         # then person not found
         (False, True, "not_hashed", "person_not_found"),
-
-
         # If  key AWSCURRENT not exists,  record AWSCurrent not exists,
         # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
         # and record plain does exist
         # then return record plain
         (False, False, "not_hashed", "not_hashed_record"),
-
         # If  key AWSCURRENT not exists,  record AWSCurrent not exists,
         # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
         # and record plain does not exist
         # then return person not found
         (False, False, None, "person_not_found"),
-
     ],
 )
 def test_secret_key_scenarios(  # noqa: PLR0913

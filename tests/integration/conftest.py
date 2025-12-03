@@ -411,15 +411,6 @@ def persisted_person_factory(
     hashing_service: HashingService,
     request: pytest.FixtureRequest,
 ):
-    """
-    Factory to persist a PERSON/COHORT record with different hashing strategies:
-      secret_key="current"  -> hash_with_current_secret
-      secret_key="previous" -> hash_with_previous_secret
-      secret_key="none"     -> store plain NHS number (no hash)
-
-    All created rows are automatically cleaned up.
-    """
-
     created_rows: list[dict[str, Any]] = []
 
     def _factory(
@@ -433,7 +424,7 @@ def persisted_person_factory(
         nhs_num = faker.nhs_number()
         nhs_number = eligibility_status.NHSNumber(nhs_num)
 
-        # --- hashing selector ---
+        # hashing selector
         if secret_key == "current":  # noqa: S105
             nhs_key = hashing_service.hash_with_current_secret(nhs_num)
         elif secret_key == "previous":  # noqa: S105
@@ -441,7 +432,7 @@ def persisted_person_factory(
         elif secret_key == "not_hashed":  # noqa: S105
             nhs_key = nhs_num
 
-        # --- build DOB ---
+        # build DOB
         date_of_birth = eligibility_status.DateOfBirth(
             faker.date_of_birth(minimum_age=minimum_age, maximum_age=maximum_age)
         )
@@ -453,14 +444,14 @@ def persisted_person_factory(
             cohorts=cohorts or ["cohort1"],
         ).data
 
-        # --- persist rows ---
+        # persist rows
         for row in rows:
             person_table.put_item(Item=row)
             created_rows.append(row)
 
         return nhs_number
 
-    # --- cleanup hook ---
+    # cleanup hook
     def cleanup():
         for row in created_rows:
             person_table.delete_item(
