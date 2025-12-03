@@ -247,12 +247,83 @@ def test_secret_key_scenarios(  # noqa: PLR0913
     persisted_person_factory: NHSNumber,
     hashing_service_factory: HashingService,
 ):
+    """
+    Test scenarios for resolving which DynamoDB record to return based on the
+    presence of AWSCURRENT key, AWSPREVIOUS key, and not hashed records.
+
+    Scenarios
+    ---------
+
+    1.  AWSCURRENT key exists; AWSCURRENT record exists.
+        AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
+        Not hashed record does not exist.
+        → Expect: return AWSCURRENT record ("current_record").
+
+        Params:
+            (True, False, "current", "current_record")
+
+    2.  AWSCURRENT key exists; AWSCURRENT record does not exist.
+        AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
+        Not hashed record does not exist.
+        → Expect: person not found ("person_not_found").
+
+        Params:
+            (True, False, None, "person_not_found")
+
+    3.  AWSCURRENT key exists; AWSCURRENT record does not exist.
+        AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
+        Not hashed record exists.
+        → Expect: return not hashed record ("not_hashed_record").
+
+        Params:
+            (True, False, "not_hashed", "not_hashed_record")
+
+    4.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+        AWSPREVIOUS key exists; AWSPREVIOUS record exists.
+        Not hashed record does not exist.
+        → Expect: return AWSPREVIOUS record ("previous_record").
+
+        Params:
+            (False, True, "previous", "previous_record")
+
+    5.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+        AWSPREVIOUS key exists; AWSPREVIOUS record does not exist.
+        Not hashed record does not exist.
+        → Expect: person not found ("person_not_found").
+
+        Params:
+            (False, True, None, "person_not_found")
+
+    6.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+        AWSPREVIOUS key exists; AWSPREVIOUS record does not exist.
+        Not hashed record exists.
+        → Expect: person not found ("person_not_found").
+
+        Params:
+            (False, True, "not_hashed", "person_not_found")
+
+    7.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+        AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
+        Not hashed record exists.
+        → Expect: return not hashed record ("not_hashed_record").
+
+        Params:
+            (False, False, "not_hashed", "not_hashed_record")
+
+    8.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+        AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
+        Not hashed record does not exist.
+        → Expect: person not found ("person_not_found").
+
+        Params:
+            (False, False, None, "person_not_found")
+    """
+
     # Given
     current = None if not has_awscurrent_key else AWS_CURRENT_SECRET
     previous = None if not has_awsprevious_key else AWS_PREVIOUS_SECRET
     hashing_service = hashing_service_factory(current=current, previous=previous)
 
-    # current, previous, nothashed, none (no record)
     persisted_person = persisted_person_factory(secret_key=dynamodb_record) if dynamodb_record else None
 
     repo = PersonRepo(person_table, hashing_service)
