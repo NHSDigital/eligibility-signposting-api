@@ -438,7 +438,7 @@ def persisted_person_factory(
             nhs_key = hashing_service.hash_with_current_secret(nhs_num)
         elif secret_key == "previous":  # noqa: S105
             nhs_key = hashing_service.hash_with_previous_secret(nhs_num)
-        elif secret_key == "nothashed":  # noqa: S105
+        elif secret_key == "not_hashed":  # noqa: S105
             nhs_key = nhs_num
 
         # --- build DOB ---

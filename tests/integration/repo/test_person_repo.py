@@ -196,9 +196,56 @@ def test_get_person_record_returns_none_when_items_have_no_person_attribute_type
 @pytest.mark.parametrize(
     ("has_awscurrent_key", "has_awsprevious_key", "dynamodb_record", "expected_result"),
     [
+        # 1.  key AWSCURRENT exists,      record AWSCurrent exists,
+        # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
+        # and record plain does not exist
+        # then return record AWSCurrent with key AWSCurrent
         (True, False, "current", "current_record"),
+
+        # 1.  key AWSCURRENT exists,      record AWSCurrent not exists,
+        # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
+        # and record plain does not exist
+        # then person not found
+        (True, False, None, "person_not_found"),
+
+        # 1.  key AWSCURRENT exists,      record AWSCurrent not exists,
+        # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
+        # and record plain does exist
+        # then return record plain
+        (True, False, "not_hashed", "not_hashed_record"),
+
+
+        # 2.  key AWSCURRENT not exists, record AWSCurrent not exists,
+        # and key AWSPREVIOUS exists,    record AWSPREVIOUS exist,
+        # and record plain does not exist
+        # then return record AWSPrevious with key AWSPrevious
+        (False, True, "previous", "previous_record"),
+
+        # 2.  key AWSCURRENT not exists, record AWSCurrent not exists,
+        # and key AWSPREVIOUS exists,    record AWSPREVIOUS not exist,
+        # and record plain does not exist
+        # then person not found
+        (False, True, None, "person_not_found"),
+
+        # 2.  key AWSCURRENT not exists, record AWSCurrent not exists,
+        # and key AWSPREVIOUS exists,    record AWSPREVIOUS not exist,
+        # and record plain does exist
+        # then person not found
+        (False, True, "not_hashed", "person_not_found"),
+
+
+        # 2.  key AWSCURRENT not exists,  record AWSCurrent not exists,
+        # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
+        # and record plain does exist
+        # then return record plain
+        (False, False, "not_hashed", "not_hashed_record"),
+
+        # 3.  key AWSCURRENT not exists,  record AWSCurrent not exists,
+        # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
+        # and record plain does not exist
+        # then return person not found
         (False, False, None, "person_not_found"),
-        (False, False, "current", "person_not_found"),
+
     ],
 )
 def test_secret_key_scenarios(  # noqa: PLR0913
@@ -230,7 +277,7 @@ def test_secret_key_scenarios(  # noqa: PLR0913
             nhs_num_value = hashing_service.hash_with_current_secret(persisted_person)
         if expected_result == "previous_record":
             nhs_num_value = hashing_service.hash_with_previous_secret(persisted_person)
-        if expected_result == "nothashed_record":
+        if expected_result == "not_hashed_record":
             nhs_num_value = persisted_person
 
         assert_that(
