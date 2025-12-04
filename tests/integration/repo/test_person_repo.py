@@ -196,46 +196,38 @@ def test_get_person_record_returns_none_when_items_have_no_person_attribute_type
 @pytest.mark.parametrize(
     ("has_awscurrent_key", "has_awsprevious_key", "dynamodb_record", "expected_result"),
     [
-        # If  key AWSCURRENT exists,      record AWSCurrent exists,
-        # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
-        # and record plain does not exist
-        # then return record AWSCurrent with key AWSCurrent
-        (True, False, "current", "current_record"),
-        # If  key AWSCURRENT exists,      record AWSCurrent not exists,
-        # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
-        # and record plain does not exist
-        # then person not found
-        (True, False, None, "person_not_found"),
-        # If  key AWSCURRENT exists,      record AWSCurrent not exists,
-        # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
-        # and record plain does exist
-        # then return record plain
-        (True, False, "not_hashed", "not_hashed_record"),
-        # If  key AWSCURRENT not exists, record AWSCurrent not exists,
-        # and key AWSPREVIOUS exists,    record AWSPREVIOUS exist,
-        # and record plain does not exist
-        # then return record AWSPrevious with key AWSPrevious
-        (False, True, "previous", "previous_record"),
-        # If  key AWSCURRENT not exists, record AWSCurrent not exists,
-        # and key AWSPREVIOUS exists,    record AWSPREVIOUS not exist,
-        # and record plain does not exist
-        # then person not found
-        (False, True, None, "person_not_found"),
-        # If  key AWSCURRENT not exists, record AWSCurrent not exists,
-        # and key AWSPREVIOUS exists,    record AWSPREVIOUS not exist,
-        # and record plain does exist
-        # then person not found
-        (False, True, "not_hashed", "person_not_found"),
-        # If  key AWSCURRENT not exists,  record AWSCurrent not exists,
-        # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
-        # and record plain does exist
-        # then return record plain
-        (False, False, "not_hashed", "not_hashed_record"),
-        # If  key AWSCURRENT not exists,  record AWSCurrent not exists,
-        # and key AWSPREVIOUS not exists, record AWSPREVIOUS not exist,
-        # and record plain does not exist
-        # then return person not found
+        # No keys; no records → person not found
         (False, False, None, "person_not_found"),
+        # AWSCURRENT key; no records → person not found
+        (True, False, None, "person_not_found"),
+        # AWSPREVIOUS key; no records → person not found
+        (False, True, None, "person_not_found"),
+        # Both keys; no records → person not found
+        (True, True, None, "person_not_found"),
+        # No keys; record='previous' but no AWS prev key → person not found
+        (False, False, "previous", "person_not_found"),
+        # AWSCURRENT key; record='previous' but no AWS prev key → person not found
+        (True, False, "previous", "person_not_found"),
+        # AWSPREVIOUS key; record='previous' and AWS prev exists → previous_record
+        (False, True, "previous", "previous_record"),
+        # Both keys; record='previous' and AWS prev exists → previous_record
+        (True, True, "previous", "previous_record"),
+        # No keys; record='current' but no AWS current → person not found
+        (False, False, "current", "person_not_found"),
+        # AWSCURRENT key; record='current' and AWS current exists → current_record
+        (True, False, "current", "current_record"),
+        # AWSPREVIOUS key; record='current' but no AWS current → person not found
+        (False, True, "current", "person_not_found"),
+        # Both keys; record='current' and AWS current exists → current_record
+        (True, True, "current", "current_record"),
+        # No keys; record='not hashed' exists → return not hashed record
+        (False, False, "not_hashed", "not_hashed_record"),
+        # AWSCURRENT key; record='not hashed' exists → return not hashed record
+        (True, False, "not_hashed", "not_hashed_record"),
+        # AWSPREVIOUS key; record='not hashed' exists but no AWS prev → person not found
+        (False, True, "not_hashed", "person_not_found"),
+        # Both keys; record='not hashed' exists but matches neither AWS record → person not found
+        (True, True, "not_hashed", "person_not_found"),
     ],
 )
 def test_secret_key_scenarios(  # noqa: PLR0913
@@ -254,13 +246,13 @@ def test_secret_key_scenarios(  # noqa: PLR0913
     Scenarios
     ---------
 
-    1.  AWSCURRENT key exists; AWSCURRENT record exists.
+    1.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
         AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
         Not hashed record does not exist.
-        → Expect: return AWSCURRENT record ("current_record").
+        → Expect: person not found ("person_not_found").
 
         Params:
-            (True, False, "current", "current_record")
+            (False, False, "None", "person_not_found")
 
     2.  AWSCURRENT key exists; AWSCURRENT record does not exist.
         AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
@@ -268,41 +260,89 @@ def test_secret_key_scenarios(  # noqa: PLR0913
         → Expect: person not found ("person_not_found").
 
         Params:
-            (True, False, None, "person_not_found")
+            (True, False, "None", "person_not_found")
 
-    3.  AWSCURRENT key exists; AWSCURRENT record does not exist.
-        AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
-        Not hashed record exists.
-        → Expect: return not hashed record ("not_hashed_record").
+    3.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+        AWSPREVIOUS key exists; AWSPREVIOUS record does not exist.
+        Not hashed record does not exist.
+        → Expect: person not found ("person_not_found").
 
         Params:
-            (True, False, "not_hashed", "not_hashed_record")
+            (False, True, "None", "person_not_found")
 
-    4.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
-        AWSPREVIOUS key exists; AWSPREVIOUS record exists.
+    4.  AWSCURRENT key exists; AWSCURRENT record does not exist.
+        AWSPREVIOUS key exists; AWSPREVIOUS record does not exist.
+        Not hashed record does not exist.
+        → Expect: person not found ("person_not_found").
+
+        Params:
+            (True, True, "None", "person_not_found")
+
+    5.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+        AWSPREVIOUS key does not exist; AWSPREVIOUS record does exist.
+        Not hashed record does not exist.
+        → Expect: person not found ("person_not_found").
+
+        Params:
+            (False, False, "previous", "person_not_found")
+
+    6.  AWSCURRENT key exists; AWSCURRENT record does not exist.
+        AWSPREVIOUS key does not exist; AWSPREVIOUS record does exist.
+        Not hashed record does not exist.
+        → Expect: person not found ("person_not_found").
+
+        Params:
+            (True, False, "previous", "person_not_found")
+
+    7.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+        AWSPREVIOUS key exists; AWSPREVIOUS record does exist.
         Not hashed record does not exist.
         → Expect: return AWSPREVIOUS record ("previous_record").
 
         Params:
             (False, True, "previous", "previous_record")
 
-    5.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+    8.  AWSCURRENT key exists; AWSCURRENT record does not exist.
+        AWSPREVIOUS key exists; AWSPREVIOUS record exists.
+        Not hashed record does not exist.
+        → Expect: return AWSPREVIOUS record ("previous_record").
+
+        Params:
+            (True, True, "previous", "previous_record")
+
+    9.  AWSCURRENT key does not exist; AWSCURRENT record does exist.
+        AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
+        Not hashed record does not exist.
+        → Expect: person not found ("person_not_found").
+
+        Params:
+            (False, False, "current", "person_not_found")
+
+    10. AWSCURRENT key exists; AWSCURRENT record exists.
+        AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
+        Not hashed record does not exist.
+        → Expect: return AWSCURRENT record ("current_record").
+
+        Params:
+            (True, False, "current", "current_record")
+
+    11. AWSCURRENT key does not exist; AWSCURRENT record does exist.
         AWSPREVIOUS key exists; AWSPREVIOUS record does not exist.
         Not hashed record does not exist.
         → Expect: person not found ("person_not_found").
 
         Params:
-            (False, True, None, "person_not_found")
+            (False, True, "current", "person_not_found")
 
-    6.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+    12. AWSCURRENT key exists; AWSCURRENT record exists.
         AWSPREVIOUS key exists; AWSPREVIOUS record does not exist.
-        Not hashed record exists.
-        → Expect: person not found ("person_not_found").
+        Not hashed record does not exist.
+        → Expect: return AWSCURRENT record ("current_record").
 
         Params:
-            (False, True, "not_hashed", "person_not_found")
+            (True, True, "current", "current_record")
 
-    7.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+    13. AWSCURRENT key does not exist; AWSCURRENT record does not exist.
         AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
         Not hashed record exists.
         → Expect: return not hashed record ("not_hashed_record").
@@ -310,13 +350,29 @@ def test_secret_key_scenarios(  # noqa: PLR0913
         Params:
             (False, False, "not_hashed", "not_hashed_record")
 
-    8.  AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+    14. AWSCURRENT key exists; AWSCURRENT record does not exist.
         AWSPREVIOUS key does not exist; AWSPREVIOUS record does not exist.
-        Not hashed record does not exist.
+        Not hashed record exists.
+        → Expect: return not hashed record ("not_hashed_record").
+
+        Params:
+            (True, False, "not_hashed", "not_hashed_record")
+
+    15. AWSCURRENT key does not exist; AWSCURRENT record does not exist.
+        AWSPREVIOUS key exists; AWSPREVIOUS record does not exist.
+        Not hashed record exists (not called because AWSPREVIOUS exists).
         → Expect: person not found ("person_not_found").
 
         Params:
-            (False, False, None, "person_not_found")
+            (False, True, "not_hashed", "person_not_found")
+
+    16. AWSCURRENT key exists; AWSCURRENT record does not exist.
+        AWSPREVIOUS key exists; AWSPREVIOUS record does not exist.
+        Not hashed record exists (not called because AWSPREVIOUS exists).
+        → Expect: person not found ("person_not_found").
+
+        Params:
+            (True, True, "not_hashed", "person_not_found")
     """
 
     # Given
