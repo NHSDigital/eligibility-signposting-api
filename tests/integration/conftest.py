@@ -35,6 +35,7 @@ from eligibility_signposting_api.repos import SecretRepo
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
 from tests.fixtures.builders.model import rule
+from tests.fixtures.builders.model.rule import RulesMapperFactory
 from tests.fixtures.builders.repos.person import person_rows_builder
 
 if TYPE_CHECKING:
@@ -776,14 +777,16 @@ def campaign_config_with_rules_having_rule_mapper(
                         negative_description="negative_description",
                     )
                 ],
-                rules_mapper={
-                    "OTHER_SETTINGS": RuleEntry(
-                        RuleNames=[RuleName("age_rule_name1")],
-                        RuleCode=RuleCode("Age rule code from mapper"),
-                        RuleText=RuleText("Age Rule Description from mapper"),
-                    ),
-                    "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=RuleCode(""), RuleText=RuleText("")),
-                },
+                rules_mapper=RulesMapperFactory.build(
+                    root={
+                        "OTHER_SETTINGS": RuleEntry(
+                            RuleNames=[RuleName("age_rule_name1")],
+                            RuleCode=RuleCode("Age rule code from mapper"),
+                            RuleText=RuleText("Age Rule Description from mapper"),
+                        ),
+                        "ALREADY_JABBED": RuleEntry(RuleNames=[], RuleCode=RuleCode(""), RuleText=RuleText("")),
+                    }
+                ),
                 status_text=None,
             )
         ],

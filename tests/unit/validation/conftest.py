@@ -29,8 +29,44 @@ def valid_campaign_config_with_only_mandatory_fields():
                 "IterationCohorts": [],
                 "IterationRules": [],
                 "ActionsMapper": {},
-            }
+            },
+            {
+                "ID": "ITER002",
+                "Version": 1,
+                "Name": "Mid-January Push",
+                "IterationDate": "20250110",
+                "IterationNumber": 2,
+                "ApprovalMinimum": 10,
+                "ApprovalMaximum": 100,
+                "Type": "A",
+                "DefaultCommsRouting": "",
+                "DefaultNotEligibleRouting": "",
+                "DefaultNotActionableRouting": "",
+                "IterationCohorts": [],
+                "IterationRules": [],
+                "ActionsMapper": {},
+            },
         ],
+    }
+
+
+@pytest.fixture
+def valid_iteration_with_only_mandatory_fields():
+    return {
+        "ID": "ITER001",
+        "Version": 1,
+        "Name": "Mid-January Push",
+        "IterationDate": "20250102",
+        "IterationNumber": 1,
+        "ApprovalMinimum": 10,
+        "ApprovalMaximum": 100,
+        "Type": "A",
+        "DefaultCommsRouting": "",
+        "DefaultNotEligibleRouting": "",
+        "DefaultNotActionableRouting": "",
+        "IterationCohorts": [],
+        "IterationRules": [],
+        "ActionsMapper": {},
     }
 
 
@@ -62,13 +98,13 @@ def valid_available_action():
 
 @pytest.fixture
 def valid_iteration_cohorts():
-    def _cohort(label: str = "label_1", group: str = "group_1"):
+    def _cohort(label: str = "label_1", group: str = "group_1", priority: int = 0):
         return {
             "CohortLabel": label,
             "CohortGroup": group,
             "PositiveDescription": "are a member of eli_399_cohort_group [[PERSON.POSTCODE:DATE(%d %B %Y)]]",
             "NegativeDescription": "are not a member of eli_399_cohort_group [[PERSON.POSTCODE:DATE(%d %B %Y)]]",
-            "Priority": 0,
+            "Priority": priority,
         }
 
     return _cohort

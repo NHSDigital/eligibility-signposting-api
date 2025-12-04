@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import typing
 from collections import Counter
 from datetime import UTC, date, datetime
@@ -237,7 +238,7 @@ class StatusText(BaseModel):
     not_actionable: str | None = Field(None, alias="NotActionable")
     actionable: str | None = Field(None, alias="Actionable")
 
-    model_config = {"populate_by_name": True, "extra": "ignore"}
+    model_config = {"populate_by_name": True}
 
 
 class RuleEntry(BaseModel):
@@ -246,6 +247,14 @@ class RuleEntry(BaseModel):
     rule_text: RuleText | None = Field(None, alias="RuleText")
 
     model_config = {"populate_by_name": True}
+
+
+class RulesMapper(RootModel[dict[str, RuleEntry]]):
+    def get(self, key: str, default: RuleEntry | None = None) -> RuleEntry | None:
+        return self.root.get(key, default)
+
+    def values(self) -> list[RuleEntry]:
+        return list(self.root.values())
 
 
 class Iteration(BaseModel):
@@ -263,7 +272,7 @@ class Iteration(BaseModel):
     iteration_cohorts: list[IterationCohort] = Field(..., alias="IterationCohorts")
     iteration_rules: list[IterationRule] = Field(..., alias="IterationRules")
     actions_mapper: ActionsMapper = Field(..., alias="ActionsMapper")
-    rules_mapper: dict[str, RuleEntry] | None = Field(None, alias="RulesMapper")
+    rules_mapper: RulesMapper | None = Field(None, alias="RulesMapper")
     status_text: StatusText | None = Field(None, alias="StatusText")
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
@@ -273,7 +282,18 @@ class Iteration(BaseModel):
     def parse_dates(cls, v: str | date) -> date:
         if isinstance(v, date):
             return v
-        return datetime.strptime(v, "%Y%m%d").date()  # noqa: DTZ007
+
+        v_str = str(v)
+
+        if not re.fullmatch(r"\d{8}", v_str):
+            msg = f"Invalid format: {v_str}. Must be YYYYMMDD with 8 digits."
+            raise ValueError(msg)
+
+        try:
+            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
+        except ValueError as err:
+            msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
+            raise ValueError(msg) from err
 
     @field_serializer("iteration_date", when_used="always")
     @staticmethod
@@ -316,7 +336,18 @@ class CampaignConfig(BaseModel):
     def parse_dates(cls, v: str | date) -> date:
         if isinstance(v, date):
             return v
-        return datetime.strptime(v, "%Y%m%d").date()  # noqa: DTZ007
+
+        v_str = str(v)
+
+        if not re.fullmatch(r"\d{8}", v_str):
+            msg = f"Invalid format: {v_str}. Must be YYYYMMDD with 8 digits."
+            raise ValueError(msg)
+
+        try:
+            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
+        except ValueError as err:
+            msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
+            raise ValueError(msg) from err
 
     @field_serializer("start_date", "end_date", when_used="always")
     @staticmethod

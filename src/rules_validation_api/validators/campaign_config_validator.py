@@ -1,4 +1,5 @@
 import typing
+from collections import Counter
 from operator import attrgetter
 
 from pydantic import field_validator, model_validator
@@ -14,16 +15,42 @@ class CampaignConfigValidation(CampaignConfig):
         return [IterationValidation(**i.model_dump()) for i in iterations]
 
     @model_validator(mode="after")
-    def check_has_iteration_from_start(self) -> typing.Self:
-        iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_date"))
-        if first_iteration := next(iter(iterations_by_date), None):
-            if first_iteration.iteration_date > self.start_date:
-                message = (
-                    f"campaign {self.id} starts on {self.start_date}, "
-                    f"1st iteration starts later - {first_iteration.iteration_date}"
-                )
-                raise ValueError(message)
+    def validate_approval_minimum_is_less_than_or_equal_to_approval_maximum(self) -> typing.Self:
+        if self.approval_minimum is not None and self.approval_maximum is not None:
+            if self.approval_minimum > self.approval_maximum:
+                msg = f"approval_minimum {self.approval_minimum} > approval_maximum {self.approval_maximum}"
+                raise ValueError(msg)
             return self
-        # Should never happen, since we are constraining self.iterations with a min_length of 1
-        message = f"campaign {self.id} has no iterations."
-        raise ValueError(message)
+        return self
+
+    @model_validator(mode="after")
+    def validate_iterations_have_unique_id(self) -> typing.Self:
+        ids = [iteration.id for iteration in self.iterations]
+        duplicates = {i_id for i_id, count in Counter(ids).items() if count > 1}
+        if duplicates:
+            msg = f"Iterations contain duplicate IDs: {', '.join(duplicates)}"
+            raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def validate_campaign_has_iteration_within_schedule(self) -> typing.Self:
+        errors: list[str] = []
+        iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_date"))
+
+        for idx, iteration in enumerate(iterations_by_date):
+            if iteration.iteration_date < self.start_date:
+                errors.append(
+                    f"CampaignConfig.Iterations.{idx}.IterationDate : "
+                    f"Starts before campaign start date {self.start_date} [type=invalid]"
+                )
+            if iteration.iteration_date > self.end_date:
+                errors.append(
+                    f"CampaignConfig.Iterations.{idx}.IterationDate : "
+                    f"Starts after campaign end date {self.end_date} [type=invalid]"
+                )
+
+        if errors:
+            # Raise one exception with all messages joined by newlines
+            raise ValueError("\n".join(errors))
+
+        return self
