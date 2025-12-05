@@ -175,8 +175,8 @@ def generate_html_report(images_dir='dashboard_exports', output_file=None):
             <div class="widget">
                 <div class="widget-title">{idx}. {title}</div>
                 <img class="widget-image"
-                     src="data:image/png;base64,{image_data}"
-                     alt="{title}">
+                    src="data:image/png;base64,{image_data}"
+                    alt="{title}">
             </div>
 """
 
