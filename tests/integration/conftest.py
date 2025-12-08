@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import subprocess
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -30,6 +30,8 @@ from eligibility_signposting_api.model.campaign_config import (
     StartDate,
     StatusText,
 )
+from eligibility_signposting_api.processors.hashing_service import HashingService, HashSecretName
+from eligibility_signposting_api.repos import SecretRepo
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
 from tests.fixtures.builders.model import rule
@@ -42,6 +44,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 AWS_REGION = "eu-west-1"
+
+AWS_SECRET_NAME = "test_secret"  # noqa: S105
+AWS_CURRENT_SECRET = "test_value"  # noqa: S105
+AWS_PREVIOUS_SECRET = "test_value_old"  # noqa: S105
 
 
 @pytest.fixture(scope="session")
@@ -114,6 +120,40 @@ def s3_client(boto3_session: Session, localstack: URL) -> BaseClient:
 @pytest.fixture(scope="session")
 def firehose_client(boto3_session: Session, localstack: URL) -> BaseClient:
     return boto3_session.client("firehose", endpoint_url=str(localstack))
+
+
+@pytest.fixture(scope="session")
+def secretsmanager_client(boto3_session: Session, localstack: URL) -> BaseClient:
+    """
+    Provides a boto3 Secrets Manager client bound to LocalStack.
+    Seeds a test secret for use in integration tests.
+    """
+    client: BaseClient = boto3_session.client(
+        service_name="secretsmanager", endpoint_url=str(localstack), region_name="eu-west-1"
+    )
+
+    secret_name = AWS_SECRET_NAME
+    secret_value = AWS_PREVIOUS_SECRET
+
+    try:
+        client.create_secret(
+            Name=secret_name,
+            SecretString=secret_value,
+        )
+    except client.exceptions.ResourceExistsException:
+        client.put_secret_value(
+            SecretId=secret_name,
+            SecretString=secret_value,
+        )
+
+    secret_name = AWS_SECRET_NAME
+    secret_value = AWS_CURRENT_SECRET
+
+    client.put_secret_value(
+        SecretId=secret_name,
+        SecretString=secret_value,
+    )
+    return client
 
 
 @pytest.fixture(scope="session")
@@ -210,6 +250,7 @@ def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -
                     "DYNAMODB_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "S3_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "FIREHOSE_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
+                    "SECRET_MANAGER_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
                     "AWS_REGION": AWS_REGION,
                     "LOG_LEVEL": "DEBUG",
                 }
@@ -344,7 +385,114 @@ def person_table(dynamodb_resource: ServiceResource) -> Generator[Any]:
 
 
 @pytest.fixture
-def persisted_person(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
+def persisted_person(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+    nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
+
+    date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
+
+    for row in (
+        rows := person_rows_builder(nhs_num_hash, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
+    ):
+        person_table.put_item(Item=row)
+
+    yield nhs_number
+
+    for row in rows:
+        person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
+
+
+@pytest.fixture
+def persisted_person_factory(
+    person_table: Any,
+    faker: Faker,
+    hashing_service: HashingService,
+    request: pytest.FixtureRequest,
+):
+    created_rows: list[dict[str, Any]] = []
+
+    def _factory(
+        *,
+        secret_key: str = "current",  # noqa: S107
+        postcode: str = "hp1",
+        cohorts: list[str] | None = None,
+        minimum_age: int = 18,
+        maximum_age: int = 65,
+    ) -> eligibility_status.NHSNumber:
+        nhs_num = faker.nhs_number()
+        nhs_number = eligibility_status.NHSNumber(nhs_num)
+
+        # hashing selector
+        if secret_key == "current":  # noqa: S105
+            nhs_key = hashing_service.hash_with_current_secret(nhs_num)
+        elif secret_key == "previous":  # noqa: S105
+            nhs_key = hashing_service.hash_with_previous_secret(nhs_num)
+        elif secret_key == "not_hashed":  # noqa: S105
+            nhs_key = nhs_num
+
+        # build DOB
+        date_of_birth = eligibility_status.DateOfBirth(
+            faker.date_of_birth(minimum_age=minimum_age, maximum_age=maximum_age)
+        )
+
+        rows = person_rows_builder(
+            nhs_key,
+            date_of_birth=date_of_birth,
+            postcode=postcode,
+            cohorts=cohorts or ["cohort1"],
+        ).data
+
+        # persist rows
+        for row in rows:
+            person_table.put_item(Item=row)
+            created_rows.append(row)
+
+        return nhs_number
+
+    # cleanup hook
+    def cleanup():
+        for row in created_rows:
+            person_table.delete_item(
+                Key={
+                    "NHS_NUMBER": row["NHS_NUMBER"],
+                    "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"],
+                }
+            )
+
+    request.addfinalizer(cleanup)  # noqa: PT021
+
+    return _factory
+
+
+@pytest.fixture
+def persisted_person_previous(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+    nhs_num_hash = hashing_service.hash_with_previous_secret(nhs_num)  # AWSPREVIOUS
+
+    date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
+
+    for row in (
+        rows := person_rows_builder(nhs_num_hash, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
+    ):
+        person_table.put_item(Item=row)
+
+    yield nhs_number
+
+    for row in rows:
+        person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
+
+
+@pytest.fixture
+def persisted_person_not_hashed(
+    person_table: Any,
+    faker: Faker,
+) -> Generator[eligibility_status.NHSNumber]:
     nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
 
@@ -360,13 +508,18 @@ def persisted_person(person_table: Any, faker: Faker) -> Generator[eligibility_s
 
 
 @pytest.fixture
-def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+def persisted_77yo_person(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+    nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
+
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=77, maximum_age=77))
 
     for row in (
         rows := person_rows_builder(
-            nhs_number,
+            nhs_num_hash,
             date_of_birth=date_of_birth,
             postcode="hp1",
             cohorts=["cohort1", "cohort2"],
@@ -381,13 +534,18 @@ def persisted_77yo_person(person_table: Any, faker: Faker) -> Generator[eligibil
 
 
 @pytest.fixture
-def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+def persisted_person_all_cohorts(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+    nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
+
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=74, maximum_age=74))
 
     for row in (
         rows := person_rows_builder(
-            nhs_number,
+            nhs_num_hash,
             date_of_birth=date_of_birth,
             postcode="SW19",
             cohorts=["cohort_label1", "cohort_label2", "cohort_label3", "cohort_label4", "cohort_label5"],
@@ -403,13 +561,18 @@ def persisted_person_all_cohorts(person_table: Any, faker: Faker) -> Generator[e
 
 
 @pytest.fixture
-def person_with_all_data(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+def person_with_all_data(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+    nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
+
     date_of_birth = eligibility_status.DateOfBirth(datetime.date(1990, 2, 28))
 
     for row in (
         rows := person_rows_builder(
-            nhs_number=nhs_number,
+            nhs_number=nhs_num_hash,
             date_of_birth=date_of_birth,
             gender="0",
             postcode="SW18",
@@ -435,10 +598,14 @@ def person_with_all_data(person_table: Any, faker: Faker) -> Generator[eligibili
 
 
 @pytest.fixture
-def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
+def persisted_person_no_cohorts(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+    nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
 
-    for row in (rows := person_rows_builder(nhs_number).data):
+    for row in (rows := person_rows_builder(nhs_num_hash).data):
         person_table.put_item(Item=row)
 
     yield nhs_number
@@ -448,11 +615,14 @@ def persisted_person_no_cohorts(person_table: Any, faker: Faker) -> Generator[el
 
 
 @pytest.fixture
-def persisted_person_pc_sw19(person_table: Any, faker: Faker) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(
-        faker.nhs_number(),
-    )
-    for row in (rows := person_rows_builder(nhs_number, postcode="SW19", cohorts=["cohort1"]).data):
+def persisted_person_pc_sw19(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+    nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
+
+    for row in (rows := person_rows_builder(nhs_num_hash, postcode="SW19", cohorts=["cohort1"]).data):
         person_table.put_item(Item=row)
 
     yield nhs_number
@@ -463,13 +633,16 @@ def persisted_person_pc_sw19(person_table: Any, faker: Faker) -> Generator[eligi
 
 @pytest.fixture
 def persisted_person_with_no_person_attribute_type(
-    person_table: Any, faker: Faker
+    person_table: Any, faker: Faker, hashing_service: HashingService
 ) -> Generator[eligibility_status.NHSNumber]:
-    nhs_number = eligibility_status.NHSNumber(faker.nhs_number())
     date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=18, maximum_age=65))
 
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+    nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
+
     for row in (
-        rows := person_rows_builder(nhs_number, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
+        rows := person_rows_builder(nhs_num_hash, date_of_birth=date_of_birth, postcode="hp1", cohorts=["cohort1"]).data
     ):
         if row["ATTRIBUTE_TYPE"] != "PERSON":
             person_table.put_item(Item=row)
@@ -926,3 +1099,54 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
     )
     yield campaign
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+# If you put StubSecretRepo in a separate module, import it instead
+class StubSecretRepo(SecretRepo):
+    # def __init__(self, current: str = AWS_CURRENT_SECRET, previous: str = AWS_PREVIOUS_SECRET):
+    def __init__(self, current: str | None, previous: str | None):
+        self._current = current
+        self._previous = previous
+
+    def get_secret_current(self, secret_name: str) -> dict[str, str]:  # noqa: ARG002
+        if self._current:
+            return {"AWSCURRENT": self._current}
+        return {}
+
+    def get_secret_previous(self, secret_name: str) -> dict[str, str]:  # noqa: ARG002
+        if self._previous:
+            return {"AWSPREVIOUS": self._previous}
+        return {}
+
+
+@pytest.fixture
+def hashing_service() -> HashingService:
+    secret_repo = StubSecretRepo(
+        current=AWS_CURRENT_SECRET,
+        previous=AWS_PREVIOUS_SECRET,
+    )
+
+    # The actual value of the name does not matter for the stub,
+    # but we keep it realistic for readability.
+    hash_secret_name = HashSecretName("eligibility-signposting-api-dev/hashing_secret")
+
+    return HashingService(
+        secret_repo=secret_repo,
+        hash_secret_name=hash_secret_name,
+    )
+
+
+@pytest.fixture
+def hashing_service_factory() -> Callable[[str | None, str | None], HashingService]:
+    def _factory(
+        current: str | None = AWS_CURRENT_SECRET, previous: str | None = AWS_PREVIOUS_SECRET
+    ) -> HashingService:
+        secret_repo = StubSecretRepo(current=current, previous=previous)
+        hash_secret_name = HashSecretName("eligibility-signposting-api-dev/hashing_secret")
+
+        return HashingService(
+            secret_repo=secret_repo,
+            hash_secret_name=hash_secret_name,
+        )
+
+    return _factory
