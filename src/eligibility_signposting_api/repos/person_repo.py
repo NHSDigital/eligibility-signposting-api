@@ -61,7 +61,7 @@ class PersonRepo:
         if nhs_hashed_with_current:
             items = self.get_person_record(nhs_hashed_with_current)
         if not items:
-            logger.warning("The AWSPREVIOUS secret was tried, but no person record was found")
+            logger.warning("The AWSCURRENT secret was tried, but no person record was found")
 
             # Hash using AWSPREVIOUS secret and fetch items
             nhs_hashed_with_previous = self._hashing_service.hash_with_previous_secret(nhs_number)
