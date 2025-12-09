@@ -15,7 +15,7 @@ permissions:
 jobs:
   generate-report:
     runs-on: ubuntu-latest
-    environment: prod
+    environment: reporting
 
     steps:
       - name: Checkout code
