@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -42,7 +42,7 @@ jobs:
           echo "PYTHON_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV
 
       - name: setup python venv
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: '${{ env.PYTHON_VERSION }}'
