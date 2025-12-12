@@ -272,13 +272,14 @@ s3transfer = ">=0.14.0,<0.15.0"
 
 [[package]]
 name = "awscli-local"
-version = "0.22.0"
+version = "0.22.2"
 description = "Thin wrapper around the \"aws\" command line interface for use with LocalStack"
 optional = false
 python-versions = "*"
 groups = ["dev"]
 files = [
-    {file = "awscli-local-0.22.0.tar.gz", hash = "sha256:3807cf2ee4bbdd4df4dfc8bef027f25bde523dcaf8119720f677ed95ebba66a4"},
+    {file = "awscli_local-0.22.2-py3-none-any.whl", hash = "sha256:1901ebef343ba8cbde06f9f6406b5415ef53e93296718c2c31c9d49b0b09bd9d"},
+    {file = "awscli_local-0.22.2.tar.gz", hash = "sha256:07c532c372753bf5f15426451dc91d6eec9de8779748049329a9a882bdac8a0b"},
 ]
 
 [package.dependencies]
@@ -3983,4 +3984,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "aeb045b6961b3cdb68c552efa12e86c00655f65ef3a85fba28906411d8fdb485"
+content-hash = "914ba7704387be11186c3914409b8bb40e909fb02d6446df562f3ac71a944820"
