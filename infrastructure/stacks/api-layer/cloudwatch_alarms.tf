@@ -495,18 +495,19 @@ resource "aws_cloudwatch_metric_alarm" "acm_expiry_alarms" {
 # Splunk backup S3 bucket delivery failure alarm
 resource "aws_cloudwatch_metric_alarm" "splunk_backup_delivery_failure" {
   alarm_name          = "SplunkBackupS3DeliveryFailure"
-  alarm_description   = "Triggers when there is a delivery failure from Firehose to the Splunk backup S3 bucket"
+  alarm_description   = "Triggers when there are any objects in the backup S3 bucket, indicating a delivery failure to Splunk."
   namespace           = "AWS/Firehose"
-  metric_name         = "DeliveryToS3.Failed"
+  metric_name         = "NumberOfObjects"
   statistic           = "Sum"
-  period              = 300 # 5 minutes
+  period              = 3600 # 1 hour
   evaluation_periods  = 1
-  threshold           = 1
-  comparison_operator = "GreaterThanOrEqualToThreshold"
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    DeliveryStreamName = module.splunk_forwarder.firehose_delivery_stream_name
+    BucketName  = "eli-splunk"
+    StorageType = "AllStorageTypes"
   }
 
   alarm_actions = [aws_sns_topic.cloudwatch_alarms.arn]
@@ -514,7 +515,7 @@ resource "aws_cloudwatch_metric_alarm" "splunk_backup_delivery_failure" {
   tags = {
     Environment = var.environment
     AlertType   = "data-delivery"
-    Service     = "firehose"
+    Service     = "s3"
     Severity    = "high"
     ManagedBy   = "terraform"
   }
