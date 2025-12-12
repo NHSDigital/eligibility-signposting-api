@@ -639,6 +639,8 @@ resource "aws_iam_policy" "firehose_readonly" {
 }
 
 resource "aws_iam_policy" "cloudwatch_management" {
+  #checkov:skip=CKV_AWS_355: GetMetricWidgetImage requires wildcard resource
+  #checkov:skip=CKV_AWS_290: GetMetricWidgetImage requires wildcard resource
   name        = "cloudwatch-management"
   description = "Allow GitHub Actions to manage CloudWatch logs, alarms, and SNS topics"
   path        = "/service-policies/"
@@ -646,6 +648,14 @@ resource "aws_iam_policy" "cloudwatch_management" {
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          # GetMetricWidgetImage does not support resource-level permissions
+          "cloudwatch:GetMetricWidgetImage"
+        ],
+        Resource = "*"
+      },
       {
         Effect = "Allow",
         Action = [
@@ -664,7 +674,6 @@ resource "aws_iam_policy" "cloudwatch_management" {
           "cloudwatch:TagResource",
           "cloudwatch:UntagResource",
           "cloudwatch:GetDashboard",
-          "cloudwatch:GetMetricWidgetImage",
 
           "sns:CreateTopic",
           "sns:DeleteTopic",
