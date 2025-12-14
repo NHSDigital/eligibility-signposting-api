@@ -7,6 +7,35 @@ import base64
 from datetime import datetime
 from pathlib import Path
 
+# Context definitions for widgets
+WIDGET_CONTEXT = {
+    "DynamoDB": "Shows the consumed write capacity units for the DynamoDB table. High usage may indicate need for scaling.",
+    "Lambda": "Number of times the Lambda function was invoked. Spikes may indicate increased traffic or retries.",
+    "5xx": "Server-side errors. Should be zero ideally.",
+    "4xx": "Client-side errors. Frequent 4xx errors might indicate issues with client requests.",
+    "Latency": "Response time of the service. Lower is better.",
+    "CPU": "CPU utilization percentage. Consistently high CPU might require instance upsizing.",
+    "Memory": "Memory usage. Ensure there is sufficient headroom.",
+    "Errors": "Count of error events.",
+    "Throttles": "Number of throttled requests. Indicates capacity limits are being hit."
+}
+
+def get_widget_description(title):
+    """
+    Get a description for a widget based on keywords in its title.
+    """
+    title_lower = title.lower()
+    description_parts = []
+
+    for key, desc in WIDGET_CONTEXT.items():
+        if key.lower() in title_lower:
+            description_parts.append(desc)
+
+    if not description_parts:
+        return "Performance metric visualization."
+
+    return " ".join(description_parts)
+
 def generate_html_report(images_dir='dashboard_exports', output_file=None):
     """
     Generate an HTML report with all dashboard widget images.
@@ -35,7 +64,7 @@ def generate_html_report(images_dir='dashboard_exports', output_file=None):
 
     # Get dashboard name and timestamp from definition file
     dashboard_name = "Monthly Demand And Capacity Report - EliD"
-    report_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    report_date = datetime.now().strftime('%d %B %Y at %H:%M')
 
     # Build HTML
     html_content = f"""<!DOCTYPE html>
@@ -43,8 +72,18 @@ def generate_html_report(images_dir='dashboard_exports', output_file=None):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Report - {dashboard_name}</title>
+    <title>NHS Dashboard Report - {dashboard_name}</title>
     <style>
+        :root {{
+            --nhs-blue: #005EB8;
+            --nhs-white: #FFFFFF;
+            --nhs-black: #231f20;
+            --nhs-dark-grey: #425563;
+            --nhs-mid-grey: #768692;
+            --nhs-pale-grey: #E8EDEE;
+            --nhs-warm-yellow: #FFB81C;
+        }}
+
         * {{
             margin: 0;
             padding: 0;
@@ -52,110 +91,129 @@ def generate_html_report(images_dir='dashboard_exports', output_file=None):
         }}
 
         body {{
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-            color: #333;
+            font-family: "Frutiger W01", Arial, sans-serif;
+            background: var(--nhs-pale-grey);
+            color: var(--nhs-black);
+            line-height: 1.5;
         }}
 
-        .container {{
-            max-width: 1400px;
+        .nhs-header {{
+            background-color: var(--nhs-blue);
+            color: var(--nhs-white);
+            padding: 24px 0;
+            margin-bottom: 32px;
+        }}
+
+        .nhs-container {{
+            max-width: 960px;
             margin: 0 auto;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 0 16px;
         }}
 
-        .header {{
-            background: linear-gradient(135deg, #232F3E 0%, #FF9900 100%);
-            color: white;
-            padding: 30px 40px;
-            border-bottom: 4px solid #FF9900;
+        .nhs-logo {{
+            font-weight: 700;
+            font-size: 24px;
+            letter-spacing: -0.5px;
+            display: inline-block;
+            margin-right: 16px;
+            padding-right: 16px;
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
         }}
 
-        .header h1 {{
-            font-size: 32px;
+        .report-title {{
+            font-size: 24px;
             font-weight: 600;
-            margin-bottom: 10px;
+            display: inline-block;
         }}
 
-        .header .subtitle {{
-            font-size: 16px;
+        .report-meta {{
+            margin-top: 8px;
+            font-size: 14px;
             opacity: 0.9;
         }}
 
         .content {{
-            padding: 40px;
+            padding-bottom: 48px;
         }}
 
-        .widget {{
-            margin-bottom: 40px;
+        .widget-card {{
+            background: var(--nhs-white);
+            border: 1px solid #d8dde0;
+            border-bottom: 4px solid var(--nhs-blue);
+            margin-bottom: 32px;
+            padding: 24px;
             page-break-inside: avoid;
         }}
 
+        .widget-header {{
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--nhs-pale-grey);
+            padding-bottom: 16px;
+        }}
+
         .widget-title {{
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 600;
-            color: #232F3E;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #FF9900;
+            color: var(--nhs-black);
+            margin-bottom: 8px;
+        }}
+
+        .widget-description {{
+            font-size: 16px;
+            color: var(--nhs-dark-grey);
+            background: #f0f4f5;
+            padding: 12px;
+            border-left: 4px solid var(--nhs-mid-grey);
+        }}
+
+        .widget-image-container {{
+            margin-top: 20px;
+            text-align: center;
         }}
 
         .widget-image {{
-            width: 100%;
+            max-width: 100%;
             height: auto;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid var(--nhs-pale-grey);
         }}
 
         .footer {{
-            background: #f8f8f8;
-            padding: 20px 40px;
             text-align: center;
-            color: #666;
+            padding: 32px 0;
+            color: var(--nhs-mid-grey);
             font-size: 14px;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid #d8dde0;
+            margin-top: 48px;
         }}
 
         @media print {{
             body {{
                 background: white;
-                padding: 0;
             }}
-
-            .container {{
-                box-shadow: none;
+            .nhs-header {{
+                background: white;
+                color: black;
+                border-bottom: 2px solid var(--nhs-blue);
             }}
-
-            .widget {{
-                page-break-inside: avoid;
-            }}
-        }}
-
-        @media (max-width: 768px) {{
-            body {{
-                padding: 10px;
-            }}
-
-            .content {{
-                padding: 20px;
-            }}
-
-            .header {{
-                padding: 20px;
+            .widget-card {{
+                border: none;
+                border-bottom: 1px solid #ccc;
             }}
         }}
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📊 {dashboard_name}</h1>
-            <div class="subtitle">Last 8 Weeks Report • Generated: {report_date}</div>
+    <header class="nhs-header">
+        <div class="nhs-container">
+            <div class="header-content">
+                <span class="nhs-logo">NHS</span>
+                <h1 class="report-title">{dashboard_name}</h1>
+                <div class="report-meta">Generated on {report_date}</div>
+            </div>
         </div>
+    </header>
 
-        <div class="content">
+    <div class="nhs-container content">
 """
 
     # Add each widget image
@@ -167,27 +225,35 @@ def generate_html_report(images_dir='dashboard_exports', output_file=None):
         # Replace underscores with spaces
         title = title.replace('_', ' ')
 
+        description = get_widget_description(title)
+
         # Read and encode image
         with open(image_file, 'rb') as f:
             image_data = base64.b64encode(f.read()).decode('utf-8')
 
         html_content += f"""
-            <div class="widget">
+        <div class="widget-card">
+            <div class="widget-header">
                 <div class="widget-title">{idx}. {title}</div>
+                <div class="widget-description">{description}</div>
+            </div>
+            <div class="widget-image-container">
                 <img class="widget-image"
                     src="data:image/png;base64,{image_data}"
                     alt="{title}">
             </div>
+        </div>
 """
 
     # Close HTML
     html_content += """
-        </div>
-
-        <div class="footer">
-            Generated from AWS CloudWatch Dashboard
-        </div>
     </div>
+
+    <footer class="footer">
+        <div class="nhs-container">
+            <p>Eligibility Data Product • Generated from AWS CloudWatch</p>
+        </div>
+    </footer>
 </body>
 </html>
 """
@@ -196,11 +262,10 @@ def generate_html_report(images_dir='dashboard_exports', output_file=None):
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html_content)
 
-    print(f"\n✓ Report generated: {output_file}")
+    print(f"\n✓ Capacity and Demand Report generated: {output_file}")
     print(f"\nTo view:")
     print(f"  - Open in browser: file://{Path(output_file).absolute()}")
     print(f"  - Or run: xdg-open {output_file}")
-    print(f"\nTo save as PDF: Open in browser → Print → Save as PDF")
 
     return output_file
 
