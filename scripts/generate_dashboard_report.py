@@ -36,31 +36,63 @@ def get_widget_description(title):
 
     return " ".join(description_parts)
 
-def generate_html_report(images_dir='dashboard_exports', output_file=None):
+def generate_section_html(env_name, images_dir):
     """
-    Generate an HTML report with all dashboard widget images.
-    Images are embedded as base64 for portability.
+    Generate HTML for a specific environment section.
     """
-
     images_path = Path(images_dir)
-
     if not images_path.exists():
-        print(f"Error: Directory {images_dir} not found")
-        return None
+        return f"<p>No data found for {env_name}</p>"
 
-    # Find all PNG images
     image_files = sorted(images_path.glob('*.png'))
-
     if not image_files:
-        print(f"Error: No PNG images found in {images_dir}")
-        return None
+        return f"<p>No images found for {env_name}</p>"
 
-    print(f"Found {len(image_files)} images to include in report")
+    html = f"""
+    <div class="env-section">
+        <h2 class="env-title">{env_name}</h2>
+    """
+
+    for idx, image_file in enumerate(image_files, 1):
+        filename = image_file.stem
+        title = filename.split('_', 1)[1] if '_' in filename else filename
+        title = title.replace('_', ' ')
+        description = get_widget_description(title)
+
+        with open(image_file, 'rb') as f:
+            image_data = base64.b64encode(f.read()).decode('utf-8')
+
+        html += f"""
+        <div class="widget-card">
+            <div class="widget-header">
+                <div class="widget-title">{idx}. {title}</div>
+                <div class="widget-description">{description}</div>
+            </div>
+            <div class="widget-image-container">
+                <img class="widget-image"
+                    src="data:image/png;base64,{image_data}"
+                    alt="{title}">
+            </div>
+        </div>
+        """
+
+    html += "</div>"
+    return html
+
+def generate_html_report(base_dir='dashboard_exports', output_file=None):
+    """
+    Generate an HTML report with all dashboard widget images from multiple environments.
+    """
+    base_path = Path(base_dir)
+
+    if not base_path.exists():
+        print(f"Error: Base directory {base_dir} not found")
+        return None
 
     # Default output filename
     if output_file is None:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_file = f'{images_dir}/dashboard_report_{timestamp}.html'
+        output_file = f'{base_dir}/dashboard_report_{timestamp}.html'
 
     # Get dashboard name and timestamp from definition file
     dashboard_name = "Monthly Demand And Capacity Report - EliD"
@@ -136,6 +168,32 @@ def generate_html_report(images_dir='dashboard_exports', output_file=None):
             padding-bottom: 48px;
         }}
 
+        .section-header {{
+            background: var(--nhs-white);
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            border-left: 8px solid var(--nhs-blue);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }}
+
+        .section-header h2 {{
+            font-size: 24px;
+            color: var(--nhs-blue);
+            margin: 0;
+        }}
+
+        .env-section {{
+            margin-bottom: 48px;
+        }}
+
+        .env-title {{
+            font-size: 20px;
+            color: var(--nhs-dark-grey);
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #d8dde0;
+        }}
+
         .widget-card {{
             background: var(--nhs-white);
             border: 1px solid #d8dde0;
@@ -199,6 +257,11 @@ def generate_html_report(images_dir='dashboard_exports', output_file=None):
                 border: none;
                 border-bottom: 1px solid #ccc;
             }}
+            .section-header {{
+                border: none;
+                padding: 0;
+                margin-bottom: 16px;
+            }}
         }}
     </style>
 </head>
@@ -216,34 +279,28 @@ def generate_html_report(images_dir='dashboard_exports', output_file=None):
     <div class="nhs-container content">
 """
 
-    # Add each widget image
-    for idx, image_file in enumerate(image_files, 1):
-        # Extract widget title from filename (remove number prefix and extension)
-        filename = image_file.stem
-        # Remove leading number and underscore (e.g., "01_")
-        title = filename.split('_', 1)[1] if '_' in filename else filename
-        # Replace underscores with spaces
-        title = title.replace('_', ' ')
-
-        description = get_widget_description(title)
-
-        # Read and encode image
-        with open(image_file, 'rb') as f:
-            image_data = base64.b64encode(f.read()).decode('utf-8')
-
-        html_content += f"""
-        <div class="widget-card">
-            <div class="widget-header">
-                <div class="widget-title">{idx}. {title}</div>
-                <div class="widget-description">{description}</div>
-            </div>
-            <div class="widget-image-container">
-                <img class="widget-image"
-                    src="data:image/png;base64,{image_data}"
-                    alt="{title}">
-            </div>
+    # ---------------------------------------------------------
+    # Section 1: Production
+    # ---------------------------------------------------------
+    html_content += """
+        <div class="section-header">
+            <h2>Production Environment</h2>
         </div>
-"""
+    """
+    html_content += generate_section_html("Prod", base_path / "Prod")
+
+    # ---------------------------------------------------------
+    # Section 2: Preprod Environments
+    # ---------------------------------------------------------
+    html_content += """
+        <div class="section-header" style="margin-top: 48px;">
+            <h2>Preprod Environments</h2>
+        </div>
+    """
+
+    # Order: Preprod, Test, Dev
+    for env in ["Preprod", "Test", "Dev"]:
+        html_content += generate_section_html(env, base_path / env)
 
     # Close HTML
     html_content += """
