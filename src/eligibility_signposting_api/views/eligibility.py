@@ -54,6 +54,7 @@ def check_eligibility(
             query_params["includeActions"],
             query_params["conditions"],
             query_params["category"],
+            request.headers.get("X-Correlation-ID"),
         )
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
