@@ -3,7 +3,9 @@ import logging
 from wireup import service
 
 from eligibility_signposting_api.model import eligibility_status
+from eligibility_signposting_api.model.campaign_config import CampaignConfig
 from eligibility_signposting_api.repos import CampaignRepo, NotFoundError, PersonRepo
+from eligibility_signposting_api.repos.consumer_mapping_repo import ConsumerMappingRepo
 from eligibility_signposting_api.services.calculators import eligibility_calculator as calculator
 
 logger = logging.getLogger(__name__)
@@ -24,11 +26,13 @@ class EligibilityService:
         person_repo: PersonRepo,
         campaign_repo: CampaignRepo,
         calculator_factory: calculator.EligibilityCalculatorFactory,
+        consumer_mapping_repo: ConsumerMappingRepo
     ) -> None:
         super().__init__()
         self.person_repo = person_repo
         self.campaign_repo = campaign_repo
         self.calculator_factory = calculator_factory
+        self.consumer_mapping = consumer_mapping_repo
 
     def get_eligibility_status(
         self,
@@ -36,16 +40,24 @@ class EligibilityService:
         include_actions: str,
         conditions: list[str],
         category: str,
+        consumer_id: str,
     ) -> eligibility_status.EligibilityStatus:
         """Calculate a person's eligibility for vaccination given an NHS number."""
         if nhs_number:
             try:
                 person_data = self.person_repo.get_eligibility_data(nhs_number)
                 campaign_configs = list(self.campaign_repo.get_campaign_configs())
+                consumer_mappings = self.consumer_mapping.get_sanctioned_campaign_ids(consumer_id)
+                sanctioned_campaign_ids: list[CampaignConfig] = [
+                    campaign for campaign in campaign_configs
+                    if campaign.id in consumer_mappings
+                ]
+
             except NotFoundError as e:
                 raise UnknownPersonError from e
             else:
-                calc: calculator.EligibilityCalculator = self.calculator_factory.get(person_data, campaign_configs)
+                calc: calculator.EligibilityCalculator = self.calculator_factory.get(person_data,
+                                                                                     sanctioned_campaign_ids)
                 return calc.get_eligibility_status(include_actions, conditions, category)
 
         raise UnknownPersonError  # pragma: no cover
