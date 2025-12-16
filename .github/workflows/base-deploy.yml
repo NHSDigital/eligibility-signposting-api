@@ -36,7 +36,7 @@ jobs:
       promoted_environment: ${{ steps.promoted_env.outputs.promoted_environment }}
     steps:
       - name: "Checkout ref"
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
           fetch-depth: 0  # get full history + tags
@@ -114,7 +114,7 @@ jobs:
       environment: ${{ needs.metadata.outputs.promoted_environment }}
       steps:
         - name: "Checkout repository at ref"
-          uses: actions/checkout@v5
+          uses: actions/checkout@v6
           with:
             ref: ${{ needs.metadata.outputs.ref }}
             fetch-depth: 0
@@ -171,7 +171,7 @@ jobs:
     environment: ${{ needs.metadata.outputs.environment }}
     steps:
       - name: "Checkout repository at ref"
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.metadata.outputs.ref }}
           fetch-depth: 0
