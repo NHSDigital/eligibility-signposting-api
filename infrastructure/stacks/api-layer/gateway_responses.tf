@@ -11,6 +11,10 @@ resource "aws_api_gateway_gateway_response" "response_4xx" {
     "gatewayresponse.header.Strict-Transport-Security" = "'max-age=31536000; includeSubDomains'"
     "gatewayresponse.header.X-Content-Type-Options"    = "'nosniff'"
   }
+
+  lifecycle {
+    ignore_changes = [response_templates]
+  }
 }
 
 resource "aws_api_gateway_gateway_response" "response_5xx" {
@@ -21,6 +25,10 @@ resource "aws_api_gateway_gateway_response" "response_5xx" {
     "gatewayresponse.header.Cache-Control"             = "'no-store, private'"
     "gatewayresponse.header.Strict-Transport-Security" = "'max-age=31536000; includeSubDomains'"
     "gatewayresponse.header.X-Content-Type-Options"    = "'nosniff'"
+  }
+
+  lifecycle {
+    ignore_changes = [response_templates]
   }
 }
 
@@ -34,6 +42,10 @@ resource "aws_api_gateway_gateway_response" "unauthorized" {
     "gatewayresponse.header.Strict-Transport-Security" = "'max-age=31536000; includeSubDomains'"
     "gatewayresponse.header.X-Content-Type-Options"    = "'nosniff'"
   }
+
+  lifecycle {
+    ignore_changes = [response_templates]
+  }
 }
 
 resource "aws_api_gateway_gateway_response" "access_denied" {
@@ -46,6 +58,10 @@ resource "aws_api_gateway_gateway_response" "access_denied" {
     "gatewayresponse.header.Strict-Transport-Security" = "'max-age=31536000; includeSubDomains'"
     "gatewayresponse.header.X-Content-Type-Options"    = "'nosniff'"
   }
+
+  lifecycle {
+    ignore_changes = [response_templates]
+  }
 }
 
 resource "aws_api_gateway_gateway_response" "throttled" {
@@ -57,5 +73,9 @@ resource "aws_api_gateway_gateway_response" "throttled" {
     "gatewayresponse.header.Cache-Control"             = "'no-store, private'"
     "gatewayresponse.header.Strict-Transport-Security" = "'max-age=31536000; includeSubDomains'"
     "gatewayresponse.header.X-Content-Type-Options"    = "'nosniff'"
+  }
+
+  lifecycle {
+    ignore_changes = [response_templates]
   }
 }

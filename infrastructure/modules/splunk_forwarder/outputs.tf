@@ -9,3 +9,9 @@ output "firehose_kms_key_arn" {
   description = "ARN of the KMS key used for Firehose encryption"
   value       = aws_kms_key.firehose_splunk_cmk.arn
 }
+
+#
+output "firehose_delivery_stream_name" {
+  description = "Name of the Kinesis Firehose delivery stream for Splunk"
+  value       = aws_kinesis_firehose_delivery_stream.splunk_delivery_stream.name
+}
