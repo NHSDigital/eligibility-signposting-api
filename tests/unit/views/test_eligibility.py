@@ -60,6 +60,7 @@ class FakeEligibilityService(EligibilityService):
         _include_actions: str,
         _conditions: list[str],
         _category: str,
+        _consumer_id: str,
     ) -> EligibilityStatus:
         return EligibilityStatusFactory.build()
 
@@ -74,6 +75,7 @@ class FakeUnknownPersonEligibilityService(EligibilityService):
         _include_actions: str,
         _conditions: list[str],
         _category: str,
+        _consumer_id: str,
     ) -> EligibilityStatus:
         raise UnknownPersonError
 
@@ -100,7 +102,7 @@ def test_security_headers_present_on_successful_response(app: Flask, client: Fla
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
     ):
         # When
-        headers = {"nhs-login-nhs-number": "9876543210"}
+        headers = {"nhs-login-nhs-number": "9876543210", "Consumer-Id": "test_consumer_id"}
         response = client.get("/patient-check/9876543210", headers=headers)
 
         # Then

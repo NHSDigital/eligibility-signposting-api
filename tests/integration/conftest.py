@@ -21,6 +21,7 @@ from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
     AvailableAction,
     CampaignConfig,
+    CampaignID,
     EndDate,
     RuleCode,
     RuleEntry,
@@ -28,9 +29,9 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleText,
     RuleType,
     StartDate,
-    StatusText, CampaignID,
+    StatusText,
 )
-from eligibility_signposting_api.model.consumer_mapping import ConsumerMapping, ConsumerId
+from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 from eligibility_signposting_api.processors.hashing_service import HashingService, HashSecretName
 from eligibility_signposting_api.repos import SecretRepo
 from eligibility_signposting_api.repos.campaign_repo import BucketName
@@ -727,19 +728,21 @@ def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generato
     yield campaign
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
+
 @pytest.fixture(scope="class")
 def consumer_mapping(s3_client: BaseClient, consumer_mapping_bucket: BucketName) -> Generator[ConsumerMapping]:
     consumer_mapping = ConsumerMapping.model_validate({})
-    consumer_mapping.root[ConsumerId("23-mic7heal-jor6don")] = [
-        CampaignID("42-hi5tch-hi5kers-gu5ide-t2o-t3he-gal6axy")
-    ]
+    consumer_mapping.root[ConsumerId("23-mic7heal-jor6don")] = [CampaignID("42-hi5tch-hi5kers-gu5ide-t2o-t3he-gal6axy")]
 
     consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
     s3_client.put_object(
-        Bucket=consumer_mapping_bucket, Key=f"consumer_mapping.json", Body=json.dumps(consumer_mapping_data), ContentType="application/json"
+        Bucket=consumer_mapping_bucket,
+        Key="consumer_mapping.json",
+        Body=json.dumps(consumer_mapping_data),
+        ContentType="application/json",
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key=f"consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
 @pytest.fixture
