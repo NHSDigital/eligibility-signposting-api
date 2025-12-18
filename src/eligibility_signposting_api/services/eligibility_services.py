@@ -25,8 +25,8 @@ class EligibilityService:
         self,
         person_repo: PersonRepo,
         campaign_repo: CampaignRepo,
+        consumer_mapping_repo: ConsumerMappingRepo,
         calculator_factory: calculator.EligibilityCalculatorFactory,
-        consumer_mapping_repo: ConsumerMappingRepo
     ) -> None:
         super().__init__()
         self.person_repo = person_repo

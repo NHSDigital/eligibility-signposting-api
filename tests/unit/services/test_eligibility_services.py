@@ -5,6 +5,7 @@ from hamcrest import assert_that, empty
 
 from eligibility_signposting_api.model.eligibility_status import NHSNumber
 from eligibility_signposting_api.repos import CampaignRepo, NotFoundError, PersonRepo
+from eligibility_signposting_api.repos.consumer_mapping_repo import ConsumerMappingRepo
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculatorFactory
 from tests.fixtures.matchers.eligibility import is_eligibility_status
@@ -13,13 +14,14 @@ from tests.fixtures.matchers.eligibility import is_eligibility_status
 def test_eligibility_service_returns_from_repo():
     # Given
     person_repo = MagicMock(spec=PersonRepo)
+    consumer_mapping_repo = MagicMock(spec=ConsumerMappingRepo)
     campaign_repo = MagicMock(spec=CampaignRepo)
     person_repo.get_eligibility = MagicMock(return_value=[])
-    service = EligibilityService(person_repo, campaign_repo, EligibilityCalculatorFactory())
+    service = EligibilityService(person_repo, campaign_repo, EligibilityCalculatorFactory(), consumer_mapping_repo)
 
     # When
     actual = service.get_eligibility_status(
-        NHSNumber("1234567890"), include_actions="Y", conditions=["ALL"], category="ALL"
+        NHSNumber("1234567890"), include_actions="Y", conditions=["ALL"], category="ALL", consumer_id="test_consumer_id"
     )
 
     # Then
