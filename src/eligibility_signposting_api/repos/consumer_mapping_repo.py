@@ -5,7 +5,7 @@ from botocore.client import BaseClient
 from wireup import Inject, service
 
 from eligibility_signposting_api.model.campaign_config import CampaignID
-from eligibility_signposting_api.model.consumer_mapping import ConsumerMapping, ConsumerId
+from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 
 BucketName = NewType("BucketName", str)
 
