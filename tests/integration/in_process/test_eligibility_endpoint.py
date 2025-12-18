@@ -14,6 +14,7 @@ from hamcrest import (
 )
 
 from eligibility_signposting_api.model.campaign_config import CampaignConfig
+from eligibility_signposting_api.model.consumer_mapping import ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import (
     NHSNumber,
 )
@@ -25,11 +26,12 @@ class TestBaseLine:
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
         headers = {"nhs-login-nhs-number": str(persisted_person),
-                   "Consumer-ID":"dummy"}
+                   "Consumer-ID": "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}", headers=headers)
