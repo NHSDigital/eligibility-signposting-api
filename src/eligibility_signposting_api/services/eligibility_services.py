@@ -47,17 +47,17 @@ class EligibilityService:
             try:
                 person_data = self.person_repo.get_eligibility_data(nhs_number)
                 campaign_configs = list(self.campaign_repo.get_campaign_configs())
-                consumer_mappings = self.consumer_mapping.get_sanctioned_campaign_ids(consumer_id)
-                sanctioned_campaign_ids: list[CampaignConfig] = [
+                permitted_campaign_ids = self.consumer_mapping.get_permitted_campaign_ids(consumer_id)
+                permitted_campaign_configs: list[CampaignConfig] = [
                     campaign for campaign in campaign_configs
-                    if campaign.id in consumer_mappings
+                    if campaign.id in permitted_campaign_ids
                 ]
 
             except NotFoundError as e:
                 raise UnknownPersonError from e
             else:
                 calc: calculator.EligibilityCalculator = self.calculator_factory.get(person_data,
-                                                                                     sanctioned_campaign_ids)
+                                                                                     permitted_campaign_configs)
                 return calc.get_eligibility_status(include_actions, conditions, category)
 
         raise UnknownPersonError  # pragma: no cover

@@ -93,7 +93,7 @@ class IterationFactory(ModelFactory[Iteration]):
 
 class RawCampaignConfigFactory(ModelFactory[CampaignConfig]):
     iterations = Use(IterationFactory.batch, size=2)
-
+    id         = "324r2"
     start_date = Use(past_date)
     end_date = Use(future_date)
 

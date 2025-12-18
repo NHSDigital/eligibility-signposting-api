@@ -28,7 +28,8 @@ class TestBaseLine:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person)}
+        headers = {"nhs-login-nhs-number": str(persisted_person),
+                   "Consumer-ID":"dummy"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}", headers=headers)

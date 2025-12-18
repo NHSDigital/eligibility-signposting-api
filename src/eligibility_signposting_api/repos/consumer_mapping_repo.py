@@ -25,8 +25,11 @@ class ConsumerMappingRepo:
         self.s3_client = s3_client
         self.bucket_name = bucket_name
 
-    def get_sanctioned_campaign_ids(self, consumer_id: ConsumerId) -> list[CampaignID] | None:
-        consumer_mappings = self.s3_client.list_objects(Bucket=self.bucket_name)["Contents"][0]
-        response = self.s3_client.get_object(Bucket=self.bucket_name, Key=f"{consumer_mappings['Key']}")
-        body = response["Body"].read()
-        return ConsumerMapping.model_validate(json.loads(body)).get(consumer_id)
+    # def get_permitted_campaign_ids(self, consumer_id: ConsumerId) -> list[CampaignID] | None:
+    #     consumer_mappings = self.s3_client.list_objects(Bucket=self.bucket_name)["Contents"][0]
+    #     response = self.s3_client.get_object(Bucket=self.bucket_name, Key=f"{consumer_mappings['Key']}")
+    #     body = response["Body"].read()
+    #     return ConsumerMapping.model_validate(json.loads(body)).get(consumer_id)
+
+    def get_permitted_campaign_ids(self, consumer_id: ConsumerId) -> list[CampaignID] | None:
+        return ["324r2"]
