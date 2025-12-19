@@ -83,9 +83,10 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person_no_cohorts: NHSNumber,
         campaign_config: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts)}
+        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y", headers=headers)
@@ -127,9 +128,10 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
         campaign_config: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19)}
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
@@ -171,9 +173,10 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person)}
+        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -221,8 +224,9 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
         campaign_config: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
-        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
@@ -272,9 +276,10 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config_with_and_rule: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person)}
+        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -326,9 +331,10 @@ class TestVirtualCohortResponse:
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19)}
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
@@ -370,9 +376,10 @@ class TestVirtualCohortResponse:
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person)}
+        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -420,9 +427,10 @@ class TestVirtualCohortResponse:
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
@@ -474,9 +482,10 @@ class TestResponseOnMissingAttributes:
         client: FlaskClient,
         persisted_person_no_cohorts: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts)}
+        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y", headers=headers)
@@ -512,9 +521,10 @@ class TestResponseOnMissingAttributes:
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19)}
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
@@ -550,9 +560,10 @@ class TestResponseOnMissingAttributes:
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person)}
+        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -594,9 +605,10 @@ class TestResponseOnMissingAttributes:
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
@@ -640,9 +652,10 @@ class TestResponseOnMissingAttributes:
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_77yo_person)}
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=N", headers=headers)
@@ -714,9 +727,10 @@ class TestEligibilityResponseWithVariousInputs:
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config_with_rules_having_rule_code: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person)}
+        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -764,9 +778,10 @@ class TestEligibilityResponseWithVariousInputs:
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config_with_rules_having_rule_mapper: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person)}
+        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
