@@ -745,6 +745,29 @@ def consumer_mapping(s3_client: BaseClient, consumer_mapping_bucket: BucketName)
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
+@pytest.fixture(scope="class")
+def consumer_mapping_with_various_targets(
+    s3_client: BaseClient, consumer_mapping_bucket: BucketName
+) -> Generator[ConsumerMapping]:
+    consumer_mapping = ConsumerMapping.model_validate({})
+    consumer_mapping.root[ConsumerId("23-mic7heal-jor6don")] = [
+        CampaignID("campaign_start_date"),
+        CampaignID("campaign_start_date_plus_one_day"),
+        CampaignID("campaign_today"),
+        CampaignID("campaign_tomorrow"),
+    ]
+
+    consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
+    s3_client.put_object(
+        Bucket=consumer_mapping_bucket,
+        Key="consumer_mapping.json",
+        Body=json.dumps(consumer_mapping_data),
+        ContentType="application/json",
+    )
+    yield consumer_mapping
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+
+
 @pytest.fixture
 def campaign_config_with_rules_having_rule_code(
     s3_client: BaseClient, rules_bucket: BucketName

@@ -29,9 +29,10 @@ from eligibility_signposting_api.model.eligibility_status import (
 )
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.views.eligibility import (
+    _get_or_default_query_params,
     build_actions,
     build_eligibility_cohorts,
-    build_suitability_results, _get_or_default_query_params,
+    build_suitability_results,
 )
 from eligibility_signposting_api.views.response_model import eligibility_response
 from tests.fixtures.builders.model.eligibility import (
