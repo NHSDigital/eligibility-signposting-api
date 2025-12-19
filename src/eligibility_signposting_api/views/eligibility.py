@@ -13,7 +13,8 @@ from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.common.api_error_response import NHS_NUMBER_NOT_FOUND_ERROR
 from eligibility_signposting_api.common.request_validator import validate_request_params
-from eligibility_signposting_api.config.constants import URL_PREFIX
+from eligibility_signposting_api.config.constants import CONSUMER_ID, URL_PREFIX
+from eligibility_signposting_api.model.consumer_mapping import ConsumerId
 from eligibility_signposting_api.model.eligibility_status import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.views.response_model import eligibility_response
@@ -48,13 +49,14 @@ def check_eligibility(
 ) -> ResponseReturnValue:
     logger.info("checking nhs_number %r in %r", nhs_number, eligibility_service, extra={"nhs_number": nhs_number})
     try:
-        query_params = get_or_default_query_params()
+        query_params = _get_or_default_query_params()
+        consumer_id = _get_consumer_id_from_headers()
         eligibility_status = eligibility_service.get_eligibility_status(
             nhs_number,
             query_params["includeActions"],
             query_params["conditions"],
             query_params["category"],
-            request.headers.get("Consumer-ID"),
+            consumer_id,
         )
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
@@ -64,7 +66,14 @@ def check_eligibility(
         return make_response(response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK)
 
 
-def get_or_default_query_params() -> dict[str, Any]:
+def _get_consumer_id_from_headers() -> ConsumerId:
+    """
+    @validate_request_params() ensures the consumer ID is never null at this stage.
+    """
+    return ConsumerId(request.headers.get(CONSUMER_ID, ""))
+
+
+def _get_or_default_query_params() -> dict[str, Any]:
     default_query_params = {"category": "ALL", "conditions": ["ALL"], "includeActions": "Y"}
 
     if not request.args:
