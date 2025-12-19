@@ -31,8 +31,7 @@ from eligibility_signposting_api.services import EligibilityService, UnknownPers
 from eligibility_signposting_api.views.eligibility import (
     build_actions,
     build_eligibility_cohorts,
-    build_suitability_results,
-    get_or_default_query_params,
+    build_suitability_results, _get_or_default_query_params,
 )
 from eligibility_signposting_api.views.response_model import eligibility_response
 from tests.fixtures.builders.model.eligibility import (
@@ -509,7 +508,7 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
 
 def test_get_or_default_query_params_with_no_args(app: Flask):
     with app.test_request_context("/patient-check"):
-        result = get_or_default_query_params()
+        result = _get_or_default_query_params()
 
         expected = {"category": "ALL", "conditions": ["ALL"], "includeActions": "Y"}
 
@@ -518,7 +517,7 @@ def test_get_or_default_query_params_with_no_args(app: Flask):
 
 def test_get_or_default_query_params_with_all_args(app: Flask):
     with app.test_request_context("/patient-check?includeActions=Y&category=VACCINATIONS&conditions=FLU"):
-        result = get_or_default_query_params()
+        result = _get_or_default_query_params()
 
         expected = {"includeActions": "Y", "category": "VACCINATIONS", "conditions": ["FLU"]}
 
@@ -527,7 +526,7 @@ def test_get_or_default_query_params_with_all_args(app: Flask):
 
 def test_get_or_default_query_params_with_partial_args(app: Flask):
     with app.test_request_context("/patient-check?includeActions=N"):
-        result = get_or_default_query_params()
+        result = _get_or_default_query_params()
 
         expected = {"includeActions": "N", "category": "ALL", "conditions": ["ALL"]}
 
@@ -536,13 +535,13 @@ def test_get_or_default_query_params_with_partial_args(app: Flask):
 
 def test_get_or_default_query_params_with_lowercase_y(app: Flask):
     with app.test_request_context("/patient-check?includeActions=y"):
-        result = get_or_default_query_params()
+        result = _get_or_default_query_params()
         assert_that(result["includeActions"], is_("Y"))
 
 
 def test_get_or_default_query_params_missing_include_actions(app: Flask):
     with app.test_request_context("/patient-check?category=SCREENING&conditions=COVID19,FLU"):
-        result = get_or_default_query_params()
+        result = _get_or_default_query_params()
 
         expected = {"includeActions": "Y", "category": "SCREENING", "conditions": ["COVID19", "FLU"]}
 

@@ -13,6 +13,7 @@ from hamcrest import (
     has_key,
 )
 
+from eligibility_signposting_api.config.constants import CONSUMER_ID
 from eligibility_signposting_api.model.campaign_config import CampaignConfig
 from eligibility_signposting_api.model.consumer_mapping import ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import (
@@ -30,7 +31,7 @@ class TestBaseLine:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), "Consumer-ID": "23-mic7heal-jor6don"}
+        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: "23-mic7heal-jor6don"}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}", headers=headers)
