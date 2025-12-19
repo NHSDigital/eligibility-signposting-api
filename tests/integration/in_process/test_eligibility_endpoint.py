@@ -324,6 +324,23 @@ class TestStandardResponse:
             ),
         )
 
+    def test_empty_response_when_no_campaign_mapped_to_consumer(
+        self,
+        client: FlaskClient,
+        persisted_person: NHSNumber,
+        campaign_config: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
+    ):
+        # Given
+        consumer_id_not_having_mapping = "23-jo4hn-ce4na"
+        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: consumer_id_not_having_mapping}
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
+
+        # Then
+        assert_that(response, is_response().with_status_code(HTTPStatus.NOT_FOUND))
+
 
 class TestVirtualCohortResponse:
     def test_not_eligible_by_rule_when_only_virtual_cohort_is_present(
