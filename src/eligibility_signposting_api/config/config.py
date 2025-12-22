@@ -22,6 +22,7 @@ ApiDomainName = NewType("ApiDomainName", str)
 def config() -> dict[str, Any]:
     person_table_name = TableName(os.getenv("PERSON_TABLE_NAME", "test_eligibility_datastore"))
     rules_bucket_name = BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket"))
+    consumer_mapping_bucket_name = BucketName(os.getenv("CONSUMER_MAPPING_BUCKET_NAME", "test-consumer-mapping-bucket"))
     audit_bucket_name = BucketName(os.getenv("AUDIT_BUCKET_NAME", "test-audit-bucket"))
     hashing_secret_name = HashSecretName(os.getenv("HASHING_SECRET_NAME", "test_secret"))
     aws_default_region = AwsRegion(os.getenv("AWS_DEFAULT_REGION", "eu-west-1"))
@@ -41,6 +42,7 @@ def config() -> dict[str, Any]:
             "s3_endpoint": None,
             "rules_bucket_name": rules_bucket_name,
             "audit_bucket_name": audit_bucket_name,
+            "consumer_mapping_bucket_name": consumer_mapping_bucket_name,
             "firehose_endpoint": None,
             "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
             "enable_xray_patching": enable_xray_patching,
@@ -59,6 +61,7 @@ def config() -> dict[str, Any]:
         "s3_endpoint": URL(os.getenv("S3_ENDPOINT", local_stack_endpoint)),
         "rules_bucket_name": rules_bucket_name,
         "audit_bucket_name": audit_bucket_name,
+        "consumer_mapping_bucket_name": consumer_mapping_bucket_name,
         "firehose_endpoint": URL(os.getenv("FIREHOSE_ENDPOINT", local_stack_endpoint)),
         "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
         "enable_xray_patching": enable_xray_patching,
