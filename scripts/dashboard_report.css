@@ -1,0 +1,158 @@
+/* NHS Dashboard Report Styles */
+:root {
+    --nhs-blue: #005EB8;
+    --nhs-white: #FFFFFF;
+    --nhs-black: #231f20;
+    --nhs-dark-grey: #425563;
+    --nhs-mid-grey: #768692;
+    --nhs-pale-grey: #E8EDEE;
+    --nhs-warm-yellow: #FFB81C;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Frutiger W01", Arial, sans-serif;
+    background: var(--nhs-pale-grey);
+    color: var(--nhs-black);
+    line-height: 1.5;
+}
+
+.nhs-header {
+    background-color: var(--nhs-blue);
+    color: var(--nhs-white);
+    padding: 24px 0;
+    margin-bottom: 32px;
+}
+
+.nhs-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+.nhs-logo {
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: -0.5px;
+    display: inline-block;
+    margin-right: 16px;
+    padding-right: 16px;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.report-title {
+    font-size: 24px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.report-meta {
+    margin-top: 8px;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.content {
+    padding-bottom: 48px;
+}
+
+.section-header {
+    background: var(--nhs-white);
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    border-left: 8px solid var(--nhs-blue);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section-header h2 {
+    font-size: 24px;
+    color: var(--nhs-blue);
+    margin: 0;
+}
+
+.env-section {
+    margin-bottom: 48px;
+}
+
+.env-title {
+    font-size: 20px;
+    color: var(--nhs-dark-grey);
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #d8dde0;
+}
+
+.widget-card {
+    background: var(--nhs-white);
+    border: 1px solid #d8dde0;
+    border-bottom: 4px solid var(--nhs-blue);
+    margin-bottom: 32px;
+    padding: 24px;
+    page-break-inside: avoid;
+}
+
+.widget-header {
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--nhs-pale-grey);
+    padding-bottom: 16px;
+}
+
+.widget-title {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--nhs-black);
+    margin-bottom: 8px;
+}
+
+.widget-description {
+    font-size: 16px;
+    color: var(--nhs-dark-grey);
+    background: #f0f4f5;
+    padding: 12px;
+    border-left: 4px solid var(--nhs-mid-grey);
+}
+
+.widget-image-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.widget-image {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--nhs-pale-grey);
+}
+
+.footer {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--nhs-mid-grey);
+    font-size: 14px;
+    border-top: 1px solid #d8dde0;
+    margin-top: 48px;
+}
+
+@media print {
+    body {
+        background: white;
+    }
+    .nhs-header {
+        background: white;
+        color: black;
+        border-bottom: 2px solid var(--nhs-blue);
+    }
+    .widget-card {
+        border: none;
+        border-bottom: 1px solid #ccc;
+    }
+    .section-header {
+        border: none;
+        padding: 0;
+        margin-bottom: 16px;
+    }
+}

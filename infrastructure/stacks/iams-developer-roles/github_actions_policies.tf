@@ -639,6 +639,8 @@ resource "aws_iam_policy" "firehose_readonly" {
 }
 
 resource "aws_iam_policy" "cloudwatch_management" {
+  #checkov:skip=CKV_AWS_355: GetMetricWidgetImage requires wildcard resource
+  #checkov:skip=CKV_AWS_290: GetMetricWidgetImage requires wildcard resource
   name        = "cloudwatch-management"
   description = "Allow GitHub Actions to manage CloudWatch logs, alarms, and SNS topics"
   path        = "/service-policies/"
@@ -646,6 +648,14 @@ resource "aws_iam_policy" "cloudwatch_management" {
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          # GetMetricWidgetImage does not support resource-level permissions
+          "cloudwatch:GetMetricWidgetImage"
+        ],
+        Resource = "*"
+      },
       {
         Effect = "Allow",
         Action = [
@@ -663,6 +673,7 @@ resource "aws_iam_policy" "cloudwatch_management" {
           "cloudwatch:ListTagsForResource",
           "cloudwatch:TagResource",
           "cloudwatch:UntagResource",
+          "cloudwatch:GetDashboard",
 
           "sns:CreateTopic",
           "sns:DeleteTopic",
@@ -683,6 +694,7 @@ resource "aws_iam_policy" "cloudwatch_management" {
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-waf-logs-*",
           "arn:aws:cloudwatch:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alarm:*",
+          "arn:aws:cloudwatch::${data.aws_caller_identity.current.account_id}:dashboard/Demand_And_Capacity_*",
           "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/default-eligibility-signposting-api*",
         ]
