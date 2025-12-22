@@ -519,32 +519,3 @@ resource "aws_cloudwatch_metric_alarm" "splunk_backup_delivery_failure" {
     ManagedBy   = "terraform"
   }
 }
-
-resource "aws_cloudwatch_metric_alarm" "splunk_backup_objects_present" {
-  alarm_name          = "SplunkBackupS3ObjectsPresent"
-  alarm_description   = "Triggers if there are any objects in the backup S3 bucket, indicating a Firehose delivery failure to Splunk."
-
-  namespace           = "AWS/S3"
-  metric_name         = "NumberOfObjects"
-  statistic           = "Average"
-  period              = 3600
-  evaluation_periods  = 1
-  threshold           = 0
-  comparison_operator = "GreaterThanThreshold"
-  treat_missing_data  = "notBreaching"
-
-  dimensions = {
-    BucketName  = "${var.project_name}-${var.environment}-eli-splunk"
-    StorageType = "AllStorageTypes"
-  }
-
-  alarm_actions = [aws_sns_topic.cloudwatch_alarms.arn]
-
-  tags = {
-    Environment = var.environment
-    AlertType   = "data-delivery-failure"
-    Service     = "s3"
-    Severity    = "high"
-    ManagedBy   = "terraform"
-  }
-}
