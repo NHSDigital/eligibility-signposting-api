@@ -20,6 +20,10 @@ class InvalidQueryParamError(Exception):
     pass
 
 
+class NoPermittedCampaignsError(Exception):
+    pass
+
+
 @service
 class EligibilityService:
     def __init__(
@@ -70,4 +74,4 @@ class EligibilityService:
                 campaign for campaign in campaign_configs if campaign.id in permitted_campaign_ids
             ]
             return permitted_campaign_configs
-        return []
+        raise NoPermittedCampaignsError
