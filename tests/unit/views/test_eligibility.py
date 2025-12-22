@@ -28,6 +28,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     UrlLink,
 )
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
+from eligibility_signposting_api.services.eligibility_services import NoPermittedCampaignsError
 from eligibility_signposting_api.views.eligibility import (
     _get_or_default_query_params,
     build_actions,
@@ -93,6 +94,20 @@ class FakeUnexpectedErrorEligibilityService(EligibilityService):
     ) -> EligibilityStatus:
         raise ValueError
 
+class FakeNoPermittedCampaignsService(EligibilityService):
+    def __init__(self):
+        pass
+
+    def get_eligibility_status(
+        self,
+        _nhs_number: NHSNumber,
+        _include_actions: str,
+        _conditions: list[str],
+        _category: str,
+        _consumer_id: str,
+    ) -> EligibilityStatus:
+        # Simulate the new error scenario
+        raise NoPermittedCampaignsError
 
 def test_security_headers_present_on_successful_response(app: Flask, client: FlaskClient):
     """Test that security headers are present on successful eligibility check response."""
@@ -583,3 +598,74 @@ def test_status_endpoint(app: Flask, client: FlaskClient):
                 )
             ),
         )
+
+
+def test_no_permitted_campaigns_for_consumer_error(app: Flask, client: FlaskClient):
+    """
+    Tests that NoPermittedCampaignsError is caught and returns
+    the correct FHIR OperationOutcome with FORBIDDEN status.
+    """
+    # Given
+    with (
+        get_app_container(app).override.service(EligibilityService, new=FakeNoPermittedCampaignsService()),
+        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
+    ):
+        headers = {
+            "nhs-login-nhs-number": "9876543210",
+            "Consumer-Id": "unrecognized_consumer"
+        }
+
+        # When
+        response = client.get("/patient-check/9876543210", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.FORBIDDEN)
+            .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
+            .and_text(
+                is_json_that(
+                    has_entries(
+                        resourceType="OperationOutcome",
+                        issue=contains_exactly(
+                            has_entries(
+                                severity="error",
+                                code="forbidden",
+                                diagnostics="Consumer ID 'unrecognized_consumer' was not recognised by the Eligibility Signposting API"
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+
+def test_consumer_id_is_passed_to_service(app: Flask, client: FlaskClient):
+    """
+    Verifies that the consumer ID from the header is actually passed
+    to the eligibility service call.
+    """
+    # Given
+    mock_service = MagicMock(spec=EligibilityService)
+    mock_service.get_eligibility_status.return_value = EligibilityStatusFactory.build()
+
+    with (
+        get_app_container(app).override.service(EligibilityService, new=mock_service),
+        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
+    ):
+        headers = {
+            "nhs-login-nhs-number": "1234567890",
+            "Consumer-Id": "specific_consumer_123"
+        }
+
+        # When
+        client.get("/patient-check/1234567890", headers=headers)
+
+        # Then
+        # Verify the 5th positional argument or the keyword argument 'consumer_id'
+        mock_service.get_eligibility_status.assert_called_once()
+        args, kwargs = mock_service.get_eligibility_status.call_args
+
+        # Check that 'specific_consumer_123' was the consumer_id passed
+        assert args[4] == "specific_consumer_123"
