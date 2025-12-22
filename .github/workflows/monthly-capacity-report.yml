@@ -13,8 +13,56 @@ permissions:
   id-token: write # Required for AWS OIDC authentication
 
 jobs:
+  export-dashboards:
+    runs-on: ubuntu-latest
+    environment: reporting
+    strategy:
+      matrix:
+        env_config:
+          - name: Prod
+            dashboard: Demand_And_Capacity_Prod
+            account_secret: AWS_PROD_ACCOUNT_ID
+          - name: Preprod
+            dashboard: Demand_And_Capacity_Preprod
+            account_secret: AWS_PREPROD_ACCOUNT_ID
+          - name: Test
+            dashboard: Demand_And_Capacity_Test
+            account_secret: AWS_TEST_ACCOUNT_ID
+          - name: Dev
+            dashboard: Demand_And_Capacity_Dev
+            account_secret: AWS_DEV_ACCOUNT_ID
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Configure AWS Credentials (${{ matrix.env_config.name }})
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets[matrix.env_config.account_secret] }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: Export Dashboard (${{ matrix.env_config.name }})
+        run: |
+          chmod +x scripts/export_dashboard_image.sh
+          ./scripts/export_dashboard_image.sh ${{ matrix.env_config.dashboard }} ${{ matrix.env_config.name }}
+        env:
+          AWS_REGION: eu-west-2
+
+      - name: Upload dashboard export
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-${{ matrix.env_config.name }}
+          path: dashboard_exports/**/*
+
   generate-report:
     runs-on: ubuntu-latest
+    needs: export-dashboards
     environment: reporting
 
     steps:
@@ -26,67 +74,13 @@ jobs:
         with:
           python-version: "3.11"
 
-      # ----------------------------------------------------------------
-      # 1. Export PROD
-      # ----------------------------------------------------------------
-      - name: "Configure AWS Credentials (Prod)"
-        uses: aws-actions/configure-aws-credentials@v5
+      - name: Download all dashboard exports
+        uses: actions/download-artifact@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_PROD_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
-          aws-region: eu-west-2
+          path: dashboard_exports
+          pattern: dashboard-*
+          merge-multiple: true
 
-      - name: Export Dashboard (Prod)
-        run: |
-          chmod +x scripts/export_dashboard_image.sh
-          ./scripts/export_dashboard_image.sh Demand_And_Capacity_Prod Prod
-        env:
-          AWS_REGION: eu-west-2
-
-      # ----------------------------------------------------------------
-      # 2. Export PREPROD
-      # ----------------------------------------------------------------
-      - name: "Configure AWS Credentials (Preprod)"
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_PREPROD_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
-          aws-region: eu-west-2
-
-      - name: Export Dashboard (Preprod)
-        run: ./scripts/export_dashboard_image.sh Demand_And_Capacity_Preprod Preprod
-        env:
-          AWS_REGION: eu-west-2
-
-      # ----------------------------------------------------------------
-      # 3. Export TEST
-      # ----------------------------------------------------------------
-      - name: "Configure AWS Credentials (Test)"
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_TEST_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
-          aws-region: eu-west-2
-
-      - name: Export Dashboard (Test)
-        run: ./scripts/export_dashboard_image.sh Demand_And_Capacity_Test Test
-        env:
-          AWS_REGION: eu-west-2
-
-      # ----------------------------------------------------------------
-      # 4. Export DEV
-      # ----------------------------------------------------------------
-      - name: "Configure AWS Credentials (Dev)"
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_DEV_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
-          aws-region: eu-west-2
-
-      - name: Export Dashboard (Dev)
-        run: ./scripts/export_dashboard_image.sh Demand_And_Capacity_Dev Dev
-        env:
-          AWS_REGION: eu-west-2
-
-      # ----------------------------------------------------------------
-      # Generate & Notify
-      # ----------------------------------------------------------------
       - name: Generate Combined Report
         run: python3 scripts/generate_dashboard_report.py --input dashboard_exports
 

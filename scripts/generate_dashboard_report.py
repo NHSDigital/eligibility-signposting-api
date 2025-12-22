@@ -2,7 +2,6 @@
 """
 Generate an HTML report from exported dashboard images
 """
-import os
 import base64
 from datetime import datetime
 from pathlib import Path
