@@ -49,8 +49,11 @@ def main() -> None:
     try:
         with Path(args.config_path).open() as file:
             json_data = json.load(file)
-            RulesValidation(**json_data)
+            result = RulesValidation(**json_data)
             sys.stdout.write(f"{GREEN}Valid Config{RESET}\n")
+            sys.stdout.write(f"{COLON_COLOR}Current Iteration Number is {RESET}{RIGHT_COLOR}"
+                f"{result.campaign_config.current_iteration.iteration_number}{RESET}\n"
+            )
 
             # Group by class
             grouped = defaultdict(list)
@@ -63,11 +66,11 @@ def main() -> None:
                 methods = sorted(grouped[cls_name])
                 # First method prints class name
                 first = methods[0]
-                colored = f"{LEFT_COLOR}{cls_name}{RESET}{COLON_COLOR}:{RESET}{RIGHT_COLOR}{first}{RESET}"
+                colored = f"{LEFT_COLOR}{cls_name}{RESET}{COLON_COLOR}:{RESET}{RIGHT_COLOR}{first}{RESET}\n"
                 sys.stdout.write(colored)
                 # Rest methods indented
                 for method_name in methods[1:]:
-                    colored = f"{' ' * len(cls_name)}{COLON_COLOR}:{RESET}{RIGHT_COLOR}{method_name}{RESET}"
+                    colored = f"{' ' * len(cls_name)}{COLON_COLOR}:{RESET}{RIGHT_COLOR}{method_name}{RESET}\n"
                     sys.stdout.write(colored)
 
     except ValidationError as e:
