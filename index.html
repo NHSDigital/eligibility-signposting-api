@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <title>Campaign Config Validator - NHS Digital</title>
   <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
   <style>
@@ -225,9 +225,12 @@
       .replace(/\x1b\[91m/g, '<span class="ansi-red">')
       .replace(/\x1b\[0m/g, '</span>');
 
-    output.innerHTML += cleanText + "\n";
-    output.scrollTop = output.scrollHeight;
+  if (cleanText.includes("Valid Config")) {
+    cleanText = cleanText.replace(/Valid Config/g, '<span style="font-size:2em;font-weight:bold;color:#007f3b">Valid Config</span>');
   }
+  output.innerHTML += cleanText + "\n";
+  output.scrollTop = output.scrollHeight;
+}
 
   function clearLog() {
     output.innerHTML = "";
@@ -248,6 +251,8 @@
     "src/eligibility_signposting_api/model/campaign_config.py",
     "src/eligibility_signposting_api/config/__init__.py",
     "src/eligibility_signposting_api/config/constants.py",
+    "src/rules_validation_api/decorators/__init__.py",
+    "src/rules_validation_api/decorators/tracker.py",
     "src/rules_validation_api/__init__.py",
     "src/rules_validation_api/validators/__init__.py",
     "src/rules_validation_api/validators/rules_validator.py",

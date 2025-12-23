@@ -3,8 +3,10 @@ import re
 from pydantic import field_validator
 
 from eligibility_signposting_api.model.campaign_config import AvailableAction
+from rules_validation_api.decorators.tracker import track_validators
 
 
+@track_validators
 class AvailableActionValidation(AvailableAction):
     @field_validator("action_description")
     @classmethod
