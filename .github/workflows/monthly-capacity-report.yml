@@ -1,0 +1,75 @@
+name: Monthly Demand and Capacity Report
+
+on:
+  # Run monthly on the 1st at 9 AM UTC
+  schedule:
+    - cron: "0 9 1 * *"
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # Required for AWS OIDC authentication
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: Generate dashboard report
+        run: |
+          chmod +x scripts/export_dashboard_image.sh
+          ./scripts/export_dashboard_image.sh Demand_And_Capacity_Prod
+        env:
+          AWS_REGION: eu-west-2
+
+      - name: Upload report as artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: capacity-report
+          path: |
+            dashboard_exports/*.html
+            dashboard_exports/*.png
+          retention-days: 90
+
+      - name: Send to Slack
+        if: success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_D_AND_C_WEBHOOK }}
+        run: |
+          # Get the latest HTML report
+          REPORT_FILE=$(ls -t dashboard_exports/dashboard_report_*.html | head -1)
+          REPORT_NAME=$(basename "$REPORT_FILE")
+
+          # GitHub Actions URL
+          GITHUB_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          # Send Slack notification with simple variables for Workflow Automation
+          curl -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d @- <<EOF
+          {
+            "report_title": "📊 Monthly Demand & Capacity Report - EliD - Prod",
+            "report_period": "Last 8 weeks",
+            "generated_date": "$(date +'%Y-%m-%d %H:%M UTC')",
+            "widgets_count": "7",
+            "github_url": "$GITHUB_URL",
+            "report_name": "$REPORT_NAME"
+          }
+          EOF

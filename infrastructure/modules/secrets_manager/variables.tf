@@ -1,6 +1,6 @@
 variable "external_write_access_role_arn" {
-  description = "Arn of the external write access role to provide secret manager access"
-  type        = string
+  description = "List of ARNs for external write access roles"
+  type = list(string)
 }
 
 variable "eligibility_lambda_role_arn" {

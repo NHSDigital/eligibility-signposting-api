@@ -530,3 +530,34 @@ resource "aws_iam_role_policy" "external_audit_kms_access_policy" {
   role   = aws_iam_role.write_access_role[count.index].id
   policy = data.aws_iam_policy_document.external_role_s3_audit_kms_access_policy.json
 }
+
+# IAM policy document for Lambda secret access
+data "aws_iam_policy_document" "secrets_access_policy" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+    ]
+
+    resources = [
+      module.secrets_manager.aws_hashing_secret_arn
+    ]
+  }
+}
+
+# Attach secret read policy to Lambda role
+resource "aws_iam_role_policy" "lambda_secret_read_policy_attachment" {
+  name   = "LambdaSecretReadAccess"
+  role   = aws_iam_role.eligibility_lambda_role.id
+  policy = data.aws_iam_policy_document.secrets_access_policy.json
+}
+
+# Attach secret read policy to external write role
+resource "aws_iam_role_policy" "external_secret_read_policy_attachment" {
+  count = length(aws_iam_role.write_access_role)
+  name   = "ExternalSecretReadAccess"
+  role   = aws_iam_role.write_access_role[count.index].id
+  policy = data.aws_iam_policy_document.secrets_access_policy.json
+}

@@ -78,3 +78,8 @@ variable "api_domain_name" {
   description = "api domain name - env variable for status endpoint response"
   type        = string
 }
+
+variable "hashing_secret_name" {
+  description = "hashing secret name"
+  type        = string
+}

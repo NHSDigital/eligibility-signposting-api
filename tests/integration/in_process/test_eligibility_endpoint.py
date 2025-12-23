@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+from botocore.client import BaseClient
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask.testing import FlaskClient
@@ -24,6 +25,7 @@ class TestBaseLine:
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config: CampaignConfig,  # noqa: ARG002
+        secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
         headers = {"nhs-login-nhs-number": str(persisted_person)}

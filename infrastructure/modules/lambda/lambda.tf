@@ -24,6 +24,7 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
       LOG_LEVEL                  = var.log_level
       ENABLE_XRAY_PATCHING       = var.enable_xray_patching
       API_DOMAIN_NAME            = var.api_domain_name
+      HASHING_SECRET_NAME        = var.hashing_secret_name
     }
   }
 

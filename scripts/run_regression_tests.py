@@ -70,10 +70,11 @@ def trigger_test_run(
     )
 
     print(f"Dispatch workflow. Unique workflow identifier: {run_id}")
-    assert (
-        response.status_code == 204
-    ), f"Failed to trigger test run. Expected 204, got {response.status_code}. Response: {response.text}"
-
+    assert response.status_code in (200, 204), (
+        f"Failed to trigger test run. "
+        f"Expected 200 or 204, got {response.status_code}. "
+        f"Response: {response.text}"
+    )
 
 def get_workflow_runs(auth_header, run_date_filter):
     print(f"Getting workflow runs after date: {run_date_filter}")
