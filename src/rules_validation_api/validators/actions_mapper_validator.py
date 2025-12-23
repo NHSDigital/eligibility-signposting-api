@@ -1,9 +1,11 @@
 from pydantic import ValidationError, model_validator
 
 from eligibility_signposting_api.model.campaign_config import ActionsMapper
+from rules_validation_api.decorators.tracker import track_validators
 from rules_validation_api.validators.available_action_validator import AvailableActionValidation
 
 
+@track_validators
 class ActionsMapperValidation(ActionsMapper):
     @model_validator(mode="after")
     def validate_keys(self) -> "ActionsMapperValidation":
