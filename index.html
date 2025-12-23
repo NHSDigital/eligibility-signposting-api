@@ -216,14 +216,15 @@
   const jsonInput = document.getElementById("jsonfile");
   const runBtn = document.getElementById("run");
 
-  function log(text) {
-    let cleanText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    // Handle ANSI Colors for Pydantic output
-    cleanText = cleanText
-      .replace(/\x1b\[92m/g, '<span class="ansi-green">')
-      .replace(/\x1b\[93m/g, '<span class="ansi-yellow">')
-      .replace(/\x1b\[91m/g, '<span class="ansi-red">')
-      .replace(/\x1b\[0m/g, '</span>');
+function log(text) {
+  let cleanText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // ANSI color replacements
+  cleanText = cleanText
+    .replace(/\x1b\[92m/g, '<span class="ansi-grey">')   // validator/method green
+    .replace(/\x1b\[93m/g, '<span class="ansi-yellow">')  // general yellow
+    .replace(/\x1b\[34m/g, '<span style="color:#005eb8;font-weight:bold">') // blue
+    .replace(/\x1b\[33m/g, '<span class="ansi-yellow">')  // colon yellow
+    .replace(/\x1b\[0m/g, '</span>');                     // reset
 
   if (cleanText.includes("Valid Config")) {
     cleanText = cleanText.replace(/Valid Config/g, '<span style="font-size:2em;font-weight:bold;color:#007f3b">Valid Config</span>');

@@ -5,6 +5,8 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from rules_validation_api.decorators.tracker import VALIDATORS_CALLED
 from rules_validation_api.validators.rules_validator import RulesValidation
 
@@ -23,15 +25,21 @@ RED = "\033[91m"
 LEFT_COLOR = "\033[34m"  # Blue for class name
 COLON_COLOR = "\033[33m"  # Yellow for colon
 RIGHT_COLOR = "\033[92m"  # Milk green for validator
-CLASS_COLORS = [
-    "\033[34m",  # blue
-    "\033[35m",  # magenta
-    "\033[36m",  # cyan
-    "\033[94m",  # light blue
-    "\033[95m",  # light magenta
-    "\033[96m",  # light cyan
-    "\033[37m",  # white/light grey
-]
+
+
+def refine_error(e: ValidationError) -> str:
+    """Return a very short, single-line error message."""
+    lines = [f"❌Validation Error: {len(e.errors())} validation error(s)"]
+
+    for err in e.errors():
+        loc = ".".join(str(x) for x in err["loc"])
+        msg = err["msg"]
+        type_ = err["type"]
+
+        lines.append(f"{loc} : {msg} [type={type_}]")
+
+    return "\n".join(lines)
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate campaign configuration.")
@@ -50,25 +58,21 @@ def main() -> None:
                 cls, method = v.split(":", 1)
                 grouped[cls].append(method.strip())
 
-            # Assign colors to classes
-            cls_color_map = {}
-            for i, cls_name in enumerate(sorted(grouped.keys(), reverse=True)):
-                cls_color_map[cls_name] = CLASS_COLORS[i % len(CLASS_COLORS)]
-
             # Print grouped
             for cls_name in sorted(grouped.keys(), reverse=True):
                 methods = sorted(grouped[cls_name])
                 # First method prints class name
                 first = methods[0]
-                colored = f"{cls_color_map[cls_name]}{cls_name}{RESET}{COLON_COLOR}:{RESET}{RIGHT_COLOR}{first}{RESET}"
-                print(colored)
+                colored = f"{LEFT_COLOR}{cls_name}{RESET}{COLON_COLOR}:{RESET}{RIGHT_COLOR}{first}{RESET}"
+                sys.stdout.write(colored)
                 # Rest methods indented
                 for method_name in methods[1:]:
                     colored = f"{' ' * len(cls_name)}{COLON_COLOR}:{RESET}{RIGHT_COLOR}{method_name}{RESET}"
-                    print(colored)
+                    sys.stdout.write(colored)
 
-    except ValueError as e:
-        sys.stderr.write(f"{YELLOW}Validation Error:{RESET} {RED}{e}{RESET}\n")
+    except ValidationError as e:
+        clean = refine_error(e)
+        sys.stderr.write(f"{YELLOW}{clean}{RESET}\n")
 
 
 if __name__ == "__main__":
