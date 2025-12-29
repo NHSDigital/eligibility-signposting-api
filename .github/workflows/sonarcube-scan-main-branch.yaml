@@ -28,7 +28,7 @@ jobs:
         run: |
           make test-unit
       - name: "Save the coverage check result"
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: coverage.xml
           path: coverage.xml
