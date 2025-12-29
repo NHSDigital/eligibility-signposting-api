@@ -154,7 +154,7 @@ jobs:
               --region eu-west-2
 
         - name: "Upload lambda artifact for the current workflow"
-          uses: actions/upload-artifact@v5
+          uses: actions/upload-artifact@v6
           with:
             name: lambda-${{ needs.metadata.outputs.tag }}
             path: ./dist/lambda.zip
