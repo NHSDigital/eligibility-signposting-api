@@ -2137,14 +2137,14 @@ files = [
 
 [[package]]
 name = "polyfactory"
-version = "3.0.0"
+version = "3.2.0"
 description = "Mock data generation factories"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["dev"]
 files = [
-    {file = "polyfactory-3.0.0-py3-none-any.whl", hash = "sha256:ad9ba3b3f04c292d30673587946e1c5d18e249074368b09abb7c9455288cfc37"},
-    {file = "polyfactory-3.0.0.tar.gz", hash = "sha256:c1be54fc10fe738415eef2248bcfc687e3d74634f5e73b70e4ba58952df31363"},
+    {file = "polyfactory-3.2.0-py3-none-any.whl", hash = "sha256:5945799cce4c56cd44ccad96fb0352996914553cc3efaa5a286930599f569571"},
+    {file = "polyfactory-3.2.0.tar.gz", hash = "sha256:879242f55208f023eee1de48522de5cb1f9fd2d09b2314e999a9592829d596d1"},
 ]
 
 [package.dependencies]
@@ -2155,7 +2155,7 @@ typing-extensions = ">=4.6.0"
 attrs = ["attrs (>=22.2.0)"]
 beanie = ["beanie", "pydantic[email]", "pymongo (<4.9)"]
 full = ["attrs", "beanie", "msgspec", "odmantic", "pydantic", "sqlalchemy"]
-msgspec = ["msgspec"]
+msgspec = ["msgspec (>=0.20.0)"]
 odmantic = ["odmantic (<1.0.0)", "pydantic[email]"]
 pydantic = ["eval-type-backport (>=0.2.2)", "pydantic[email] (>=1.10)"]
 sqlalchemy = ["sqlalchemy (>=1.4.29)"]
@@ -3720,4 +3720,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "aedfac585b3b99ae84e6480d95e66eba232b5438d271c03529b4cb41c095d460"
+content-hash = "e6c15b7569655c0ff5da0cc3920d84127280bd61c70ae9ff4ad77f4ee3ac8b40"
