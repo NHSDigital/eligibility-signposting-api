@@ -41,9 +41,9 @@ class AddDaysHandler(DerivedValueHandler):
 
         Args:
             default_days: Default number of days to add when not specified
-                         in token or vaccine_type_days. Defaults to 91.
+                        in token or vaccine_type_days. Defaults to 91.
             vaccine_type_days: Dictionary mapping vaccine types to their
-                              specific days values. E.g., {"COVID": 91, "FLU": 365}
+                        specific days values. E.g., {"COVID": 91, "FLU": 365}
         """
         self.default_days = default_days
         self.vaccine_type_days = vaccine_type_days or {}
