@@ -38,7 +38,7 @@ class TestTokenParser:
         ],
     )
     def test_parse_invalid_tokens_raises_error(self, token):
-        with pytest.raises(ValueError, match="Invalid token."):
+        with pytest.raises(ValueError, match=r"Invalid token\."):
             TokenParser.parse(token)
 
     @pytest.mark.parametrize(
@@ -53,5 +53,5 @@ class TestTokenParser:
         ],
     )
     def test_parse_invalid_token_format_raises_error(self, token):
-        with pytest.raises(ValueError, match="Invalid token format."):
+        with pytest.raises(ValueError, match=r"Invalid token format\."):
             TokenParser.parse(token)

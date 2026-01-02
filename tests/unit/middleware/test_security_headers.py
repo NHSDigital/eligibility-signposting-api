@@ -3,7 +3,7 @@
 from http import HTTPStatus
 
 import pytest
-from flask import Flask
+from flask import Flask, make_response
 from flask.testing import FlaskClient
 from hamcrest import assert_that, contains_string, equal_to, has_entries, is_
 
@@ -152,8 +152,6 @@ class TestSecurityHeadersMiddleware:
 
         @app.route("/test")
         def test_route():
-            from flask import make_response
-
             resp = make_response({"status": "ok"}, HTTPStatus.OK)
             resp.headers["Cache-Control"] = "public, max-age=3600"
             return resp

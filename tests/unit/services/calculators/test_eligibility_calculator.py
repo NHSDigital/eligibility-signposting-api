@@ -1436,7 +1436,7 @@ def test_eligibility_status_with_invalid_tokens_raises_attribute_error(faker: Fa
 
     calculator = EligibilityCalculator(person_rows, campaign_configs)
 
-    with pytest.raises(ValueError, match="Invalid token."):
+    with pytest.raises(ValueError, match=r"Invalid token format\."):
         calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
 
