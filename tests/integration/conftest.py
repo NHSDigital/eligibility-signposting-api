@@ -21,16 +21,10 @@ from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
     AvailableAction,
     CampaignConfig,
-    CommsRouting,
     EndDate,
-    RuleAttributeLevel,
-    RuleAttributeName,
     RuleCode,
-    RuleDescription,
     RuleEntry,
     RuleName,
-    RuleOperator,
-    RulePriority,
     RuleText,
     RuleType,
     StartDate,
@@ -830,7 +824,7 @@ def inactive_iteration_config(s3_client: BaseClient, rules_bucket: BucketName) -
         )
 
         campaign.start_date = StartDate(datetime.date(2025, 1, 1))
-        campaign.end_date = EndDate(datetime.date(2026, 1, 1))
+        campaign.end_date = EndDate(datetime.date(2027, 1, 1))
         campaign.iterations[0].iteration_date = data[1]
 
         campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
@@ -1123,160 +1117,6 @@ class StubSecretRepo(SecretRepo):
         if self._previous:
             return {"AWSPREVIOUS": self._previous}
         return {}
-
-
-@pytest.fixture
-def person_with_covid_vaccination(
-    person_table: Any, faker: Faker, hashing_service: HashingService
-) -> Generator[eligibility_status.NHSNumber]:
-    """
-    Creates a person with a COVID vaccination record.
-    LAST_SUCCESSFUL_DATE is set to 2026-01-28 (20260128).
-    Used for testing derived values like NEXT_DOSE_DUE with ADD_DAYS function.
-    """
-    nhs_num = faker.nhs_number()
-    nhs_number = eligibility_status.NHSNumber(nhs_num)
-    nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
-
-    date_of_birth = eligibility_status.DateOfBirth(datetime.date(1960, 5, 15))
-
-    for row in (
-        rows := person_rows_builder(
-            nhs_number=nhs_num_hash,
-            date_of_birth=date_of_birth,
-            postcode="SW1A",
-            cohorts=["covid_eligible"],
-            vaccines={"COVID": {"LAST_SUCCESSFUL_DATE": "20260128", "CONDITION_NAME": "COVID"}},
-        ).data
-    ):
-        person_table.put_item(Item=row)
-
-    yield nhs_number
-
-    for row in rows:
-        person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
-
-
-@pytest.fixture(scope="class")
-def campaign_config_with_derived_values(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
-    """
-    Creates a campaign config that uses the ADD_DAYS derived value function.
-    Contains actions for:
-    - DateOfLastVaccination: Shows the raw LAST_SUCCESSFUL_DATE
-    - DateOfNextEarliestVaccination: Shows NEXT_DOSE_DUE derived by adding 91 days
-    """
-    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
-        target="COVID",
-        iterations=[
-            rule.IterationFactory.build(
-                actions_mapper=rule.ActionsMapperFactory.build(
-                    root={
-                        "VACCINATION_DATES": AvailableAction(
-                            ActionType="DataValue",
-                            ExternalRoutingCode="DateOfLastVaccination",
-                            ActionDescription="[[TARGET.COVID.LAST_SUCCESSFUL_DATE]]",
-                        ),
-                        "NEXT_DOSE_DATE": AvailableAction(
-                            ActionType="DataValue",
-                            ExternalRoutingCode="DateOfNextEarliestVaccination",
-                            ActionDescription="[[TARGET.COVID.NEXT_DOSE_DUE:ADD_DAYS(91)]]",
-                        ),
-                    }
-                ),
-                iteration_cohorts=[
-                    rule.IterationCohortFactory.build(
-                        cohort_label="covid_eligible",
-                        cohort_group="covid_vaccination",
-                        positive_description="Eligible for COVID vaccination",
-                        negative_description="Not eligible for COVID vaccination",
-                    ),
-                ],
-                iteration_rules=[
-                    rule.IterationRuleFactory.build(
-                        type=RuleType.redirect,
-                        name=RuleName("Provide vaccination dates"),
-                        description=RuleDescription("Provide vaccination dates to patient"),
-                        priority=RulePriority(10),
-                        operator=RuleOperator.is_not_null,
-                        attribute_level=RuleAttributeLevel.TARGET,
-                        attribute_target="COVID",
-                        attribute_name=RuleAttributeName("LAST_SUCCESSFUL_DATE"),
-                        comms_routing=CommsRouting("VACCINATION_DATES|NEXT_DOSE_DATE"),
-                    ),
-                ],
-                default_comms_routing="VACCINATION_DATES",
-                default_not_eligible_routing="VACCINATION_DATES",
-                default_not_actionable_routing="VACCINATION_DATES",
-            )
-        ],
-    )
-    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
-    s3_client.put_object(
-        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
-    )
-    yield campaign
-    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
-
-
-@pytest.fixture(scope="class")
-def campaign_config_with_derived_values_formatted(
-    s3_client: BaseClient, rules_bucket: BucketName
-) -> Generator[CampaignConfig]:
-    """
-    Creates a campaign config that uses ADD_DAYS with DATE formatting.
-    The NEXT_DOSE_DUE is formatted as "29 April 2026" instead of raw "20260429".
-    """
-    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
-        target="COVID",
-        iterations=[
-            rule.IterationFactory.build(
-                actions_mapper=rule.ActionsMapperFactory.build(
-                    root={
-                        "VACCINATION_DATES": AvailableAction(
-                            ActionType="DataValue",
-                            ExternalRoutingCode="DateOfLastVaccination",
-                            ActionDescription="[[TARGET.COVID.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y)]]",
-                        ),
-                        "NEXT_DOSE_DATE": AvailableAction(
-                            ActionType="DataValue",
-                            ExternalRoutingCode="DateOfNextEarliestVaccination",
-                            ActionDescription="[[TARGET.COVID.NEXT_DOSE_DUE:ADD_DAYS(91):DATE(%d %B %Y)]]",
-                        ),
-                    }
-                ),
-                iteration_cohorts=[
-                    rule.IterationCohortFactory.build(
-                        cohort_label="covid_eligible",
-                        cohort_group="covid_vaccination",
-                        positive_description="Eligible for COVID vaccination",
-                        negative_description="Not eligible for COVID vaccination",
-                    ),
-                ],
-                iteration_rules=[
-                    rule.IterationRuleFactory.build(
-                        type=RuleType.redirect,
-                        name=RuleName("Provide vaccination dates"),
-                        description=RuleDescription("Provide vaccination dates to patient"),
-                        priority=RulePriority(10),
-                        operator=RuleOperator.is_not_null,
-                        attribute_level=RuleAttributeLevel.TARGET,
-                        attribute_target="COVID",
-                        attribute_name=RuleAttributeName("LAST_SUCCESSFUL_DATE"),
-                        comms_routing=CommsRouting("VACCINATION_DATES|NEXT_DOSE_DATE"),
-                    ),
-                ],
-                default_comms_routing="VACCINATION_DATES",
-                default_not_eligible_routing="VACCINATION_DATES",
-                default_not_actionable_routing="VACCINATION_DATES",
-            )
-        ],
-    )
-    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
-    s3_client.put_object(
-        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
-    )
-    yield campaign
-    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
 @pytest.fixture
