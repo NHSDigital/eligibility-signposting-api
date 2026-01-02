@@ -824,6 +824,38 @@ class TestEligibilityResponseWithVariousInputs:
             ),
         )
 
+    def test_response_when_no_campaign_config_is_present(
+        self,
+        client: FlaskClient,
+        persisted_77yo_person: NHSNumber,
+        campaign_config_with_rules_having_rule_mapper: CampaignConfig,  # noqa: ARG002
+        consumer_mapping: ConsumerMapping,  # noqa: ARG002
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+    ):
+        # Given
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: "23-mic7heal-jor6don"}
+
+        # When
+        response = client.get(f'/patient-check/{persisted_77yo_person}?includeActions=N&conditions=FLU',
+                              headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(
+                is_json_that(
+                    has_entry(
+                        "processedSuggestions",
+                        equal_to(
+                            []
+                        ),
+                    )
+                )
+            ),
+        )
+
 
 class TestEligibilityResponseWhenConsumerHasNoMapping:
     def test_empty_response_when_no_campaign_mapped_for_the_consumer(
