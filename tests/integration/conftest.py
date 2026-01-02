@@ -824,7 +824,7 @@ def inactive_iteration_config(s3_client: BaseClient, rules_bucket: BucketName) -
         )
 
         campaign.start_date = StartDate(datetime.date(2025, 1, 1))
-        campaign.end_date = EndDate(datetime.date(2026, 1, 1))
+        campaign.end_date = EndDate(datetime.date(2027, 1, 1))
         campaign.iterations[0].iteration_date = data[1]
 
         campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
