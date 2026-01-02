@@ -4,7 +4,9 @@
 set -e
 
 DASHBOARD_NAME="${1:-Demand_And_Capacity_Prod}"
-OUTPUT_DIR="dashboard_exports"
+ENVIRONMENT="${2:-Prod}"
+OUTPUT_BASE="dashboard_exports"
+OUTPUT_DIR="${OUTPUT_BASE}/${ENVIRONMENT}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 REGION="${AWS_REGION:-eu-west-2}"
 
@@ -15,6 +17,7 @@ echo "========================================="
 echo "CloudWatch Dashboard Image Export"
 echo "========================================="
 echo "Dashboard: $DASHBOARD_NAME"
+echo "Environment: $ENVIRONMENT"
 echo "Region: $REGION"
 echo "Output: $OUTPUT_DIR"
 echo ""
@@ -49,7 +52,7 @@ import sys
 import os
 
 # Read dashboard definition
-with open(f"dashboard_exports/dashboard_definition_{os.environ['TIMESTAMP']}.json") as f:
+with open(f"{os.environ['OUTPUT_DIR']}/dashboard_definition_{os.environ['TIMESTAMP']}.json") as f:
     dashboard_data = json.load(f)
 
 # Parse the dashboard body
@@ -133,10 +136,4 @@ print("========================================")
 PYTHON_SCRIPT
 
 echo ""
-echo "Generating HTML report..."
-python3 scripts/generate_dashboard_report.py --input "${OUTPUT_DIR}"
-
-echo ""
-echo "✓ Complete! Check the ${OUTPUT_DIR}/ directory for:"
-echo "  - Individual widget images (PNG files)"
-echo "  - Combined HTML report (dashboard_report_*.html)"
+echo "✓ Export for $ENVIRONMENT complete!"

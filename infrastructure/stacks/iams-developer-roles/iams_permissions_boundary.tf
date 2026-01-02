@@ -26,6 +26,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "cloudwatch:ListTagsForResource",
       "cloudwatch:TagResource",
       "cloudwatch:UntagResource",
+      "cloudwatch:GetDashboard",
+      "cloudwatch:GetMetricWidgetImage",
 
       # DynamoDB - table management
       "dynamodb:DescribeTimeToLive",
