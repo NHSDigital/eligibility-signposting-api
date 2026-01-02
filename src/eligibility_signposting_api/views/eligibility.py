@@ -11,11 +11,16 @@ from wireup import Injected
 
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
-from eligibility_signposting_api.common.api_error_response import NHS_NUMBER_NOT_FOUND_ERROR
+from eligibility_signposting_api.common.api_error_response import (
+    CONSUMER_HAS_NO_CAMPAIGN_MAPPING,
+    NHS_NUMBER_NOT_FOUND_ERROR,
+)
 from eligibility_signposting_api.common.request_validator import validate_request_params
-from eligibility_signposting_api.config.constants import URL_PREFIX
+from eligibility_signposting_api.config.constants import CONSUMER_ID, URL_PREFIX
+from eligibility_signposting_api.model.consumer_mapping import ConsumerId
 from eligibility_signposting_api.model.eligibility_status import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
+from eligibility_signposting_api.services.eligibility_services import NoPermittedCampaignsError
 from eligibility_signposting_api.views.response_model import eligibility_response
 from eligibility_signposting_api.views.response_model.eligibility_response import ProcessedSuggestion
 
@@ -47,23 +52,36 @@ def check_eligibility(
     nhs_number: NHSNumber, eligibility_service: Injected[EligibilityService], audit_service: Injected[AuditService]
 ) -> ResponseReturnValue:
     logger.info("checking nhs_number %r in %r", nhs_number, eligibility_service, extra={"nhs_number": nhs_number})
+
+    query_params = _get_or_default_query_params()
+    consumer_id = _get_consumer_id_from_headers()
+
     try:
-        query_params = get_or_default_query_params()
         eligibility_status = eligibility_service.get_eligibility_status(
             nhs_number,
             query_params["includeActions"],
             query_params["conditions"],
             query_params["category"],
+            consumer_id,
         )
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
+    except NoPermittedCampaignsError:
+        return handle_no_permitted_campaigns_for_the_consumer_error(consumer_id)
     else:
         response: eligibility_response.EligibilityResponse = build_eligibility_response(eligibility_status)
         AuditContext.write_to_firehose(audit_service)
         return make_response(response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK)
 
 
-def get_or_default_query_params() -> dict[str, Any]:
+def _get_consumer_id_from_headers() -> ConsumerId:
+    """
+    @validate_request_params() ensures the consumer ID is never null at this stage.
+    """
+    return ConsumerId(request.headers.get(CONSUMER_ID, ""))
+
+
+def _get_or_default_query_params() -> dict[str, Any]:
     default_query_params = {"category": "ALL", "conditions": ["ALL"], "includeActions": "Y"}
 
     if not request.args:
@@ -98,6 +116,13 @@ def get_or_default_query_params() -> dict[str, Any]:
 def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:
     diagnostics = f"NHS Number '{nhs_number}' was not recognised by the Eligibility Signposting API"
     return NHS_NUMBER_NOT_FOUND_ERROR.log_and_generate_response(
+        log_message=diagnostics, diagnostics=diagnostics, location_param="id"
+    )
+
+
+def handle_no_permitted_campaigns_for_the_consumer_error(consumer_id: ConsumerId) -> ResponseReturnValue:
+    diagnostics = f"Consumer ID '{consumer_id}' was not recognised by the Eligibility Signposting API"
+    return CONSUMER_HAS_NO_CAMPAIGN_MAPPING.log_and_generate_response(
         log_message=diagnostics, diagnostics=diagnostics, location_param="id"
     )
 
