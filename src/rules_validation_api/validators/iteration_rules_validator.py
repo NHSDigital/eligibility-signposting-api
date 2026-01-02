@@ -9,8 +9,10 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleAttributeName,
     RuleType,
 )
+from rules_validation_api.decorators.tracker import track_validators
 
 
+@track_validators
 class IterationRuleValidation(IterationRule):
     @field_validator("attribute_target")
     @classmethod
