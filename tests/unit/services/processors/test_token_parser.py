@@ -47,7 +47,6 @@ class TestTokenParser:
             "[[PERSON.DATE_OF_BIRTH:DATE(]]",
             "[[PERSON.DATE_OF_BIRTH:DATE)]]",
             "[[PERSON.DATE_OF_BIRTH:DATE]]",
-            "[[PERSON.DATE_OF_BIRTH:INVALID_FORMAT(abc)]]",
             "[[PERSON.DATE_OF_BIRTH:INVALID_FORMAT(a (b) c)]]",
             "[[PERSON.DATE_OF_BIRTH:DATE(a (b) c)]]",
         ],
@@ -55,3 +54,10 @@ class TestTokenParser:
     def test_parse_invalid_token_format_raises_error(self, token):
         with pytest.raises(ValueError, match="Invalid token format."):
             TokenParser.parse(token)
+
+    def test_parse_function_token_valid(self):
+        """Test that valid function tokens are parsed correctly."""
+        # This used to be invalid, but now we support custom functions
+        parsed = TokenParser.parse("[[PERSON.DATE_OF_BIRTH:SOME_FUNC(abc)]]")
+        assert parsed.function_name == "SOME_FUNC"
+        assert parsed.function_args == "abc"
