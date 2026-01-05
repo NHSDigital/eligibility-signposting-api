@@ -5,6 +5,8 @@ from unittest.mock import Mock
 import pytest
 from mangum.types import LambdaContext
 
+from eligibility_signposting_api.app import log_request_ids_from_headers
+
 
 @pytest.fixture
 def lambda_context():
@@ -46,8 +48,6 @@ def lambda_context():
     ],
 )
 def test_log_request_ids_decorator_logs_metadata(headers, gateway_request_id, expected_extra, lambda_context, caplog):
-    from eligibility_signposting_api.app import log_request_ids_from_headers
-
     event = {"headers": headers}
     if gateway_request_id is not None:
         event["requestContext"] = {"requestId": gateway_request_id}
