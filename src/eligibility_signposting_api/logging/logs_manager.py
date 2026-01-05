@@ -32,12 +32,12 @@ def add_lambda_request_id_to_logger() -> Callable:
 class EnrichedJsonFormatter(JsonFormatter):
     def add_fields(
         self,
-        log_record: dict[str, Any],
+        log_data: dict[str, Any],
         record: logging.LogRecord,
         message_dict: dict[str, Any],
     ) -> None:
-        log_record["request_id"] = request_id_context_var.get() or "-"
-        super().add_fields(log_record, record, message_dict)
+        log_data["request_id"] = request_id_context_var.get() or "-"
+        super().add_fields(log_data, record, message_dict)
 
 
 def init_logging(quieten: Sequence[str] = ("asyncio", "botocore", "boto3", "mangum", "urllib3")) -> None:
