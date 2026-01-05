@@ -8,10 +8,11 @@ from flask.testing import FlaskClient
 from hamcrest import (
     assert_that,
     contains_exactly,
+    contains_inanyorder,
     equal_to,
     has_entries,
     has_entry,
-    has_key, has_item, all_of, has_length, contains, has_items, contains_inanyorder,
+    has_key,
 )
 
 from eligibility_signposting_api.config.constants import CONSUMER_ID
@@ -825,78 +826,83 @@ class TestEligibilityResponseWithVariousInputs:
             ),
         )
 
-
     @pytest.mark.parametrize(
-        "campaign_configs, consumer_mapping_for_rsv_and_covid, consumer_id, requested_conditions, expected_targets",
+        (
+            "campaign_configs",
+            "consumer_mapping_for_rsv_and_covid",
+            "consumer_id",
+            "requested_conditions",
+            "expected_targets",
+        ),
         [
             # Scenario 1: Intersection of mapped targets, requested targets, and active campaigns (Success)
             (
-                    ["RSV", "COVID", "FLU"],
-                    "consumer_mapping_for_rsv_and_covid",
-                    "consumer-id-mapped-to-rsv-and-covid",
-                    "ALL",
-                    ["RSV", "COVID"],
+                ["RSV", "COVID", "FLU"],
+                "consumer_mapping_for_rsv_and_covid",
+                "consumer-id-mapped-to-rsv-and-covid",
+                "ALL",
+                ["RSV", "COVID"],
             ),
             # Scenario 2: Explicit request for a single mapped target with an active campaign
             (
-                    ["RSV", "COVID", "FLU"],
-                    "consumer_mapping_for_rsv_and_covid",
-                    "consumer-id-mapped-to-rsv-and-covid",
-                    "RSV",
-                    ["RSV"],
+                ["RSV", "COVID", "FLU"],
+                "consumer_mapping_for_rsv_and_covid",
+                "consumer-id-mapped-to-rsv-and-covid",
+                "RSV",
+                ["RSV"],
             ),
             # Scenario 3: Request for an active campaign (FLU) that the consumer is NOT mapped to
             (
-                    ["RSV", "COVID", "FLU"],
-                    "consumer_mapping_for_rsv_and_covid",
-                    "consumer-id-mapped-to-rsv-and-covid",
-                    "FLU",
-                    [],
+                ["RSV", "COVID", "FLU"],
+                "consumer_mapping_for_rsv_and_covid",
+                "consumer-id-mapped-to-rsv-and-covid",
+                "FLU",
+                [],
             ),
             # Scenario 4: Request for a target that neither exists in system nor is mapped to consumer
             (
-                    ["RSV", "COVID", "FLU"],
-                    "consumer_mapping_for_rsv_and_covid",
-                    "consumer-id-mapped-to-rsv-and-covid",
-                    "HPV",
-                    [],
+                ["RSV", "COVID", "FLU"],
+                "consumer_mapping_for_rsv_and_covid",
+                "consumer-id-mapped-to-rsv-and-covid",
+                "HPV",
+                [],
             ),
             # Scenario 5: Consumer has no target mappings; requesting ALL should return empty
             (
-                    ["RSV", "COVID", "FLU"],
-                    "consumer-id-mapped-to-rsv-and-covid",
-                    "consumer-id-with-no-mapping",
-                    "ALL",
-                    [],
+                ["RSV", "COVID", "FLU"],
+                "consumer-id-mapped-to-rsv-and-covid",
+                "consumer-id-with-no-mapping",
+                "ALL",
+                [],
             ),
             # Scenario 6: Consumer has no target mappings; requesting specific target should return empty
             (
-                    ["RSV", "COVID", "FLU"],
-                    "consumer-id-mapped-to-rsv-and-covid",
-                    "consumer-id-with-no-mapping",
-                    "RSV",
-                    [],
+                ["RSV", "COVID", "FLU"],
+                "consumer-id-mapped-to-rsv-and-covid",
+                "consumer-id-with-no-mapping",
+                "RSV",
+                [],
             ),
             # Scenario 7: Consumer is mapped to targets (RSV/COVID), but those campaigns aren't active/present
             (
-                    ["MMR"],
-                    "consumer_mapping_for_rsv_and_covid",
-                    "consumer-id-mapped-to-rsv-and-covid",
-                    "ALL",
-                    [],
+                ["MMR"],
+                "consumer_mapping_for_rsv_and_covid",
+                "consumer-id-mapped-to-rsv-and-covid",
+                "ALL",
+                [],
             ),
             # Scenario 8: Request for specific mapped target (RSV), but those campaigns aren't active/present
             (
-                    ["MMR"],
-                    "consumer_mapping_for_rsv_and_covid",
-                    "consumer-id-mapped-to-rsv-and-covid",
-                    "RSV",
-                    [],
+                ["MMR"],
+                "consumer_mapping_for_rsv_and_covid",
+                "consumer-id-mapped-to-rsv-and-covid",
+                "RSV",
+                [],
             ),
         ],
-        indirect=["campaign_configs", "consumer_mapping_for_rsv_and_covid"]
+        indirect=["campaign_configs", "consumer_mapping_for_rsv_and_covid"],
     )
-    def test_valid_response_when_consumer_has_a_valid_campaign_config_mapping(
+    def test_valid_response_when_consumer_has_a_valid_campaign_config_mapping(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
@@ -911,7 +917,9 @@ class TestEligibilityResponseWithVariousInputs:
         headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: consumer_id}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y&conditions={requested_conditions}", headers=headers)
+        response = client.get(
+            f"/patient-check/{persisted_person}?includeActions=Y&conditions={requested_conditions}", headers=headers
+        )
 
         assert_that(
             response,
@@ -922,10 +930,8 @@ class TestEligibilityResponseWithVariousInputs:
                     has_entry(
                         "processedSuggestions",
                         # This ensures ONLY these items exist, no extras like FLU
-                        contains_inanyorder(
-                            *[has_entry("condition", i) for i in expected_targets]
-                        )
+                        contains_inanyorder(*[has_entry("condition", i) for i in expected_targets]),
                     )
                 )
-            )
+            ),
         )

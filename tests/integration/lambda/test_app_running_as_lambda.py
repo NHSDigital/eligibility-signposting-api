@@ -424,6 +424,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
+    secretsmanager_client: BaseClient,  # noqa: ARG001
 ):
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person_all_cohorts}"
     response = httpx.get(

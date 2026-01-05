@@ -606,7 +606,7 @@ def test_consumer_id_is_passed_to_service(app: Flask, client: FlaskClient):
         # Then
         # Verify the 5th positional argument or the keyword argument 'consumer_id'
         mock_service.get_eligibility_status.assert_called_once()
-        args, kwargs = mock_service.get_eligibility_status.call_args
+        args, _kwargs = mock_service.get_eligibility_status.call_args
 
         # Check that 'specific_consumer_123' was the consumer_id passed
         assert args[4] == "specific_consumer_123"

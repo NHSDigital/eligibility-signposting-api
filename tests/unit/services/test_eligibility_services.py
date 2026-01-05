@@ -66,32 +66,33 @@ def test_eligibility_service_for_nonexistent_nhs_number():
 
 
 def test_get_eligibility_status_filters_permitted_campaigns(service, mock_repos):
-        """Tests that ONLY permitted campaigns reach the calculator factory."""
-        # Given
-        nhs_number = NHSNumber("1234567890")
-        person_data = {"age": 65, "vulnerable": True}
-        mock_repos["person"].get_eligibility_data.return_value = person_data
+    """Tests that ONLY permitted campaigns reach the calculator factory."""
+    # Given
+    nhs_number = NHSNumber("1234567890")
+    person_data = {"age": 65, "vulnerable": True}
+    mock_repos["person"].get_eligibility_data.return_value = person_data
 
-        # Available campaigns in system
-        camp_a = MagicMock(spec=CampaignConfig, id=CampaignID("CAMP_A"))
-        camp_b = MagicMock(spec=CampaignConfig, id=CampaignID("CAMP_B"))
-        mock_repos["campaign"].get_campaign_configs.return_value = [camp_a, camp_b]
+    # Available campaigns in system
+    camp_a = MagicMock(spec=CampaignConfig, id=CampaignID("CAMP_A"))
+    camp_b = MagicMock(spec=CampaignConfig, id=CampaignID("CAMP_B"))
+    mock_repos["campaign"].get_campaign_configs.return_value = [camp_a, camp_b]
 
-        # Consumer is only permitted to see CAMP_B
-        mock_repos["consumer"].get_permitted_campaign_ids.return_value = [CampaignID("CAMP_B")]
+    # Consumer is only permitted to see CAMP_B
+    mock_repos["consumer"].get_permitted_campaign_ids.return_value = [CampaignID("CAMP_B")]
 
-        # Mock calculator behavior
-        mock_calc = MagicMock()
-        mock_repos["factory"].get.return_value = mock_calc
-        mock_calc.get_eligibility_status.return_value = "eligible_result"
+    # Mock calculator behavior
+    mock_calc = MagicMock()
+    mock_repos["factory"].get.return_value = mock_calc
+    mock_calc.get_eligibility_status.return_value = "eligible_result"
 
-        # When
-        result = service.get_eligibility_status(nhs_number, "Y", ["FLU"], "G1", "consumer_xyz")
+    # When
+    result = service.get_eligibility_status(nhs_number, "Y", ["FLU"], "G1", "consumer_xyz")
 
-        # Then
-        # Verify the factory was called ONLY with camp_b
-        mock_repos["factory"].get.assert_called_once_with(person_data, [camp_b])
-        assert result == "eligible_result"
+    # Then
+    # Verify the factory was called ONLY with camp_b
+    mock_repos["factory"].get.assert_called_once_with(person_data, [camp_b])
+    assert result == "eligible_result"
+
 
 def test_raises_unknown_person_error_on_repo_not_found(service, mock_repos):
     """Tests that NotFoundError from repo is translated to UnknownPersonError."""

@@ -991,7 +991,7 @@ def campaign_config_with_invalid_tokens(s3_client: BaseClient, rules_bucket: Buc
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
     campaigns, campaign_data_keys = [], []
@@ -1014,7 +1014,6 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
     for i in range(3):
         campaign = rule.CampaignConfigFactory.build(
             name=f"campaign_{i}",
-            id=f"{targets[i]}_campaign_id",
             target=targets[i],
             type="V",
             iterations=[
@@ -1111,71 +1110,8 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
     yield campaign
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
-@pytest.fixture(scope="function")
-def multiple_campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
-    """Create and upload multiple campaign configs to S3, then clean up after tests."""
-    campaigns, campaign_data_keys = [], []
 
-    targets = getattr(request, "param", ["RSV", "COVID", "FLU"])
-    target_rules_map = {
-        targets[0]: [
-            rule.PersonAgeSuppressionRuleFactory.build(type=RuleType.filter, description="TOO YOUNG"),
-            rule.PostcodeSuppressionRuleFactory.build(type=RuleType.filter, priority=8, cohort_label="cohort_label4"),
-        ],
-        targets[1]: [
-            rule.PersonAgeSuppressionRuleFactory.build(description="TOO YOUNG, your icb is: [[PERSON.ICB]]"),
-            rule.PostcodeSuppressionRuleFactory.build(
-                priority=12, cohort_label="cohort_label2", description="Your postcode is: [[PERSON.POSTCODE]]"
-            ),
-        ],
-        targets[2]: [rule.ICBRedirectRuleFactory.build()],
-    }
-
-    for i in range(3):
-        campaign = rule.CampaignConfigFactory.build(
-            name=f"campaign_{i}",
-            id=f"{targets[i]}_campaign_id",
-            target=targets[i],
-            type="V",
-            iterations=[
-                rule.IterationFactory.build(
-                    iteration_rules=target_rules_map.get(targets[i]),
-                    iteration_cohorts=[
-                        rule.IterationCohortFactory.build(
-                            cohort_label=f"cohort_label{i + 1}",
-                            cohort_group=f"cohort_group{i + 1}",
-                            positive_description=f"positive_desc_{i + 1}",
-                            negative_description=f"negative_desc_{i + 1}",
-                        ),
-                        rule.IterationCohortFactory.build(
-                            cohort_label="cohort_label4",
-                            cohort_group="cohort_group4",
-                            positive_description="positive_desc_4",
-                            negative_description="negative_desc_4",
-                        ),
-                    ],
-                    status_text=StatusText(
-                        NotEligible=f"You are not eligible to take {targets[i]} vaccines.",
-                        NotActionable=f"You have taken {targets[i]} vaccine in the last 90 days",
-                        Actionable=f"You can take {targets[i]} vaccine.",
-                    ),
-                )
-            ],
-        )
-        campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
-        key = f"{campaign.name}.json"
-        s3_client.put_object(
-            Bucket=rules_bucket, Key=key, Body=json.dumps(campaign_data), ContentType="application/json"
-        )
-        campaigns.append(campaign)
-        campaign_data_keys.append(key)
-
-    yield campaigns
-
-    for key in campaign_data_keys:
-        s3_client.delete_object(Bucket=rules_bucket, Key=key)
-
-@pytest.fixture(scope="function")
+@pytest.fixture
 def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
     campaigns, campaign_data_keys = [], []
@@ -1220,6 +1156,7 @@ def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -
     for key in campaign_data_keys:
         s3_client.delete_object(Bucket=rules_bucket, Key=key)
 
+
 @pytest.fixture(scope="class")
 def consumer_mapping(s3_client: BaseClient, consumer_mapping_bucket: BucketName) -> Generator[ConsumerMapping]:
     consumer_mapping = ConsumerMapping.model_validate({})
@@ -1235,11 +1172,16 @@ def consumer_mapping(s3_client: BaseClient, consumer_mapping_bucket: BucketName)
     yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
+
 @pytest.fixture(scope="class")
-def consumer_mapping_for_rsv_and_covid(s3_client: BaseClient, consumer_mapping_bucket: BucketName) -> Generator[ConsumerMapping]:
+def consumer_mapping_for_rsv_and_covid(
+    s3_client: BaseClient, consumer_mapping_bucket: BucketName
+) -> Generator[ConsumerMapping]:
     consumer_mapping = ConsumerMapping.model_validate({})
-    consumer_mapping.root[ConsumerId("consumer-id-mapped-to-rsv-and-covid")] = [CampaignID("RSV_campaign_id"),
-                                                                CampaignID("COVID_campaign_id")]
+    consumer_mapping.root[ConsumerId("consumer-id-mapped-to-rsv-and-covid")] = [
+        CampaignID("RSV_campaign_id"),
+        CampaignID("COVID_campaign_id"),
+    ]
 
     consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
     s3_client.put_object(
@@ -1250,6 +1192,7 @@ def consumer_mapping_for_rsv_and_covid(s3_client: BaseClient, consumer_mapping_b
     )
     yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+
 
 @pytest.fixture(scope="class")
 def consumer_mapping_with_various_targets(
