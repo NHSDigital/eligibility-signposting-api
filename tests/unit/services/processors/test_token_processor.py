@@ -351,7 +351,7 @@ class TestTokenProcessor:
             actions=[],
         )
 
-        with pytest.raises(ValueError, match="Invalid token format."):
+        with pytest.raises(ValueError, match=r"Invalid token format\."):
             TokenProcessor.find_and_replace_tokens(person, condition)
 
     @pytest.mark.parametrize(
