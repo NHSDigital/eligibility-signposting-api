@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+import pytest
 from botocore.client import BaseClient
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
@@ -10,7 +11,7 @@ from hamcrest import (
     equal_to,
     has_entries,
     has_entry,
-    has_key,
+    has_key, has_item, all_of, has_length, contains, has_items, contains_inanyorder,
 )
 
 from eligibility_signposting_api.config.constants import CONSUMER_ID
@@ -26,7 +27,7 @@ class TestBaseLine:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config: CampaignConfig,  # noqa: ARG002
+        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
         consumer_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -60,7 +61,7 @@ class TestBaseLine:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config: CampaignConfig,  # noqa: ARG002
+        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
     ):
         # Given
         headers = {"nhs-login-nhs-number": str(persisted_person)}
@@ -82,7 +83,7 @@ class TestStandardResponse:
         self,
         client: FlaskClient,
         persisted_person_no_cohorts: NHSNumber,
-        campaign_config: CampaignConfig,  # noqa: ARG002
+        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
         consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
@@ -127,7 +128,7 @@ class TestStandardResponse:
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
-        campaign_config: CampaignConfig,  # noqa: ARG002
+        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
         consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
@@ -172,7 +173,7 @@ class TestStandardResponse:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config: CampaignConfig,  # noqa: ARG002
+        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
         consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         # Given
@@ -223,7 +224,7 @@ class TestStandardResponse:
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        campaign_config: CampaignConfig,  # noqa: ARG002
+        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
         consumer_mapping: ConsumerMapping,  # noqa: ARG002
     ):
         headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: "23-mic7heal-jor6don"}
@@ -824,22 +825,94 @@ class TestEligibilityResponseWithVariousInputs:
             ),
         )
 
-    def test_response_when_no_campaign_config_is_present(
+
+    @pytest.mark.parametrize(
+        "campaign_configs, consumer_mapping_for_rsv_and_covid, consumer_id, requested_conditions, expected_targets",
+        [
+            # Scenario 1: Intersection of mapped targets, requested targets, and active campaigns (Success)
+            (
+                    ["RSV", "COVID", "FLU"],
+                    "consumer_mapping_for_rsv_and_covid",
+                    "consumer-id-mapped-to-rsv-and-covid",
+                    "ALL",
+                    ["RSV", "COVID"],
+            ),
+            # Scenario 2: Explicit request for a single mapped target with an active campaign
+            (
+                    ["RSV", "COVID", "FLU"],
+                    "consumer_mapping_for_rsv_and_covid",
+                    "consumer-id-mapped-to-rsv-and-covid",
+                    "RSV",
+                    ["RSV"],
+            ),
+            # Scenario 3: Request for an active campaign (FLU) that the consumer is NOT mapped to
+            (
+                    ["RSV", "COVID", "FLU"],
+                    "consumer_mapping_for_rsv_and_covid",
+                    "consumer-id-mapped-to-rsv-and-covid",
+                    "FLU",
+                    [],
+            ),
+            # Scenario 4: Request for a target that neither exists in system nor is mapped to consumer
+            (
+                    ["RSV", "COVID", "FLU"],
+                    "consumer_mapping_for_rsv_and_covid",
+                    "consumer-id-mapped-to-rsv-and-covid",
+                    "HPV",
+                    [],
+            ),
+            # Scenario 5: Consumer has no target mappings; requesting ALL should return empty
+            (
+                    ["RSV", "COVID", "FLU"],
+                    "consumer-id-mapped-to-rsv-and-covid",
+                    "consumer-id-with-no-mapping",
+                    "ALL",
+                    [],
+            ),
+            # Scenario 6: Consumer has no target mappings; requesting specific target should return empty
+            (
+                    ["RSV", "COVID", "FLU"],
+                    "consumer-id-mapped-to-rsv-and-covid",
+                    "consumer-id-with-no-mapping",
+                    "RSV",
+                    [],
+            ),
+            # Scenario 7: Consumer is mapped to targets (RSV/COVID), but those campaigns aren't active/present
+            (
+                    ["MMR"],
+                    "consumer_mapping_for_rsv_and_covid",
+                    "consumer-id-mapped-to-rsv-and-covid",
+                    "ALL",
+                    [],
+            ),
+            # Scenario 8: Request for specific mapped target (RSV), but those campaigns aren't active/present
+            (
+                    ["MMR"],
+                    "consumer_mapping_for_rsv_and_covid",
+                    "consumer-id-mapped-to-rsv-and-covid",
+                    "RSV",
+                    [],
+            ),
+        ],
+        indirect=["campaign_configs", "consumer_mapping_for_rsv_and_covid"]
+    )
+    def test_valid_response_when_consumer_has_a_valid_campaign_config_mapping(
         self,
         client: FlaskClient,
-        persisted_77yo_person: NHSNumber,
-        campaign_config_with_rules_having_rule_mapper: CampaignConfig,  # noqa: ARG002
-        consumer_mapping: ConsumerMapping,  # noqa: ARG002
+        persisted_person: NHSNumber,
         secretsmanager_client: BaseClient,  # noqa: ARG002
+        campaign_configs: CampaignConfig,  # noqa: ARG002
+        consumer_mapping_for_rsv_and_covid: ConsumerMapping,  # noqa: ARG002
+        consumer_id: str,
+        requested_conditions: str,
+        expected_targets: list[str],
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: "23-mic7heal-jor6don"}
+        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: consumer_id}
 
         # When
-        response = client.get(f'/patient-check/{persisted_77yo_person}?includeActions=N&conditions=FLU',
-                              headers=headers)
+        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y&conditions={requested_conditions}", headers=headers)
 
-        # Then
         assert_that(
             response,
             is_response()
@@ -848,30 +921,11 @@ class TestEligibilityResponseWithVariousInputs:
                 is_json_that(
                     has_entry(
                         "processedSuggestions",
-                        equal_to(
-                            []
-                        ),
+                        # This ensures ONLY these items exist, no extras like FLU
+                        contains_inanyorder(
+                            *[has_entry("condition", i) for i in expected_targets]
+                        )
                     )
                 )
-            ),
+            )
         )
-
-
-class TestEligibilityResponseWhenConsumerHasNoMapping:
-    def test_empty_response_when_no_campaign_mapped_for_the_consumer(
-        self,
-        client: FlaskClient,
-        persisted_person: NHSNumber,
-        campaign_config: CampaignConfig,  # noqa: ARG002
-        consumer_mapping: ConsumerMapping,  # noqa: ARG002
-        secretsmanager_client: BaseClient,  # noqa: ARG002
-    ):
-        # Given
-        consumer_id_not_having_mapping = "23-jo4hn-ce4na"
-        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: consumer_id_not_having_mapping}
-
-        # When
-        response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
-
-        # Then
-        assert_that(response, is_response().with_status_code(HTTPStatus.FORBIDDEN))

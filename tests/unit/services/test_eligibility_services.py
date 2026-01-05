@@ -3,14 +3,14 @@ from unittest.mock import MagicMock
 import pytest
 from hamcrest import assert_that, empty
 
-from eligibility_signposting_api.model.campaign_config import CampaignID, CampaignConfig
+from eligibility_signposting_api.model.campaign_config import CampaignConfig, CampaignID
 from eligibility_signposting_api.model.eligibility_status import NHSNumber
 from eligibility_signposting_api.repos import CampaignRepo, NotFoundError, PersonRepo
 from eligibility_signposting_api.repos.consumer_mapping_repo import ConsumerMappingRepo
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.services.calculators.eligibility_calculator import EligibilityCalculatorFactory
-from eligibility_signposting_api.services.eligibility_services import NoPermittedCampaignsError
 from tests.fixtures.matchers.eligibility import is_eligibility_status
+
 
 @pytest.fixture
 def mock_repos():
@@ -18,17 +18,16 @@ def mock_repos():
         "person": MagicMock(spec=PersonRepo),
         "campaign": MagicMock(spec=CampaignRepo),
         "consumer": MagicMock(spec=ConsumerMappingRepo),
-        "factory": MagicMock(spec=EligibilityCalculatorFactory)
+        "factory": MagicMock(spec=EligibilityCalculatorFactory),
     }
+
 
 @pytest.fixture
 def service(mock_repos):
     return EligibilityService(
-        mock_repos["person"],
-        mock_repos["campaign"],
-        mock_repos["consumer"],
-        mock_repos["factory"]
+        mock_repos["person"], mock_repos["campaign"], mock_repos["consumer"], mock_repos["factory"]
     )
+
 
 def test_eligibility_service_returns_from_repo():
     # Given
@@ -93,17 +92,6 @@ def test_get_eligibility_status_filters_permitted_campaigns(service, mock_repos)
         # Verify the factory was called ONLY with camp_b
         mock_repos["factory"].get.assert_called_once_with(person_data, [camp_b])
         assert result == "eligible_result"
-
-def test_raises_no_permitted_campaigns_error(service, mock_repos):
-    """Tests the scenario where the consumer mapping exists but returns nothing."""
-    mock_repos["person"].get_eligibility_data.return_value = {"data": "exists"}
-    mock_repos["campaign"].get_campaign_configs.return_value = [MagicMock()]
-
-    # Consumer has no permitted IDs mapped
-    mock_repos["consumer"].get_permitted_campaign_ids.return_value = []
-
-    with pytest.raises(NoPermittedCampaignsError):
-        service.get_eligibility_status(NHSNumber("1"), "Y", [], "", "bad_consumer")
 
 def test_raises_unknown_person_error_on_repo_not_found(service, mock_repos):
     """Tests that NotFoundError from repo is translated to UnknownPersonError."""
