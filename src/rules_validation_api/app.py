@@ -51,7 +51,8 @@ def main() -> None:
             json_data = json.load(file)
             result = RulesValidation(**json_data)
             sys.stdout.write(f"{GREEN}Valid Config{RESET}\n")
-            sys.stdout.write(f"{COLON_COLOR}Current Iteration Number is {RESET}{RIGHT_COLOR}"
+            sys.stdout.write(
+                f"{COLON_COLOR}Current Iteration Number is {RESET}{RIGHT_COLOR}"
                 f"{result.campaign_config.current_iteration.iteration_number}{RESET}\n"
             )
 

@@ -228,7 +228,7 @@ def iam_role(iam_client: BaseClient) -> Generator[str]:
 
 @pytest.fixture(scope="session")
 def lambda_zip() -> Path:
-    build_result = subprocess.run(["make", "build"], capture_output=True, text=True, check=False)  # noqa: S607
+    build_result = subprocess.run(["make", "build"], capture_output=True, text=True, check=False)  # noqa: S603, S607
     assert build_result.returncode == 0, f"'make build' failed: {build_result.stderr}"
     return Path("dist/lambda.zip")
 

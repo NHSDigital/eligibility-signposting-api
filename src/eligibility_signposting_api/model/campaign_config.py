@@ -158,7 +158,7 @@ class IterationRule(BaseModel):
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
     @field_validator("rule_stop", mode="before")
-    def parse_yn_to_bool(cls, v: str | bool) -> bool:  # noqa: N805, FBT001
+    def parse_yn_to_bool(cls, v: str | bool) -> bool:  # noqa: N805
         if isinstance(v, str):
             return v.upper() == "Y"
         return v
