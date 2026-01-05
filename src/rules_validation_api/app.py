@@ -1,4 +1,3 @@
-# Sonar ignore
 import argparse
 import json
 import logging
@@ -21,14 +20,10 @@ GREEN = "\033[92m"
 RESET = "\033[0m"
 YELLOW = "\033[93m"
 RED = "\033[91m"
-
-# ANSI color codes
-LEFT_COLOR = "\033[34m"  # Blue for class name
-COLON_COLOR = "\033[33m"  # Yellow for colon
-RIGHT_COLOR = "\033[92m"  # Milk green for validator
+BLUE = "\033[34m"
 
 
-def refine_error(e: ValidationError) -> str:  # pragma: no cover
+def refine_error(e: ValidationError) -> str:
     """Return a very short, single-line error message."""
     lines = [f"❌Validation Error: {len(e.errors())} validation error(s)"]
 
@@ -53,7 +48,7 @@ def main() -> None:
             result = RulesValidation(**json_data)
             sys.stdout.write(f"{GREEN}Valid Config{RESET}\n")
             sys.stdout.write(
-                f"{COLON_COLOR}Current Iteration Number is {RESET}{RIGHT_COLOR}"
+                f"{YELLOW}Current Iteration Number is {RESET}{GREEN}"
                 f"{result.campaign_config.current_iteration.iteration_number}{RESET}\n"
             )
 
@@ -68,11 +63,11 @@ def main() -> None:
                 methods = sorted(grouped[cls_name])
                 # First method prints class name
                 first = methods[0]
-                colored = f"{LEFT_COLOR}{cls_name}{RESET}{COLON_COLOR}:{RESET}{RIGHT_COLOR}{first}{RESET}\n"
+                colored = f"{BLUE}{cls_name}{RESET}{YELLOW}:{RESET}{GREEN}{first}{RESET}\n"
                 sys.stdout.write(colored)
                 # Rest methods indented
                 for method_name in methods[1:]:
-                    colored = f"{' ' * len(cls_name)}{COLON_COLOR}:{RESET}{RIGHT_COLOR}{method_name}{RESET}\n"
+                    colored = f"{' ' * len(cls_name)}{YELLOW}:{RESET}{GREEN}{method_name}{RESET}\n"
                     sys.stdout.write(colored)
 
     except ValidationError as e:
