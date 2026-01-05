@@ -36,7 +36,7 @@ def test_install_and_call_lambda_flask(
     lambda_client: BaseClient,
     flask_function: str,
     persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,  # noqa: ARG001
+    rsv_campaign_config: CampaignConfig,  # noqa: ARG001
     consumer_mapping: ConsumerMapping,  # noqa: ARG001
 ):
     """Given lambda installed into localstack, run it via boto3 lambda client"""
@@ -89,7 +89,7 @@ def test_install_and_call_lambda_flask(
 
 def test_install_and_call_flask_lambda_over_http(
     persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,  # noqa: ARG001
+    rsv_campaign_config: CampaignConfig,  # noqa: ARG001
     consumer_mapping: ConsumerMapping,  # noqa: ARG001
     api_gateway_endpoint: URL,
 ):
@@ -113,7 +113,7 @@ def test_install_and_call_flask_lambda_over_http(
 def test_install_and_call_flask_lambda_with_unknown_nhs_number(  # noqa: PLR0913
     flask_function: str,
     persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,  # noqa: ARG001
+    rsv_campaign_config: CampaignConfig,  # noqa: ARG001
     consumer_mapping: ConsumerMapping,  # noqa: ARG001
     logs_client: BaseClient,
     api_gateway_endpoint: URL,
@@ -187,7 +187,7 @@ def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
 def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_if_audited(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,
+    rsv_campaign_config: CampaignConfig,
     consumer_mapping: ConsumerMapping,  # noqa: ARG001
     s3_client: BaseClient,
     audit_bucket: BucketName,
@@ -234,13 +234,13 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
 
     expected_conditions = [
         {
-            "campaignId": campaign_config.id,
-            "campaignVersion": campaign_config.version,
-            "iterationId": campaign_config.iterations[0].id,
-            "iterationVersion": campaign_config.iterations[0].version,
-            "conditionName": campaign_config.target,
+            "campaignId": rsv_campaign_config.id,
+            "campaignVersion": rsv_campaign_config.version,
+            "iterationId": rsv_campaign_config.iterations[0].id,
+            "iterationVersion": rsv_campaign_config.iterations[0].version,
+            "conditionName": rsv_campaign_config.target,
             "status": "not_actionable",
-            "statusText": f"You should have the {campaign_config.target} vaccine",
+            "statusText": f"You should have the {rsv_campaign_config.target} vaccine",
             "eligibilityCohorts": [{"cohortCode": "cohort1", "cohortStatus": "not_actionable"}],
             "eligibilityCohortGroups": [
                 {
@@ -285,7 +285,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
 def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_results_in_error_response(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,  # noqa:ARG001
+    rsv_campaign_config: CampaignConfig,  # noqa:ARG001
     api_gateway_endpoint: URL,
 ):
     # Given
@@ -332,7 +332,7 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
 def test_given_nhs_number_not_present_in_headers_results_in_error_response(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,  # noqa:ARG001
+    rsv_campaign_config: CampaignConfig,  # noqa:ARG001
     api_gateway_endpoint: URL,
 ):
     # Given
@@ -378,7 +378,7 @@ def test_given_nhs_number_not_present_in_headers_results_in_error_response(
 def test_validation_of_query_params_when_all_are_valid(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,  # noqa:ARG001
+    rsv_campaign_config: CampaignConfig,  # noqa:ARG001
     consumer_mapping: ConsumerMapping,  # noqa: ARG001
     api_gateway_endpoint: URL,
 ):
@@ -399,7 +399,7 @@ def test_validation_of_query_params_when_all_are_valid(
 def test_validation_of_query_params_when_invalid_conditions_is_specified(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,  # noqa:ARG001
+    rsv_campaign_config: CampaignConfig,  # noqa:ARG001
     api_gateway_endpoint: URL,
 ):
     # Given

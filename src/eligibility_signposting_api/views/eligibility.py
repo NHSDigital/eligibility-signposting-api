@@ -20,7 +20,6 @@ from eligibility_signposting_api.config.constants import CONSUMER_ID, URL_PREFIX
 from eligibility_signposting_api.model.consumer_mapping import ConsumerId
 from eligibility_signposting_api.model.eligibility_status import Condition, EligibilityStatus, NHSNumber, Status
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
-from eligibility_signposting_api.services.eligibility_services import NoPermittedCampaignsError
 from eligibility_signposting_api.views.response_model import eligibility_response
 from eligibility_signposting_api.views.response_model.eligibility_response import ProcessedSuggestion
 
@@ -66,8 +65,6 @@ def check_eligibility(
         )
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
-    except NoPermittedCampaignsError:
-        return handle_no_permitted_campaigns_for_the_consumer_error(consumer_id)
     else:
         response: eligibility_response.EligibilityResponse = build_eligibility_response(eligibility_status)
         AuditContext.write_to_firehose(audit_service)
