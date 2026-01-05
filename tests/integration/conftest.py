@@ -1014,6 +1014,7 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
     for i in range(3):
         campaign = rule.CampaignConfigFactory.build(
             name=f"campaign_{i}",
+            id=f"{targets[i]}_campaign_id",
             target=targets[i],
             type="V",
             iterations=[
