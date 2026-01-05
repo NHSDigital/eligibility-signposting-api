@@ -37,7 +37,7 @@ def refine_error(e: ValidationError) -> str:
     return "\n".join(lines)
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     parser = argparse.ArgumentParser(description="Validate campaign configuration.")
     parser.add_argument("--config_path", required=True, help="Path to the campaign config JSON file")
     args = parser.parse_args()
