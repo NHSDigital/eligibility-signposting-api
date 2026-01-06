@@ -135,19 +135,3 @@ NHS_NUMBER_MISMATCH_ERROR = APIErrorResponse(
     fhir_error_code=FHIRSpineErrorCode.ACCESS_DENIED,
     fhir_display_message="Access has been denied to process this request.",
 )
-
-CONSUMER_ID_NOT_PROVIDED_ERROR = APIErrorResponse(
-    status_code=HTTPStatus.FORBIDDEN,
-    fhir_issue_code=FHIRIssueCode.FORBIDDEN,
-    fhir_issue_severity=FHIRIssueSeverity.ERROR,
-    fhir_error_code=FHIRSpineErrorCode.ACCESS_DENIED,
-    fhir_display_message="Access has been denied to process this request.",
-)
-
-CONSUMER_HAS_NO_CAMPAIGN_MAPPING = APIErrorResponse(
-    status_code=HTTPStatus.FORBIDDEN,
-    fhir_issue_code=FHIRIssueCode.FORBIDDEN,
-    fhir_issue_severity=FHIRIssueSeverity.ERROR,
-    fhir_error_code=FHIRSpineErrorCode.ACCESS_DENIED,
-    fhir_display_message="Access has been denied to process this request.",
-)

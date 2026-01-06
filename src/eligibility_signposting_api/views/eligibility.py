@@ -12,7 +12,6 @@ from wireup import Injected
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.common.api_error_response import (
-    CONSUMER_HAS_NO_CAMPAIGN_MAPPING,
     NHS_NUMBER_NOT_FOUND_ERROR,
 )
 from eligibility_signposting_api.common.request_validator import validate_request_params
@@ -113,13 +112,6 @@ def _get_or_default_query_params() -> dict[str, Any]:
 def handle_unknown_person_error(nhs_number: NHSNumber) -> ResponseReturnValue:
     diagnostics = f"NHS Number '{nhs_number}' was not recognised by the Eligibility Signposting API"
     return NHS_NUMBER_NOT_FOUND_ERROR.log_and_generate_response(
-        log_message=diagnostics, diagnostics=diagnostics, location_param="id"
-    )
-
-
-def handle_no_permitted_campaigns_for_the_consumer_error(consumer_id: ConsumerId) -> ResponseReturnValue:
-    diagnostics = f"Consumer ID '{consumer_id}' was not recognised by the Eligibility Signposting API"
-    return CONSUMER_HAS_NO_CAMPAIGN_MAPPING.log_and_generate_response(
         log_message=diagnostics, diagnostics=diagnostics, location_param="id"
     )
 
