@@ -79,6 +79,12 @@ def test_refine_error_output_structure():
 def test_no_current_iteration():
     # Arrange
     result = Mock()
+    result.campaign_config = Mock()
+
+    # iterations must be a list, not a Mock
+    result.campaign_config.iterations = []
+
+    # current_iteration should raise StopIteration
     type(result.campaign_config).current_iteration = PropertyMock(side_effect=StopIteration)
 
     captured = StringIO()
@@ -91,7 +97,7 @@ def test_no_current_iteration():
     sys.stdout = sys.__stdout__
 
     # Assert
-    assert "There is no Current Iteration" in captured.getvalue()
+    assert "No active iteration could be determined" in captured.getvalue()
 
 
 def test_current_iteration_exists():
@@ -100,17 +106,18 @@ def test_current_iteration_exists():
     mock_iteration.iteration_number = 7
 
     result = Mock()
+    result.campaign_config = Mock()
+
+    result.campaign_config.iterations = [mock_iteration]
+
     type(result.campaign_config).current_iteration = PropertyMock(return_value=mock_iteration)
 
     captured = StringIO()
     sys.stdout = captured
 
-    # Act
     display_current_iteration(result)
 
-    # Reset stdout
     sys.stdout = sys.__stdout__
 
-    # Assert
-    assert "Current Iteration Number is" in captured.getvalue()
+    assert "Current Iteration Number:" in captured.getvalue()
     assert "7" in captured.getvalue()

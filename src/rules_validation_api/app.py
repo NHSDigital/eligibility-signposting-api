@@ -74,14 +74,17 @@ def main() -> None:  # pragma: no cover
 
 
 def display_current_iteration(result: RulesValidation) -> None:
+    no_of_iterations = 0
     try:
+        no_of_iterations = len(result.campaign_config.iterations)
         current = result.campaign_config.current_iteration
     except StopIteration:
         current = None
     if current is None:
-        sys.stdout.write(f"{YELLOW}There is no Current Iteration{RESET}\n")
+        sys.stdout.write(f"{YELLOW}No active iteration could be determined{RESET}\n")
     else:
-        sys.stdout.write(f"{YELLOW}Current Iteration Number is {RESET}{GREEN}{current.iteration_number}{RESET}\n")
+        sys.stdout.write(f"{YELLOW}Current Iteration Number: {RESET}{GREEN}{current.iteration_number}{RESET}\n")
+        sys.stdout.write(f"{YELLOW}Total iterations configured: {RESET}{GREEN}{no_of_iterations}{RESET}\n")
 
 
 if __name__ == "__main__":  # pragma: no cover
