@@ -4,31 +4,16 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/"
-    cooldown:
-      default-days: 5
-      semver-major-days: 7
-      semver-minor-days: 7
-      semver-patch-days: 3
     schedule:
       interval: "daily"
 
   - package-ecosystem: "github-actions"
     directory: "/"
-    cooldown:
-      default-days: 5
-      semver-major-days: 7
-      semver-minor-days: 7
-      semver-patch-days: 3
     schedule:
       interval: "daily"
 
   - package-ecosystem: "terraform"
     directory: "/"
-    cooldown:
-      default-days: 5
-      semver-major-days: 7
-      semver-minor-days: 7
-      semver-patch-days: 3
     schedule:
       interval: "daily"
 
