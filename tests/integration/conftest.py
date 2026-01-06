@@ -1158,9 +1158,14 @@ def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -
 
 
 @pytest.fixture(scope="class")
-def consumer_mapping(s3_client: BaseClient, consumer_mapping_bucket: BucketName) -> Generator[ConsumerMapping]:
+def consumer_id() -> ConsumerId:
+    return ConsumerId("23-mic7heal-jor6don")
+
+
+@pytest.fixture(scope="class")
+def consumer_mapping_with_rsv(s3_client: BaseClient, consumer_mapping_bucket: BucketName, rsv_campaign_config:CampaignConfig, consumer_id:ConsumerId) -> Generator[ConsumerMapping]:
     consumer_mapping = ConsumerMapping.model_validate({})
-    consumer_mapping.root[ConsumerId("23-mic7heal-jor6don")] = [CampaignID("42-hi5tch-hi5kers-gu5ide-t2o-t3he-gal6axy")]
+    consumer_mapping.root[ConsumerId(consumer_id)] = [rsv_campaign_config.id]
 
     consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
     s3_client.put_object(
@@ -1172,17 +1177,76 @@ def consumer_mapping(s3_client: BaseClient, consumer_mapping_bucket: BucketName)
     yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
+@pytest.fixture
+def consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text(
+    s3_client, consumer_mapping_bucket, campaign_config_with_missing_descriptions_missing_rule_text, consumer_id
+):
+    mapping = ConsumerMapping.model_validate({})
+    mapping.root[consumer_id] = [campaign_config_with_missing_descriptions_missing_rule_text.id]
+
+    s3_client.put_object(
+        Bucket=consumer_mapping_bucket,
+        Key="consumer_mapping.json",
+        Body=json.dumps(mapping.model_dump(by_alias=True)),
+        ContentType="application/json",
+    )
+    yield mapping
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+
+@pytest.fixture
+def consumer_mapping_with_campaign_config_with_rules_having_rule_code(
+    s3_client, consumer_mapping_bucket, campaign_config_with_rules_having_rule_code, consumer_id
+):
+    mapping = ConsumerMapping.model_validate({})
+    mapping.root[consumer_id] = [campaign_config_with_rules_having_rule_code.id]
+
+    s3_client.put_object(
+        Bucket=consumer_mapping_bucket,
+        Key="consumer_mapping.json",
+        Body=json.dumps(mapping.model_dump(by_alias=True)),
+        ContentType="application/json",
+    )
+    yield mapping
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+
+@pytest.fixture
+def consumer_mapping_with_campaign_config_with_rules_having_rule_mapper(
+    s3_client, consumer_mapping_bucket, campaign_config_with_rules_having_rule_mapper, consumer_id
+):
+    mapping = ConsumerMapping.model_validate({})
+    mapping.root[consumer_id] = [campaign_config_with_rules_having_rule_mapper.id]
+
+    s3_client.put_object(
+        Bucket=consumer_mapping_bucket,
+        Key="consumer_mapping.json",
+        Body=json.dumps(mapping.model_dump(by_alias=True)),
+        ContentType="application/json",
+    )
+    yield mapping
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+
+
+@pytest.fixture
+def consumer_mapping_with_only_virtual_cohort(
+    s3_client, consumer_mapping_bucket, campaign_config_with_virtual_cohort, consumer_id
+):
+    mapping = ConsumerMapping.model_validate({})
+    mapping.root[consumer_id] = [campaign_config_with_virtual_cohort.id]
+
+    s3_client.put_object(
+        Bucket=consumer_mapping_bucket,
+        Key="consumer_mapping.json",
+        Body=json.dumps(mapping.model_dump(by_alias=True)),
+        ContentType="application/json",
+    )
+    yield mapping
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 @pytest.fixture(scope="class")
 def consumer_mappings(
     request, s3_client: BaseClient, consumer_mapping_bucket: BucketName
 ) -> Generator[ConsumerMapping]:
     consumer_mapping = ConsumerMapping.model_validate(getattr(request, "param", {}))
-    consumer_mapping.root[ConsumerId("consumer-id-mapped-to-rsv-and-covid")] = [
-        CampaignID("RSV_campaign_id"),
-        CampaignID("COVID_campaign_id"),
-    ]
-
     consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
     s3_client.put_object(
         Bucket=consumer_mapping_bucket,
