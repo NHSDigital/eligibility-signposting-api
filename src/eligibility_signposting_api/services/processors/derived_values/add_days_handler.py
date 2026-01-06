@@ -118,12 +118,13 @@ class AddDaysHandler(DerivedValueHandler):
         Returns:
             Number of days to add
         """
-        # Priority 1: Token argument
+        # Priority 1: Token argument (if non-empty)
         if context.function_args:
             try:
                 return int(context.function_args)
-            except ValueError:
-                pass
+            except ValueError as e:
+                message = f"Invalid days argument '{context.function_args}' for ADD_DAYS function. Expected an integer."
+                raise ValueError(message) from e
 
         # Priority 2: Vaccine-specific configuration
         if context.attribute_name in self.vaccine_type_days:
