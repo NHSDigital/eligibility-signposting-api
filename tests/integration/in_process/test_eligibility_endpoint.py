@@ -829,7 +829,7 @@ class TestEligibilityResponseWithVariousInputs:
     @pytest.mark.parametrize(
         (
             "campaign_configs",
-            "consumer_mapping_for_rsv_and_covid",
+            "consumer_mappings",
             "consumer_id",
             "requested_conditions",
             "expected_targets",
@@ -838,69 +838,85 @@ class TestEligibilityResponseWithVariousInputs:
             # Scenario 1: Intersection of mapped targets, requested targets, and active campaigns (Success)
             (
                 ["RSV", "COVID", "FLU"],
-                "consumer_mapping_for_rsv_and_covid",
-                "consumer-id-mapped-to-rsv-and-covid",
+                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                "consumer-id",
                 "ALL",
                 ["RSV", "COVID"],
             ),
             # Scenario 2: Explicit request for a single mapped target with an active campaign
             (
                 ["RSV", "COVID", "FLU"],
-                "consumer_mapping_for_rsv_and_covid",
-                "consumer-id-mapped-to-rsv-and-covid",
+                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                "consumer-id",
                 "RSV",
                 ["RSV"],
             ),
             # Scenario 3: Request for an active campaign (FLU) that the consumer is NOT mapped to
             (
                 ["RSV", "COVID", "FLU"],
-                "consumer_mapping_for_rsv_and_covid",
-                "consumer-id-mapped-to-rsv-and-covid",
+                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                "consumer-id",
                 "FLU",
                 [],
             ),
             # Scenario 4: Request for a target that neither exists in system nor is mapped to consumer
             (
                 ["RSV", "COVID", "FLU"],
-                "consumer_mapping_for_rsv_and_covid",
-                "consumer-id-mapped-to-rsv-and-covid",
+                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                "consumer-id",
                 "HPV",
                 [],
             ),
-            # Scenario 5: Consumer has no target mappings; requesting ALL should return empty
+            # Scenario 5: No mappings at all; requesting ALL should return empty
             (
                 ["RSV", "COVID", "FLU"],
-                "consumer-id-mapped-to-rsv-and-covid",
-                "consumer-id-with-no-mapping",
+                {},
+                "consumer-id",
                 "ALL",
                 [],
             ),
-            # Scenario 6: Consumer has no target mappings; requesting specific target should return empty
+            # Scenario 6: No mappings at all; requesting RSV should return empty
             (
                 ["RSV", "COVID", "FLU"],
-                "consumer-id-mapped-to-rsv-and-covid",
-                "consumer-id-with-no-mapping",
+                {},
+                "consumer-id",
                 "RSV",
                 [],
             ),
-            # Scenario 7: Consumer is mapped to targets (RSV/COVID), but those campaigns aren't active/present
+            # Scenario 7: Consumer has no target mappings; requesting ALL should return empty
             (
-                ["MMR"],
-                "consumer_mapping_for_rsv_and_covid",
-                "consumer-id-mapped-to-rsv-and-covid",
+                ["RSV", "COVID", "FLU"],
+                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                "another-consumer-id",
                 "ALL",
                 [],
             ),
-            # Scenario 8: Request for specific mapped target (RSV), but those campaigns aren't active/present
+            # Scenario 8: Consumer has no target mappings; requesting specific target should return empty
+            (
+                ["RSV", "COVID", "FLU"],
+                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                "another-consumer-id",
+                "RSV",
+                [],
+            ),
+            # Scenario 9: Consumer is mapped to targets (RSV/COVID), but those campaigns aren't active/present
             (
                 ["MMR"],
-                "consumer_mapping_for_rsv_and_covid",
-                "consumer-id-mapped-to-rsv-and-covid",
+                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                "consumer-id",
+                "ALL",
+                [],
+            ),
+            # Scenario 10: Request for specific mapped target (RSV), but those campaigns aren't active/present
+            (
+                ["MMR"],
+                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                "consumer-id",
                 "RSV",
                 [],
             ),
         ],
-        indirect=["campaign_configs", "consumer_mapping_for_rsv_and_covid"],
+        indirect=["campaign_configs", "consumer_mappings"],
     )
     def test_valid_response_when_consumer_has_a_valid_campaign_config_mapping(  # noqa: PLR0913
         self,
@@ -908,7 +924,7 @@ class TestEligibilityResponseWithVariousInputs:
         persisted_person: NHSNumber,
         secretsmanager_client: BaseClient,  # noqa: ARG002
         campaign_configs: CampaignConfig,  # noqa: ARG002
-        consumer_mapping_for_rsv_and_covid: ConsumerMapping,  # noqa: ARG002
+        consumer_mappings: ConsumerMapping,  # noqa: ARG002
         consumer_id: str,
         requested_conditions: str,
         expected_targets: list[str],

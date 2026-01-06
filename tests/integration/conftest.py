@@ -1174,10 +1174,10 @@ def consumer_mapping(s3_client: BaseClient, consumer_mapping_bucket: BucketName)
 
 
 @pytest.fixture(scope="class")
-def consumer_mapping_for_rsv_and_covid(
-    s3_client: BaseClient, consumer_mapping_bucket: BucketName
+def consumer_mappings(
+    request, s3_client: BaseClient, consumer_mapping_bucket: BucketName
 ) -> Generator[ConsumerMapping]:
-    consumer_mapping = ConsumerMapping.model_validate({})
+    consumer_mapping = ConsumerMapping.model_validate(getattr(request, "param", {}))
     consumer_mapping.root[ConsumerId("consumer-id-mapped-to-rsv-and-covid")] = [
         CampaignID("RSV_campaign_id"),
         CampaignID("COVID_campaign_id"),
