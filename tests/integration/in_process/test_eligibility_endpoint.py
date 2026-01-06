@@ -24,7 +24,7 @@ from eligibility_signposting_api.model.eligibility_status import (
 
 
 class TestBaseLine:
-    def test_nhs_number_given(
+    def test_nhs_number_given(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
@@ -81,7 +81,7 @@ class TestBaseLine:
 
 
 class TestStandardResponse:
-    def test_not_base_eligible(
+    def test_not_base_eligible(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person_no_cohorts: NHSNumber,
@@ -128,7 +128,7 @@ class TestStandardResponse:
             ),
         )
 
-    def test_not_eligible_by_rule(
+    def test_not_eligible_by_rule(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
@@ -175,7 +175,7 @@ class TestStandardResponse:
             ),
         )
 
-    def test_not_actionable_and_check_response_when_no_rule_code_given(
+    def test_not_actionable_and_check_response_when_no_rule_code_given(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
@@ -228,7 +228,7 @@ class TestStandardResponse:
             ),
         )
 
-    def test_actionable(
+    def test_actionable(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
@@ -282,7 +282,7 @@ class TestStandardResponse:
             ),
         )
 
-    def test_actionable_with_and_rule(
+    def test_actionable_with_and_rule(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
@@ -339,7 +339,7 @@ class TestStandardResponse:
 
 
 class TestVirtualCohortResponse:
-    def test_not_eligible_by_rule_when_only_virtual_cohort_is_present(
+    def test_not_eligible_by_rule_when_only_virtual_cohort_is_present(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
@@ -386,7 +386,7 @@ class TestVirtualCohortResponse:
             ),
         )
 
-    def test_not_actionable_when_only_virtual_cohort_is_present(
+    def test_not_actionable_when_only_virtual_cohort_is_present(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
@@ -439,7 +439,7 @@ class TestVirtualCohortResponse:
             ),
         )
 
-    def test_actionable_when_only_virtual_cohort_is_present(
+    def test_actionable_when_only_virtual_cohort_is_present(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
@@ -496,7 +496,7 @@ class TestVirtualCohortResponse:
 
 
 class TestResponseOnMissingAttributes:
-    def test_not_base_eligible(
+    def test_not_base_eligible(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person_no_cohorts: NHSNumber,
@@ -537,12 +537,12 @@ class TestResponseOnMissingAttributes:
             ),
         )
 
-    def test_not_eligible_by_rule(
+    def test_not_eligible_by_rule(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
-        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,
+        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -578,12 +578,12 @@ class TestResponseOnMissingAttributes:
             ),
         )
 
-    def test_not_actionable(
+    def test_not_actionable(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
-        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,
+        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -625,17 +625,17 @@ class TestResponseOnMissingAttributes:
             ),
         )
 
-    def test_actionable(
+    def test_actionable(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
-        consumer_id: ConsumerId,  # noqa: ARG002
+        consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: "23-mic7heal-jor6don"}
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
@@ -674,17 +674,17 @@ class TestResponseOnMissingAttributes:
             ),
         )
 
-    def test_actionable_no_actions(
+    def test_actionable_no_actions(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
-        consumer_id: ConsumerId,  # noqa: ARG002
+        consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: "23-mic7heal-jor6don"}
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=N", headers=headers)
@@ -751,17 +751,17 @@ class TestResponseOnMissingAttributes:
 
 
 class TestEligibilityResponseWithVariousInputs:
-    def test_not_actionable_and_check_response_when_rule_mapper_is_absent_but_rule_code_given(
+    def test_not_actionable_and_check_response_when_rule_mapper_is_absent_but_rule_code_given(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config_with_rules_having_rule_code: CampaignConfig,  # noqa: ARG002
-        consumer_mapping_with_campaign_config_with_rules_having_rule_code: ConsumerMapping,
+        consumer_mapping_with_campaign_config_with_rules_having_rule_code: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
-        secretsmanager_client: BaseClient,
+        secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: "23-mic7heal-jor6don"}
+        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -804,17 +804,17 @@ class TestEligibilityResponseWithVariousInputs:
             ),
         )
 
-    def test_not_actionable_and_check_response_when_rule_mapper_is_given(
+    def test_not_actionable_and_check_response_when_rule_mapper_is_given(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
         campaign_config_with_rules_having_rule_mapper: CampaignConfig,  # noqa: ARG002
-        consumer_mapping_with_campaign_config_with_rules_having_rule_mapper: ConsumerMapping,
+        consumer_mapping_with_campaign_config_with_rules_having_rule_mapper: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
-        secretsmanager_client: BaseClient,
+        secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: "23-mic7heal-jor6don"}
+        headers = {"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
