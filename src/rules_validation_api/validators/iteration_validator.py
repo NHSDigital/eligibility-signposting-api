@@ -11,12 +11,14 @@ from eligibility_signposting_api.model.campaign_config import (
     IterationRule,
     RuleType,
 )
+from rules_validation_api.decorators.tracker import track_validators
 from rules_validation_api.validators.actions_mapper_validator import ActionsMapperValidation
 from rules_validation_api.validators.available_action_validator import AvailableActionValidation
 from rules_validation_api.validators.iteration_cohort_validator import IterationCohortValidation
 from rules_validation_api.validators.iteration_rules_validator import IterationRuleValidation
 
 
+@track_validators
 class IterationValidation(Iteration):
     @field_validator("iteration_rules")
     @classmethod

@@ -129,7 +129,7 @@ class EligibilityCalculator:
         if not iteration_results:
             return None
 
-        (best_iteration_name, best_iteration_result) = max(
+        (_best_iteration_name, best_iteration_result) = max(
             iteration_results.items(),
             key=lambda item: next(iter(item[1].cohort_results.values())).status.value
             # Below handles the case where there are no cohort results
