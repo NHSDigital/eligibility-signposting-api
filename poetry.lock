@@ -993,14 +993,14 @@ files = [
 
 [[package]]
 name = "eval-type-backport"
-version = "0.2.2"
+version = "0.3.1"
 description = "Like `typing._eval_type`, but lets older Python versions use newer typing features."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "eval_type_backport-0.2.2-py3-none-any.whl", hash = "sha256:cb6ad7c393517f476f96d456d0412ea80f0a8cf96f6892834cd9340149111b0a"},
-    {file = "eval_type_backport-0.2.2.tar.gz", hash = "sha256:f0576b4cf01ebb5bd358d02314d31846af5e07678387486e2c798af0e7d849c1"},
+    {file = "eval_type_backport-0.3.1-py3-none-any.whl", hash = "sha256:279ab641905e9f11129f56a8a78f493518515b83402b860f6f06dd7c011fdfa8"},
+    {file = "eval_type_backport-0.3.1.tar.gz", hash = "sha256:57e993f7b5b69d271e37482e62f74e76a0276c82490cf8e4f0dffeb6b332d5ed"},
 ]
 
 [package.extras]
@@ -3712,4 +3712,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "cf8e98a313e58ebac1b6e5e42b6e7ec9c2562988c8f680af501a991286eb2064"
+content-hash = "b5b105ef2f2b6465cdd9414b9535fa71502edb9c6b67c4420c32d07336d1e37c"
