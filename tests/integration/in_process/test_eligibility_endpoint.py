@@ -17,7 +17,7 @@ from hamcrest import (
 
 from eligibility_signposting_api.config.constants import CONSUMER_ID
 from eligibility_signposting_api.model.campaign_config import CampaignConfig
-from eligibility_signposting_api.model.consumer_mapping import ConsumerMapping, ConsumerId
+from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import (
     NHSNumber,
 )
@@ -345,7 +345,7 @@ class TestVirtualCohortResponse:
         persisted_person_pc_sw19: NHSNumber,
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
-        consumer_id: ConsumerId, # noqa: ARG002
+        consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -392,7 +392,7 @@ class TestVirtualCohortResponse:
         persisted_person: NHSNumber,
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
-        consumer_id: ConsumerId,  # noqa: ARG002
+        consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -445,7 +445,7 @@ class TestVirtualCohortResponse:
         persisted_77yo_person: NHSNumber,
         campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
-        consumer_id: ConsumerId,  # noqa: ARG002
+        consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -502,7 +502,7 @@ class TestResponseOnMissingAttributes:
         persisted_person_no_cohorts: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
-        consumer_id: ConsumerId,  # noqa: ARG002
+        consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -543,8 +543,7 @@ class TestResponseOnMissingAttributes:
         persisted_person_pc_sw19: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,
-        # noqa: ARG002
-        consumer_id: ConsumerId,  # noqa: ARG002
+        consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -585,8 +584,7 @@ class TestResponseOnMissingAttributes:
         persisted_person: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,
-        # noqa: ARG002
-        consumer_id: ConsumerId,  # noqa: ARG002
+        consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -632,7 +630,7 @@ class TestResponseOnMissingAttributes:
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
-        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,# noqa: ARG002
+        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -681,7 +679,7 @@ class TestResponseOnMissingAttributes:
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
         campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
-        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,# noqa: ARG002
+        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):

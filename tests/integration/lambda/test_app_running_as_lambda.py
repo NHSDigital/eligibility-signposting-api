@@ -25,7 +25,7 @@ from yarl import URL
 
 from eligibility_signposting_api.config.constants import CONSUMER_ID
 from eligibility_signposting_api.model.campaign_config import CampaignConfig
-from eligibility_signposting_api.model.consumer_mapping import ConsumerMapping
+from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import NHSNumber
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 
@@ -37,7 +37,8 @@ def test_install_and_call_lambda_flask(
     flask_function: str,
     persisted_person: NHSNumber,
     rsv_campaign_config: CampaignConfig,  # noqa: ARG001
-    consumer_mapping: ConsumerMapping,  # noqa: ARG001
+    consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG001
+    consumer_id: ConsumerId,
 ):
     """Given lambda installed into localstack, run it via boto3 lambda client"""
     # Given
@@ -52,7 +53,7 @@ def test_install_and_call_lambda_flask(
             "accept": "application/json",
             "content-type": "application/json",
             "nhs-login-nhs-number": str(persisted_person),
-            CONSUMER_ID: "23-mic7heal-jor6don",
+            CONSUMER_ID: consumer_id,
         },
         "pathParameters": {"id": str(persisted_person)},
         "requestContext": {
@@ -90,7 +91,8 @@ def test_install_and_call_lambda_flask(
 def test_install_and_call_flask_lambda_over_http(
     persisted_person: NHSNumber,
     rsv_campaign_config: CampaignConfig,  # noqa: ARG001
-    consumer_mapping: ConsumerMapping,  # noqa: ARG001
+    consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG001
+    consumer_id: ConsumerId,
     api_gateway_endpoint: URL,
 ):
     """Given api-gateway and lambda installed into localstack, run it via http"""
@@ -99,7 +101,7 @@ def test_install_and_call_flask_lambda_over_http(
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: "23-mic7heal-jor6don"},
+        headers={"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: consumer_id},
         timeout=10,
     )
 
@@ -114,7 +116,8 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(  # noqa: PLR0913
     flask_function: str,
     persisted_person: NHSNumber,
     rsv_campaign_config: CampaignConfig,  # noqa: ARG001
-    consumer_mapping: ConsumerMapping,  # noqa: ARG001
+    consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG001
+    consumer_id: ConsumerId,
     logs_client: BaseClient,
     api_gateway_endpoint: URL,
 ):
@@ -188,7 +191,8 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     rsv_campaign_config: CampaignConfig,
-    consumer_mapping: ConsumerMapping,  # noqa: ARG001
+    consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG001
+    consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
@@ -379,7 +383,8 @@ def test_validation_of_query_params_when_all_are_valid(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     rsv_campaign_config: CampaignConfig,  # noqa:ARG001
-    consumer_mapping: ConsumerMapping,  # noqa: ARG001
+    consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG001
+    consumer_id: ConsumerId,
     api_gateway_endpoint: URL,
 ):
     # Given
@@ -420,7 +425,8 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person_all_cohorts: NHSNumber,
     multiple_campaign_configs: list[CampaignConfig],
-    consumer_mapping: ConsumerMapping,  # noqa: ARG001
+    consumer_mapping_with_multiple_campaign_configs: ConsumerMapping,  # noqa: ARG001
+    consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
@@ -431,7 +437,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
         invoke_url,
         headers={
             "nhs-login-nhs-number": str(persisted_person_all_cohorts),
-            CONSUMER_ID: "23-mic7heal-jor6don",
+            CONSUMER_ID: consumer_id,
             "x_request_id": "x_request_id",
             "x_correlation_id": "x_correlation_id",
             "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
@@ -567,6 +573,7 @@ def test_no_active_iteration_returns_empty_processed_suggestions(
     persisted_person_all_cohorts: NHSNumber,
     inactive_iteration_config: list[CampaignConfig],  # noqa:ARG001
     consumer_mapping_with_various_targets: ConsumerMapping,  # noqa:ARG001
+    consumer_id: ConsumerId,
     api_gateway_endpoint: URL,
 ):
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person_all_cohorts}"
@@ -574,7 +581,7 @@ def test_no_active_iteration_returns_empty_processed_suggestions(
         invoke_url,
         headers={
             "nhs-login-nhs-number": str(persisted_person_all_cohorts),
-            CONSUMER_ID: "23-mic7heal-jor6don",
+            CONSUMER_ID: consumer_id,
             "x_request_id": "x_request_id",
             "x_correlation_id": "x_correlation_id",
             "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
@@ -604,7 +611,8 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     person_with_all_data: NHSNumber,
     campaign_config_with_tokens: CampaignConfig,  # noqa:ARG001
-    consumer_mapping: ConsumerMapping,  # noqa:ARG001
+    consumer_mapping_with_campaign_config_with_tokens: ConsumerMapping,  # noqa: ARG001
+    consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
@@ -614,7 +622,7 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": str(person_with_all_data), CONSUMER_ID: "23-mic7heal-jor6don"},
+        headers={"nhs-login-nhs-number": str(person_with_all_data), CONSUMER_ID: consumer_id},
         timeout=10,
     )
 
@@ -655,7 +663,8 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     person_with_all_data: NHSNumber,
     campaign_config_with_invalid_tokens: CampaignConfig,  # noqa:ARG001
-    consumer_mapping: ConsumerMapping,  # noqa: ARG001
+    consumer_mapping_with_campaign_config_with_invalid_tokens: ConsumerMapping,  # noqa: ARG001
+    consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
@@ -665,7 +674,7 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
     invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": str(person_with_all_data), CONSUMER_ID: "23-mic7heal-jor6don"},
+        headers={"nhs-login-nhs-number": str(person_with_all_data), CONSUMER_ID: consumer_id},
         timeout=10,
     )
 
