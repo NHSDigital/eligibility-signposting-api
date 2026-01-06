@@ -7,6 +7,7 @@ from flask import request
 from flask.typing import ResponseReturnValue
 
 from eligibility_signposting_api.common.api_error_response import (
+    CONSUMER_ID_NOT_PROVIDED_ERROR,
     INVALID_CATEGORY_ERROR,
     INVALID_CONDITION_FORMAT_ERROR,
     INVALID_INCLUDE_ACTIONS_ERROR,
