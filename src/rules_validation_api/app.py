@@ -82,6 +82,7 @@ def display_current_iteration(result: RulesValidation) -> None:
         current = None
     if current is None:
         sys.stdout.write(f"{YELLOW}No active iteration could be determined{RESET}\n")
+        sys.stdout.write(f"{YELLOW}Total iterations configured: {RESET}{GREEN}{no_of_iterations}{RESET}\n")
     else:
         sys.stdout.write(f"{YELLOW}Current Iteration Number: {RESET}{GREEN}{current.iteration_number}{RESET}\n")
         sys.stdout.write(f"{YELLOW}Total iterations configured: {RESET}{GREEN}{no_of_iterations}{RESET}\n")
