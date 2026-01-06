@@ -564,7 +564,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
 def test_no_active_iteration_returns_empty_processed_suggestions(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person_all_cohorts: NHSNumber,
-    consumer_mapping_with_various_targets: ConsumerMapping,  # noqa:ARG001
+    consumer_mapping_with_inactive_iteration_config: ConsumerMapping,  # noqa:ARG001
     consumer_id: ConsumerId,
     api_gateway_endpoint: URL,
 ):

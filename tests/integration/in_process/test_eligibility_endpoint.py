@@ -24,11 +24,10 @@ from eligibility_signposting_api.model.eligibility_status import (
 
 
 class TestBaseLine:
-    def test_nhs_number_given(  # noqa: PLR0913
+    def test_nhs_number_given(
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
         consumer_id: ConsumerId,
         consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -63,7 +62,6 @@ class TestBaseLine:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
     ):
         # Given
         headers = {"nhs-login-nhs-number": str(persisted_person)}
@@ -81,11 +79,10 @@ class TestBaseLine:
 
 
 class TestStandardResponse:
-    def test_not_base_eligible(  # noqa: PLR0913
+    def test_not_base_eligible(
         self,
         client: FlaskClient,
         persisted_person_no_cohorts: NHSNumber,
-        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
         consumer_id: ConsumerId,
         consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -128,11 +125,10 @@ class TestStandardResponse:
             ),
         )
 
-    def test_not_eligible_by_rule(  # noqa: PLR0913
+    def test_not_eligible_by_rule(
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
-        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
         consumer_id: ConsumerId,
         consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -175,11 +171,10 @@ class TestStandardResponse:
             ),
         )
 
-    def test_not_actionable_and_check_response_when_no_rule_code_given(  # noqa: PLR0913
+    def test_not_actionable_and_check_response_when_no_rule_code_given(
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
         consumer_id: ConsumerId,
         consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -228,11 +223,10 @@ class TestStandardResponse:
             ),
         )
 
-    def test_actionable(  # noqa: PLR0913
+    def test_actionable(
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        rsv_campaign_config: CampaignConfig,  # noqa: ARG002
         consumer_id: ConsumerId,
         consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -282,13 +276,12 @@ class TestStandardResponse:
             ),
         )
 
-    def test_actionable_with_and_rule(  # noqa: PLR0913
+    def test_actionable_with_and_rule(
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config_with_and_rule: CampaignConfig,  # noqa: ARG002
         consumer_id: ConsumerId,
-        consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG002
+        consumer_mapping_with_campaign_config_with_and_rule: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -339,11 +332,10 @@ class TestStandardResponse:
 
 
 class TestVirtualCohortResponse:
-    def test_not_eligible_by_rule_when_only_virtual_cohort_is_present(  # noqa: PLR0913
+    def test_not_eligible_by_rule_when_only_virtual_cohort_is_present(
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
-        campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -386,11 +378,10 @@ class TestVirtualCohortResponse:
             ),
         )
 
-    def test_not_actionable_when_only_virtual_cohort_is_present(  # noqa: PLR0913
+    def test_not_actionable_when_only_virtual_cohort_is_present(
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -439,11 +430,10 @@ class TestVirtualCohortResponse:
             ),
         )
 
-    def test_actionable_when_only_virtual_cohort_is_present(  # noqa: PLR0913
+    def test_actionable_when_only_virtual_cohort_is_present(
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        campaign_config_with_virtual_cohort: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -496,11 +486,10 @@ class TestVirtualCohortResponse:
 
 
 class TestResponseOnMissingAttributes:
-    def test_not_base_eligible(  # noqa: PLR0913
+    def test_not_base_eligible(
         self,
         client: FlaskClient,
         persisted_person_no_cohorts: NHSNumber,
-        campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -537,11 +526,10 @@ class TestResponseOnMissingAttributes:
             ),
         )
 
-    def test_not_eligible_by_rule(  # noqa: PLR0913
+    def test_not_eligible_by_rule(
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
-        campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -578,11 +566,10 @@ class TestResponseOnMissingAttributes:
             ),
         )
 
-    def test_not_actionable(  # noqa: PLR0913
+    def test_not_actionable(
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -625,11 +612,10 @@ class TestResponseOnMissingAttributes:
             ),
         )
 
-    def test_actionable(  # noqa: PLR0913
+    def test_actionable(
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -674,11 +660,10 @@ class TestResponseOnMissingAttributes:
             ),
         )
 
-    def test_actionable_no_actions(  # noqa: PLR0913
+    def test_actionable_no_actions(
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -751,11 +736,10 @@ class TestResponseOnMissingAttributes:
 
 
 class TestEligibilityResponseWithVariousInputs:
-    def test_not_actionable_and_check_response_when_rule_mapper_is_absent_but_rule_code_given(  # noqa: PLR0913
+    def test_not_actionable_and_check_response_when_rule_mapper_is_absent_but_rule_code_given(
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config_with_rules_having_rule_code: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_rules_having_rule_code: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
@@ -804,11 +788,10 @@ class TestEligibilityResponseWithVariousInputs:
             ),
         )
 
-    def test_not_actionable_and_check_response_when_rule_mapper_is_given(  # noqa: PLR0913
+    def test_not_actionable_and_check_response_when_rule_mapper_is_given(
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config_with_rules_having_rule_mapper: CampaignConfig,  # noqa: ARG002
         consumer_mapping_with_campaign_config_with_rules_having_rule_mapper: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
