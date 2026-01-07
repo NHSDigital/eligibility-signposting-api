@@ -130,7 +130,7 @@ def test_security_headers_present_on_error_response(app: Flask, client: FlaskCli
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
     ):
         # When
-        headers = {"nhs-login-nhs-number": "9876543210"}
+        headers = {"nhs-login-nhs-number": "9876543210", "consumer-id":"test_customer_id"}
         response = client.get("/patient-check/9876543210", headers=headers)
 
         # Then
@@ -179,7 +179,7 @@ def test_nhs_number_given(app: Flask, client: FlaskClient):
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(12345)}
+        headers = {"nhs-login-nhs-number": str(12345), "consumer-id":"test_customer_id"}
 
         # When
         response = client.get("/patient-check/12345", headers=headers)
@@ -192,7 +192,7 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
     # Given
     with get_app_container(app).override.service(EligibilityService, new=FakeUnknownPersonEligibilityService()):
         # Given
-        headers = {"nhs-login-nhs-number": str(12345)}
+        headers = {"nhs-login-nhs-number": str(12345), "consumer-id":"test_customer_id"}
 
         # When
         response = client.get("/patient-check/", headers=headers)
@@ -231,7 +231,7 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
 
 def test_unexpected_error(app: Flask, client: FlaskClient):
     # Given
-    headers = {"nhs-login-nhs-number": str(12345)}
+    headers = {"nhs-login-nhs-number": str(12345), "consumer-id":"test_customer_id"}
 
     with get_app_container(app).override.service(EligibilityService, new=FakeUnexpectedErrorEligibilityService()):
         response = client.get("/patient-check/12345", headers=headers)
@@ -441,7 +441,7 @@ def test_excludes_nulls_via_build_response(client: FlaskClient):
             return_value=mocked_response,
         ),
     ):
-        response = client.get("/patient-check/12345", headers={"nhs-login-nhs-number": str(12345)})
+        response = client.get("/patient-check/12345", headers={"nhs-login-nhs-number": str(12345), "consumer-id":"test_customer_id"})
         assert response.status_code == HTTPStatus.OK
 
         payload = json.loads(response.data)
@@ -493,7 +493,7 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
             return_value=mocked_response,
         ),
     ):
-        response = client.get("/patient-check/12345", headers={"nhs-login-nhs-number": str(12345)})
+        response = client.get("/patient-check/12345", headers={"nhs-login-nhs-number": str(12345), "consumer-id":"test_customer_id"})
         assert response.status_code == HTTPStatus.OK
 
         payload = json.loads(response.data)

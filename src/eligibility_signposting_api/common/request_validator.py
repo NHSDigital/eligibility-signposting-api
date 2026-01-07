@@ -57,8 +57,7 @@ def validate_request_params() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> ResponseReturnValue:  # noqa:ANN002,ANN003
-            consumer_id = str(request.headers.get(CONSUMER_ID))
-
+            consumer_id = request.headers.get(CONSUMER_ID)
             if not consumer_id:
                 message = "You are not authorised to request"
                 return CONSUMER_ID_NOT_PROVIDED_ERROR.log_and_generate_response(
