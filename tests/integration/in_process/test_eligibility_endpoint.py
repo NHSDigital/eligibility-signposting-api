@@ -857,13 +857,21 @@ class TestEligibilityResponseWithVariousInputs:
                 "ALL",
                 ["RSV", "COVID"],
             ),
-            # Scenario 2: Explicit request for a single mapped target with an active campaign
+            # Scenario 2a: Explicit request for a single mapped target with an active campaign
             (
                 ["RSV", "COVID", "FLU"],
                 {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
                 "consumer-id",
                 "RSV",
                 ["RSV"],
+            ),
+            # Scenario 2b: Explicit request for a single mapped target with an active campaign
+            (
+                ["RSV", "COVID", "FLU"],
+                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                "consumer-id",
+                "RSV,COVID",
+                ["RSV", "COVID"],
             ),
             # Scenario 3: Request for an active campaign (FLU) that the consumer is NOT mapped to
             (
