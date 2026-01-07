@@ -47,10 +47,8 @@ def main() -> None:  # pragma: no cover
             json_data = json.load(file)
             result = RulesValidation(**json_data)
             sys.stdout.write(f"{GREEN}Valid Config{RESET}\n")
-            sys.stdout.write(
-                f"{YELLOW}Current Iteration Number is {RESET}{GREEN}"
-                f"{result.campaign_config.current_iteration.iteration_number}{RESET}\n"
-            )
+
+            display_current_iteration(result)
 
             # Group by class
             grouped = defaultdict(list)
@@ -73,6 +71,21 @@ def main() -> None:  # pragma: no cover
     except ValidationError as e:
         clean = refine_error(e)
         sys.stderr.write(f"{YELLOW}{clean}{RESET}\n")
+
+
+def display_current_iteration(result: RulesValidation) -> None:
+    no_of_iterations = 0
+    try:
+        no_of_iterations = len(result.campaign_config.iterations)
+        current = result.campaign_config.current_iteration
+    except StopIteration:
+        current = None
+    if current is None:
+        sys.stdout.write(f"{YELLOW}No active iteration could be determined{RESET}\n")
+        sys.stdout.write(f"{YELLOW}Total iterations configured: {RESET}{GREEN}{no_of_iterations}{RESET}\n")
+    else:
+        sys.stdout.write(f"{YELLOW}Current Iteration Number: {RESET}{GREEN}{current.iteration_number}{RESET}\n")
+        sys.stdout.write(f"{YELLOW}Total iterations configured: {RESET}{GREEN}{no_of_iterations}{RESET}\n")
 
 
 if __name__ == "__main__":  # pragma: no cover

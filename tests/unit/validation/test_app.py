@@ -1,6 +1,10 @@
+import sys
+from io import StringIO
+from unittest.mock import Mock, PropertyMock
+
 from pydantic import BaseModel, ValidationError
 
-from rules_validation_api.app import refine_error
+from rules_validation_api.app import display_current_iteration, refine_error
 
 
 def _raise_validation_error(model_cls, **kwargs) -> ValidationError:
@@ -70,3 +74,50 @@ def test_refine_error_output_structure():
     expected_no_lines = 3
     assert len(lines) == expected_no_lines
     assert lines[0].startswith("❌Validation Error:")
+
+
+def test_no_current_iteration():
+    # Arrange
+    result = Mock()
+    result.campaign_config = Mock()
+
+    # iterations must be a list, not a Mock
+    result.campaign_config.iterations = []
+
+    # current_iteration should raise StopIteration
+    type(result.campaign_config).current_iteration = PropertyMock(side_effect=StopIteration)
+
+    captured = StringIO()
+    sys.stdout = captured
+
+    # Act
+    display_current_iteration(result)
+
+    # Reset stdout
+    sys.stdout = sys.__stdout__
+
+    # Assert
+    assert "No active iteration could be determined" in captured.getvalue()
+
+
+def test_current_iteration_exists():
+    # Arrange
+    mock_iteration = Mock()
+    mock_iteration.iteration_number = 7
+
+    result = Mock()
+    result.campaign_config = Mock()
+
+    result.campaign_config.iterations = [mock_iteration]
+
+    type(result.campaign_config).current_iteration = PropertyMock(return_value=mock_iteration)
+
+    captured = StringIO()
+    sys.stdout = captured
+
+    display_current_iteration(result)
+
+    sys.stdout = sys.__stdout__
+
+    assert "Current Iteration Number:" in captured.getvalue()
+    assert "7" in captured.getvalue()
