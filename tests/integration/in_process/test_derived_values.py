@@ -33,7 +33,13 @@ from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask.testing import FlaskClient
 from hamcrest import (
     assert_that,
+    greater_than_or_equal_to,
+    has_entries,
+    has_item,
     has_key,
+    has_length,
+    is_not,
+    none,
 )
 
 from eligibility_signposting_api.model.campaign_config import CampaignConfig
@@ -86,7 +92,7 @@ class TestDerivedValues:
 
         # Extract the processed suggestions
         body = response.get_json()
-        assert body is not None
+        assert_that(body, is_not(none()))
         processed_suggestions = body.get("processedSuggestions", [])
 
         # Find the COVID condition
@@ -94,41 +100,26 @@ class TestDerivedValues:
             (s for s in processed_suggestions if s.get("condition") == "COVID"),
             None,
         )
-        assert covid_suggestion is not None, "Expected COVID condition in response"
+        assert_that(covid_suggestion, is_not(none()))
 
         # Extract actions
-        actions = covid_suggestion.get("actions", [])
+        actions = covid_suggestion.get("actions", [])  # type: ignore[union-attr]
         expected_actions_count = 2
-        assert len(actions) >= expected_actions_count, (
-            f"Expected at least {expected_actions_count} actions, got {len(actions)}"
-        )
-
-        # Find the vaccination date actions by action code
-        date_of_last = next(
-            (a for a in actions if a.get("actionCode") == "DateOfLastVaccination"),
-            None,
-        )
-        date_of_next = next(
-            (a for a in actions if a.get("actionCode") == "DateOfNextEarliestVaccination"),
-            None,
-        )
+        assert_that(actions, has_length(greater_than_or_equal_to(expected_actions_count)))
 
         # Verify DateOfLastVaccination shows the raw date
-        assert date_of_last is not None, "Expected DateOfLastVaccination action"
-        assert date_of_last["description"] == "20260128", (
-            f"Expected DateOfLastVaccination to be '20260128', got '{date_of_last['description']}'"
+        assert_that(
+            actions,
+            has_item(has_entries(actionType="DataValue", actionCode="DateOfLastVaccination", description="20260128")),
         )
 
         # Verify DateOfNextEarliestVaccination shows the calculated date (2026-01-28 + 91 days = 2026-04-29)
-        assert date_of_next is not None, "Expected DateOfNextEarliestVaccination action"
-        assert date_of_next["description"] == "20260429", (
-            f"Expected DateOfNextEarliestVaccination to be '20260429' (20260128 + 91 days), "
-            f"got '{date_of_next['description']}'"
+        assert_that(
+            actions,
+            has_item(
+                has_entries(actionType="DataValue", actionCode="DateOfNextEarliestVaccination", description="20260429")
+            ),
         )
-
-        # Verify action types are DataValue as per requirement
-        assert date_of_last["actionType"] == "DataValue"
-        assert date_of_next["actionType"] == "DataValue"
 
     def test_add_days_with_formatted_date_output(
         self,
@@ -163,23 +154,19 @@ class TestDerivedValues:
         )
 
         body = response.get_json()
-        assert body is not None
+        assert_that(body, is_not(none()))
         processed_suggestions = body.get("processedSuggestions", [])
 
         covid_suggestion = next(
             (s for s in processed_suggestions if s.get("condition") == "COVID"),
             None,
         )
-        assert covid_suggestion is not None
+        assert_that(covid_suggestion, is_not(none()))
 
-        actions = covid_suggestion.get("actions", [])
-        date_of_next = next(
-            (a for a in actions if a.get("actionCode") == "DateOfNextEarliestVaccination"),
-            None,
-        )
+        actions = covid_suggestion.get("actions", [])  # type: ignore[union-attr]
 
         # Verify the formatted date output
-        assert date_of_next is not None, "Expected DateOfNextEarliestVaccination action"
-        assert date_of_next["description"] == "29 April 2026", (
-            f"Expected formatted date '29 April 2026', got '{date_of_next['description']}'"
+        assert_that(
+            actions,
+            has_item(has_entries(actionCode="DateOfNextEarliestVaccination", description="29 April 2026")),
         )
