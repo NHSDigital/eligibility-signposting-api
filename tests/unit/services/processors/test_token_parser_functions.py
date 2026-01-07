@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 import pytest
+from hamcrest import assert_that, calling, equal_to, is_, none, raises
 
 from eligibility_signposting_api.services.processors.token_parser import TokenParser
 
@@ -61,26 +62,26 @@ class TestTokenParserWithFunctions:
         """Test parsing tokens with function calls."""
         parsed_token = TokenParser.parse(token)
 
-        assert parsed_token.attribute_level == expected.level
-        assert parsed_token.attribute_name == expected.name
-        assert parsed_token.attribute_value == expected.value
-        assert parsed_token.function_name == expected.function
-        assert parsed_token.function_args == expected.args
-        assert parsed_token.format == expected.date_format
+        assert_that(parsed_token.attribute_level, is_(equal_to(expected.level)))
+        assert_that(parsed_token.attribute_name, is_(equal_to(expected.name)))
+        assert_that(parsed_token.attribute_value, is_(equal_to(expected.value)))
+        assert_that(parsed_token.function_name, is_(equal_to(expected.function)))
+        assert_that(parsed_token.function_args, is_(equal_to(expected.args)))
+        assert_that(parsed_token.format, is_(equal_to(expected.date_format)))
 
     def test_parse_without_function_has_none_function_fields(self):
         """Test that tokens without functions have None for function fields."""
         parsed = TokenParser.parse("[[TARGET.COVID.LAST_SUCCESSFUL_DATE]]")
 
-        assert parsed.function_name is None
-        assert parsed.function_args is None
+        assert_that(parsed.function_name, is_(none()))
+        assert_that(parsed.function_args, is_(none()))
 
     def test_parse_date_format_not_treated_as_function(self):
         """Test that DATE format is not treated as a derived function."""
         parsed = TokenParser.parse("[[PERSON.DATE_OF_BIRTH:DATE(%d %B %Y)]]")
 
-        assert parsed.function_name is None
-        assert parsed.format == "%d %B %Y"
+        assert_that(parsed.function_name, is_(none()))
+        assert_that(parsed.format, is_(equal_to("%d %B %Y")))
 
     @pytest.mark.parametrize(
         "token",
@@ -92,5 +93,4 @@ class TestTokenParserWithFunctions:
     )
     def test_parse_invalid_function_format_raises_error(self, token):
         """Test that malformed function calls raise errors."""
-        with pytest.raises(ValueError, match="Invalid token format"):
-            TokenParser.parse(token)
+        assert_that(calling(TokenParser.parse).with_args(token), raises(ValueError, "Invalid token format"))
