@@ -840,12 +840,14 @@ class TestEligibilityResponseWithVariousInputs:
             ),
         )
 
+
     @pytest.mark.parametrize(
         (
             "campaign_configs",
             "consumer_mappings",
             "consumer_id",
             "requested_conditions",
+            "requested_category",
             "expected_targets",
         ),
         [
@@ -855,6 +857,7 @@ class TestEligibilityResponseWithVariousInputs:
                 {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
                 "consumer-id",
                 "ALL",
+                "VACCINATIONS",
                 ["RSV", "COVID"],
             ),
             # Scenario 2a: Explicit request for a single mapped target with an active campaign
@@ -863,6 +866,7 @@ class TestEligibilityResponseWithVariousInputs:
                 {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
                 "consumer-id",
                 "RSV",
+                "VACCINATIONS",
                 ["RSV"],
             ),
             # Scenario 2b: Explicit request for a single mapped target with an active campaign
@@ -871,6 +875,7 @@ class TestEligibilityResponseWithVariousInputs:
                 {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
                 "consumer-id",
                 "RSV,COVID",
+                "VACCINATIONS",
                 ["RSV", "COVID"],
             ),
             # Scenario 3: Request for an active campaign (FLU) that the consumer is NOT mapped to
@@ -879,6 +884,7 @@ class TestEligibilityResponseWithVariousInputs:
                 {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
                 "consumer-id",
                 "FLU",
+                "VACCINATIONS",
                 [],
             ),
             # Scenario 4: Request for a target that neither exists in system nor is mapped to consumer
@@ -887,6 +893,7 @@ class TestEligibilityResponseWithVariousInputs:
                 {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
                 "consumer-id",
                 "HPV",
+                "VACCINATIONS",
                 [],
             ),
             # Scenario 5: No mappings at all; requesting ALL should return empty
@@ -895,6 +902,7 @@ class TestEligibilityResponseWithVariousInputs:
                 {},
                 "consumer-id",
                 "ALL",
+                "VACCINATIONS",
                 [],
             ),
             # Scenario 6: No mappings at all; requesting RSV should return empty
@@ -903,6 +911,7 @@ class TestEligibilityResponseWithVariousInputs:
                 {},
                 "consumer-id",
                 "RSV",
+                "VACCINATIONS",
                 [],
             ),
             # Scenario 7: Consumer has no target mappings; requesting ALL should return empty
@@ -911,6 +920,7 @@ class TestEligibilityResponseWithVariousInputs:
                 {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
                 "another-consumer-id",
                 "ALL",
+                "VACCINATIONS",
                 [],
             ),
             # Scenario 8: Consumer has no target mappings; requesting specific target should return empty
@@ -919,6 +929,7 @@ class TestEligibilityResponseWithVariousInputs:
                 {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
                 "another-consumer-id",
                 "RSV",
+                "VACCINATIONS",
                 [],
             ),
             # Scenario 9: Consumer is mapped to targets (RSV/COVID), but those campaigns aren't active/present
@@ -927,6 +938,7 @@ class TestEligibilityResponseWithVariousInputs:
                 {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
                 "consumer-id",
                 "ALL",
+                "VACCINATIONS",
                 [],
             ),
             # Scenario 10: Request for specific mapped target (RSV), but those campaigns aren't active/present
@@ -935,6 +947,7 @@ class TestEligibilityResponseWithVariousInputs:
                 {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
                 "consumer-id",
                 "RSV",
+                "VACCINATIONS",
                 [],
             ),
         ],
@@ -949,6 +962,7 @@ class TestEligibilityResponseWithVariousInputs:
         consumer_mappings: ConsumerMapping,  # noqa: ARG002
         consumer_id: str,
         requested_conditions: str,
+        requested_category: str,
         expected_targets: list[str],
     ):
         # Given
@@ -956,7 +970,7 @@ class TestEligibilityResponseWithVariousInputs:
 
         # When
         response = client.get(
-            f"/patient-check/{persisted_person}?includeActions=Y&conditions={requested_conditions}", headers=headers
+            f"/patient-check/{persisted_person}?includeActions=Y&category={requested_category}&conditions={requested_conditions}", headers=headers
         )
 
         assert_that(
