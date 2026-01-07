@@ -840,7 +840,6 @@ class TestEligibilityResponseWithVariousInputs:
             ),
         )
 
-
     @pytest.mark.parametrize(
         (
             "campaign_configs",
@@ -970,7 +969,8 @@ class TestEligibilityResponseWithVariousInputs:
 
         # When
         response = client.get(
-            f"/patient-check/{persisted_person}?includeActions=Y&category={requested_category}&conditions={requested_conditions}", headers=headers
+            f"/patient-check/{persisted_person}?includeActions=Y&category={requested_category}&conditions={requested_conditions}",
+            headers=headers,
         )
 
         assert_that(
