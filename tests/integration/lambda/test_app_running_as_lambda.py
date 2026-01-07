@@ -293,7 +293,7 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": f"123{persisted_person!s}", "consumer-id":"test_consumer_id"},
+        headers={"nhs-login-nhs-number": f"123{persisted_person!s}", "consumer-id": "test_consumer_id"},
         timeout=10,
     )
 
@@ -406,7 +406,7 @@ def test_validation_of_query_params_when_invalid_conditions_is_specified(
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": persisted_person, "consumer-id":"test_consumer_id"},
+        headers={"nhs-login-nhs-number": persisted_person, "consumer-id": "test_consumer_id"},
         params={"category": "ALL", "conditions": "23-097"},
         timeout=10,
     )
