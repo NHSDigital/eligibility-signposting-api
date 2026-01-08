@@ -1094,6 +1094,55 @@ def campaign_config_with_derived_values_formatted(
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
+@pytest.fixture
+def campaign_config_with_multiple_add_days(
+    s3_client: BaseClient, rules_bucket: BucketName
+) -> Generator[CampaignConfig]:
+    """Campaign config with multiple actions using ADD_DAYS with different parameters."""
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="COVID",
+        iterations=[
+            rule.IterationFactory.build(
+                default_comms_routing="DERIVED_LAST_DATE|DERIVED_NEXT_DOSE_91|DERIVED_NEXT_DOSE_61",
+                actions_mapper=rule.ActionsMapperFactory.build(
+                    root={
+                        "DERIVED_LAST_DATE": AvailableAction(
+                            ActionType="DataValue",
+                            ExternalRoutingCode="DateOfLastVaccination",
+                            ActionDescription="[[TARGET.COVID.LAST_SUCCESSFUL_DATE]]",
+                        ),
+                        "DERIVED_NEXT_DOSE_91": AvailableAction(
+                            ActionType="DataValue",
+                            ExternalRoutingCode="DateOfNextDoseAt91Days",
+                            ActionDescription="[[TARGET.COVID.NEXT_DOSE_DUE:ADD_DAYS(91)]]",
+                        ),
+                        "DERIVED_NEXT_DOSE_61": AvailableAction(
+                            ActionType="DataValue",
+                            ExternalRoutingCode="DateOfNextDoseAt61Days",
+                            ActionDescription="[[TARGET.COVID.NEXT_DOSE_DUE:ADD_DAYS(61)]]",
+                        ),
+                    }
+                ),
+                iteration_rules=[],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort_label1",
+                        cohort_group="cohort_group1",
+                        positive_description="Positive Description",
+                        negative_description="Negative Description",
+                    )
+                ],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
 @pytest.fixture(scope="class")
 def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""

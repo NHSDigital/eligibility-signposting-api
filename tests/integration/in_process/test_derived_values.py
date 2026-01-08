@@ -32,6 +32,7 @@ from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask.testing import FlaskClient
 from hamcrest import (
+    all_of,
     assert_that,
     greater_than_or_equal_to,
     has_entries,
@@ -169,4 +170,75 @@ class TestDerivedValues:
         assert_that(
             actions,
             has_item(has_entries(actionCode="DateOfNextEarliestVaccination", description="29 April 2026")),
+        )
+
+
+class TestMultipleActionsWithAddDays:
+    """Test that multiple actions can use ADD_DAYS with different parameters."""
+
+    def test_multiple_actions_with_different_add_days_parameters(
+        self,
+        client: FlaskClient,
+        campaign_config_with_multiple_add_days: CampaignConfig,  # noqa: ARG002
+        person_with_covid_vaccination: NHSNumber,
+    ):
+        """
+        Test that multiple actions can use the same function (ADD_DAYS) with different parameters.
+
+        This test verifies that when a campaign has multiple actions that use ADD_DAYS with different
+        parameters (e.g., ADD_DAYS(91) and ADD_DAYS(61)), both calculations are performed correctly.
+
+        Given:
+            - A person with a COVID vaccination date of 2026-01-28 (20260128)
+            - A campaign config with three actions:
+                1. DateOfLastVaccination: Returns the raw LAST_SUCCESSFUL_DATE
+                2. DateOfNextDoseAt91Days: Returns NEXT_DOSE_DUE with ADD_DAYS(91)
+                3. DateOfNextDoseAt61Days: Returns NEXT_DOSE_DUE with ADD_DAYS(61)
+
+        When:
+            - The /patient-check endpoint is called with includeActions=Y
+
+        Then:
+            - DateOfLastVaccination should be "20260128" (raw date)
+            - DateOfNextDoseAt91Days should be "20260429" (2026-01-28 + 91 days)
+            - DateOfNextDoseAt61Days should be "20260330" (2026-01-28 + 61 days)
+
+        This addresses the reviewer's suggestion to test multiple actions using the same
+        function with different parameters.
+        """
+        # Given
+        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination)}
+
+        # When
+        response = client.get(
+            f"/patient-check/{person_with_covid_vaccination}?includeActions=Y",
+            headers=headers,
+        )
+
+        # Then
+        assert_that(
+            response,
+            is_response().with_status_code(HTTPStatus.OK).and_text(is_json_that(has_key("processedSuggestions"))),
+        )
+
+        body = response.get_json()
+        assert_that(body, is_not(none()))
+        processed_suggestions = body.get("processedSuggestions", [])
+
+        covid_suggestion = next(
+            (s for s in processed_suggestions if s.get("condition") == "COVID"),
+            None,
+        )
+        assert_that(covid_suggestion, is_not(none()))
+
+        actions = covid_suggestion.get("actions", [])  # type: ignore[union-attr]
+
+        # Verify all three actions are present with correct values
+        assert_that(
+            actions,
+            all_of(
+                has_item(has_entries(actionCode="DateOfLastVaccination", description="20260128")),
+                has_item(has_entries(actionCode="DateOfNextDoseAt91Days", description="20260429")),
+                has_item(has_entries(actionCode="DateOfNextDoseAt61Days", description="20260330")),
+            ),
         )
