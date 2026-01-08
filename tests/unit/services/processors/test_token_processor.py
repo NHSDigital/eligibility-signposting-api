@@ -330,11 +330,7 @@ class TestTokenProcessor:
     @pytest.mark.parametrize(
         "token_format",
         [
-            ":INVALID_DATE_FORMATTER(%ABC)",
-            ":INVALID_DATE_FORMATTER(19900327)",
             ":()",
-            ":FORMAT(DATE)",
-            ":FORMAT(BLAH)",
             ":DATE[%d %B %Y]",
             ":DATE(%A, (%d) %B %Y)",
         ],
@@ -352,6 +348,31 @@ class TestTokenProcessor:
         )
 
         with pytest.raises(ValueError, match=r"Invalid token format\."):
+            TokenProcessor.find_and_replace_tokens(person, condition)
+
+    @pytest.mark.parametrize(
+        ("token_format", "func_name"),
+        [
+            (":INVALID_DATE_FORMATTER(%ABC)", "INVALID_DATE_FORMATTER"),
+            (":INVALID_DATE_FORMATTER(19900327)", "INVALID_DATE_FORMATTER"),
+            (":FORMAT(DATE)", "FORMAT"),
+            (":FORMAT(BLAH)", "FORMAT"),
+        ],
+    )
+    def test_unknown_function_raises_error(self, token_format: str, func_name: str):
+        """Test that unknown function names raise ValueError with appropriate message."""
+        person = Person([{"ATTRIBUTE_TYPE": "PERSON", "AGE": "30", "DATE_OF_BIRTH": "19900327"}])
+
+        condition = Condition(
+            condition_name=ConditionName("You had your RSV vaccine"),
+            status=Status.actionable,
+            status_text=StatusText(f"Your birthday is on [[PERSON.DATE_OF_BIRTH{token_format}]]"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        with pytest.raises(ValueError, match=f"Unknown function '{func_name}'"):
             TokenProcessor.find_and_replace_tokens(person, condition)
 
     @pytest.mark.parametrize(
