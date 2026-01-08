@@ -33,3 +33,47 @@ module "eligibility_signposting_lambda_function" {
   provisioned_concurrency_count     = 5
   api_domain_name                   = local.api_domain_name
 }
+
+# -----------------------------------------------------------------------------
+# Secret rotation lambdas
+# -----------------------------------------------------------------------------
+
+# 1. Generator Lambda
+data "archive_file" "create_zip" {
+  type        = "zip"
+  source_file = "${path.module}/scripts/create_pending_secret.py"
+  output_path = "${path.module}/scripts/create_pending_secret.zip"
+}
+
+resource "aws_lambda_function" "create_secret_lambda" {
+  filename      = data.archive_file.create_zip.output_path
+  function_name = "${terraform.workspace}-CreatePendingSecretFunction"
+  role          = aws_iam_role.rotation_lambda_role.arn
+  handler       = "create_pending_secret.lambda_handler"
+  runtime       = "python3.13"
+  timeout       = 30
+
+  environment {
+    variables = { SECRET_NAME = module.secrets_manager.aws_hashing_secret_name }
+  }
+}
+
+# 2. Promoter Lambda
+data "archive_file" "promote_zip" {
+  type        = "zip"
+  source_file = "${path.module}/scripts/promote_to_current.py"
+  output_path = "${path.module}/scripts/promote_to_current.zip"
+}
+
+resource "aws_lambda_function" "promote_secret_lambda" {
+  filename      = data.archive_file.promote_zip.output_path
+  function_name = "${terraform.workspace}-PromoteToCurrentFunction"
+  role          = aws_iam_role.rotation_lambda_role.arn
+  handler       = "promote_to_current.lambda_handler"
+  runtime       = "python3.13"
+  timeout       = 30
+
+  environment {
+    variables = { SECRET_NAME = module.secrets_manager.aws_hashing_secret_name }
+  }
+}

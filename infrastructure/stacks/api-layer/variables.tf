@@ -15,3 +15,9 @@ variable "waf_enabled_environments" {
   description = "Environments in which WAF resources are deployed. Adjust to disable in test after evaluation."
   default     = ["dev", "preprod", "prod"]
 }
+
+variable "operator_emails" {
+  description = "List of email addresses to receive manual approval notifications"
+  type        = list(string)
+  default = ["tom.eldridge1@nhs.net", "shweta.dongare1@nhs.net"]
+}
