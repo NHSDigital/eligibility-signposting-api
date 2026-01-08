@@ -50,3 +50,6 @@ sandbox/specification/*
 /tests/e2e/reports/*
 /tests/e2e/.temp/
 /tests/e2e/certs/
+
+/.github/skills
+/.github/copilot-instructions.md
