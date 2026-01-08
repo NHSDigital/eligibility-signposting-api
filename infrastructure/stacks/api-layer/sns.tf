@@ -3,7 +3,7 @@ resource "aws_sns_topic" "cli_login_topic" {
 }
 
 resource "aws_sns_topic_subscription" "email_targets" {
-  for_each  = toset(var.operator_emails)
+  for_each  = toset(var.OPERATOR_EMAILS)
 
   topic_arn = aws_sns_topic.cli_login_topic.arn
   protocol  = "email"
