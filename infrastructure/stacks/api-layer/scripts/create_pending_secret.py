@@ -5,6 +5,7 @@ import secrets
 import string
 
 import boto3
+from mangum.types import LambdaContext, LambdaEvent
 
 SECRET_NAME = os.environ.get("SECRET_NAME")
 REGION_NAME = os.environ.get("AWS_REGION")
@@ -13,13 +14,20 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def generate_password(length=32):
+class PendingVersionExistsError(Exception):
+    pass
+
+
+def generate_password(length: int = 32) -> str:
     """Generates a secure random password."""
     alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
-    return "".join(secrets.choice(alphabet) for i in range(length))
+    return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
-def lambda_handler(event, context):
+def lambda_handler(
+    event: LambdaEvent,  # noqa: ARG001
+    context: LambdaContext,
+) -> dict:
     sm_client = boto3.client("secretsmanager", region_name=REGION_NAME)
 
     logger.info(
@@ -50,7 +58,7 @@ def lambda_handler(event, context):
                     )
                 )
 
-                raise Exception(msg)
+                raise PendingVersionExistsError(msg)
     except sm_client.exceptions.ResourceNotFoundException:
         logger.info("Secret not found. Proceeding to create (assuming it will be initialized).")
 
@@ -64,8 +72,9 @@ def lambda_handler(event, context):
         )
         return {"status": "success", "secret_name": SECRET_NAME, "version_id": resp["VersionId"]}
 
-    except sm_client.exceptions.ResourceNotFoundException:
-        raise Exception(f"The secret '{SECRET_NAME}' was not found in region '{REGION_NAME}'.")
+    except sm_client.exceptions.ResourceNotFoundException as e:
+        exception_message = f"The secret '{SECRET_NAME}' was not found in region '{REGION_NAME}'."
+        raise sm_client.exceptions.ResourceNotFoundException(exception_message) from e
     except Exception as e:
-        logger.error(json.dumps({"event": "rotation_failed", "error": str(e), "type": type(e).__name__}))
-        raise Exception(f"Error creating pending secret: {e!s}")
+        logger.exception(json.dumps({"event": "rotation_failed", "type": type(e).__name__}))
+        raise
