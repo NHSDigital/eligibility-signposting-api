@@ -20,9 +20,9 @@ class TestValidateNHSNumber:
     @pytest.mark.parametrize(
         ("path_nhs", "header_nhs", "expected_result", "expected_log_msg"),
         [
-            (None, None, False, "NHS number is not present"),
-            ("1234567890", None, False, "NHS number is not present"),
-            (None, "1234567890", False, "NHS number is not present"),
+            (None, None, False, "NHS number is not present in path"),
+            ("1234567890", None, True, None),
+            (None, "1234567890", False, "NHS number is not present in path"),
             ("1234567890", "0987654321", False, "NHS number mismatch"),
             ("1234567890", "1234567890", True, None),
         ],
