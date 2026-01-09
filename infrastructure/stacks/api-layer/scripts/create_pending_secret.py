@@ -2,9 +2,14 @@ import boto3
 import secrets
 import string
 import os
+import logging
+import json
 
 SECRET_NAME = os.environ.get('SECRET_NAME')
 REGION_NAME = os.environ.get('AWS_REGION')
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 def generate_password(length=32):
     """Generates a secure random password."""
@@ -13,6 +18,31 @@ def generate_password(length=32):
 
 def lambda_handler(event, context):
     sm_client = boto3.client('secretsmanager', region_name=REGION_NAME)
+
+    logger.info(json.dumps({
+        'event': 'rotation_started',
+        'request_id': context.aws_request_id,
+        'secret_name': SECRET_NAME,
+        'function': 'create_pending_secret'
+    }))
+
+    try:
+        metadata = sm_client.describe_secret(SecretId=SECRET_NAME)
+        # Check if any version currently has the 'AWSPENDING' label
+        for version_id, stages in metadata.get('VersionIdsToStages', {}).items():
+            if 'AWSPENDING' in stages:
+                msg = f"Pending version already exists with version_id: {version_id}."
+
+                logger.warning(json.dumps({
+                    'event': 'rotation_aborted',
+                    'reason': 'pending_version_exists',
+                    'pending_version_id': version_id
+                }))
+
+                raise Exception(msg)
+    except sm_client.exceptions.ResourceNotFoundException:
+        logger.info("Secret not found. Proceeding to create (assuming it will be initialized).")
+        pass
 
     new_password = generate_password()
 
@@ -23,7 +53,11 @@ def lambda_handler(event, context):
             VersionStages=['AWSPENDING']
         )
 
-        print(f"Successfully created pending version for {SECRET_NAME}")
+        logger.info(json.dumps({
+            'event': 'pending_version_created',
+            'version_id': resp['VersionId'],
+            'status': 'success'
+        }))
         return {
             "status": "success",
             "secret_name": SECRET_NAME,
@@ -33,4 +67,9 @@ def lambda_handler(event, context):
     except sm_client.exceptions.ResourceNotFoundException:
         raise Exception(f"The secret '{SECRET_NAME}' was not found in region '{REGION_NAME}'.")
     except Exception as e:
+        logger.error(json.dumps({
+            'event': 'rotation_failed',
+            'error': str(e),
+            'type': type(e).__name__
+        }))
         raise Exception(f"Error creating pending secret: {str(e)}")

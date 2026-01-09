@@ -597,7 +597,10 @@ resource "aws_iam_policy" "rotation_secrets_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
-        Resource = "arn:aws:logs:*:*:*"
+        Resource = [
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${aws_lambda_function.create_secret_lambda.function_name}:*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${aws_lambda_function.promote_secret_lambda.function_name}:*"
+        ]
       }
     ]
   })

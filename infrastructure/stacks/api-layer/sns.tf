@@ -1,4 +1,5 @@
 resource "aws_sns_topic" "cli_login_topic" {
+  #checkov:skip=CKV_AWS_26: Topic contains nothing sensitive so no encryption required
   name = "cli-login-notifications"
 }
 

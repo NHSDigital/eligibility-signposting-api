@@ -46,6 +46,13 @@ data "archive_file" "create_zip" {
 }
 
 resource "aws_lambda_function" "create_secret_lambda" {
+  #checkov:skip=CKV_AWS_116: No deadletter queue is required for this Lambda function
+  #checkov:skip=CKV_AWS_115: Not applicable as it will not be possible to trigger concurrently
+  #checkov:skip=CKV_AWS_272: Skipping code signing but flagged to create ticket to investigate on ELI-238
+  #checkov:skip=CKV_AWS_50: No x-ray needed for this function
+  #checkov:skip=CKV_AWS_173: No encryption needed for the secret name
+  #checkov:skip=CKV_AWS_117: Does not need to be in a VPC
+
   filename      = data.archive_file.create_zip.output_path
   function_name = "${terraform.workspace}-CreatePendingSecretFunction"
   role          = aws_iam_role.rotation_lambda_role.arn
@@ -66,6 +73,12 @@ data "archive_file" "promote_zip" {
 }
 
 resource "aws_lambda_function" "promote_secret_lambda" {
+  #checkov:skip=CKV_AWS_116: No deadletter queue is required for this Lambda function
+  #checkov:skip=CKV_AWS_115: Not applicable as it will not be possible to trigger concurrently
+  #checkov:skip=CKV_AWS_272: Skipping code signing but flagged to create ticket to investigate on ELI-238
+  #checkov:skip=CKV_AWS_50: No x-ray needed for this function
+  #checkov:skip=CKV_AWS_173: No encryption needed for the secret name
+  #checkov:skip=CKV_AWS_117: Does not need to be in a VPC
   filename      = data.archive_file.promote_zip.output_path
   function_name = "${terraform.workspace}-PromoteToCurrentFunction"
   role          = aws_iam_role.rotation_lambda_role.arn
