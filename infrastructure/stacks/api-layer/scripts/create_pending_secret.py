@@ -5,7 +5,6 @@ import secrets
 import string
 
 import boto3
-from mangum.types import LambdaContext, LambdaEvent
 
 SECRET_NAME = os.environ.get("SECRET_NAME")
 REGION_NAME = os.environ.get("AWS_REGION")
@@ -25,8 +24,8 @@ def generate_password(length: int = 32) -> str:
 
 
 def lambda_handler(
-    event: LambdaEvent,  # noqa: ARG001
-    context: LambdaContext,
+    event: dict,  # noqa: ARG001
+    context: object,
 ) -> dict:
     sm_client = boto3.client("secretsmanager", region_name=REGION_NAME)
 
@@ -43,7 +42,6 @@ def lambda_handler(
 
     try:
         metadata = sm_client.describe_secret(SecretId=SECRET_NAME)
-        # Check if any version currently has the 'AWSPENDING' label
         for version_id, stages in metadata.get("VersionIdsToStages", {}).items():
             if "AWSPENDING" in stages:
                 msg = f"Pending version already exists with version_id: {version_id}."
