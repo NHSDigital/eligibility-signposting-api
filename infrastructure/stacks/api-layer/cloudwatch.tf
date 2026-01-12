@@ -34,3 +34,9 @@ resource "aws_cloudwatch_log_stream" "firehose_audit_stream" {
     aws_cloudwatch_log_group.firehose_audit
   ]
 }
+
+resource "aws_cloudwatch_log_group" "rotation_sfn_logs" {
+  name              = "/aws/stepfunctions/SecretRotationWorkflow"
+  kms_key_id = module.secrets_manager.rotation_sns_key_arn
+  retention_in_days = 365
+}
