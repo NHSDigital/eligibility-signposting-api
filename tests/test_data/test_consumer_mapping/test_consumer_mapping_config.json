@@ -1,0 +1,10 @@
+{
+  "consumer-id-123": [
+    "RSV_campaign_id",
+    "COVID_campaign_id"
+  ],
+  "consumer-id-456": [
+    "RSV_campaign_id",
+    "COVID_campaign_id"
+  ]
+}
