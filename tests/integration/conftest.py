@@ -1114,7 +1114,7 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
 @pytest.fixture
 def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
-    campaign_data_keys = [], []
+    campaigns, campaign_data_keys = [], []
 
     raw = getattr(
         request, "param", [("RSV", "RSV_campaign_id"), ("COVID", "COVID_campaign_id"), ("FLU", "FLU_campaign_id")]
@@ -1371,7 +1371,7 @@ def consumer_mapping_with_multiple_campaign_configs(
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture
 def consumer_mappings(
     request, s3_client: BaseClient, consumer_mapping_bucket: BucketName
 ) -> Generator[ConsumerMapping]:
