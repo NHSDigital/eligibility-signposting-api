@@ -24,13 +24,8 @@ resource "aws_sfn_state_machine" "rotation_machine" {
         Resource       = "arn:aws:states:::sns:publish.waitForTaskToken",
         TimeoutSeconds = 86400,
         Parameters = {
-          TopicArn = aws_sns_topic.cli_login_topic.arn,
-          Message = {
-            Title         = "STEP 1 DONE: Pending Secret Created",
-            Instructions  = "1. Run 'Add New Hashes' job. 2. Copy TaskToken below. 3. Run CLI resume command.",
-            SecretName    = module.secrets_manager.aws_hashing_secret_name,
-            "TaskToken.$" = "$$.Task.Token"
-          }
+          TopicArn    = aws_sns_topic.cli_login_topic.arn,
+          "Message.$" = local.add_jobs_message
         },
         Catch = [
           { ErrorEquals = ["States.Timeout"], Next = "Fail_Timeout" },
@@ -50,12 +45,7 @@ resource "aws_sfn_state_machine" "rotation_machine" {
         TimeoutSeconds = 86400,
         Parameters = {
           TopicArn = aws_sns_topic.cli_login_topic.arn,
-          Message = {
-            Title         = "STEP 2 DONE: Promoted to Current",
-            Instructions  = "1. Run 'Delete Old Hashes' job. 2. Copy TaskToken below. 3. Run CLI resume command.",
-            SecretName    = module.secrets_manager.aws_hashing_secret_name,
-            "TaskToken.$" = "$$.Task.Token"
-          }
+          "Message.$" = local.delete_jobs_message
         },
         Catch = [
           { ErrorEquals = ["States.Timeout"], Next = "Fail_Timeout" },
@@ -74,7 +64,7 @@ resource "aws_sfn_state_machine" "rotation_machine" {
         Parameters = {
           TopicArn    = aws_sns_topic.cli_login_topic.arn,
           Subject     = "CRITICAL: Secret Rotation Failed",
-          "Message.$" = "$.Cause"
+          "Message.$" = local.failure_message
         },
         Next = "Fail_Generic"
       },
@@ -83,4 +73,77 @@ resource "aws_sfn_state_machine" "rotation_machine" {
       }
     }
   })
+}
+
+locals {
+  add_jobs_message = <<EOT
+States.Format('
+======================================================
+ACTION REQUIRED: PENDING SECRET CREATED
+======================================================
+
+A manual action is required to proceed.
+
+CONTEXT:
+Secret Name: ${module.secrets_manager.aws_hashing_secret_name}
+
+INSTRUCTIONS:
+1. Run the "Add New Hashes" job.
+2. Ensure the new hashes are working as expected.
+3. Run the command below to approve and resume the workflow:
+
+aws stepfunctions send-task-success --task-token {}
+
+======================================================
+', $$.Task.Token)
+EOT
+
+  delete_jobs_message = <<EOT
+States.Format('
+======================================================
+ACTION REQUIRED: SECRET AWSPENDING PROMOTED TO AWSCURRENT
+======================================================
+
+A manual action is required to proceed.
+
+CONTEXT:
+Secret Name: ${module.secrets_manager.aws_hashing_secret_name}
+
+INSTRUCTIONS:
+1. Run the "Delete Old Hashes" job.
+2. Ensure the old hashes have been removed successfully.
+3. Run the command below to approve and resume the workflow:
+
+aws stepfunctions send-task-success --task-token {}
+
+======================================================
+', $$.Task.Token)
+EOT
+
+  failure_message = <<EOT
+States.Format('
+======================================================
+CRITICAL: ROTATION FAILED
+======================================================
+
+The workflow encountered an error and could not complete.
+
+ERROR DETAILS:
+{}
+
+------------------------------------------------------
+HOW TO FIX: "Pending Version Exists" Error
+------------------------------------------------------
+If the error above indicates a pending version already exists,
+you must clean it up manually.
+
+1. Find the Version ID of the pending secret:
+aws secretsmanager list-secret-version-ids --secret-id ${module.secrets_manager.aws_hashing_secret_name}
+
+2. Remove the AWSPENDING label:
+aws secretsmanager update-secret-version-stage --secret-id ${module.secrets_manager.aws_hashing_secret_name} --version-stage AWSPENDING --remove-from-version-id <OLD_PENDING_VERSION_ID>
+
+======================================================
+', $.Cause)
+EOT
 }
