@@ -137,3 +137,8 @@ resource "aws_iam_role_policy_attachment" "attach_eb_sfn" {
   role       = aws_iam_role.eventbridge_sfn_invoke_role.name
   policy_arn = aws_iam_policy.eventbridge_sfn_policy.arn
 }
+
+resource "aws_iam_role_policy_attachment" "rotation_vpc_access" {
+  role       = aws_iam_role.rotation_lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}

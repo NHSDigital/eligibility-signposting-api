@@ -627,7 +627,15 @@ resource "aws_iam_policy" "rotation_sfn_policy" {
       {
         Effect   = "Allow",
         Action   = "sns:Publish",
-        Resource = aws_sns_topic.cli_login_topic.arn
+        Resource = aws_sns_topic.secret_rotation.arn
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ],
+        Resource = module.secrets_manager.rotation_sns_key_arn
       }
     ]
   })

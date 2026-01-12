@@ -47,21 +47,23 @@ data "archive_file" "create_zip" {
 
 resource "aws_lambda_function" "create_secret_lambda" {
   #checkov:skip=CKV_AWS_116: No deadletter queue is required for this Lambda function
-  #checkov:skip=CKV_AWS_115: Not applicable as it will not be possible to trigger concurrently
   #checkov:skip=CKV_AWS_272: Skipping code signing but flagged to create ticket to investigate on ELI-238
   #checkov:skip=CKV_AWS_50: No x-ray needed for this function
   #checkov:skip=CKV_AWS_173: No encryption needed for the secret name
-  #checkov:skip=CKV_AWS_117: Does not need to be in a VPC
 
-  filename      = data.archive_file.create_zip.output_path
-  function_name = "${terraform.workspace}-CreatePendingSecretFunction"
-  role          = aws_iam_role.rotation_lambda_role.arn
-  handler       = "create_pending_secret.lambda_handler"
-  runtime       = "python3.13"
-  timeout       = 30
-
+  filename                       = data.archive_file.create_zip.output_path
+  function_name                  = "${terraform.workspace}-CreatePendingSecretFunction"
+  role                           = aws_iam_role.rotation_lambda_role.arn
+  handler                        = "create_pending_secret.lambda_handler"
+  runtime                        = "python3.13"
+  timeout                        = 30
+  reserved_concurrent_executions = 1
   environment {
     variables = { SECRET_NAME = module.secrets_manager.aws_hashing_secret_name }
+  }
+  vpc_config {
+    subnet_ids = [for s in data.aws_subnet.private_subnets : s.id]
+    security_group_ids = [data.aws_security_group.main_sg.id]
   }
 }
 
@@ -74,19 +76,22 @@ data "archive_file" "promote_zip" {
 
 resource "aws_lambda_function" "promote_secret_lambda" {
   #checkov:skip=CKV_AWS_116: No deadletter queue is required for this Lambda function
-  #checkov:skip=CKV_AWS_115: Not applicable as it will not be possible to trigger concurrently
   #checkov:skip=CKV_AWS_272: Skipping code signing but flagged to create ticket to investigate on ELI-238
   #checkov:skip=CKV_AWS_50: No x-ray needed for this function
   #checkov:skip=CKV_AWS_173: No encryption needed for the secret name
-  #checkov:skip=CKV_AWS_117: Does not need to be in a VPC
-  filename      = data.archive_file.promote_zip.output_path
-  function_name = "${terraform.workspace}-PromoteToCurrentFunction"
-  role          = aws_iam_role.rotation_lambda_role.arn
-  handler       = "promote_to_current.lambda_handler"
-  runtime       = "python3.13"
-  timeout       = 30
 
+  filename                       = data.archive_file.promote_zip.output_path
+  function_name                  = "${terraform.workspace}-PromoteToCurrentFunction"
+  role                           = aws_iam_role.rotation_lambda_role.arn
+  handler                        = "promote_to_current.lambda_handler"
+  runtime                        = "python3.13"
+  timeout                        = 30
+  reserved_concurrent_executions = 1
   environment {
     variables = { SECRET_NAME = module.secrets_manager.aws_hashing_secret_name }
+  }
+  vpc_config {
+    subnet_ids = [for s in data.aws_subnet.private_subnets : s.id]
+    security_group_ids = [data.aws_security_group.main_sg.id]
   }
 }

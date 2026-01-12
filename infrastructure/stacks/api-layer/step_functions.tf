@@ -16,7 +16,7 @@ resource "aws_sfn_state_machine" "rotation_machine" {
       "CreatePendingVersion" : {
         Type     = "Task",
         Resource = aws_lambda_function.create_secret_lambda.arn,
-        Catch = [{ ErrorEquals = ["States.ALL"], Next = "NotifyFailure" }],
+        Catch    = [{ ErrorEquals = ["States.ALL"], Next = "NotifyFailure" }],
         Next     = "WaitFor_AddNewHashes"
       },
       "WaitFor_AddNewHashes" : {
@@ -24,11 +24,11 @@ resource "aws_sfn_state_machine" "rotation_machine" {
         Resource       = "arn:aws:states:::sns:publish.waitForTaskToken",
         TimeoutSeconds = 86400,
         Parameters = {
-          TopicArn    = aws_sns_topic.cli_login_topic.arn,
+          TopicArn    = aws_sns_topic.secret_rotation.arn,
           "Message.$" = local.add_jobs_message
         },
         Catch = [
-          { ErrorEquals = ["States.Timeout"], Next = "Fail_Timeout" },
+          { ErrorEquals = ["States.Timeout"], Next = "NotifyTimeout" },
           { ErrorEquals = ["States.ALL"], Next = "NotifyFailure" }
         ],
         Next = "PromoteToCurrent"
@@ -36,7 +36,7 @@ resource "aws_sfn_state_machine" "rotation_machine" {
       "PromoteToCurrent" : {
         Type     = "Task",
         Resource = aws_lambda_function.promote_secret_lambda.arn,
-        Catch = [{ ErrorEquals = ["States.ALL"], Next = "NotifyFailure" }],
+        Catch    = [{ ErrorEquals = ["States.ALL"], Next = "NotifyFailure" }],
         Next     = "WaitFor_DelOldHashes"
       },
       "WaitFor_DelOldHashes" : {
@@ -44,15 +44,27 @@ resource "aws_sfn_state_machine" "rotation_machine" {
         Resource       = "arn:aws:states:::sns:publish.waitForTaskToken",
         TimeoutSeconds = 86400,
         Parameters = {
-          TopicArn = aws_sns_topic.cli_login_topic.arn,
+          TopicArn    = aws_sns_topic.secret_rotation.arn,
           "Message.$" = local.delete_jobs_message
         },
         Catch = [
-          { ErrorEquals = ["States.Timeout"], Next = "Fail_Timeout" },
+          { ErrorEquals = ["States.Timeout"], Next = "NotifyTimeout" },
           { ErrorEquals = ["States.ALL"], Next = "NotifyFailure" }
         ],
         End = true
       },
+
+      "NotifyTimeout" : {
+        Type     = "Task",
+        Resource = "arn:aws:states:::sns:publish",
+        Parameters = {
+          TopicArn    = aws_sns_topic.secret_rotation.arn,
+          Subject     = "WARNING: Secret Rotation Timed Out",
+          "Message.$" = local.timeout_message
+        },
+        Next = "Fail_Timeout"
+      },
+
       "Fail_Timeout" : {
         Type  = "Fail",
         Error = "ManualActionTimedOut",
@@ -62,7 +74,7 @@ resource "aws_sfn_state_machine" "rotation_machine" {
         Type     = "Task",
         Resource = "arn:aws:states:::sns:publish",
         Parameters = {
-          TopicArn    = aws_sns_topic.cli_login_topic.arn,
+          TopicArn    = aws_sns_topic.secret_rotation.arn,
           Subject     = "CRITICAL: Secret Rotation Failed",
           "Message.$" = local.failure_message
         },
@@ -145,5 +157,34 @@ aws secretsmanager update-secret-version-stage --secret-id ${module.secrets_mana
 
 ======================================================
 ', $.Cause)
+EOT
+
+  timeout_message = <<EOT
+States.Format('
+======================================================
+WARNING: ROTATION TIMED OUT
+======================================================
+
+The manual verification step was not completed within the 24-hour limit.
+The rotation workflow has been stopped.
+
+CONTEXT:
+Secret Name: ${module.secrets_manager.aws_hashing_secret_name}
+
+IMPACT:
+No immediate impact. Your applications are still using the current secret.
+However, a "Pending" version may have been left behind.
+
+ACTION REQUIRED:
+Before the next rotation run, you must remove the pending version:
+
+1. Find the Version ID:
+aws secretsmanager list-secret-version-ids --secret-id ${module.secrets_manager.aws_hashing_secret_name}
+
+2. Remove the AWSPENDING label:
+aws secretsmanager update-secret-version-stage --secret-id ${module.secrets_manager.aws_hashing_secret_name} --version-stage AWSPENDING --remove-from-version-id <OLD_PENDING_VERSION_ID>
+
+======================================================
+')
 EOT
 }
