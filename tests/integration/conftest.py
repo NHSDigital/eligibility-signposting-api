@@ -1114,14 +1114,19 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
 @pytest.fixture
 def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
-    campaigns, campaign_data_keys = [], []
+    campaign_data_keys = [], []
 
-    targets = getattr(request, "param", ["RSV", "COVID", "FLU"])
+    raw = getattr(
+        request, "param", [("RSV", "RSV_campaign_id"), ("COVID", "COVID_campaign_id"), ("FLU", "FLU_campaign_id")]
+    )
+
+    targets = [t for t, _id in raw]
+    campaign_id = [_id for t, _id in raw]
 
     for i in range(len(targets)):
         campaign: CampaignConfig = rule.CampaignConfigFactory.build(
             name=f"campaign_{i}",
-            id=f"{targets[i]}_campaign_id",
+            id=campaign_id[i],
             target=targets[i],
             type="V",
             iterations=[
@@ -1148,10 +1153,10 @@ def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -
         s3_client.put_object(
             Bucket=rules_bucket, Key=key, Body=json.dumps(campaign_data), ContentType="application/json"
         )
-        campaigns.append(campaign)
+        campaign_id.append(campaign)
         campaign_data_keys.append(key)
 
-    yield campaigns
+    yield campaign_id
 
     for key in campaign_data_keys:
         s3_client.delete_object(Bucket=rules_bucket, Key=key)
