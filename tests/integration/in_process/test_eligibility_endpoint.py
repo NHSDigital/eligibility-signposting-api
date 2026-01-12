@@ -842,112 +842,151 @@ class TestEligibilityResponseWithVariousInputs:
 
     @pytest.mark.parametrize(
         (
-            "campaign_configs",
-            "consumer_mappings",
-            "consumer_id",
-            "requested_conditions",
-            "requested_category",
-            "expected_targets",
+                "campaign_configs",
+                "consumer_mappings",
+                "consumer_id",
+                "requested_conditions",
+                "requested_category",
+                "expected_targets",
         ),
         [
-            # Scenario 1: Intersection of mapped targets, requested targets, and active campaigns (Success)
+            # ============================================================
+            # Group 1: Consumer is mapped, campaign exists in S3, requesting
+            # ============================================================
+
+            # 1.1 Consumer is mapped; multiple active campaigns exist; requesting ALL
+            #     → Return intersection of mapped campaigns and active campaigns
             (
-                ["RSV", "COVID", "FLU"],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
-                "consumer-id",
-                "ALL",
-                "VACCINATIONS",
-                ["RSV", "COVID"],
+                    ["RSV", "COVID", "FLU"],
+                    {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                    "consumer-id",
+                    "ALL",
+                    "VACCINATIONS",
+                    ["RSV", "COVID"],
             ),
-            # Scenario 2a: Explicit request for a single mapped target with an active campaign
+
+            # 1.2 Consumer is mapped; requested single campaign exists and is mapped
+            #     → Return requested campaign
             (
-                ["RSV", "COVID", "FLU"],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
-                "consumer-id",
-                "RSV",
-                "VACCINATIONS",
-                ["RSV"],
+                    ["RSV", "COVID", "FLU"],
+                    {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                    "consumer-id",
+                    "RSV",
+                    "VACCINATIONS",
+                    ["RSV"],
             ),
-            # Scenario 2b: Explicit request for a single mapped target with an active campaign
+
+            # 1.3 Consumer is mapped; requested multiple campaigns exist and are mapped
+            #     → Return requested campaigns
             (
-                ["RSV", "COVID", "FLU"],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
-                "consumer-id",
-                "RSV,COVID",
-                "VACCINATIONS",
-                ["RSV", "COVID"],
+                    ["RSV", "COVID", "FLU"],
+                    {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                    "consumer-id",
+                    "RSV,COVID",
+                    "VACCINATIONS",
+                    ["RSV", "COVID"],
             ),
-            # Scenario 3: Request for an active campaign (FLU) that the consumer is NOT mapped to
+
+            # ============================================================
+            # Group 2: Consumer is mapped, campaign does NOT exist in S3
+            # ============================================================
+
+            # 2.1 Consumer is mapped; requested campaign exists in S3
+            #     but is NOT mapped to the consumer
+            #     → Return empty
             (
-                ["RSV", "COVID", "FLU"],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
-                "consumer-id",
-                "FLU",
-                "VACCINATIONS",
-                [],
+                    ["RSV", "COVID", "FLU"],
+                    {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                    "consumer-id",
+                    "FLU",
+                    "VACCINATIONS",
+                    [],
             ),
-            # Scenario 4: Request for a target that neither exists in system nor is mapped to consumer
+
+            # 2.2 Consumer is mapped, but none of the mapped campaigns exist in S3
+            #     → Return empty
             (
-                ["RSV", "COVID", "FLU"],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
-                "consumer-id",
-                "HPV",
-                "VACCINATIONS",
-                [],
+                    ["MMR"],
+                    {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                    "consumer-id",
+                    "ALL",
+                    "VACCINATIONS",
+                    [],
             ),
-            # Scenario 5: No mappings at all; requesting ALL should return empty
+
+            # 2.3 Consumer is mapped; requested specific mapped campaign,
+            #     but campaign does not exist in S3
+            #     → Return empty
             (
-                ["RSV", "COVID", "FLU"],
-                {},
-                "consumer-id",
-                "ALL",
-                "VACCINATIONS",
-                [],
+                    ["MMR"],
+                    {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                    "consumer-id",
+                    "RSV",
+                    "VACCINATIONS",
+                    [],
             ),
-            # Scenario 6: No mappings at all; requesting RSV should return empty
+
+            # ============================================================
+            # Group 3: Consumer is NOT mapped, campaign exists in S3
+            # ============================================================
+
+            # 3.1 Consumer is not mapped; campaigns exist in S3; requesting ALL
+            #     → Return empty
             (
-                ["RSV", "COVID", "FLU"],
-                {},
-                "consumer-id",
-                "RSV",
-                "VACCINATIONS",
-                [],
+                    ["RSV", "COVID", "FLU"],
+                    {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                    "another-consumer-id",
+                    "ALL",
+                    "VACCINATIONS",
+                    [],
             ),
-            # Scenario 7: Consumer has no target mappings; requesting ALL should return empty
+
+            # 3.2 Consumer is not mapped; requested specific campaign exists in S3
+            #     → Return empty
             (
-                ["RSV", "COVID", "FLU"],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
-                "another-consumer-id",
-                "ALL",
-                "VACCINATIONS",
-                [],
+                    ["RSV", "COVID", "FLU"],
+                    {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                    "another-consumer-id",
+                    "RSV",
+                    "VACCINATIONS",
+                    [],
             ),
-            # Scenario 8: Consumer has no target mappings; requesting specific target should return empty
+
+            # ============================================================
+            # Group 4: Consumer is NOT mapped, campaign does NOT exist in S3
+            # ============================================================
+
+            # 4.1 Consumer is mapped; requested campaign does not exist in system
+            #     → Return empty
             (
-                ["RSV", "COVID", "FLU"],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
-                "another-consumer-id",
-                "RSV",
-                "VACCINATIONS",
-                [],
+                    ["RSV", "COVID", "FLU"],
+                    {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                    "consumer-id",
+                    "HPV",
+                    "VACCINATIONS",
+                    [],
             ),
-            # Scenario 9: Consumer is mapped to targets (RSV/COVID), but those campaigns aren't active/present
+
+            # 4.2 No consumer mappings exist; requesting ALL
+            #     → Return empty
             (
-                ["MMR"],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
-                "consumer-id",
-                "ALL",
-                "VACCINATIONS",
-                [],
+                    ["RSV", "COVID", "FLU"],
+                    {},
+                    "consumer-id",
+                    "ALL",
+                    "VACCINATIONS",
+                    [],
             ),
-            # Scenario 10: Request for specific mapped target (RSV), but those campaigns aren't active/present
+
+            # 4.3 No consumer mappings exist; requesting specific campaign
+            #     → Return empty
             (
-                ["MMR"],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
-                "consumer-id",
-                "RSV",
-                "VACCINATIONS",
-                [],
+                    ["RSV", "COVID", "FLU"],
+                    {},
+                    "consumer-id",
+                    "RSV",
+                    "VACCINATIONS",
+                    [],
             ),
         ],
         indirect=["campaign_configs", "consumer_mappings"],
