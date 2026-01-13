@@ -561,3 +561,101 @@ resource "aws_iam_role_policy" "external_secret_read_policy_attachment" {
   role   = aws_iam_role.write_access_role[count.index].id
   policy = data.aws_iam_policy_document.secrets_access_policy.json
 }
+
+# --- Rotation Logic Policies ---
+resource "aws_iam_policy" "rotation_secrets_policy" {
+  name        = "rotation_secrets_policy"
+  description = "Allow Lambda to read/write ONLY the hashing secret"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid    = "ManageSecretBits",
+        Effect = "Allow",
+        Action = [
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:PutSecretValue",
+          "secretsmanager:UpdateSecretVersionStage",
+          "secretsmanager:GetSecretValue"
+        ],
+        Resource = module.secrets_manager.aws_hashing_secret_arn
+      },
+      {
+        Sid    = "AllowKMSKeyUsage",
+        Effect = "Allow",
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ],
+        Resource = module.secrets_manager.kms_key_arn
+      },
+      {
+        Sid    = "BasicLogging",
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = [
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${aws_lambda_function.create_secret_lambda.function_name}:*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${aws_lambda_function.promote_secret_lambda.function_name}:*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_rotation_secrets" {
+  role       = aws_iam_role.rotation_lambda_role.name
+  policy_arn = aws_iam_policy.rotation_secrets_policy.arn
+}
+
+resource "aws_iam_policy" "rotation_sfn_policy" {
+  name = "rotation_sfn_policy"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = "lambda:InvokeFunction",
+        Resource = [
+          aws_lambda_function.create_secret_lambda.arn,
+          aws_lambda_function.promote_secret_lambda.arn
+        ]
+      },
+      {
+        Effect   = "Allow",
+        Action   = "sns:Publish",
+        Resource = aws_sns_topic.secret_rotation.arn
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ],
+        Resource = module.secrets_manager.rotation_sns_key_arn
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogDelivery",
+          "logs:GetLogDelivery",
+          "logs:UpdateLogDelivery",
+          "logs:DeleteLogDelivery",
+          "logs:ListLogDeliveries",
+          "logs:PutResourcePolicy",
+          "logs:DescribeResourcePolicies",
+          "logs:DescribeLogGroups"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_rotation_sfn" {
+  role       = aws_iam_role.rotation_sfn_role.name
+  policy_arn = aws_iam_policy.rotation_sfn_policy.arn
+}
