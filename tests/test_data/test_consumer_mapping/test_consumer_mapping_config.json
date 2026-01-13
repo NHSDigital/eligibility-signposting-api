@@ -1,10 +1,22 @@
 {
-  "consumer-id-123": [
-    "RSV_campaign_id",
-    "COVID_campaign_id"
-  ],
-  "consumer-id-456": [
-    "RSV_campaign_id",
-    "COVID_campaign_id"
-  ]
+	"consumer-id-123": [
+		{
+			"campaign": "RSV_campaign_id",
+			"description": "RSV Ongoing for My Vaccines"
+		},
+		{
+			"campaign": "COVID_campaign_id",
+			"description": "COVID Ongoing for My Vaccines"
+		}
+	],
+	"consumer-id-456": [
+		{
+			"campaign": "RSV_campaign_id_NBS",
+			"description": "RSV Ongoing for NBS"
+		},
+		{
+			"campaign": "COVID_campaign_id_NBS",
+			"description": "RSV Ongoing for NBS"
+		}
+	]
 }

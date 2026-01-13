@@ -26,7 +26,18 @@ class ConsumerMappingRepo:
         self.bucket_name = bucket_name
 
     def get_permitted_campaign_ids(self, consumer_id: ConsumerId) -> list[CampaignID] | None:
-        consumer_mappings = self.s3_client.list_objects(Bucket=self.bucket_name)["Contents"][0]
-        response = self.s3_client.get_object(Bucket=self.bucket_name, Key=f"{consumer_mappings['Key']}")
+        objects = self.s3_client.list_objects(Bucket=self.bucket_name).get("Contents")
+
+        if not objects:
+            return None
+
+        consumer_mappings_obj = objects[0]
+        response = self.s3_client.get_object(Bucket=self.bucket_name, Key=consumer_mappings_obj["Key"])
         body = response["Body"].read()
-        return ConsumerMapping.model_validate(json.loads(body)).get(consumer_id)
+
+        mapping_result = ConsumerMapping.model_validate(json.loads(body)).get(consumer_id)
+
+        if mapping_result is None:
+            return None
+
+        return [item.campaign for item in mapping_result]

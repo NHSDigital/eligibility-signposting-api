@@ -31,7 +31,7 @@ class TestBaseLine:
         client: FlaskClient,
         persisted_person: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -86,7 +86,7 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person_no_cohorts: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -132,7 +132,7 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -178,7 +178,7 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -230,7 +230,7 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: consumer_id}
@@ -283,7 +283,7 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapping_with_campaign_config_with_and_rule: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_campaign_having_and_rule: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -338,7 +338,7 @@ class TestVirtualCohortResponse:
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
-        consumer_mapping_with_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_campaign_having_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -384,7 +384,7 @@ class TestVirtualCohortResponse:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        consumer_mapping_with_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_campaign_having_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -436,7 +436,7 @@ class TestVirtualCohortResponse:
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        consumer_mapping_with_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_campaign_having_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -492,7 +492,7 @@ class TestResponseOnMissingAttributes:
         self,
         client: FlaskClient,
         persisted_person_no_cohorts: NHSNumber,
-        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_campaign_missing_descriptions_and_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -532,7 +532,7 @@ class TestResponseOnMissingAttributes:
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
-        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_campaign_missing_descriptions_and_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -572,7 +572,7 @@ class TestResponseOnMissingAttributes:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_campaign_missing_descriptions_and_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -618,7 +618,7 @@ class TestResponseOnMissingAttributes:
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_campaign_missing_descriptions_and_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -666,7 +666,7 @@ class TestResponseOnMissingAttributes:
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_campaign_missing_descriptions_and_rule_text: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -742,7 +742,7 @@ class TestEligibilityResponseWithVariousInputs:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        consumer_mapping_with_campaign_config_with_rules_having_rule_code: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_campaign_having_rules_with_rule_code: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -794,7 +794,7 @@ class TestEligibilityResponseWithVariousInputs:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        consumer_mapping_with_campaign_config_with_rules_having_rule_mapper: ConsumerMapping,  # noqa: ARG002
+        consumer_mapped_to_campaign_having_rules_with_rule_mapper: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -862,7 +862,12 @@ class TestEligibilityResponseWithVariousInputs:
                     ("COVID", "COVID_campaign_id"),
                     ("FLU", "FLU_campaign_id"),
                 ],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                {
+                    "consumer-id": [
+                        {"campaign": "RSV_campaign_id"},
+                        {"campaign": "COVID_campaign_id"},
+                    ]
+                },
                 "consumer-id",
                 "ALL",
                 "VACCINATIONS",
@@ -875,7 +880,12 @@ class TestEligibilityResponseWithVariousInputs:
                     ("COVID", "COVID_campaign_id"),
                     ("FLU", "FLU_campaign_id"),
                 ],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                {
+                    "consumer-id": [
+                        {"campaign": "RSV_campaign_id"},
+                        {"campaign": "COVID_campaign_id"},
+                    ]
+                },
                 "consumer-id",
                 "RSV",
                 "VACCINATIONS",
@@ -888,7 +898,12 @@ class TestEligibilityResponseWithVariousInputs:
                     ("COVID", "COVID_campaign_id"),
                     ("FLU", "FLU_campaign_id"),
                 ],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                {
+                    "consumer-id": [
+                        {"campaign": "RSV_campaign_id"},
+                        {"campaign": "COVID_campaign_id"},
+                    ]
+                },
                 "consumer-id",
                 "RSV,COVID",
                 "VACCINATIONS",
@@ -904,7 +919,12 @@ class TestEligibilityResponseWithVariousInputs:
                     ("COVID", "COVID_campaign_id"),
                     ("FLU", "FLU_campaign_id"),
                 ],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                {
+                    "consumer-id": [
+                        {"campaign": "RSV_campaign_id"},
+                        {"campaign": "COVID_campaign_id"},
+                    ]
+                },
                 "consumer-id",
                 "FLU",
                 "VACCINATIONS",
@@ -915,7 +935,12 @@ class TestEligibilityResponseWithVariousInputs:
                 [
                     ("MMR", "MMR_campaign_id"),
                 ],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                {
+                    "consumer-id": [
+                        {"campaign": "RSV_campaign_id"},
+                        {"campaign": "COVID_campaign_id"},
+                    ]
+                },
                 "consumer-id",
                 "ALL",
                 "VACCINATIONS",
@@ -926,7 +951,12 @@ class TestEligibilityResponseWithVariousInputs:
                 [
                     ("MMR", "MMR_campaign_id"),
                 ],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                {
+                    "consumer-id": [
+                        {"campaign": "RSV_campaign_id"},
+                        {"campaign": "COVID_campaign_id"},
+                    ]
+                },
                 "consumer-id",
                 "RSV",
                 "VACCINATIONS",
@@ -942,7 +972,12 @@ class TestEligibilityResponseWithVariousInputs:
                     ("COVID", "COVID_campaign_id"),
                     ("FLU", "FLU_campaign_id"),
                 ],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                {
+                    "consumer-id": [
+                        {"campaign": "RSV_campaign_id"},
+                        {"campaign": "COVID_campaign_id"},
+                    ]
+                },
                 "another-consumer-id",
                 "ALL",
                 "VACCINATIONS",
@@ -955,7 +990,12 @@ class TestEligibilityResponseWithVariousInputs:
                     ("COVID", "COVID_campaign_id"),
                     ("FLU", "FLU_campaign_id"),
                 ],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                {
+                    "consumer-id": [
+                        {"campaign": "RSV_campaign_id"},
+                        {"campaign": "COVID_campaign_id"},
+                    ]
+                },
                 "another-consumer-id",
                 "RSV",
                 "VACCINATIONS",
@@ -971,7 +1011,12 @@ class TestEligibilityResponseWithVariousInputs:
                     ("COVID", "COVID_campaign_id"),
                     ("FLU", "FLU_campaign_id"),
                 ],
-                {"consumer-id": ["RSV_campaign_id", "COVID_campaign_id"]},
+                {
+                    "consumer-id": [
+                        {"campaign": "RSV_campaign_id"},
+                        {"campaign": "COVID_campaign_id"},
+                    ]
+                },
                 "consumer-id",
                 "HPV",
                 "VACCINATIONS",
@@ -1054,7 +1099,10 @@ class TestEligibilityResponseWithVariousInputs:
         [
             (
                 [("RSV", "RSV_campaign_id_1"), ("RSV", "RSV_campaign_id_2")],
-                {"consumer-id-1": ["RSV_campaign_id_1"], "consumer-id-2": ["RSV_campaign_id_2"]},
+                {
+                    "consumer-id-1": [{"campaign": "RSV_campaign_id_1"}],
+                    "consumer-id-2": [{"campaign": "RSV_campaign_id_2"}],
+                },
                 "RSV",
                 "VACCINATIONS",
             )

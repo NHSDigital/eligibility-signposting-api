@@ -36,7 +36,7 @@ def test_install_and_call_lambda_flask(
     lambda_client: BaseClient,
     flask_function: str,
     persisted_person: NHSNumber,
-    consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG001
+    consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
 ):
     """Given lambda installed into localstack, run it via boto3 lambda client"""
@@ -89,7 +89,7 @@ def test_install_and_call_lambda_flask(
 
 def test_install_and_call_flask_lambda_over_http(
     persisted_person: NHSNumber,
-    consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG001
+    consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
     api_gateway_endpoint: URL,
 ):
@@ -113,10 +113,11 @@ def test_install_and_call_flask_lambda_over_http(
 def test_install_and_call_flask_lambda_with_unknown_nhs_number(  # noqa: PLR0913
     flask_function: str,
     persisted_person: NHSNumber,
-    consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG001
+    consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
     logs_client: BaseClient,
     api_gateway_endpoint: URL,
+    secretsmanager_client: BaseClient,  # noqa: ARG001
 ):
     """Given lambda installed into localstack, run it via http, with a nonexistent NHS number specified"""
     # Given
@@ -188,7 +189,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     rsv_campaign_config: CampaignConfig,
-    consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG001
+    consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,
@@ -378,7 +379,7 @@ def test_given_nhs_number_not_present_in_headers_results_in_error_response(
 def test_validation_of_query_params_when_all_are_valid(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    consumer_mapping_with_rsv: ConsumerMapping,  # noqa: ARG001
+    consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
     api_gateway_endpoint: URL,
 ):
@@ -419,7 +420,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person_all_cohorts: NHSNumber,
     multiple_campaign_configs: list[CampaignConfig],
-    consumer_mapping_with_multiple_campaign_configs: ConsumerMapping,  # noqa: ARG001
+    consumer_mapped_to_multiple_campaign_configs: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,
@@ -565,7 +566,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
 def test_no_active_iteration_returns_empty_processed_suggestions(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person_all_cohorts: NHSNumber,
-    consumer_mapping_with_inactive_iteration_config: ConsumerMapping,  # noqa:ARG001
+    consumer_mapped_to_campaign_having_inactive_iteration_config: ConsumerMapping,  # noqa:ARG001
     consumer_id: ConsumerId,
     api_gateway_endpoint: URL,
 ):
@@ -603,7 +604,7 @@ def test_no_active_iteration_returns_empty_processed_suggestions(
 def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     person_with_all_data: NHSNumber,
-    consumer_mapping_with_campaign_config_with_tokens: ConsumerMapping,  # noqa: ARG001
+    consumer_mapped_to_campaign_having_tokens: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,
@@ -654,7 +655,7 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
 def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
     lambda_client: BaseClient,  # noqa:ARG001
     person_with_all_data: NHSNumber,
-    consumer_mapping_with_campaign_config_with_invalid_tokens: ConsumerMapping,  # noqa: ARG001
+    consumer_mapped_to_campaign_having_invalid_tokens: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,

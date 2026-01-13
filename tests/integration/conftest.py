@@ -31,7 +31,7 @@ from eligibility_signposting_api.model.campaign_config import (
     StartDate,
     StatusText,
 )
-from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
+from eligibility_signposting_api.model.consumer_mapping import ConsumerCampaign, ConsumerId, ConsumerMapping
 from eligibility_signposting_api.processors.hashing_service import HashingService, HashSecretName
 from eligibility_signposting_api.repos import SecretRepo
 from eligibility_signposting_api.repos.campaign_repo import BucketName
@@ -1114,7 +1114,7 @@ def campaign_config_with_missing_descriptions_missing_rule_text(
 @pytest.fixture
 def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
-    campaigns, campaign_data_keys = [], []
+    campaigns, campaign_data_keys = [], []  # noqa: F841
 
     raw = getattr(
         request, "param", [("RSV", "RSV_campaign_id"), ("COVID", "COVID_campaign_id"), ("FLU", "FLU_campaign_id")]
@@ -1167,179 +1167,146 @@ def consumer_id() -> ConsumerId:
     return ConsumerId("23-mic7heal-jor6don")
 
 
+def create_and_put_consumer_mapping_in_s3(
+    campaign_config: CampaignConfig, consumer_id: str, consumer_mapping_bucket, s3_client
+) -> ConsumerMapping:
+    consumer_mapping = ConsumerMapping.model_validate({})
+    campaign_entry = ConsumerCampaign(campaign=campaign_config.id, description="Test description for campaign mapping")
+
+    consumer_mapping.root[ConsumerId(consumer_id)] = [campaign_entry]
+    consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
+    s3_client.put_object(
+        Bucket=consumer_mapping_bucket,
+        Key="consumer_mapping.json",
+        Body=json.dumps(consumer_mapping_data),
+        ContentType="application/json",
+    )
+    return consumer_mapping
+
+
 @pytest.fixture(scope="class")
-def consumer_mapping_with_campaign_config_with_invalid_tokens(
+def consumer_mapped_to_campaign_having_invalid_tokens(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
     campaign_config_with_invalid_tokens: CampaignConfig,
     consumer_id: ConsumerId,
 ) -> Generator[ConsumerMapping]:
-    consumer_mapping = ConsumerMapping.model_validate({})
-    consumer_mapping.root[ConsumerId(consumer_id)] = [campaign_config_with_invalid_tokens.id]
-
-    consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
-    s3_client.put_object(
-        Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
-        Body=json.dumps(consumer_mapping_data),
-        ContentType="application/json",
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_invalid_tokens, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
 @pytest.fixture(scope="class")
-def consumer_mapping_with_campaign_config_with_tokens(
+def consumer_mapped_to_campaign_having_tokens(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
     campaign_config_with_tokens: CampaignConfig,
     consumer_id: ConsumerId,
 ) -> Generator[ConsumerMapping]:
-    consumer_mapping = ConsumerMapping.model_validate({})
-    consumer_mapping.root[ConsumerId(consumer_id)] = [campaign_config_with_tokens.id]
-
-    consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
-    s3_client.put_object(
-        Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
-        Body=json.dumps(consumer_mapping_data),
-        ContentType="application/json",
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_tokens, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
 @pytest.fixture(scope="class")
-def consumer_mapping_with_rsv(
+def consumer_mapped_to_rsv_campaign(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
     rsv_campaign_config: CampaignConfig,
     consumer_id: ConsumerId,
 ) -> Generator[ConsumerMapping]:
-    consumer_mapping = ConsumerMapping.model_validate({})
-    consumer_mapping.root[ConsumerId(consumer_id)] = [rsv_campaign_config.id]
-
-    consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
-    s3_client.put_object(
-        Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
-        Body=json.dumps(consumer_mapping_data),
-        ContentType="application/json",
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        rsv_campaign_config, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
 @pytest.fixture(scope="class")
-def consumer_mapping_with_campaign_config_with_and_rule(
+def consumer_mapped_to_campaign_having_and_rule(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
     campaign_config_with_and_rule: CampaignConfig,
     consumer_id: ConsumerId,
 ) -> Generator[ConsumerMapping]:
-    consumer_mapping = ConsumerMapping.model_validate({})
-    consumer_mapping.root[ConsumerId(consumer_id)] = [campaign_config_with_and_rule.id]
-
-    consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
-    s3_client.put_object(
-        Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
-        Body=json.dumps(consumer_mapping_data),
-        ContentType="application/json",
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_and_rule, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
 @pytest.fixture
-def consumer_mapping_with_campaign_config_with_missing_descriptions_missing_rule_text(
+def consumer_mapped_to_campaign_missing_descriptions_and_rule_text(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,
     consumer_id: ConsumerId,
 ):
-    mapping = ConsumerMapping.model_validate({})
-    mapping.root[consumer_id] = [campaign_config_with_missing_descriptions_missing_rule_text.id]
-
-    s3_client.put_object(
-        Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
-        Body=json.dumps(mapping.model_dump(by_alias=True)),
-        ContentType="application/json",
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_missing_descriptions_missing_rule_text, consumer_id, consumer_mapping_bucket, s3_client
     )
-    yield mapping
+    yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
 @pytest.fixture
-def consumer_mapping_with_campaign_config_with_rules_having_rule_code(
+def consumer_mapped_to_campaign_having_rules_with_rule_code(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     campaign_config_with_rules_having_rule_code: CampaignConfig,
     consumer_id: ConsumerId,
 ):
-    mapping = ConsumerMapping.model_validate({})
-    mapping.root[consumer_id] = [campaign_config_with_rules_having_rule_code.id]
-
-    s3_client.put_object(
-        Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
-        Body=json.dumps(mapping.model_dump(by_alias=True)),
-        ContentType="application/json",
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_rules_having_rule_code, consumer_id, consumer_mapping_bucket, s3_client
     )
-    yield mapping
+    yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
 @pytest.fixture
-def consumer_mapping_with_campaign_config_with_rules_having_rule_mapper(
+def consumer_mapped_to_campaign_having_rules_with_rule_mapper(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     campaign_config_with_rules_having_rule_mapper: CampaignConfig,
     consumer_id: ConsumerId,
 ):
-    mapping = ConsumerMapping.model_validate({})
-    mapping.root[consumer_id] = [campaign_config_with_rules_having_rule_mapper.id]
-
-    s3_client.put_object(
-        Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
-        Body=json.dumps(mapping.model_dump(by_alias=True)),
-        ContentType="application/json",
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_rules_having_rule_mapper, consumer_id, consumer_mapping_bucket, s3_client
     )
-    yield mapping
+    yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
 @pytest.fixture
-def consumer_mapping_with_only_virtual_cohort(
+def consumer_mapped_to_campaign_having_only_virtual_cohort(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     campaign_config_with_virtual_cohort: CampaignConfig,
     consumer_id: ConsumerId,
 ):
-    mapping = ConsumerMapping.model_validate({})
-    mapping.root[consumer_id] = [campaign_config_with_virtual_cohort.id]
-
-    s3_client.put_object(
-        Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
-        Body=json.dumps(mapping.model_dump(by_alias=True)),
-        ContentType="application/json",
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_virtual_cohort, consumer_id, consumer_mapping_bucket, s3_client
     )
-    yield mapping
+    yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
 @pytest.fixture
-def consumer_mapping_with_inactive_iteration_config(
+def consumer_mapped_to_campaign_having_inactive_iteration_config(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     inactive_iteration_config: list[CampaignConfig],
     consumer_id: ConsumerId,
 ):
     mapping = ConsumerMapping.model_validate({})
-    mapping.root[consumer_id] = [cc.id for cc in inactive_iteration_config]
+    mapping.root[consumer_id] = [
+        ConsumerCampaign(campaign=cc.id, description=f"Description for {cc.id}") for cc in inactive_iteration_config
+    ]
 
     s3_client.put_object(
         Bucket=consumer_mapping_bucket,
@@ -1352,14 +1319,16 @@ def consumer_mapping_with_inactive_iteration_config(
 
 
 @pytest.fixture(scope="class")
-def consumer_mapping_with_multiple_campaign_configs(
+def consumer_mapped_to_multiple_campaign_configs(
     multiple_campaign_configs: list[CampaignConfig],
     consumer_id: ConsumerId,
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
 ) -> Generator[ConsumerMapping]:
     mapping = ConsumerMapping.model_validate({})
-    mapping.root[consumer_id] = [cc.id for cc in multiple_campaign_configs]
+    mapping.root[consumer_id] = [
+        ConsumerCampaign(campaign=cc.id, description=f"Description for {cc.id}") for cc in multiple_campaign_configs
+    ]
 
     s3_client.put_object(
         Bucket=consumer_mapping_bucket,
@@ -1388,15 +1357,16 @@ def consumer_mappings(
 
 
 @pytest.fixture(scope="class")
-def consumer_mapping_with_various_targets(
+def consumer_mapped_to_with_various_targets(
     s3_client: BaseClient, consumer_mapping_bucket: BucketName
 ) -> Generator[ConsumerMapping]:
     consumer_mapping = ConsumerMapping.model_validate({})
+
     consumer_mapping.root[ConsumerId("23-mic7heal-jor6don")] = [
-        CampaignID("campaign_start_date"),
-        CampaignID("campaign_start_date_plus_one_day"),
-        CampaignID("campaign_today"),
-        CampaignID("campaign_tomorrow"),
+        ConsumerCampaign(campaign=CampaignID("campaign_start_date")),
+        ConsumerCampaign(campaign=CampaignID("campaign_start_date_plus_one_day")),
+        ConsumerCampaign(campaign=CampaignID("campaign_today")),
+        ConsumerCampaign(campaign=CampaignID("campaign_tomorrow")),
     ]
 
     consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
