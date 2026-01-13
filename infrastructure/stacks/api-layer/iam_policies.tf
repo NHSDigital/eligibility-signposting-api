@@ -350,6 +350,38 @@ resource "aws_kms_key_policy" "s3_rules_kms_key" {
   policy = data.aws_iam_policy_document.s3_rules_kms_key_policy.json
 }
 
+data "aws_iam_policy_document" "s3_consumer_mapping_kms_key_policy" {
+  #checkov:skip=CKV_AWS_111: Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_356: Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_109: Root user needs full KMS key management
+  statement {
+    sid    = "EnableIamUserPermissions"
+    effect = "Allow"
+    principals {
+      type = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions = ["kms:*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowLambdaDecrypt"
+    effect = "Allow"
+    principals {
+      type = "AWS"
+      identifiers = [aws_iam_role.eligibility_lambda_role.arn]
+    }
+    actions = ["kms:Decrypt"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_kms_key_policy" "s3_consumer_mapping_kms_key" {
+  key_id = module.s3_consumer_mappings_bucket.storage_bucket_kms_key_id
+  policy = data.aws_iam_policy_document.s3_consumer_mapping_kms_key_policy.json
+}
+
 resource "aws_iam_role_policy" "splunk_firehose_policy" {
   #checkov:skip=CKV_AWS_290: Firehose requires write access to dynamic log streams without static constraints
   #checkov:skip=CKV_AWS_355: Firehose logging requires wildcard resource for CloudWatch log groups/streams
