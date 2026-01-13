@@ -104,6 +104,60 @@ data "aws_iam_policy_document" "rules_s3_bucket_policy" {
   }
 }
 
+# Policy doc for S3 Consumer Mappings bucket
+data "aws_iam_policy_document" "s3_consumer_mapping_bucket_policy" {
+  statement {
+    sid = "AllowSSLRequestsOnly"
+    actions = [
+      "s3:GetObject",
+      "s3:ListBucket",
+    ]
+    resources = [
+      module.s3_consumer_mappings_bucket.storage_bucket_arn,
+      "${module.s3_consumer_mappings_bucket.storage_bucket_arn}/*",
+    ]
+    condition {
+      test     = "Bool"
+      values = ["true"]
+      variable = "aws:SecureTransport"
+    }
+  }
+}
+
+# ensure only secure transport is allowed
+
+resource "aws_s3_bucket_policy" "consumer_mapping_s3_bucket" {
+  bucket = module.s3_consumer_mappings_bucket.storage_bucket_id
+  policy = data.aws_iam_policy_document.s3_consumer_mapping_bucket_policy.json
+}
+
+data "aws_iam_policy_document" "consumer_mapping_s3_bucket_policy" {
+  statement {
+    sid = "AllowSslRequestsOnly"
+    actions = [
+      "s3:*",
+    ]
+    effect = "Deny"
+    resources = [
+      module.s3_consumer_mappings_bucket.storage_bucket_arn,
+      "${module.s3_consumer_mappings_bucket.storage_bucket_arn}/*",
+    ]
+    principals {
+      type = "*"
+      identifiers = ["*"]
+    }
+    condition {
+      test = "Bool"
+      values = [
+        "false",
+      ]
+
+      variable = "aws:SecureTransport"
+    }
+  }
+}
+
+# audit bucket
 resource "aws_s3_bucket_policy" "audit_s3_bucket" {
   bucket = module.s3_audit_bucket.storage_bucket_id
   policy = data.aws_iam_policy_document.audit_s3_bucket_policy.json
@@ -136,10 +190,16 @@ data "aws_iam_policy_document" "audit_s3_bucket_policy" {
 }
 
 # Attach s3 read policy to Lambda role
-resource "aws_iam_role_policy" "lambda_s3_read_policy" {
-  name   = "S3ReadAccess"
+resource "aws_iam_role_policy" "lambda_s3_rules_read_policy" {
+  name   = "S3RulesReadAccess"
   role   = aws_iam_role.eligibility_lambda_role.id
   policy = data.aws_iam_policy_document.s3_rules_bucket_policy.json
+}
+
+resource "aws_iam_role_policy" "lambda_s3_mapping_read_policy" {
+  name   = "S3ConsumerMappingReadAccess"
+  role   = aws_iam_role.eligibility_lambda_role.id
+  policy = data.aws_iam_policy_document.s3_consumer_mapping_bucket_policy.json
 }
 
 # Attach s3 write policy to kinesis firehose role
