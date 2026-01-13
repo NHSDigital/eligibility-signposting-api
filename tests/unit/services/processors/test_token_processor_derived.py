@@ -124,6 +124,48 @@ class TestTokenProcessorDerivedValues:
 
         assert result.status_text == "Next dose: "
 
+    def test_custom_target_without_mapping_returns_empty(self):
+        """Test unknown target without source override returns empty string."""
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("COVID"),
+            status=Status.actionable,
+            status_text=StatusText("Due: [[TARGET.COVID.DOSE_DUE:ADD_DAYS(91)]]"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        result = TokenProcessor.find_and_replace_tokens(person, condition)
+
+        assert result.status_text == "Due: "
+
+    def test_custom_target_with_source_override_uses_override(self):
+        """Test custom target with explicit source override derives date."""
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "COVID", "CUSTOM_DATE": "20250101"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("COVID"),
+            status=Status.actionable,
+            status_text=StatusText("Next dose: [[TARGET.COVID.DOSE_DUE:ADD_DAYS(30, CUSTOM_DATE)]]"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        result = TokenProcessor.find_and_replace_tokens(person, condition)
+
+        assert result.status_text == "Next dose: 20250131"
+
     def test_mixed_regular_and_derived_tokens(self):
         """Test mixing regular tokens with derived value tokens."""
         person = Person(

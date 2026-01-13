@@ -104,24 +104,26 @@ class DerivedValueRegistry:
             True if any handler can derive this attribute
         """
         for handler in self._handlers.values():
-            source = handler.get_source_attribute(attribute_value)
+            # Pass None for function_args as we're just checking capability
+            source = handler.get_source_attribute(attribute_value, function_args=None)
             if source != attribute_value:
                 return True
         return False
 
-    def get_source_attribute(self, function_name: str, target_attribute: str) -> str:
+    def get_source_attribute(self, function_name: str, target_attribute: str, function_args: str | None = None) -> str:
         """Get the source attribute for a derived attribute.
 
         Args:
             function_name: The function name of the handler
             target_attribute: The target derived attribute
+            function_args: Optional arguments from the token function call
 
         Returns:
             The source attribute name, or the target if no handler found
         """
         handler = self.get_handler(function_name)
         if handler:
-            return handler.get_source_attribute(target_attribute)
+            return handler.get_source_attribute(target_attribute, function_args)
         return target_attribute
 
     def calculate(

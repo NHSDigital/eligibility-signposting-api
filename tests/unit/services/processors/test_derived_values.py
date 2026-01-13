@@ -44,6 +44,93 @@ class TestAddDaysHandler:
         # 2025-01-01 + 30 days = 2025-01-31
         assert_that(result, is_(equal_to("20250131")))
 
+    def test_get_source_attribute_from_args(self):
+        """Test that source attribute is extracted from function args."""
+        handler = AddDaysHandler()
+
+        # Test with source attribute provided
+        source = handler.get_source_attribute("target", "91, CUSTOM_SOURCE")
+        assert_that(source, is_(equal_to("CUSTOM_SOURCE")))
+
+        # Test with only days provided (should fallback to default mapping or target)
+        source = handler.get_source_attribute("NEXT_DOSE_DUE", "91")
+        assert_that(source, is_(equal_to("LAST_SUCCESSFUL_DATE")))
+
+        # Test with empty args
+        source = handler.get_source_attribute("NEXT_DOSE_DUE", None)
+        assert_that(source, is_(equal_to("LAST_SUCCESSFUL_DATE")))
+
+    def test_calculate_with_args_source_override(self):
+        """Test calculation with source attribute in args."""
+        handler = AddDaysHandler(default_days=91)
+        # Note: In the real flow, get_source_attribute is called before context creation
+        # to set source_attribute in the context. Checking if calculate handles the complex args correctly
+        # for days parsing.
+
+        context = DerivedValueContext(
+            person_data=[{"ATTRIBUTE_TYPE": "COVID", "CUSTOM_DATE": "20250101"}],
+            attribute_name="COVID",
+            source_attribute="CUSTOM_DATE",  # This would have been resolved by get_source_attribute
+            function_args="30, CUSTOM_DATE",
+            date_format=None,
+        )
+
+        result = handler.calculate(context)
+
+        # 2025-01-01 + 30 days = 2025-01-31
+        assert_that(result, is_(equal_to("20250131")))
+
+    def test_calculate_with_blank_days_and_source_override(self):
+        """Test that blank days arg with override falls back to defaults."""
+        handler = AddDaysHandler(default_days=91)
+        context = DerivedValueContext(
+            person_data=[{"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"}],
+            attribute_name="COVID",
+            source_attribute="LAST_SUCCESSFUL_DATE",
+            function_args=", LAST_SUCCESSFUL_DATE",
+            date_format=None,
+        )
+
+        result = handler.calculate(context)
+
+        # No explicit days provided, so default 91 days should be used
+        assert_that(result, is_(equal_to("20250402")))
+
+    def test_source_override_trims_whitespace_and_case(self):
+        """Test override parsing handles whitespace and lowercase inputs."""
+        handler = AddDaysHandler(default_days=91)
+
+        source = handler.get_source_attribute("DOSE_DUE", " 30 , last_successful_date ")
+        assert_that(source, is_(equal_to("LAST_SUCCESSFUL_DATE")))
+
+        context = DerivedValueContext(
+            person_data=[{"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"}],
+            attribute_name="COVID",
+            source_attribute=source,
+            function_args=" 30 , last_successful_date ",
+            date_format=None,
+        )
+
+        result = handler.calculate(context)
+
+        # 2025-01-01 + 30 days = 2025-01-31
+        assert_that(result, is_(equal_to("20250131")))
+
+    def test_calculate_with_missing_custom_source_returns_empty(self):
+        """Test that missing custom source attribute returns empty string."""
+        handler = AddDaysHandler(default_days=91)
+        context = DerivedValueContext(
+            person_data=[{"ATTRIBUTE_TYPE": "COVID"}],
+            attribute_name="COVID",
+            source_attribute="CUSTOM_DATE",
+            function_args="30, CUSTOM_DATE",
+            date_format=None,
+        )
+
+        result = handler.calculate(context)
+
+        assert_that(result, is_(equal_to("")))
+
     def test_calculate_with_vaccine_specific_days(self):
         """Test that vaccine-specific days are used when configured."""
         handler = AddDaysHandler(

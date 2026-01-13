@@ -153,7 +153,11 @@ class TokenProcessor:
 
         try:
             target_attribute = parsed_token.attribute_value or parsed_token.attribute_name
-            source_attribute = registry.get_source_attribute(function_name, target_attribute)
+            source_attribute = registry.get_source_attribute(
+                function_name,
+                target_attribute,
+                parsed_token.function_args,
+            )
 
             context = DerivedValueContext(
                 person_data=person_data,

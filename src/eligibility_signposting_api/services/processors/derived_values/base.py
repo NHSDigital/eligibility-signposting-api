@@ -53,13 +53,14 @@ class DerivedValueHandler(ABC):
         """
 
     @abstractmethod
-    def get_source_attribute(self, target_attribute: str) -> str:
+    def get_source_attribute(self, target_attribute: str, function_args: str | None = None) -> str:
         """Get the source attribute name needed for this derived value.
 
         For example, NEXT_DOSE_DUE derives from LAST_SUCCESSFUL_DATE.
 
         Args:
             target_attribute: The target derived attribute name (e.g., 'NEXT_DOSE_DUE')
+            function_args: Optional arguments from the token function call
 
         Returns:
             The source attribute name to use for calculation

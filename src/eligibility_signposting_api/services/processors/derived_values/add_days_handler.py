@@ -48,15 +48,25 @@ class AddDaysHandler(DerivedValueHandler):
         self.default_days = default_days
         self.vaccine_type_days = vaccine_type_days or {}
 
-    def get_source_attribute(self, target_attribute: str) -> str:
+    def get_source_attribute(self, target_attribute: str, function_args: str | None = None) -> str:
         """Get the source attribute for a derived attribute.
+
+        Check if source is provided in function args (e.g., ADD_DAYS(91, SOURCE_FIELD)).
+        If not, fall back to mapping or return target_attribute as default.
 
         Args:
             target_attribute: The derived attribute name (e.g., 'NEXT_DOSE_DUE')
+            function_args: Optional arguments from token (e.g., '91, LAST_SUCCESSFUL_DATE')
 
         Returns:
             The source attribute name (e.g., 'LAST_SUCCESSFUL_DATE')
         """
+        if function_args and "," in function_args:
+            # Extract source from args if present (second argument)
+            parts = [p.strip() for p in function_args.split(",")]
+            if len(parts) > 1 and parts[1]:
+                return parts[1].upper()
+
         return self.DERIVED_ATTRIBUTE_SOURCES.get(target_attribute, target_attribute)
 
     def calculate(self, context: DerivedValueContext) -> str:
@@ -120,11 +130,13 @@ class AddDaysHandler(DerivedValueHandler):
         """
         # Priority 1: Token argument (if non-empty)
         if context.function_args:
-            try:
-                return int(context.function_args)
-            except ValueError as e:
-                message = f"Invalid days argument '{context.function_args}' for ADD_DAYS function. Expected an integer."
-                raise ValueError(message) from e
+            args = context.function_args.split(",")[0].strip()
+            if args:
+                try:
+                    return int(args)
+                except ValueError as e:
+                    message = f"Invalid days argument '{args}' for ADD_DAYS function. Expected an integer."
+                    raise ValueError(message) from e
 
         # Priority 2: Vaccine-specific configuration
         if context.attribute_name in self.vaccine_type_days:
