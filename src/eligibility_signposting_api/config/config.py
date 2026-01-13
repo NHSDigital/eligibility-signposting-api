@@ -51,10 +51,10 @@ def config() -> dict[str, Any]:
 
     local_stack_endpoint = "http://localhost:4566"
     return {
-        "aws_access_key_id": AwsAccessKey(os.getenv("AWS_ACCESS_KEY_ID", "dummy_key")),
+        "aws_access_key_id": AwsAccessKey(os.getenv("AWS_ACCESS_KEY_ID", "fake")),
         "aws_default_region": aws_default_region,
-        "aws_secret_access_key": AwsSecretAccessKey(os.getenv("AWS_SECRET_ACCESS_KEY", "dummy_secret")),
-        "dynamodb_endpoint": URL(os.getenv("DYNAMODB_ENDPOINT", local_stack_endpoint)),
+        "aws_secret_access_key": AwsSecretAccessKey(os.getenv("AWS_SECRET_ACCESS_KEY", "fake")),
+        "dynamodb_endpoint": URL(os.getenv("DYNAMODB_ENDPOINT", "http://localhost:8000")),
         "person_table_name": person_table_name,
         "s3_endpoint": URL(os.getenv("S3_ENDPOINT", local_stack_endpoint)),
         "rules_bucket_name": rules_bucket_name,

@@ -98,9 +98,14 @@ def dynamodb_client(boto3_session: Session, localstack: URL) -> BaseClient:
 
 
 @pytest.fixture(scope="session")
-def dynamodb_resource(boto3_session: Session, localstack: URL) -> ServiceResource:
-    return boto3_session.resource("dynamodb", endpoint_url=str(localstack))
+def dynamodb_resource(boto3_session: Session):
+    # defaults to the docker-compose service name "dynamodb-local"
+    endpoint_url = os.getenv("DYNAMODB_ENDPOINT", "http://localhost:8000")
 
+    return boto3_session.resource(
+        "dynamodb",
+        endpoint_url=endpoint_url
+    )
 
 @pytest.fixture(scope="session")
 def logs_client(boto3_session: Session, localstack: URL) -> BaseClient:
