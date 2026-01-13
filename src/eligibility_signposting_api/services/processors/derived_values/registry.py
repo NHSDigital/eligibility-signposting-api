@@ -44,22 +44,40 @@ class DerivedValueRegistry:
         Args:
             handler: The derived value handler to register
         """
-        cls._default_handlers[handler.function_name] = handler
+        normalized_name = handler.function_name.upper()
+        cls._default_handlers[normalized_name] = handler
+
+        if _RegistryHolder.instance is not None:
+            _RegistryHolder.instance.register(handler)
+
+    def clear(self) -> None:
+        """Clear all handlers from this registry instance."""
+        self._handlers.clear()
 
     @classmethod
     def clear_defaults(cls) -> None:
         """Clear all default handlers. Useful for testing."""
         cls._default_handlers.clear()
+        if _RegistryHolder.instance is not None:
+            _RegistryHolder.instance.clear()
 
     @classmethod
     def get_default_handlers(cls) -> dict[str, DerivedValueHandler]:
         """Get a copy of the default handlers. Useful for testing."""
         return cls._default_handlers.copy()
 
+    def set_handlers(self, handlers: dict[str, DerivedValueHandler]) -> None:
+        """Replace all handlers in this registry instance."""
+        self._handlers = {name.upper(): handler for name, handler in handlers.items()}
+
     @classmethod
     def set_default_handlers(cls, handlers: dict[str, DerivedValueHandler]) -> None:
         """Set the default handlers. Useful for testing."""
-        cls._default_handlers = handlers
+        normalized = {name.upper(): handler for name, handler in handlers.items()}
+        cls._default_handlers = normalized
+
+        if _RegistryHolder.instance is not None:
+            _RegistryHolder.instance.set_handlers(handlers)
 
     def register(self, handler: DerivedValueHandler) -> None:
         """Register a derived value handler.
@@ -68,7 +86,8 @@ class DerivedValueRegistry:
             handler: The handler to register. Its function_name attribute
                     will be used as the lookup key.
         """
-        self._handlers[handler.function_name] = handler
+        normalized_name = handler.function_name.upper()
+        self._handlers[normalized_name] = handler
 
     def get_handler(self, function_name: str) -> DerivedValueHandler | None:
         """Get a handler by function name.
@@ -151,8 +170,10 @@ class DerivedValueRegistry:
         return handler.calculate(context)
 
 
-# Create a singleton instance for convenience
-_registry = DerivedValueRegistry()
+class _RegistryHolder:
+    """Holder for the singleton registry to avoid global statement."""
+
+    instance: DerivedValueRegistry | None = None
 
 
 def get_registry() -> DerivedValueRegistry:
@@ -161,4 +182,6 @@ def get_registry() -> DerivedValueRegistry:
     Returns:
         The singleton DerivedValueRegistry instance
     """
-    return _registry
+    if _RegistryHolder.instance is None:
+        _RegistryHolder.instance = DerivedValueRegistry()
+    return _RegistryHolder.instance

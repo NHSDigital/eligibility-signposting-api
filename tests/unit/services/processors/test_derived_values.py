@@ -5,7 +5,9 @@ from hamcrest import assert_that, calling, equal_to, is_, raises, same_instance
 from eligibility_signposting_api.services.processors.derived_values import (
     AddDaysHandler,
     DerivedValueContext,
+    DerivedValueHandler,
     DerivedValueRegistry,
+    get_registry,
 )
 
 
@@ -359,6 +361,29 @@ class TestDerivedValueRegistry:
 
         # The default ADD_DAYS handler should be registered via __init__.py
         assert_that(registry.has_handler("ADD_DAYS"), is_(True))
+
+    def test_global_registry_has_default_handlers(self):
+        """Test that the exported registry singleton sees default handlers."""
+        registry = get_registry()
+
+        assert_that(registry.has_handler("ADD_DAYS"), is_(True))
+
+    def test_register_normalizes_function_name(self):
+        """Test that registering handlers works regardless of name casing."""
+
+        class LowercaseHandler(DerivedValueHandler):
+            function_name = "custom_func"
+
+            def calculate(self, context: DerivedValueContext) -> str:  # noqa: ARG002
+                return ""
+
+            def get_source_attribute(self, target_attribute: str, function_args: str | None = None) -> str:  # noqa: ARG002
+                return target_attribute
+
+        registry = DerivedValueRegistry()
+        registry.register(LowercaseHandler())
+
+        assert_that(registry.has_handler("CUSTOM_FUNC"), is_(True))
 
     def test_clear_defaults_removes_default_handlers(self):
         """Test that clear_defaults removes all default handlers."""
