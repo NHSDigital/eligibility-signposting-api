@@ -1,6 +1,6 @@
 from typing import NewType
 
-from pydantic import BaseModel, RootModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 from eligibility_signposting_api.model.campaign_config import CampaignID
 
