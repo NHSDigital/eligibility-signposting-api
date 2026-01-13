@@ -38,3 +38,8 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Ignore secret rotation lambda zip files
+
+stacks/api-layer/scripts/create_pending_secret.zip
+stacks/api-layer/scripts/promote_to_current.zip
