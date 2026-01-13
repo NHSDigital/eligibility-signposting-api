@@ -75,6 +75,8 @@ resource "aws_iam_policy" "lambda_management" {
         Resource = [
           "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api",
           "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api:*",
+          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:default-CreatePendingSecretFunction",
+          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:default-PromoteToCurrentFunction",
           "arn:aws:lambda:*:580247275435:layer:LambdaInsightsExtension:*"
         ]
       }
@@ -420,7 +422,12 @@ resource "aws_iam_policy" "api_infrastructure" {
           "wafv2:DisassociateWebACL",
           "wafv2:PutLoggingConfiguration",
           "wafv2:GetLoggingConfiguration",
-          "wafv2:DeleteLoggingConfiguration"
+          "wafv2:DeleteLoggingConfiguration",
+
+          # State Machine
+          "states:DescribeStateMachine",
+          "states:ListStateMachineVersions",
+          "states:ListTagsForResource"
         ],
 
 
@@ -443,6 +450,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:events:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:rule/cloudwatch-alarm-state-change-to-splunk*",
           "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/webacl/*",
           "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/managedruleset/*",
+          "arn:aws:states:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:SecretRotationWorkflow",
         ]
       },
     ]
@@ -562,6 +570,9 @@ resource "aws_iam_policy" "iam_management" {
           "arn:aws:iam::*:policy/*PermissionsBoundary",
           "arn:aws:iam::*:policy/*PutSubscriptionFilterPolicy",
           "arn:aws:iam::*:policy/*CWLogsToCSOCDestinationPolicy",
+          "arn:aws:iam::*:policy/rotation_secrets_policy",
+          "arn:aws:iam::*:policy/rotation_sfn_policy",
+          "arn:aws:iam::*:policy/eventbridge_sfn_start_policy",
           # VPC flow logs role
           "arn:aws:iam::*:role/vpc-flow-logs-role",
           # API role
@@ -692,7 +703,8 @@ resource "aws_iam_policy" "cloudwatch_management" {
           "sns:Subscribe",
           "sns:Unsubscribe",
           "sns:ListSubscriptions",
-          "sns:ListSubscriptionsByTopic"
+          "sns:ListSubscriptionsByTopic",
+          "sns:GetSubscriptionAttributes"
         ],
         Resource = [
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/*",
