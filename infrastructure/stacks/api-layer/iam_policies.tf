@@ -128,7 +128,7 @@ data "aws_iam_policy_document" "s3_consumer_mapping_bucket_policy" {
 
 resource "aws_s3_bucket_policy" "consumer_mapping_s3_bucket" {
   bucket = module.s3_consumer_mappings_bucket.storage_bucket_id
-  policy = data.aws_iam_policy_document.s3_consumer_mapping_bucket_policy.json
+  policy = data.aws_iam_policy_document.consumer_mapping_s3_bucket_policy.json
 }
 
 data "aws_iam_policy_document" "consumer_mapping_s3_bucket_policy" {
