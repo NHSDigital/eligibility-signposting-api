@@ -26,8 +26,8 @@ class TestConsumerMappingRepo:
         # The mocked S3 data must match the new schema (objects with description)
         mapping_data = {
             consumer_id: [
-                {"campaign": "flu-2024", "description": "Flu Shot Description"},
-                {"campaign": "covid-2024", "description": "Covid Shot Description"},
+                {"Campaign": "flu-2024", "Description": "Flu Shot Description"},
+                {"Campaign": "covid-2024", "Description": "Covid Shot Description"},
             ]
         }
 
@@ -49,7 +49,7 @@ class TestConsumerMappingRepo:
         Setup data where the consumer_id doesn't exist
         We must still use the valid schema (dicts inside the list) to pass Pydantic validation
         """
-        valid_schema_data = {"other-user": [{"campaign": "camp-1", "description": "Some description"}]}
+        valid_schema_data = {"other-user": [{"Campaign": "camp-1", "Description": "Some description"}]}
 
         mock_s3_client.list_objects.return_value = {"Contents": [{"Key": "mappings.json"}]}
         body_json = json.dumps(valid_schema_data).encode("utf-8")

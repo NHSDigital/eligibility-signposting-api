@@ -1,6 +1,6 @@
 from typing import NewType
 
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel, RootModel, Field
 
 from eligibility_signposting_api.model.campaign_config import CampaignID
 
@@ -8,8 +8,8 @@ ConsumerId = NewType("ConsumerId", str)
 
 
 class ConsumerCampaign(BaseModel):
-    campaign: CampaignID
-    description: str | None = None
+    campaign: CampaignID = Field(alias="Campaign")
+    description: str | None = Field(default=None, alias="Description")
 
 
 class ConsumerMapping(RootModel[dict[ConsumerId, list[ConsumerCampaign]]]):

@@ -1171,7 +1171,7 @@ def create_and_put_consumer_mapping_in_s3(
     campaign_config: CampaignConfig, consumer_id: str, consumer_mapping_bucket, s3_client
 ) -> ConsumerMapping:
     consumer_mapping = ConsumerMapping.model_validate({})
-    campaign_entry = ConsumerCampaign(campaign=campaign_config.id, description="Test description for campaign mapping")
+    campaign_entry = ConsumerCampaign(Campaign=campaign_config.id, Description="Test description for campaign mapping")
 
     consumer_mapping.root[ConsumerId(consumer_id)] = [campaign_entry]
     consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
@@ -1305,7 +1305,7 @@ def consumer_mapped_to_campaign_having_inactive_iteration_config(
 ):
     mapping = ConsumerMapping.model_validate({})
     mapping.root[consumer_id] = [
-        ConsumerCampaign(campaign=cc.id, description=f"Description for {cc.id}") for cc in inactive_iteration_config
+        ConsumerCampaign(Campaign=cc.id, Description=f"Description for {cc.id}") for cc in inactive_iteration_config
     ]
 
     s3_client.put_object(
@@ -1327,7 +1327,7 @@ def consumer_mapped_to_multiple_campaign_configs(
 ) -> Generator[ConsumerMapping]:
     mapping = ConsumerMapping.model_validate({})
     mapping.root[consumer_id] = [
-        ConsumerCampaign(campaign=cc.id, description=f"Description for {cc.id}") for cc in multiple_campaign_configs
+        ConsumerCampaign(Campaign=cc.id, Description=f"Description for {cc.id}") for cc in multiple_campaign_configs
     ]
 
     s3_client.put_object(
@@ -1363,10 +1363,10 @@ def consumer_mapped_to_with_various_targets(
     consumer_mapping = ConsumerMapping.model_validate({})
 
     consumer_mapping.root[ConsumerId("23-mic7heal-jor6don")] = [
-        ConsumerCampaign(campaign=CampaignID("campaign_start_date")),
-        ConsumerCampaign(campaign=CampaignID("campaign_start_date_plus_one_day")),
-        ConsumerCampaign(campaign=CampaignID("campaign_today")),
-        ConsumerCampaign(campaign=CampaignID("campaign_tomorrow")),
+        ConsumerCampaign(Campaign=CampaignID("campaign_start_date")),
+        ConsumerCampaign(Campaign=CampaignID("campaign_start_date_plus_one_day")),
+        ConsumerCampaign(Campaign=CampaignID("campaign_today")),
+        ConsumerCampaign(Campaign=CampaignID("campaign_tomorrow")),
     ]
 
     consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)

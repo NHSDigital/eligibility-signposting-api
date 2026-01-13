@@ -864,8 +864,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"campaign": "RSV_campaign_id"},
-                        {"campaign": "COVID_campaign_id"},
+                        {"Campaign": "RSV_campaign_id"},
+                        {"Campaign": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -882,8 +882,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"campaign": "RSV_campaign_id"},
-                        {"campaign": "COVID_campaign_id"},
+                        {"Campaign": "RSV_campaign_id"},
+                        {"Campaign": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -900,8 +900,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"campaign": "RSV_campaign_id"},
-                        {"campaign": "COVID_campaign_id"},
+                        {"Campaign": "RSV_campaign_id"},
+                        {"Campaign": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -921,8 +921,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"campaign": "RSV_campaign_id"},
-                        {"campaign": "COVID_campaign_id"},
+                        {"Campaign": "RSV_campaign_id"},
+                        {"Campaign": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -937,8 +937,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"campaign": "RSV_campaign_id"},
-                        {"campaign": "COVID_campaign_id"},
+                        {"Campaign": "RSV_campaign_id"},
+                        {"Campaign": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -953,8 +953,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"campaign": "RSV_campaign_id"},
-                        {"campaign": "COVID_campaign_id"},
+                        {"Campaign": "RSV_campaign_id"},
+                        {"Campaign": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -974,8 +974,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"campaign": "RSV_campaign_id"},
-                        {"campaign": "COVID_campaign_id"},
+                        {"Campaign": "RSV_campaign_id"},
+                        {"Campaign": "COVID_campaign_id"},
                     ]
                 },
                 "another-consumer-id",
@@ -992,8 +992,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"campaign": "RSV_campaign_id"},
-                        {"campaign": "COVID_campaign_id"},
+                        {"Campaign": "RSV_campaign_id"},
+                        {"Campaign": "COVID_campaign_id"},
                     ]
                 },
                 "another-consumer-id",
@@ -1013,8 +1013,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"campaign": "RSV_campaign_id"},
-                        {"campaign": "COVID_campaign_id"},
+                        {"Campaign": "RSV_campaign_id"},
+                        {"Campaign": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -1100,8 +1100,8 @@ class TestEligibilityResponseWithVariousInputs:
             (
                 [("RSV", "RSV_campaign_id_1"), ("RSV", "RSV_campaign_id_2")],
                 {
-                    "consumer-id-1": [{"campaign": "RSV_campaign_id_1"}],
-                    "consumer-id-2": [{"campaign": "RSV_campaign_id_2"}],
+                    "consumer-id-1": [{"Campaign": "RSV_campaign_id_1"}],
+                    "consumer-id-2": [{"Campaign": "RSV_campaign_id_2"}],
                 },
                 "RSV",
                 "VACCINATIONS",
