@@ -269,7 +269,9 @@ resource "aws_iam_policy" "api_infrastructure" {
           "logs:CreateLogDelivery",
           "logs:DeleteLogDelivery",
           # IAM service-linked role for WAF logging
-          "iam:CreateServiceLinkedRole"
+          "iam:CreateServiceLinkedRole",
+          # IAM to list tags
+          "logs:ListTagsForResource"
 
         ],
         Resource = "*"
@@ -569,7 +571,11 @@ resource "aws_iam_policy" "iam_management" {
           # Eventbridge to firehose role
           "arn:aws:iam::*:role/*-eventbridge-to-firehose-role*",
           # Firehose splunk role
-          "arn:aws:iam::*:role/splunk-firehose-role"
+          "arn:aws:iam::*:role/splunk-firehose-role",
+          # Eventbridge invoke step functions role
+          "arn:aws:iam::*:role/eventbridge_invoke_sfn_role",
+          "arn:aws:iam::*:role/secret_rotation_lambda_role",
+          "arn:aws:iam::*:role/secret_rotation_workflow_role"
         ]
       }
     ]
@@ -696,6 +702,7 @@ resource "aws_iam_policy" "cloudwatch_management" {
           "arn:aws:cloudwatch:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alarm:*",
           "arn:aws:cloudwatch::${data.aws_caller_identity.current.account_id}:dashboard/Demand_And_Capacity_*",
           "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:cloudwatch-security-alarms*",
+          "arn:aws:sns:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:secret-rotation-notifications*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/default-eligibility-signposting-api*",
         ]
       }
