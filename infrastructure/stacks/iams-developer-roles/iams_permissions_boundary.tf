@@ -223,6 +223,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "sns:Unsubscribe",
       "sns:ListSubscriptions",
       "sns:ListSubscriptionsByTopic",
+      "sns:GetSubscriptionAttributes",
 
       # SSM - parameter management
       "ssm:DescribeParameters",
@@ -249,7 +250,12 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "wafv2:DeleteLoggingConfiguration",
 
       # Secret Manager
-      "secretsmanager:*"
+      "secretsmanager:*",
+
+      # State Machine management
+      "states:DescribeStateMachine",
+      "states:ListStateMachineVersions",
+      "states:ListTagsForResource"
     ]
 
     resources = ["*"]
