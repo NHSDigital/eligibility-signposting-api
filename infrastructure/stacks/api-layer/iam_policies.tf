@@ -191,7 +191,7 @@ data "aws_iam_policy_document" "audit_s3_bucket_policy" {
 
 # Attach s3 read policy to Lambda role
 resource "aws_iam_role_policy" "lambda_s3_rules_read_policy" {
-  name   = "S3RulesReadAccess"
+  name   = "S3ReadAccess"
   role   = aws_iam_role.eligibility_lambda_role.id
   policy = data.aws_iam_policy_document.s3_rules_bucket_policy.json
 }
