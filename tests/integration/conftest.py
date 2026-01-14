@@ -1120,8 +1120,14 @@ def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -
         request, "param", [("RSV", "RSV_campaign_id"), ("COVID", "COVID_campaign_id"), ("FLU", "FLU_campaign_id")]
     )
 
-    targets = [t for t, _id in raw]
-    campaign_id = [_id for t, _id in raw]
+    targets = []
+    campaign_id = []
+    status = []
+
+    for t, _id, *rest in raw:
+        targets.append(t)
+        campaign_id.append(_id)
+        status.append(rest[0] if rest else None)
 
     for i in range(len(targets)):
         campaign: CampaignConfig = rule.CampaignConfigFactory.build(
@@ -1148,6 +1154,10 @@ def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -
                 )
             ],
         )
+
+        if status[i] == "inactive":
+            campaign.iterations[0].iteration_date = datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(days=7)
+
         campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
         key = f"{campaign.name}.json"
         s3_client.put_object(
