@@ -1094,9 +1094,9 @@ class TestEligibilityResponseWithVariousInputs:
             ("consumer-id-1", "RSV_campaign_id_1"),
             # Consumer  is mapped only to RSV_campaign_id_2
             ("consumer-id-2", "RSV_campaign_id_2"),
-            # Edge-case : Consumer-id-3a is mapped to multiple active campaigns, so the first one in S3 is only taken.
+            # Edge-case : Consumer-id-3a is mapped to multiple active campaigns, so only one taken.
             ("consumer-id-3a", "RSV_campaign_id_3"),
-            # Edge-case : Consumer-id-3b is mapped to multiple active campaigns, so the first one in S3 is only taken.
+            # Edge-case : Consumer-id-3b is mapped to multiple active campaigns, so only one taken.
             ("consumer-id-3b", "RSV_campaign_id_3"),
             # Edge-case : Consumer is mapped to inactive inactive_RSV_campaign_id_5 and active RSV_campaign_id_6
             ("consumer-id-4", "RSV_campaign_id_6"),
