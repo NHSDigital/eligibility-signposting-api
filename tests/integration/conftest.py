@@ -104,8 +104,8 @@ def boto3_session() -> Session:
 
 
 @pytest.fixture(scope="session")
-def api_gateway_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("apigateway", endpoint_url=str(localstack))
+def api_gateway_client(boto3_session: Session) -> BaseClient:
+    return boto3_session.client("apigateway")
 
 
 @pytest.fixture(scope="session")
@@ -114,38 +114,26 @@ def lambda_client(boto3_session: Session, localstack: URL) -> BaseClient:
 
 
 @pytest.fixture(scope="session")
-def dynamodb_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("dynamodb", endpoint_url=str(localstack))
-
-
-@pytest.fixture(scope="session")
 def dynamodb_resource(boto3_session: Session):
-    # defaults to the docker-compose service name "dynamodb-local"
-    endpoint_url = os.getenv("DYNAMODB_ENDPOINT", "http://localhost:8000")
-
-    return boto3_session.resource(
-        "dynamodb",
-        endpoint_url=endpoint_url
-    )
+    return boto3_session.resource("dynamodb")
 
 @pytest.fixture(scope="session")
-def logs_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("logs", endpoint_url=str(localstack))
+def logs_client(boto3_session: Session) -> BaseClient:
+    return boto3_session.client("logs")
+
+@pytest.fixture(scope="session")
+def iam_client(boto3_session: Session) -> BaseClient:
+    return boto3_session.client("iam")
 
 
 @pytest.fixture(scope="session")
-def iam_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("iam", endpoint_url=str(localstack))
+def s3_client(boto3_session: Session) -> BaseClient:
+    return boto3_session.client("s3")
 
 
 @pytest.fixture(scope="session")
-def s3_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("s3", endpoint_url=str(localstack))
-
-
-@pytest.fixture(scope="session")
-def firehose_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("firehose", endpoint_url=str(localstack))
+def firehose_client(boto3_session: Session) -> BaseClient:
+    return boto3_session.client("firehose")
 
 
 @pytest.fixture(scope="session")
@@ -698,10 +686,13 @@ def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
     s3_client.delete_bucket(Bucket=bucket_name)
 
 
-@pytest.fixture(autouse=True)
-def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketName) -> dict[str, Any]:
-    return firehose_client.create_delivery_stream(
-        DeliveryStreamName="test_kinesis_audit_stream_to_s3",
+@pytest.fixture(scope="function", autouse=True)
+def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: str) -> Generator[dict[str, Any], None, None]:
+    stream_name = "test_kinesis_audit_stream_to_s3"
+
+    # 1. SETUP: Create the stream
+    response = firehose_client.create_delivery_stream(
+        DeliveryStreamName=stream_name,
         DeliveryStreamType="DirectPut",
         ExtendedS3DestinationConfiguration={
             "BucketARN": f"arn:aws:s3:::{audit_bucket}",
@@ -712,6 +703,11 @@ def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketNa
         },
     )
 
+    # 2. YIELD: Run the test
+    yield response
+
+    # 3. TEARDOWN: Delete the stream so the next test can create it fresh
+    firehose_client.delete_delivery_stream(DeliveryStreamName=stream_name)
 
 @pytest.fixture(scope="class")
 def campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:

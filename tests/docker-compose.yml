@@ -18,15 +18,3 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
-  dynamodb-local:
-    image: amazon/dynamodb-local:latest
-    container_name: dynamodb-local
-    ports:
-      - "8000:8000" # Standard DynamoDB Local port
-    # The command enables shared DB (single file) and specifies the path for data
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
-    volumes:
-      # Maps a local folder to the container to ensure data persists after restart
-      - "./dynamodb_data:/home/dynamodblocal/data"
-    working_dir: /home/dynamodblocal
