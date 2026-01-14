@@ -87,6 +87,18 @@ def localstack(request: pytest.FixtureRequest) -> URL:
     logger.info("localstack running on %s", url)
     return url
 
+@pytest.fixture(scope="session")
+def moto_server(request: pytest.FixtureRequest) -> URL:
+    docker_ip: str = request.getfixturevalue("docker_ip")
+    docker_services: Services = request.getfixturevalue("docker_services")
+
+    logger.info("Starting localstack")
+    port = docker_services.port_for("moto-server", 5000)
+    url = URL(f"http://{docker_ip}:{port}")
+    docker_services.wait_until_responsive(timeout=30.0, pause=0.1, check=lambda: is_responsive(url))
+    logger.info("localstack running on %s", url)
+    return url
+
 
 def is_responsive(url: URL) -> bool:
     try:
@@ -104,8 +116,8 @@ def boto3_session() -> Session:
 
 
 @pytest.fixture(scope="session")
-def api_gateway_client(boto3_session: Session) -> BaseClient:
-    return boto3_session.client("apigateway")
+def api_gateway_client(boto3_session: Session, moto_server:URL) -> BaseClient:
+    return boto3_session.client("apigateway", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
@@ -114,36 +126,36 @@ def lambda_client(boto3_session: Session, localstack: URL) -> BaseClient:
 
 
 @pytest.fixture(scope="session")
-def dynamodb_resource(boto3_session: Session):
-    return boto3_session.resource("dynamodb")
+def dynamodb_resource(boto3_session: Session, moto_server:URL) -> BaseClient:
+    return boto3_session.resource("dynamodb", endpoint_url=str(moto_server))
 
 @pytest.fixture(scope="session")
-def logs_client(boto3_session: Session) -> BaseClient:
-    return boto3_session.client("logs")
+def logs_client(boto3_session: Session, moto_server:URL) -> BaseClient:
+    return boto3_session.client("logs", endpoint_url=str(moto_server))
 
 @pytest.fixture(scope="session")
-def iam_client(boto3_session: Session) -> BaseClient:
-    return boto3_session.client("iam")
-
-
-@pytest.fixture(scope="session")
-def s3_client(boto3_session: Session) -> BaseClient:
-    return boto3_session.client("s3")
+def iam_client(boto3_session: Session, moto_server:URL) -> BaseClient:
+    return boto3_session.client("iam", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def firehose_client(boto3_session: Session) -> BaseClient:
-    return boto3_session.client("firehose")
+def s3_client(boto3_session: Session, moto_server:URL) -> BaseClient:
+    return boto3_session.client("s3", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def secretsmanager_client(boto3_session: Session) -> BaseClient:
+def firehose_client(boto3_session: Session, moto_server:URL) -> BaseClient:
+    return boto3_session.client("firehose", endpoint_url=str(moto_server))
+
+
+@pytest.fixture(scope="session")
+def secretsmanager_client(boto3_session: Session, moto_server:URL) -> BaseClient:
     """
     Provides a mocked boto3 Secrets Manager client (via Moto).
     Seeds a test secret with 'Previous' and 'Current' values.
     """
     # 1. Create client without endpoint_url (Moto intercepts default AWS URLs)
-    client: BaseClient = boto3_session.client("secretsmanager")
+    client: BaseClient = boto3_session.client("secretsmanager", endpoint_url=str(moto_server))
 
     # 2. Seed the initial "Previous" value
     # We use try/except to handle cases where the mock might not have fully reset

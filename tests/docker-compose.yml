@@ -18,3 +18,24 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  moto-server:
+    image: motoserver/moto:latest
+    container_name: moto-server
+    # ⚠️ CRITICAL CHANGE: Map Host 5001 -> Container 5000
+    ports:
+      - "4567:5000"
+    environment:
+      # Moto inside the container still thinks it's on 5000 (that's fine)
+      - MOTO_PORT=5000
+    networks:
+      - test-network
+    healthcheck:
+      test: "curl -f http://localhost:5000/health || exit 1"
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  test-network:
+    driver: bridge

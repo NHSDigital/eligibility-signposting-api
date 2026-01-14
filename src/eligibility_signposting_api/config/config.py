@@ -49,20 +49,20 @@ def config() -> dict[str, Any]:
             "log_level": log_level,
         }
 
-    local_stack_endpoint = "http://localhost:4566"
+    moto_server_endpoint = "http://localhost:4567"
     return {
         "aws_access_key_id": AwsAccessKey(os.getenv("AWS_ACCESS_KEY_ID", "fake")),
         "aws_default_region": aws_default_region,
         "aws_secret_access_key": AwsSecretAccessKey(os.getenv("AWS_SECRET_ACCESS_KEY", "fake")),
-        "dynamodb_endpoint": URL(os.getenv("DYNAMODB_ENDPOINT", "https://dynamodb.eu-west-1.amazonaws.com")),
+        "dynamodb_endpoint": URL(os.getenv("DYNAMODB_ENDPOINT", moto_server_endpoint)),
         "person_table_name": person_table_name,
-        "s3_endpoint": URL(os.getenv("S3_ENDPOINT", "https://s3.eu-west-1.amazonaws.com")),
+        "s3_endpoint": URL(os.getenv("S3_ENDPOINT", moto_server_endpoint)),
         "rules_bucket_name": rules_bucket_name,
         "audit_bucket_name": audit_bucket_name,
-        "firehose_endpoint": URL(os.getenv("FIREHOSE_ENDPOINT", "https://firehose.eu-west-1.amazonaws.com")),
+        "firehose_endpoint": URL(os.getenv("FIREHOSE_ENDPOINT", moto_server_endpoint)),
         "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
         "enable_xray_patching": enable_xray_patching,
-        "secretsmanager_endpoint": URL(os.getenv("SECRET_MANAGER_ENDPOINT", "https://secretsmanager.eu-west-1.amazonaws.com")),
+        "secretsmanager_endpoint": URL(os.getenv("SECRET_MANAGER_ENDPOINT", moto_server_endpoint)),
         "hashing_secret_name": hashing_secret_name,
         "log_level": log_level,
     }
