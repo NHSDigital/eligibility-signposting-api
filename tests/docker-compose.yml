@@ -36,6 +36,25 @@ services:
       timeout: 5s
       retries: 5
 
+    # This uses the Dockerfile you provided
+  mock-server:
+    build:
+      context: ..
+      dockerfile: tests/Dockerfile
+    container_name: mock-server
+    ports:
+      - "9123:9123"  # OpenResty/Nginx entry
+      - "5000:5000"  # Flask Token Server (Direct access)
+    environment:
+      # Overrides for variables used in your entrypoint.sh
+      - LOGIN_ROOT_URL=http://localhost:9123
+      - APP_ROOT_URL=https://localhost:3000
+      - NBS_URL=http://localhost:9123/nbs
+      - ELID_DELAY_SECONDS=0
+      - APIM_DELAY_SECONDS=0
+    networks:
+      - test-network
+
 networks:
   test-network:
     driver: bridge

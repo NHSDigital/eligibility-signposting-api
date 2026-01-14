@@ -1,21 +1,17 @@
-from collections.abc import Callable
-from functools import wraps
-from typing import Any
+import logging
 
 from aws_xray_sdk.core import xray_recorder
-from mangum.types import LambdaContext, LambdaEvent
+from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
 
+logger = logging.getLogger(__name__)
 
-def tracing_setup() -> Callable:
-    def decorator(func: Callable) -> Callable:
-        @wraps(func)
-        def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any] | None:
-            xray_recorder.begin_subsegment("Lambda")
-            try:
-                return func(event, context)
-            finally:
-                xray_recorder.end_subsegment()
+#TODO needs manual testing
+def setup_tracing(app):
+    """Replaces @tracing_setup for Fargate."""
+    service_name = 'eligibility-signposting-api'
 
-        return wrapper
+    # 1. Configure the recorder with the service name
+    xray_recorder.configure(service=service_name)
 
-    return decorator
+    # 2. Initialize the middleware with only the app and recorder
+    XRayMiddleware(app, xray_recorder)
