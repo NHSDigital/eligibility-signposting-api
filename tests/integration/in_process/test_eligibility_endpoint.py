@@ -1096,7 +1096,7 @@ class TestEligibilityResponseWithVariousInputs:
             ("consumer-id-2", "RSV_campaign_id_2"),
             # Edge-case : Consumer-id-3 is mapped to multiple active campaigns, so the first one is only considered.
             ("consumer-id-3", "RSV_campaign_id_3"),
-            # Edge-case : Consumer is mapped to inactive RSV_campaign_id_5 and active RSV_campaign_id_6
+            # Edge-case : Consumer is mapped to inactive inactive_RSV_campaign_id_5 and active RSV_campaign_id_6
             ("consumer-id-4", "RSV_campaign_id_6"),
             # Edge-case : Consumer is mapped only to inactive RSV_campaign_id_5
             ("consumer-id-5", None),
@@ -1111,15 +1111,15 @@ class TestEligibilityResponseWithVariousInputs:
                     ("RSV", "RSV_campaign_id_2"),
                     ("RSV", "RSV_campaign_id_3"),
                     ("RSV", "RSV_campaign_id_4"),
-                    ("RSV", "RSV_campaign_id_5", "inactive"),  # inactive iteration
+                    ("RSV", "inactive_RSV_campaign_id_5", "inactive"),  # inactive iteration
                     ("RSV", "RSV_campaign_id_6"),
                 ],
                 {
                     "consumer-id-1": [{"Campaign": "RSV_campaign_id_1"}],
                     "consumer-id-2": [{"Campaign": "RSV_campaign_id_2"}],
                     "consumer-id-3": [{"Campaign": "RSV_campaign_id_3"}, {"Campaign": "RSV_campaign_id_4"}],
-                    "consumer-id-4": [{"Campaign": "RSV_campaign_id_5"}, {"Campaign": "RSV_campaign_id_6"}],
-                    "consumer-id-5": [{"Campaign": "RSV_campaign_id_5"}],
+                    "consumer-id-4": [{"Campaign": "inactive_RSV_campaign_id_5"}, {"Campaign": "RSV_campaign_id_6"}],
+                    "consumer-id-5": [{"Campaign": "inactive_RSV_campaign_id_5"}],
                 },
                 "RSV",
                 "VACCINATIONS",
