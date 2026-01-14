@@ -62,7 +62,7 @@ def config() -> dict[str, Any]:
         "firehose_endpoint": URL(os.getenv("FIREHOSE_ENDPOINT", local_stack_endpoint)),
         "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
         "enable_xray_patching": enable_xray_patching,
-        "secretsmanager_endpoint": URL(os.getenv("SECRET_MANAGER_ENDPOINT", local_stack_endpoint)),
+        "secretsmanager_endpoint": URL(os.getenv("SECRET_MANAGER_ENDPOINT", "https://secretsmanager.eu-west-1.amazonaws.com")),
         "hashing_secret_name": hashing_secret_name,
         "log_level": log_level,
     }

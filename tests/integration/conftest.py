@@ -15,6 +15,7 @@ from boto3.resources.base import ServiceResource
 from botocore.client import BaseClient
 from faker import Faker
 from httpx import RequestError
+from moto import mock_aws
 from yarl import URL
 
 from eligibility_signposting_api.model import eligibility_status
@@ -49,6 +50,26 @@ AWS_SECRET_NAME = "test_secret"  # noqa: S105
 AWS_CURRENT_SECRET = "test_value"  # noqa: S105
 AWS_PREVIOUS_SECRET = "test_value_old"  # noqa: S105
 
+@pytest.fixture(scope="session", autouse=True)
+def aws_credentials():
+    """Mocked AWS Credentials for moto."""
+    os.environ["AWS_ACCESS_KEY_ID"] = "fake"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "fake"
+    os.environ["AWS_SECURITY_TOKEN"] = "fake"
+    os.environ["AWS_SESSION_TOKEN"] = "fake"
+    os.environ["AWS_DEFAULT_REGION"] = AWS_REGION
+
+# 2. START GLOBAL MOCK SERVER
+@pytest.fixture(scope="session", autouse=True)
+def start_moto():
+    """
+    Starts Moto mocking for the entire test session.
+    Crucial for scope="session" fixtures.
+    """
+    mock = mock_aws()
+    mock.start()
+    yield
+    mock.stop()
 
 @pytest.fixture(scope="session")
 def localstack(request: pytest.FixtureRequest) -> URL:
@@ -79,7 +100,7 @@ def is_responsive(url: URL) -> bool:
 
 @pytest.fixture(scope="session")
 def boto3_session() -> Session:
-    return Session(aws_access_key_id="fake", aws_secret_access_key="fake", region_name=AWS_REGION)
+    return Session(aws_access_key_id="fake", aws_secret_access_key="fake", aws_session_token="fake", region_name=AWS_REGION)
 
 
 @pytest.fixture(scope="session")
@@ -128,38 +149,36 @@ def firehose_client(boto3_session: Session, localstack: URL) -> BaseClient:
 
 
 @pytest.fixture(scope="session")
-def secretsmanager_client(boto3_session: Session, localstack: URL) -> BaseClient:
+def secretsmanager_client(boto3_session: Session) -> BaseClient:
     """
-    Provides a boto3 Secrets Manager client bound to LocalStack.
-    Seeds a test secret for use in integration tests.
+    Provides a mocked boto3 Secrets Manager client (via Moto).
+    Seeds a test secret with 'Previous' and 'Current' values.
     """
-    client: BaseClient = boto3_session.client(
-        service_name="secretsmanager", endpoint_url=str(localstack), region_name="eu-west-1"
-    )
+    # 1. Create client without endpoint_url (Moto intercepts default AWS URLs)
+    client: BaseClient = boto3_session.client("secretsmanager")
 
-    secret_name = AWS_SECRET_NAME
-    secret_value = AWS_PREVIOUS_SECRET
-
+    # 2. Seed the initial "Previous" value
+    # We use try/except to handle cases where the mock might not have fully reset
+    # (though usually with Moto it starts empty).
     try:
         client.create_secret(
-            Name=secret_name,
-            SecretString=secret_value,
+            Name=AWS_SECRET_NAME,
+            SecretString=AWS_PREVIOUS_SECRET,
         )
     except client.exceptions.ResourceExistsException:
         client.put_secret_value(
-            SecretId=secret_name,
-            SecretString=secret_value,
+            SecretId=AWS_SECRET_NAME,
+            SecretString=AWS_PREVIOUS_SECRET,
         )
 
-    secret_name = AWS_SECRET_NAME
-    secret_value = AWS_CURRENT_SECRET
-
+    # 3. Rotate to the "Current" value
+    # This ensures the secret has version stages similar to a real rotated secret
     client.put_secret_value(
-        SecretId=secret_name,
-        SecretString=secret_value,
+        SecretId=AWS_SECRET_NAME,
+        SecretString=AWS_CURRENT_SECRET,
     )
-    return client
 
+    return client
 
 @pytest.fixture(scope="session")
 def iam_role(iam_client: BaseClient) -> Generator[str]:
