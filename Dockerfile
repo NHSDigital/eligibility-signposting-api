@@ -15,9 +15,8 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
-# 2. Install Poetry and Gunicorn directly into system Python
-# This avoids path issues with /opt/venv binaries not finding libraries
-RUN pip install --no-cache-dir poetry gunicorn
+# 2. Install Poetry
+RUN pip install --no-cache-dir poetry
 
 # 3. Install Project Dependencies
 COPY pyproject.toml poetry.lock* ./

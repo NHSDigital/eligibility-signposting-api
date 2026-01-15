@@ -16,7 +16,8 @@ services:
   mock-fargate-server:
     build:
       context: ..
-      dockerfile: tests/Dockerfile
+      dockerfile: Dockerfile
+    image: mock-fargate-server:local-test
     ports:
       - "5001:5000"  # Flask
     networks:

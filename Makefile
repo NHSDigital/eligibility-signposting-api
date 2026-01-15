@@ -4,6 +4,9 @@
 include scripts/init.mk
 
 MAKE_DIR := $(abspath $(shell pwd))
+IMAGE_NAME := eligibility-signposting-api
+# In CD, VERSION can be passed as an argument (e.g., make build VERSION=v1)
+VERSION ?= latest
 
 #Installs dependencies using poetry.
 install-python:
@@ -34,16 +37,15 @@ _dist_include="pytest.ini poetry.lock poetry.toml pyproject.toml Makefile build/
 # Example CI/CD targets are: dependencies, build, publish, deploy, clean, etc.
 
 dependencies: # Install dependencies needed to build and test the project @Pipeline
-	scripts/dependencies.sh
+	@echo "Fargate spike: dependencies handled via Dockerfile"
 
 check-licenses:
 	scripts/check_python_licenses.sh
 
 .PHONY: build
-build: dist/lambda.zip # Build lambda.zip in dist/
-
-dist/lambda.zip: $(MAKE_DIR)/pyproject.toml $(MAKE_DIR)/poetry.lock $(shell find src -type f)
-	poetry build-lambda -vv && poetry run clean-lambda
+build: ## Build docker image for Fargate
+	# Use parent context as Dockerfile is in parent branch
+	docker build --load -t $(IMAGE_NAME):$(VERSION) -f Dockerfile .
 
 deploy: # Deploy the project artefact to the target environment @Pipeline
 	# TODO: Implement the artefact deployment step
