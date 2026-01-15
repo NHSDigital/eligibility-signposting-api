@@ -70,6 +70,7 @@ resource "aws_iam_policy" "lambda_management" {
           "lambda:PutProvisionedConcurrencyConfig",
           "lambda:DeleteProvisionedConcurrencyConfig",
           "lambda:ListProvisionedConcurrencyConfigs",
+          "lambda:PutFunctionConcurrency",
 
         ],
         Resource = [
@@ -304,7 +305,8 @@ resource "aws_iam_policy" "api_infrastructure" {
           # WAF v2 logs (both naming conventions)
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*",
-          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-waf-logs-*"
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-waf-logs-*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/stepfunctions/*"
         ]
       },
       {

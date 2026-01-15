@@ -171,6 +171,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "lambda:PutProvisionedConcurrencyConfig",
       "lambda:DeleteProvisionedConcurrencyConfig",
       "lambda:ListProvisionedConcurrencyConfigs",
+      "lambda:PutFunctionConcurrency",
 
       # CloudWatch Logs - log management
       "logs:*",
