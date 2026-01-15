@@ -432,7 +432,8 @@ resource "aws_iam_policy" "api_infrastructure" {
           "states:ListStateMachineVersions",
           "states:ListTagsForResource",
           "states:ValidateStateMachineDefinition",
-          "states:CreateStateMachine"
+          "states:CreateStateMachine",
+          "states:TagResource"
         ],
 
 
