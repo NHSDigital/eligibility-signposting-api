@@ -1,32 +1,9 @@
 services:
-  localstack:
-#    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
-    image: localstack/localstack:4.4.0  # See https://hub.docker.com/r/localstack/localstack/tags
-    ports:
-      - "4566:4566"            # LocalStack Gateway
-      - "4510-4559:4510-4559"  # external services port range
-    environment:
-      # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
-      - DEBUG=${LOCALSTACK_DEBUG:-0}
-      - DEFAULT_REGION=${AWS_DEFAULT_REGION:-eu-west-1}
-      - LAMBDA_EXECUTOR=docker
-    volumes:
-      - "${LOCALSTACK_VOLUME_DIR:-../volume}:/var/lib/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    healthcheck:
-      test: "curl -f http://localhost:4566/health || exit 1"
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   moto-server:
     image: motoserver/moto:latest
-    container_name: moto-server
-    # ⚠️ CRITICAL CHANGE: Map Host 5001 -> Container 5000
     ports:
       - "4567:5000"
     environment:
-      # Moto inside the container still thinks it's on 5000 (that's fine)
       - MOTO_PORT=5000
     networks:
       - test-network
@@ -36,24 +13,29 @@ services:
       timeout: 5s
       retries: 5
 
-    # This uses the Dockerfile you provided
-  mock-server:
+  mock-fargate-server:
     build:
       context: ..
       dockerfile: tests/Dockerfile
-    container_name: mock-server
     ports:
       - "9123:9123"  # OpenResty/Nginx entry
-      - "5000:5000"  # Flask Token Server (Direct access)
-    environment:
-      # Overrides for variables used in your entrypoint.sh
-      - LOGIN_ROOT_URL=http://localhost:9123
-      - APP_ROOT_URL=https://localhost:3000
-      - NBS_URL=http://localhost:9123/nbs
-      - ELID_DELAY_SECONDS=0
-      - APIM_DELAY_SECONDS=0
+      - "5001:5000"  # Flask
     networks:
       - test-network
+    healthcheck:
+      test: "curl -f http://localhost:5000/patient-check/_status || exit 1"
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      - AWS_DEFAULT_REGION=eu-west-1
+      - AWS_ACCESS_KEY_ID=fake
+      - AWS_SECRET_ACCESS_KEY=fake
+      - AWS_SECURITY_TOKEN=fake
+      - AWS_SESSION_TOKEN=fake
+      - AWS_XRAY_SDK_ENABLED=false
+    depends_on:
+      - moto-server
 
 networks:
   test-network:
