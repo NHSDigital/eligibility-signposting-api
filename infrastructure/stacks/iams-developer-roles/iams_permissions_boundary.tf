@@ -256,7 +256,9 @@ data "aws_iam_policy_document" "permissions_boundary" {
       # State Machine management
       "states:DescribeStateMachine",
       "states:ListStateMachineVersions",
-      "states:ListTagsForResource"
+      "states:ListTagsForResource",
+      "states:ValidateStateMachineDefinition",
+      "states:CreateStateMachine"
     ]
 
     resources = ["*"]

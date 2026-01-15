@@ -291,7 +291,8 @@ resource "aws_iam_policy" "api_infrastructure" {
           # CloudWatch Logs subscription filters for CSOC forwarding
           "logs:PutSubscriptionFilter",
           "logs:DeleteSubscriptionFilter",
-          "logs:DescribeSubscriptionFilters"
+          "logs:DescribeSubscriptionFilters",
+          "logs:PutRetentionPolicy"
         ],
         Resource = [
           # VPC Flow Logs
@@ -429,7 +430,9 @@ resource "aws_iam_policy" "api_infrastructure" {
           # State Machine
           "states:DescribeStateMachine",
           "states:ListStateMachineVersions",
-          "states:ListTagsForResource"
+          "states:ListTagsForResource",
+          "states:ValidateStateMachineDefinition",
+          "states:CreateStateMachine"
         ],
 
 
@@ -452,7 +455,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:events:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:rule/cloudwatch-alarm-state-change-to-splunk*",
           "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/webacl/*",
           "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/managedruleset/*",
-          "arn:aws:states:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:SecretRotationWorkflow",
+          "arn:aws:states:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:*",
         ]
       },
     ]
