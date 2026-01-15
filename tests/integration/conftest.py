@@ -38,9 +38,7 @@ from eligibility_signposting_api.repos.person_repo import TableName
 from tests.fixtures.builders.model import rule
 from tests.fixtures.builders.model.rule import RulesMapperFactory
 from tests.fixtures.builders.repos.person import person_rows_builder
-
-if TYPE_CHECKING:
-    from pytest_docker.plugin import Services
+from pytest_docker.plugin import Services
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +80,21 @@ def fargate_simulation(request: pytest.FixtureRequest) -> URL:
     docker_services.wait_until_responsive(timeout=30.0, pause=0.1, check=lambda: is_responsive(url/"patient-check/_status"))
     logger.info("fargate server is running on %s", url)
     return url
+
+def get_fargate_logs(docker_services: Services) -> list[str]:
+    result: bytes = docker_services._docker_compose.execute("logs --no-color mock-fargate-server")
+    raw_lines = result.decode("utf-8").splitlines()
+    # Strip the 'service-name | ' prefix that Docker Compose adds
+    return [line.partition("|")[-1].strip() for line in raw_lines]
+
+@pytest.fixture
+def fargate_logs(docker_services: Services) -> Callable[[], list[str]]:
+    """Fixture to provide access to container logs."""
+
+    def _get_messages() -> list[str]:
+        return get_fargate_logs(docker_services)
+
+    return _get_messages
 
 @pytest.fixture(scope="session")
 def api_gateway_simulation(request: pytest.FixtureRequest) -> URL:
@@ -136,7 +149,7 @@ def firehose_client(boto3_session: Session, moto_server:URL) -> BaseClient:
     return boto3_session.client("firehose", endpoint_url=str(moto_server))
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def secretsmanager_client(boto3_session: Session, moto_server:URL) -> BaseClient:
     """
     Provides a mocked boto3 Secrets Manager client (via Moto).

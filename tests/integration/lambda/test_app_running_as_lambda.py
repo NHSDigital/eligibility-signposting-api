@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 from http import HTTPStatus
+from typing import Callable
 
 import httpx
 import stamina
@@ -29,7 +30,8 @@ from eligibility_signposting_api.repos.campaign_repo import BucketName
 
 logger = logging.getLogger(__name__)
 
-#TODO migrate
+
+# TODO migrate
 # def test_install_and_call_lambda_flask(
 #     lambda_client: BaseClient,
 #     flask_function: str,
@@ -86,8 +88,7 @@ logger = logging.getLogger(__name__)
 def test_install_and_call_flask_lambda_over_http(
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa: ARG001
-    api_gateway_endpoint: URL,
-    secretsmanager_client: BaseClient,
+    api_gateway_endpoint: URL
 ):
     """Given api-gateway and lambda installed into localstack, run it via http"""
     # Given
@@ -107,11 +108,11 @@ def test_install_and_call_flask_lambda_over_http(
 
 
 def test_install_and_call_flask_lambda_with_unknown_nhs_number(
-    flask_function: str,
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa: ARG001
     logs_client: BaseClient,
     api_gateway_endpoint: URL,
+    fargate_logs: Callable[[], list[str]]
 ):
     """Given lambda installed into localstack, run it via http, with a nonexistent NHS number specified"""
     # Given
@@ -139,15 +140,15 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
                             severity="error",
                             code="processing",
                             diagnostics=f"NHS Number '{nhs_number!s}' was not "
-                            f"recognised by the Eligibility Signposting API",
+                                        f"recognised by the Eligibility Signposting API",
                             details={
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
                                         "code": "REFERENCE_NOT_FOUND",
                                         "display": "The given NHS number was not found in our datasets. "
-                                        "This could be because the number is incorrect or "
-                                        "some other reason we cannot process that number.",
+                                                   "This could be because the number is incorrect or "
+                                                   "some other reason we cannot process that number.",
                                     }
                                 ]
                             },
@@ -158,7 +159,7 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(
         ),
     )
 
-    messages = get_log_messages(flask_function, logs_client)
+    messages = fargate_logs()
     assert_that(
         messages,
         has_item(contains_string(f"NHS Number '{nhs_number}' was not recognised by the Eligibility Signposting API")),
@@ -180,13 +181,12 @@ def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
 
 
 def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_if_audited(  # noqa: PLR0913
-    lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
-    flask_function: str,
+    fargate_logs: Callable[[], list[str]],
     logs_client: BaseClient,
 ):
     # Given
@@ -264,7 +264,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     assert_that(audit_data["response"]["lastUpdated"], is_not(equal_to("")))
     assert_that(audit_data["response"]["condition"], equal_to(expected_conditions))
 
-    messages = get_log_messages(flask_function, logs_client)
+    messages = fargate_logs()
     assert_that(
         messages,
         has_item(contains_string("Defaulting category query param to 'ALL' as no value was provided")),
@@ -276,7 +276,6 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
 
 
 def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_results_in_error_response(
-    lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa:ARG001
     api_gateway_endpoint: URL,
@@ -323,7 +322,6 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
 
 
 def test_given_nhs_number_not_present_in_headers_results_in_error_response(
-    lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa:ARG001
     api_gateway_endpoint: URL,
@@ -369,7 +367,6 @@ def test_given_nhs_number_not_present_in_headers_results_in_error_response(
 
 
 def test_validation_of_query_params_when_all_are_valid(
-    lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa:ARG001
     api_gateway_endpoint: URL,
@@ -389,7 +386,6 @@ def test_validation_of_query_params_when_all_are_valid(
 
 
 def test_validation_of_query_params_when_invalid_conditions_is_specified(
-    lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa:ARG001
     api_gateway_endpoint: URL,
@@ -408,8 +404,7 @@ def test_validation_of_query_params_when_invalid_conditions_is_specified(
     assert_that(response, is_response().with_status_code(HTTPStatus.BAD_REQUEST))
 
 
-def test_given_person_has_unique_status_for_different_conditions_with_audit(  # noqa: PLR0913
-    lambda_client: BaseClient,  # noqa:ARG001
+def test_given_person_has_unique_status_for_different_conditions_with_audit(
     persisted_person_all_cohorts: NHSNumber,
     multiple_campaign_configs: list[CampaignConfig],
     s3_client: BaseClient,
@@ -552,7 +547,6 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
 
 @freeze_time("2025-08-08")
 def test_no_active_iteration_returns_empty_processed_suggestions(
-    lambda_client: BaseClient,  # noqa:ARG001
     persisted_person_all_cohorts: NHSNumber,
     inactive_iteration_config: list[CampaignConfig],  # noqa:ARG001
     api_gateway_endpoint: URL,
@@ -588,13 +582,11 @@ def test_no_active_iteration_returns_empty_processed_suggestions(
 
 
 def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
-    lambda_client: BaseClient,  # noqa:ARG001
     person_with_all_data: NHSNumber,
     campaign_config_with_tokens: CampaignConfig,  # noqa:ARG001
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
-    flask_function: str,  # noqa:ARG001
     logs_client: BaseClient,  # noqa:ARG001
 ):
     invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
@@ -638,14 +630,13 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
 
 
 def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
-    lambda_client: BaseClient,  # noqa:ARG001
     person_with_all_data: NHSNumber,
     campaign_config_with_invalid_tokens: CampaignConfig,  # noqa:ARG001
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
-    flask_function: str,
     logs_client: BaseClient,
+    fargate_logs: Callable[[], list[str]],
 ):
     invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
     response = httpx.get(
@@ -688,7 +679,7 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
     assert len(objects) == 0  # Check there are no audit logs
 
     assert_that(
-        get_log_messages(flask_function, logs_client),
+        fargate_logs(),
         has_item(contains_string("Invalid attribute name 'ICECREAM' in token '[[PERSON.ICECREAM]]'.")),
     )
 

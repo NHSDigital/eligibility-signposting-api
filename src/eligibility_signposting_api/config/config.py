@@ -25,7 +25,7 @@ def config() -> dict[str, Any]:
     audit_bucket_name = BucketName(os.getenv("AUDIT_BUCKET_NAME", "test-audit-bucket"))
     hashing_secret_name = HashSecretName(os.getenv("HASHING_SECRET_NAME", "test_secret"))
     aws_default_region = AwsRegion(os.getenv("AWS_DEFAULT_REGION", "eu-west-1"))
-    enable_xray_patching = bool(os.getenv("ENABLE_XRAY_PATCHING", "false"))
+    enable_xray_patching = os.getenv("ENABLE_XRAY_PATCHING", "false").lower() == "true"
     kinesis_audit_stream_to_s3 = AwsKinesisFirehoseStreamName(
         os.getenv("KINESIS_AUDIT_STREAM_TO_S3", "test_kinesis_audit_stream_to_s3")
     )
