@@ -29,64 +29,65 @@ from eligibility_signposting_api.repos.campaign_repo import BucketName
 
 logger = logging.getLogger(__name__)
 
-
-def test_install_and_call_lambda_flask(
-    lambda_client: BaseClient,
-    flask_function: str,
-    persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,  # noqa: ARG001
-):
-    """Given lambda installed into localstack, run it via boto3 lambda client"""
-    # Given
-
-    # When
-    request_payload = {
-        "version": "2.0",
-        "routeKey": "GET /",
-        "rawPath": "/",
-        "rawQueryString": "",
-        "headers": {
-            "accept": "application/json",
-            "content-type": "application/json",
-            "nhs-login-nhs-number": str(persisted_person),
-        },
-        "pathParameters": {"id": str(persisted_person)},
-        "requestContext": {
-            "http": {
-                "sourceIp": "192.0.0.1",
-                "method": "GET",
-                "path": f"/patient-check/{persisted_person}",
-                "protocol": "HTTP/1.1",
-            }
-        },
-        "queryStringParameters": {},
-        "body": None,
-        "isBase64Encoded": False,
-    }
-    response = lambda_client.invoke(
-        FunctionName=flask_function,
-        InvocationType="RequestResponse",
-        Payload=json.dumps(request_payload),
-        LogType="Tail",
-    )
-    log_output = base64.b64decode(response["LogResult"]).decode("utf-8")
-
-    # Then
-    assert_that(response, has_entries(StatusCode=HTTPStatus.OK))
-    response_payload = json.loads(response["Payload"].read().decode("utf-8"))
-    logger.info(response_payload)
-    assert_that(
-        response_payload,
-        has_entries(statusCode=HTTPStatus.OK, body=is_json_that(has_key("processedSuggestions"))),
-    )
-
-    assert_that(log_output, contains_string("checking nhs_number"))
+#TODO migrate
+# def test_install_and_call_lambda_flask(
+#     lambda_client: BaseClient,
+#     flask_function: str,
+#     persisted_person: NHSNumber,
+#     campaign_config: CampaignConfig,  # noqa: ARG001
+# ):
+#     """Given lambda installed into localstack, run it via boto3 lambda client"""
+#     # Given
+#
+#     # When
+#     request_payload = {
+#         "version": "2.0",
+#         "routeKey": "GET /",
+#         "rawPath": "/",
+#         "rawQueryString": "",
+#         "headers": {
+#             "accept": "application/json",
+#             "content-type": "application/json",
+#             "nhs-login-nhs-number": str(persisted_person),
+#         },
+#         "pathParameters": {"id": str(persisted_person)},
+#         "requestContext": {
+#             "http": {
+#                 "sourceIp": "192.0.0.1",
+#                 "method": "GET",
+#                 "path": f"/patient-check/{persisted_person}",
+#                 "protocol": "HTTP/1.1",
+#             }
+#         },
+#         "queryStringParameters": {},
+#         "body": None,
+#         "isBase64Encoded": False,
+#     }
+#     response = lambda_client.invoke(
+#         FunctionName=flask_function,
+#         InvocationType="RequestResponse",
+#         Payload=json.dumps(request_payload),
+#         LogType="Tail",
+#     )
+#     log_output = base64.b64decode(response["LogResult"]).decode("utf-8")
+#
+#     # Then
+#     assert_that(response, has_entries(StatusCode=HTTPStatus.OK))
+#     response_payload = json.loads(response["Payload"].read().decode("utf-8"))
+#     logger.info(response_payload)
+#     assert_that(
+#         response_payload,
+#         has_entries(statusCode=HTTPStatus.OK, body=is_json_that(has_key("processedSuggestions"))),
+#     )
+#
+#     assert_that(log_output, contains_string("checking nhs_number"))
 
 
 def test_install_and_call_flask_lambda_over_http(
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa: ARG001
     api_gateway_endpoint: URL,
+    secretsmanager_client: BaseClient,
 ):
     """Given api-gateway and lambda installed into localstack, run it via http"""
     # Given

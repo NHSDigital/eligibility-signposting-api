@@ -59,46 +59,41 @@ def aws_credentials():
     os.environ["AWS_SESSION_TOKEN"] = "fake"
     os.environ["AWS_DEFAULT_REGION"] = AWS_REGION
 
-# 2. START GLOBAL MOCK SERVER
-@pytest.fixture(scope="session", autouse=True)
-def start_moto():
-    """
-    Starts Moto mocking for the entire test session.
-    Crucial for scope="session" fixtures.
-    """
-    mock = mock_aws()
-    mock.start()
-    yield
-    mock.stop()
-
-@pytest.fixture(scope="session")
-def localstack(request: pytest.FixtureRequest) -> URL:
-    if url := os.getenv("RUNNING_LOCALSTACK_URL", None):
-        logger.info("localstack already running on %s", url)
-        return URL(url)
-
-    docker_ip: str = request.getfixturevalue("docker_ip")
-    docker_services: Services = request.getfixturevalue("docker_services")
-
-    logger.info("Starting localstack")
-    port = docker_services.port_for("localstack", 4566)
-    url = URL(f"http://{docker_ip}:{port}")
-    docker_services.wait_until_responsive(timeout=30.0, pause=0.1, check=lambda: is_responsive(url))
-    logger.info("localstack running on %s", url)
-    return url
-
 @pytest.fixture(scope="session")
 def moto_server(request: pytest.FixtureRequest) -> URL:
     docker_ip: str = request.getfixturevalue("docker_ip")
     docker_services: Services = request.getfixturevalue("docker_services")
 
-    logger.info("Starting localstack")
+    logger.info("Starting moto server on %s", docker_ip)
     port = docker_services.port_for("moto-server", 5000)
     url = URL(f"http://{docker_ip}:{port}")
     docker_services.wait_until_responsive(timeout=30.0, pause=0.1, check=lambda: is_responsive(url))
-    logger.info("localstack running on %s", url)
+    logger.info("moto server is running on %s", url)
     return url
 
+@pytest.fixture(scope="session")
+def fargate_simulation(request: pytest.FixtureRequest) -> URL:
+    docker_ip: str = request.getfixturevalue("docker_ip")
+    docker_services: Services = request.getfixturevalue("docker_services")
+
+    logger.info("Starting mocked fargate server on %s", docker_ip)
+    port = docker_services.port_for("mock-fargate-server", 5000)
+    url = URL(f"http://{docker_ip}:{port}")
+    docker_services.wait_until_responsive(timeout=30.0, pause=0.1, check=lambda: is_responsive(url/"patient-check/_status"))
+    logger.info("fargate server is running on %s", url)
+    return url
+
+@pytest.fixture(scope="session")
+def api_gateway_simulation(request: pytest.FixtureRequest) -> URL:
+    docker_ip: str = request.getfixturevalue("docker_ip")
+    docker_services: Services = request.getfixturevalue("docker_services")
+
+    logger.info("Starting mocked aws gateway on %s", docker_ip)
+    port = docker_services.port_for("mock-api-gateway", 9123)
+    url = URL(f"http://{docker_ip}:{port}")
+    docker_services.wait_until_responsive(timeout=30.0, pause=0.1, check=lambda: is_responsive(url/"health"))
+    logger.info("fargate server is running on %s", url)
+    return url
 
 def is_responsive(url: URL) -> bool:
     try:
@@ -114,16 +109,9 @@ def is_responsive(url: URL) -> bool:
 def boto3_session() -> Session:
     return Session(aws_access_key_id="fake", aws_secret_access_key="fake", aws_session_token="fake", region_name=AWS_REGION)
 
-
 @pytest.fixture(scope="session")
 def api_gateway_client(boto3_session: Session, moto_server:URL) -> BaseClient:
     return boto3_session.client("apigateway", endpoint_url=str(moto_server))
-
-
-@pytest.fixture(scope="session")
-def lambda_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("lambda", endpoint_url=str(localstack))
-
 
 @pytest.fixture(scope="session")
 def dynamodb_resource(boto3_session: Session, moto_server:URL) -> BaseClient:
@@ -257,36 +245,6 @@ def lambda_zip() -> Path:
     return Path("dist/lambda.zip")
 
 
-@pytest.fixture(scope="session")
-def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -> Generator[str]:
-    function_name = "eligibility_signposting_api"
-    with lambda_zip.open("rb") as zipfile:
-        lambda_client.create_function(
-            FunctionName=function_name,
-            Runtime="python3.13",
-            Role=iam_role,
-            Handler="eligibility_signposting_api.app.lambda_handler",
-            Code={"ZipFile": zipfile.read()},
-            Architectures=["x86_64"],
-            Timeout=180,
-            Environment={
-                "Variables": {
-                    "DYNAMODB_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
-                    "S3_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
-                    "FIREHOSE_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
-                    "SECRET_MANAGER_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
-                    "AWS_REGION": AWS_REGION,
-                    "LOG_LEVEL": "DEBUG",
-                }
-            },
-        )
-    logger.info("loaded zip")
-    wait_for_function_active(function_name, lambda_client)
-    logger.info("function active")
-    yield function_name
-    lambda_client.delete_function(FunctionName=function_name)
-
-
 @pytest.fixture(autouse=True)
 def clean_audit_bucket(s3_client: BaseClient, audit_bucket: str):
     objects_to_delete = []
@@ -302,92 +260,9 @@ def clean_audit_bucket(s3_client: BaseClient, audit_bucket: str):
             Delete={"Objects": objects_to_delete, "Quiet": True},
         )
 
-
-@pytest.fixture(scope="session")
-def flask_function_url(lambda_client: BaseClient, flask_function: str) -> URL:
-    response = lambda_client.create_function_url_config(FunctionName=flask_function, AuthType="NONE")
-    return URL(response["FunctionUrl"])
-
-
-class FunctionNotActiveError(Exception):
-    """Lambda Function not yet active"""
-
-
-def wait_for_function_active(function_name, lambda_client):
-    for attempt in stamina.retry_context(on=FunctionNotActiveError, attempts=20, timeout=120):
-        with attempt:
-            logger.info("waiting")
-            response = lambda_client.get_function(FunctionName=function_name)
-            function_state = response["Configuration"]["State"]
-            logger.info("function_state %s", function_state)
-            if function_state != "Active":
-                raise FunctionNotActiveError
-
-
-@pytest.fixture(scope="session")
-def configured_api_gateway(api_gateway_client, lambda_client, flask_function: str):
-    region = lambda_client.meta.region_name
-
-    api = api_gateway_client.create_rest_api(name="API Gateway Lambda integration")
-    rest_api_id = api["id"]
-
-    resources = api_gateway_client.get_resources(restApiId=rest_api_id)
-    root_id = next(item["id"] for item in resources["items"] if item["path"] == "/")
-
-    patient_check_res = api_gateway_client.create_resource(
-        restApiId=rest_api_id, parentId=root_id, pathPart="patient-check"
-    )
-    patient_check_id = patient_check_res["id"]
-
-    id_res = api_gateway_client.create_resource(restApiId=rest_api_id, parentId=patient_check_id, pathPart="{id}")
-    resource_id = id_res["id"]
-
-    api_gateway_client.put_method(
-        restApiId=rest_api_id,
-        resourceId=resource_id,
-        httpMethod="GET",
-        authorizationType="NONE",
-        requestParameters={"method.request.path.id": True},
-    )
-
-    # Integration with actual region
-    lambda_uri = (
-        f"arn:aws:apigateway:{region}:lambda:path/2015-03-31/functions/"
-        f"arn:aws:lambda:{region}:000000000000:function:{flask_function}/invocations"
-    )
-    api_gateway_client.put_integration(
-        restApiId=rest_api_id,
-        resourceId=resource_id,
-        httpMethod="GET",
-        type="AWS_PROXY",
-        integrationHttpMethod="POST",
-        uri=lambda_uri,
-        passthroughBehavior="WHEN_NO_MATCH",
-    )
-
-    # Permission with matching region
-    lambda_client.add_permission(
-        FunctionName=flask_function,
-        StatementId="apigateway-access",
-        Action="lambda:InvokeFunction",
-        Principal="apigateway.amazonaws.com",
-        SourceArn=f"arn:aws:execute-api:{region}:000000000000:{rest_api_id}/*/GET/patient-check/*",
-    )
-
-    # Deploy the API
-    api_gateway_client.create_deployment(restApiId=rest_api_id, stageName="dev")
-
-    return {
-        "rest_api_id": rest_api_id,
-        "resource_id": resource_id,
-        "invoke_url": f"http://{rest_api_id}.execute-api.localhost.localstack.cloud:4566/dev/patient-check/{{id}}",
-    }
-
-
 @pytest.fixture
-def api_gateway_endpoint(configured_api_gateway: dict) -> URL:
-    return URL(f"http://{configured_api_gateway['rest_api_id']}.execute-api.localhost.localstack.cloud:4566/dev")
-
+def api_gateway_endpoint(fargate_simulation, api_gateway_simulation, moto_server):
+    return api_gateway_simulation
 
 @pytest.fixture(scope="session")
 def person_table(dynamodb_resource: ServiceResource) -> Generator[Any]:
