@@ -60,8 +60,8 @@ def validate_request_params() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> ResponseReturnValue:  # noqa:ANN002,ANN003
-            path_nhs_number = str(kwargs.get("nhs_number"))
-            header_nhs_no = str(request.headers.get(NHS_NUMBER_HEADER))
+            path_nhs_number = str(kwargs.get("nhs_number")) if kwargs.get("nhs_number") else None
+            header_nhs_no = str(request.headers.get(NHS_NUMBER_HEADER)) if request.headers.get(NHS_NUMBER_HEADER) else None
 
             if not validate_nhs_number(path_nhs_number, header_nhs_no):
                 message = "You are not authorised to request information for the supplied NHS Number"
