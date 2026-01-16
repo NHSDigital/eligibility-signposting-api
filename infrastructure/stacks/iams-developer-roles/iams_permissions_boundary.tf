@@ -218,7 +218,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "states:ListTagsForResource",
       "states:ValidateStateMachineDefinition",
       "states:CreateStateMachine",
-      "states:TagResource"
+      "states:TagResource",
+      "states:UpdateStateMachine",
     ]
 
     resources = ["*"]
