@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+import pytest
 from botocore.client import BaseClient
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
@@ -37,6 +38,55 @@ class TestBaseLine:
         assert_that(
             response,
             is_response().with_status_code(HTTPStatus.OK).and_text(is_json_that(has_key("processedSuggestions"))),
+        )
+
+    @pytest.mark.parametrize(
+        "headers",
+        [
+            {"nhs-login-nhs-number": None},  # header present but empty
+            {},  # header missing entirely
+            {"nhs-login-nhs-number": ""},  # header present but blank
+        ],
+    )
+    def test_nhs_number_given_but_no_nhs_number_in_header(
+        self,
+        client: FlaskClient,
+        persisted_person: NHSNumber,
+        campaign_config: CampaignConfig,  # noqa: ARG002
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+        headers: dict,
+    ):
+        # Given
+        # When
+        response = client.get(f"/patient-check/{persisted_person}", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(is_json_that(has_key("processedSuggestions"))),
+        )
+
+    def test_nhs_number_given_but_header_nhs_number_doesnt_match(
+        self,
+        client: FlaskClient,
+        persisted_person: NHSNumber,
+        campaign_config: CampaignConfig,  # noqa: ARG002
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+    ):
+        # Given
+        headers = {"nhs-login-nhs-number": f"123{str(persisted_person)}"}
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person}", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.FORBIDDEN)
+            .and_text(is_json_that(has_entries(resourceType="OperationOutcome"))),
         )
 
     def test_no_nhs_number_given(self, client: FlaskClient):
