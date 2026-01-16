@@ -171,6 +171,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "lambda:PutProvisionedConcurrencyConfig",
       "lambda:DeleteProvisionedConcurrencyConfig",
       "lambda:ListProvisionedConcurrencyConfigs",
+      "lambda:PutFunctionConcurrency",
 
       # CloudWatch Logs - log management
       "logs:*",
@@ -255,7 +256,10 @@ data "aws_iam_policy_document" "permissions_boundary" {
       # State Machine management
       "states:DescribeStateMachine",
       "states:ListStateMachineVersions",
-      "states:ListTagsForResource"
+      "states:ListTagsForResource",
+      "states:ValidateStateMachineDefinition",
+      "states:CreateStateMachine",
+      "states:TagResource"
     ]
 
     resources = ["*"]
