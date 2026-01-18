@@ -1,0 +1,434 @@
+name: "Create Release Candidate"
+
+on:
+  workflow_dispatch:
+    inputs:
+      dev_tag:
+        description: "dev-* tag to promote (e.g., dev-20250115120000)"
+        required: true
+        type: string
+      deploy_to_test:
+        description: "Deploy to Test first (if not already done)?"
+        required: false
+        default: true
+        type: boolean
+      release_type:
+        description: "Version bump type for RC"
+        required: false
+        default: "rc"
+        type: choice
+        options:
+          - rc
+          - patch
+          - minor
+          - major
+
+concurrency:
+  group: release-candidate-${{ inputs.dev_tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+  actions: read
+
+jobs:
+  validate:
+    name: "Validate dev tag exists"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      dev_tag: ${{ steps.validate.outputs.dev_tag }}
+      commit_sha: ${{ steps.validate.outputs.commit_sha }}
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: "Validate tag exists and get commit SHA"
+        id: validate
+        run: |
+          git fetch --tags --force
+          TAG="${{ inputs.dev_tag }}"
+
+          # Validate tag format
+          if [[ ! "$TAG" =~ ^dev-[0-9]{14}$ ]]; then
+            echo "❌ Invalid tag format. Expected dev-YYYYMMDDHHMMSS, got: $TAG" >&2
+            exit 1
+          fi
+
+          # Check if tag exists
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "❌ Tag $TAG does not exist in repository" >&2
+            exit 1
+          fi
+
+          # Get the commit SHA
+          COMMIT_SHA=$(git rev-parse "$TAG^{commit}")
+          echo "✅ Found tag $TAG pointing to commit $COMMIT_SHA"
+
+          echo "dev_tag=$TAG" >> $GITHUB_OUTPUT
+          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+
+  verify-artifact:
+    name: "Verify S3 artifact exists"
+    runs-on: ubuntu-latest
+    needs: [validate]
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
+    environment: dev
+    outputs:
+      artifact_exists: ${{ steps.check.outputs.exists }}
+      s3_bucket: ${{ steps.bucket.outputs.name }}
+    steps:
+      - name: "Checkout at dev tag"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.validate.outputs.dev_tag }}
+
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: $(grep '^terraform' .tool-versions | cut -f2 -d' ')
+
+      - name: "Configure AWS Credentials (dev)"
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Get S3 bucket name"
+        id: bucket
+        run: |
+          cd infrastructure/stacks/api-layer
+          terraform init -backend=true
+          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          echo "name=$BUCKET" >> $GITHUB_OUTPUT
+          echo "📦 S3 Bucket: $BUCKET"
+
+      - name: "Check if artifact exists in S3"
+        id: check
+        run: |
+          TAG="${{ needs.validate.outputs.dev_tag }}"
+          BUCKET="${{ steps.bucket.outputs.name }}"
+          S3_KEY="artifacts/$TAG/lambda.zip"
+
+          if aws s3 ls "s3://$BUCKET/$S3_KEY" --region eu-west-2 >/dev/null 2>&1; then
+            echo "✅ Artifact exists: s3://$BUCKET/$S3_KEY"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Artifact NOT found: s3://$BUCKET/$S3_KEY"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+  rebuild-artifact:
+    name: "Rebuild and upload artifact (if missing)"
+    runs-on: ubuntu-latest
+    needs: [validate, verify-artifact]
+    if: needs.verify-artifact.outputs.artifact_exists == 'false'
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+      contents: read
+    environment: dev
+    steps:
+      - name: "Checkout at dev tag"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.validate.outputs.dev_tag }}
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: "Build lambda artifact"
+        run: |
+          make dependencies install-python
+          make build
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Upload to S3"
+        run: |
+          TAG="${{ needs.validate.outputs.dev_tag }}"
+          BUCKET="${{ needs.verify-artifact.outputs.s3_bucket }}"
+          aws s3 cp ./dist/lambda.zip \
+            "s3://$BUCKET/artifacts/$TAG/lambda.zip" \
+            --region eu-west-2
+          echo "✅ Uploaded artifact to s3://$BUCKET/artifacts/$TAG/lambda.zip"
+
+  deploy-to-test:
+    name: "Deploy to Test (optional)"
+    runs-on: ubuntu-latest
+    needs: [validate, verify-artifact, rebuild-artifact]
+    if: |
+      always() &&
+      inputs.deploy_to_test == true &&
+      (needs.verify-artifact.outputs.artifact_exists == 'true' || needs.rebuild-artifact.result == 'success')
+    timeout-minutes: 45
+    permissions:
+      id-token: write
+      contents: read
+    environment: test
+    steps:
+      - name: "Checkout at dev tag"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.validate.outputs.dev_tag }}
+
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: $(grep '^terraform' .tool-versions | cut -f2 -d' ')
+
+      - name: "Configure AWS Credentials (dev) - to download artifact"
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Download lambda from S3 (dev bucket)"
+        run: |
+          TAG="${{ needs.validate.outputs.dev_tag }}"
+          BUCKET="${{ needs.verify-artifact.outputs.s3_bucket }}"
+          mkdir -p ./dist
+          aws s3 cp \
+            "s3://$BUCKET/artifacts/$TAG/lambda.zip" \
+            ./dist/lambda.zip \
+            --region eu-west-2
+
+      - name: "Configure AWS Credentials (test)"
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Terraform Apply (TEST)"
+        env:
+          ENVIRONMENT: test
+          WORKSPACE: "default"
+          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
+          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
+          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+          TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
+          TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
+        run: |
+          mkdir -p ./build
+          echo "🚀 Deploying ${{ needs.validate.outputs.dev_tag }} to TEST"
+          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
+        working-directory: ./infrastructure
+
+      - name: "Validate Feature Toggles"
+        env:
+          ENV: test
+        run: |
+          pip install boto3
+          python scripts/feature_toggle/validate_toggles.py
+
+      - name: "Get test S3 bucket"
+        id: test_bucket
+        run: |
+          cd infrastructure/stacks/api-layer
+          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          echo "name=$BUCKET" >> $GITHUB_OUTPUT
+
+      - name: "Upload lambda to test S3"
+        run: |
+          TAG="${{ needs.validate.outputs.dev_tag }}"
+          BUCKET="${{ steps.test_bucket.outputs.name }}"
+          aws s3 cp ./dist/lambda.zip \
+            "s3://$BUCKET/artifacts/$TAG/lambda.zip" \
+            --region eu-west-2
+
+  test-regression:
+    name: "Test Regression Tests"
+    needs: [deploy-to-test]
+    if: inputs.deploy_to_test == true
+    uses: ./.github/workflows/regression-tests.yml
+    with:
+      ENVIRONMENT: "test"
+      VERSION_NUMBER: "main"
+    secrets: inherit
+
+  deploy-to-preprod:
+    name: "Deploy to PreProd and create RC"
+    runs-on: ubuntu-latest
+    needs:
+      [
+        validate,
+        verify-artifact,
+        rebuild-artifact,
+        deploy-to-test,
+        test-regression,
+      ]
+    if: |
+      always() &&
+      !cancelled() &&
+      (needs.deploy-to-test.result == 'success' || needs.deploy-to-test.result == 'skipped') &&
+      (needs.test-regression.result == 'success' || needs.test-regression.result == 'skipped') &&
+      (needs.verify-artifact.outputs.artifact_exists == 'true' || needs.rebuild-artifact.result == 'success')
+    timeout-minutes: 45
+    permissions:
+      id-token: write
+      contents: write
+    environment: preprod
+    outputs:
+      rc_tag: ${{ steps.release.outputs.rc_tag }}
+    steps:
+      - name: "Checkout at dev tag"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.validate.outputs.dev_tag }}
+          fetch-depth: 0
+
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: $(grep '^terraform' .tool-versions | cut -f2 -d' ')
+
+      - name: "Determine source bucket (test or dev)"
+        id: source
+        run: |
+          if [[ "${{ inputs.deploy_to_test }}" == "true" ]]; then
+            echo "environment=test" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: "Configure AWS Credentials (source) - to download artifact"
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Get source S3 bucket"
+        id: source_bucket
+        env:
+          ENV: ${{ steps.source.outputs.environment }}
+        run: |
+          cd infrastructure
+          make terraform env=$ENV stack=api-layer tf-command=init workspace=default
+          cd stacks/api-layer
+          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          echo "name=$BUCKET" >> $GITHUB_OUTPUT
+          echo "📦 Source bucket ($ENV): $BUCKET"
+
+      - name: "Download lambda from source S3"
+        run: |
+          TAG="${{ needs.validate.outputs.dev_tag }}"
+          BUCKET="${{ steps.source_bucket.outputs.name }}"
+          mkdir -p ./dist
+          aws s3 cp \
+            "s3://$BUCKET/artifacts/$TAG/lambda.zip" \
+            ./dist/lambda.zip \
+            --region eu-west-2
+
+      - name: "Configure AWS Credentials (preprod)"
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Terraform Apply (PREPROD)"
+        env:
+          ENVIRONMENT: preprod
+          WORKSPACE: "default"
+          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
+          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
+          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+          TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
+          TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
+        run: |
+          mkdir -p ./build
+          echo "🚀 Deploying ${{ needs.validate.outputs.dev_tag }} to PREPROD"
+          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
+        working-directory: ./infrastructure
+
+      - name: "Validate Feature Toggles"
+        env:
+          ENV: preprod
+        run: |
+          pip install boto3
+          python scripts/feature_toggle/validate_toggles.py
+
+      - name: "Create Release Candidate tag"
+        id: release
+        env:
+          DEV_TAG: ${{ needs.validate.outputs.dev_tag }}
+          RELEASE_TYPE: ${{ inputs.release_type }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pip install requests
+          python scripts/workflow/tag_and_release.py
+
+      - name: "Capture RC tag"
+        id: rc_tag_file
+        run: |
+          RC_TAG=$(cat release_tag.txt)
+          echo "rc_tag=$RC_TAG" >> $GITHUB_OUTPUT
+          echo "✅ Created release candidate: $RC_TAG"
+
+      - name: "Get preprod S3 bucket"
+        id: preprod_bucket
+        run: |
+          cd infrastructure/stacks/api-layer
+          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          echo "name=$BUCKET" >> $GITHUB_OUTPUT
+
+      - name: "Upload lambda to preprod S3"
+        run: |
+          RC_TAG="${{ steps.rc_tag_file.outputs.rc_tag }}"
+          BUCKET="${{ steps.preprod_bucket.outputs.name }}"
+          aws s3 cp ./dist/lambda.zip \
+            "s3://$BUCKET/artifacts/$RC_TAG/lambda.zip" \
+            --region eu-west-2
+          echo "✅ Artifact available for production deployment"
+
+  preprod-regression:
+    name: "PreProd Regression Tests"
+    needs: [deploy-to-preprod]
+    uses: ./.github/workflows/regression-tests.yml
+    with:
+      ENVIRONMENT: "preprod"
+      VERSION_NUMBER: "main"
+    secrets: inherit
+
+  summary:
+    name: "Deployment Summary"
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-to-test, deploy-to-preprod, preprod-regression]
+    if: always()
+    steps:
+      - name: "Print summary"
+        run: |
+          echo "## 🚀 Release Candidate Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Dev Tag:** \`${{ needs.validate.outputs.dev_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ needs.validate.outputs.commit_sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Test: ${{ needs.deploy-to-test.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- PreProd: ${{ needs.deploy-to-preprod.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.deploy-to-preprod.result }}" == "success" ]]; then
+            echo "### ✅ Release Candidate Created" >> $GITHUB_STEP_SUMMARY
+            echo "\`${{ needs.deploy-to-preprod.outputs.rc_tag }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Ready for production deployment!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "To deploy to production, run:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "Workflow: 5. CD | Deploy to Prod" >> $GITHUB_STEP_SUMMARY
+            echo "RC Tag: ${{ needs.deploy-to-preprod.outputs.rc_tag }}" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
