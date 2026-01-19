@@ -9,7 +9,7 @@ from eligibility_signposting_api.config.constants import ALLOWED_CONDITIONS
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.processors.derived_values import (
     DerivedValueContext,
-    DerivedValueRegistry,
+    get_registry,
 )
 from eligibility_signposting_api.services.processors.token_parser import ParsedToken, TokenParser
 
@@ -125,7 +125,7 @@ class TokenProcessor:
         Raises:
             ValueError: If no handler is registered or attribute not found
         """
-        registry = DerivedValueRegistry()
+        registry = get_registry()
 
         function_name = parsed_token.function_name
         if not function_name:
