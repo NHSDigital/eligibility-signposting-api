@@ -1,5 +1,4 @@
 resource "aws_sfn_state_machine" "rotation_machine" {
-  #checkov:skip=CKV_AWS_284: No x-ray needed for this resource
   name     = "SecretRotationWorkflow"
   role_arn = aws_iam_role.rotation_sfn_role.arn
 
@@ -12,21 +11,22 @@ resource "aws_sfn_state_machine" "rotation_machine" {
   definition = jsonencode({
     Comment = "Secret Rotation: Create -> Manual Pause -> Promote -> Manual Pause",
     StartAt = "CreatePendingVersion",
-    States = {
-      "CreatePendingVersion" : {
+    States  = {
+      CreatePendingVersion = {
         Type     = "Task",
         Resource = aws_lambda_function.create_secret_lambda.arn,
         Catch    = [{ ErrorEquals = ["States.ALL"], Next = "NotifyFailure" }],
         Next     = "WaitFor_AddNewHashes"
       },
-      "WaitFor_AddNewHashes" : {
+
+      WaitFor_AddNewHashes = {
         Type           = "Task",
         Resource       = "arn:aws:states:::sns:publish.waitForTaskToken",
         TimeoutSeconds = 86400,
         Parameters = {
-          Subject     = "Action required: AWSPENDING secret created (Environment: ${var.environment})",
-          TopicArn    = aws_sns_topic.secret_rotation.arn,
-          "Message.$" = local.add_jobs_message
+          Subject  = "Action required: AWSPENDING secret created (Environment: ${var.environment})",
+          TopicArn = aws_sns_topic.secret_rotation.arn,
+          "Message.$" = "States.Format('======================================================\nAction required: AWSPENDING secret created (Environment: ${var.environment})\n======================================================\n\nA manual action is required to proceed.\n\nCONTEXT:\nSecret Name: ${module.secrets_manager.aws_hashing_secret_name}\n\nINSTRUCTIONS:\n1. Run the \"Add New Hashes (elid_add_new_salt)\" job.\n2. Ensure the new hashes are working as expected.\n3. Run the command below to approve and resume the workflow:\n\naws stepfunctions send-task-success --task-token {} --task-output {}\n\n======================================================\n', $$.Task.Token, '{}')"
         },
         Catch = [
           { ErrorEquals = ["States.Timeout"], Next = "NotifyTimeout" },
@@ -34,20 +34,22 @@ resource "aws_sfn_state_machine" "rotation_machine" {
         ],
         Next = "PromoteToCurrent"
       },
-      "PromoteToCurrent" : {
+
+      PromoteToCurrent = {
         Type     = "Task",
         Resource = aws_lambda_function.promote_secret_lambda.arn,
         Catch    = [{ ErrorEquals = ["States.ALL"], Next = "NotifyFailure" }],
         Next     = "WaitFor_DelOldHashes"
       },
-      "WaitFor_DelOldHashes" : {
+
+      WaitFor_DelOldHashes = {
         Type           = "Task",
         Resource       = "arn:aws:states:::sns:publish.waitForTaskToken",
         TimeoutSeconds = 86400,
         Parameters = {
-          Subject     = "Action required: Secret AWSPENDING promoted to AWSCURRENT (Environment: ${var.environment})",
-          TopicArn    = aws_sns_topic.secret_rotation.arn,
-          "Message.$" = local.delete_jobs_message
+          Subject  = "Action required: Secret AWSPENDING promoted to AWSCURRENT (Environment: ${var.environment})",
+          TopicArn = aws_sns_topic.secret_rotation.arn,
+          "Message.$" = "States.Format('======================================================\nAction required: Secret AWSPENDING promoted to AWSCURRENT (Environment: ${var.environment})\n======================================================\n\nA manual action is required to proceed.\n\nCONTEXT:\nSecret Name: ${module.secrets_manager.aws_hashing_secret_name}\n\nINSTRUCTIONS:\n1. Run the \"Delete Old Hashes (elid_delete_old_salt)\" job.\n2. Ensure the old hashes have been removed successfully.\n3. Run the command below to approve and resume the workflow:\n\naws stepfunctions send-task-success --task-token {} --task-output {}\n\n======================================================\n', $$.Task.Token, '{}')"
         },
         Catch = [
           { ErrorEquals = ["States.Timeout"], Next = "NotifyTimeout" },
@@ -56,23 +58,24 @@ resource "aws_sfn_state_machine" "rotation_machine" {
         End = true
       },
 
-      "NotifyTimeout" : {
+      NotifyTimeout = {
         Type     = "Task",
         Resource = "arn:aws:states:::sns:publish",
         Parameters = {
-          TopicArn    = aws_sns_topic.secret_rotation.arn,
-          Subject     = "Warning: Secret rotation timed out (Environment: ${var.environment})",
-          "Message.$" = local.timeout_message
+          TopicArn = aws_sns_topic.secret_rotation.arn,
+          Subject  = "Warning: Secret rotation timed out (Environment: ${var.environment})",
+          Message  = local.timeout_message
         },
         Next = "Fail_Timeout"
       },
 
-      "Fail_Timeout" : {
+      Fail_Timeout = {
         Type  = "Fail",
         Error = "ManualActionTimedOut",
         Cause = "User did not respond within 24 hours."
       },
-      "NotifyFailure" : {
+
+      NotifyFailure = {
         Type     = "Task",
         Resource = "arn:aws:states:::sns:publish",
         Parameters = {
@@ -82,7 +85,8 @@ resource "aws_sfn_state_machine" "rotation_machine" {
         },
         Next = "Fail_Generic"
       },
-      "Fail_Generic" : {
+
+      Fail_Generic = {
         Type = "Fail"
       }
     }
@@ -90,50 +94,6 @@ resource "aws_sfn_state_machine" "rotation_machine" {
 }
 
 locals {
-  add_jobs_message = <<EOT
-States.Format('
-======================================================
-Action required: AWSPENDING secret created (Environment: ${var.environment})
-======================================================
-
-A manual action is required to proceed.
-
-CONTEXT:
-Secret Name: ${module.secrets_manager.aws_hashing_secret_name}
-
-INSTRUCTIONS:
-1. Run the "Add New Hashes (elid_add_new_salt)" job.
-2. Ensure the new hashes are working as expected.
-3. Run the command below to approve and resume the workflow:
-
-aws stepfunctions send-task-success --task-token {} --task-output {{}}
-
-======================================================
-', $$.Task.Token)
-EOT
-
-  delete_jobs_message = <<EOT
-States.Format('
-======================================================
-Action required: Secret AWSPENDING promoted to AWSCURRENT (Environment: ${var.environment})
-======================================================
-
-A manual action is required to proceed.
-
-CONTEXT:
-Secret Name: ${module.secrets_manager.aws_hashing_secret_name}
-
-INSTRUCTIONS:
-1. Run the "Delete Old Hashes (elid_delete_old_salt)" job.
-2. Ensure the old hashes have been removed successfully.
-3. Run the command below to approve and resume the workflow:
-
-aws stepfunctions send-task-success --task-token {} --task-output {{}}
-
-======================================================
-', $$.Task.Token)
-EOT
-
   failure_message = <<EOT
 States.Format('
 ======================================================
@@ -148,48 +108,18 @@ Secret Name: ${module.secrets_manager.aws_hashing_secret_name}
 ERROR DETAILS:
 {}
 
-------------------------------------------------------
-HOW TO FIX: "Pending Version Exists" Error
-------------------------------------------------------
-If the error above indicates a pending version already exists,
-you must clean it up manually.
-
-1. Find the Version ID of the pending secret:
-aws secretsmanager list-secret-version-ids --secret-id ${module.secrets_manager.aws_hashing_secret_name}
-
-2. Remove the AWSPENDING label:
-aws secretsmanager update-secret-version-stage --secret-id ${module.secrets_manager.aws_hashing_secret_name} --version-stage AWSPENDING --remove-from-version-id <OLD_PENDING_VERSION_ID>
-
 ======================================================
 ', $.Cause)
 EOT
 
   timeout_message = <<EOT
-States.Format('
 ======================================================
 Warning: Rotation timed out (Environment: ${var.environment})
 ======================================================
 
 The manual verification step was not completed within the 24-hour limit.
-The rotation workflow has been stopped.
 
-CONTEXT:
 Secret Name: ${module.secrets_manager.aws_hashing_secret_name}
-
-IMPACT:
-No immediate impact. Your applications are still using the current secret.
-However, a "Pending" version may have been left behind.
-
-ACTION REQUIRED:
-Before the next rotation run, you must remove the pending version:
-
-1. Find the Version ID:
-aws secretsmanager list-secret-version-ids --secret-id ${module.secrets_manager.aws_hashing_secret_name}
-
-2. Remove the AWSPENDING label:
-aws secretsmanager update-secret-version-stage --secret-id ${module.secrets_manager.aws_hashing_secret_name} --version-stage AWSPENDING --remove-from-version-id <OLD_PENDING_VERSION_ID>
-
 ======================================================
-')
 EOT
 }
