@@ -45,7 +45,7 @@ class TestValidateRequestParams:
         "headers",
         [
             {},  # header missing entirely - request from application restricted consumer
-            {"nhs-login-nhs-number": "1234567890"} # valid request from consumer
+            {"nhs-login-nhs-number": "1234567890"},  # valid request from consumer
         ],
     )
     def test_validate_request_params_success(self, headers, app, caplog):
@@ -70,8 +70,8 @@ class TestValidateRequestParams:
         "headers",
         [
             {"nhs-login-nhs-number": None},  # not valid
-            {"nhs-login-nhs-number": ""}, # not valid
-            {"nhs-login-nhs-number": "9834567890"}  # not valid, due to mismatch
+            {"nhs-login-nhs-number": ""},  # not valid
+            {"nhs-login-nhs-number": "9834567890"},  # not valid, due to mismatch
         ],
     )
     def test_validate_request_params_nhs_mismatch(self, headers, app, caplog):

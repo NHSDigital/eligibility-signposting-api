@@ -62,13 +62,14 @@ def validate_request_params() -> Callable:
 
             if NHS_NUMBER_HEADER in request.headers:
                 header_nhs_no = request.headers.get(NHS_NUMBER_HEADER)
-                logger.info("NHS numbers from the request", extra={"header_nhs": header_nhs_no, "path_nhs": path_nhs_number})
+                logger.info(
+                    "NHS numbers from the request", extra={"header_nhs": header_nhs_no, "path_nhs": path_nhs_number}
+                )
                 if not validate_nhs_number_in_header(path_nhs_number, header_nhs_no):
                     message = "You are not authorised to request information for the supplied NHS Number"
                     return NHS_NUMBER_ERROR.log_and_generate_response(log_message=message, diagnostics=message)
             else:
-                logger.info("NHS numbers from the request",
-                            extra={"header_nhs": None, "path_nhs": path_nhs_number})
+                logger.info("NHS numbers from the request", extra={"header_nhs": None, "path_nhs": path_nhs_number})
 
             query_params = request.args
             if query_params:
