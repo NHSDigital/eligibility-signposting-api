@@ -458,6 +458,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/webacl/*",
           "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/managedruleset/*",
           "arn:aws:states:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:*",
+          "arn:aws:events:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:rule/*"
         ]
       },
     ]
