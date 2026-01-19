@@ -106,10 +106,10 @@ INSTRUCTIONS:
 2. Ensure the new hashes are working as expected.
 3. Run the command below to approve and resume the workflow:
 
-aws stepfunctions send-task-success --task-token {} --task-output \\{\\}
+aws stepfunctions send-task-success --task-token {} --task-output {}
 
 ======================================================
-', $$.Task.Token)
+', $$.Task.Token, '{}')
 EOT
 
   delete_jobs_message = <<EOT
@@ -128,10 +128,10 @@ INSTRUCTIONS:
 2. Ensure the old hashes have been removed successfully.
 3. Run the command below to approve and resume the workflow:
 
-aws stepfunctions send-task-success --task-token {} --task-output \\{\\}
+aws stepfunctions send-task-success --task-token {} --task-output {}
 
 ======================================================
-', $$.Task.Token)
+', $$.Task.Token, '{}')
 EOT
 
   failure_message = <<EOT
