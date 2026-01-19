@@ -10,7 +10,7 @@ from eligibility_signposting_api.common.api_error_response import (
     INVALID_CATEGORY_ERROR,
     INVALID_CONDITION_FORMAT_ERROR,
     INVALID_INCLUDE_ACTIONS_ERROR,
-    NHS_NUMBER_MISMATCH_ERROR,
+    NHS_NUMBER_ERROR,
 )
 from eligibility_signposting_api.config.constants import NHS_NUMBER_HEADER
 
@@ -39,16 +39,10 @@ def validate_query_params(query_params: dict[str, str]) -> tuple[bool, ResponseR
     return True, None
 
 
-def validate_nhs_number(path_nhs: str | None, header_nhs: str | None) -> bool:
-    logger.info("NHS numbers from the request", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
-
+def validate_nhs_number_in_header(path_nhs: str | None, header_nhs: str | None) -> bool:
     if not path_nhs:
-        logger.error("NHS number is not present in path", extra={"path_nhs": path_nhs})
+        logger.error("NHS number is not present in path", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
         return False
-
-    if not header_nhs:  # Not a validation error
-        logger.info("NHS number is not present in header", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
-        return True
 
     if header_nhs != path_nhs:
         logger.error("NHS number mismatch", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
@@ -61,11 +55,20 @@ def validate_request_params() -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> ResponseReturnValue:  # noqa:ANN002,ANN003
             path_nhs_number = str(kwargs.get("nhs_number")) if kwargs.get("nhs_number") else None
-            header_nhs_no = str(request.headers.get(NHS_NUMBER_HEADER)) if request.headers.get(NHS_NUMBER_HEADER) else None
 
-            if not validate_nhs_number(path_nhs_number, header_nhs_no):
+            if not path_nhs_number:
                 message = "You are not authorised to request information for the supplied NHS Number"
-                return NHS_NUMBER_MISMATCH_ERROR.log_and_generate_response(log_message=message, diagnostics=message)
+                return NHS_NUMBER_ERROR.log_and_generate_response(log_message=message, diagnostics=message)
+
+            if NHS_NUMBER_HEADER in request.headers:
+                header_nhs_no = request.headers.get(NHS_NUMBER_HEADER)
+                logger.info("NHS numbers from the request", extra={"header_nhs": header_nhs_no, "path_nhs": path_nhs_number})
+                if not validate_nhs_number_in_header(path_nhs_number, header_nhs_no):
+                    message = "You are not authorised to request information for the supplied NHS Number"
+                    return NHS_NUMBER_ERROR.log_and_generate_response(log_message=message, diagnostics=message)
+            else:
+                logger.info("NHS numbers from the request",
+                            extra={"header_nhs": None, "path_nhs": path_nhs_number})
 
             query_params = request.args
             if query_params:
