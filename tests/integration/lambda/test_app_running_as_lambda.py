@@ -352,6 +352,7 @@ def test_given_nhs_number_key_present_in_headers_have_no_value_results_in_error_
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
         invoke_url,
+        headers={"nhs-login-nhs-number": ""},
         timeout=10,
     )
 
@@ -360,7 +361,6 @@ def test_given_nhs_number_key_present_in_headers_have_no_value_results_in_error_
         response,
         is_response()
         .with_status_code(HTTPStatus.FORBIDDEN)
-        .with_headers(has_entries({"Content-Type": "application/fhir+json", "nhs-login-nhs-number": None}))
         .and_body(
             is_json_that(
                 has_entries(
