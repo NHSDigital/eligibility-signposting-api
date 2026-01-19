@@ -321,7 +321,27 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
     )
 
 
-def test_given_nhs_number_not_present_in_headers_results_in_error_response(
+def test_given_nhs_number_not_present_in_headers_results_in_valid_for_application_restricted_users(
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person: NHSNumber,
+    campaign_config: CampaignConfig,  # noqa:ARG001
+    api_gateway_endpoint: URL,
+):
+    # Given
+    # When
+    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
+    response = httpx.get(
+        invoke_url,
+        timeout=10,
+    )
+
+    assert_that(
+        response,
+        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
+    )
+
+
+def test_given_nhs_number_key_present_in_headers_have_no_value_results_in_error_response(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     campaign_config: CampaignConfig,  # noqa:ARG001
@@ -340,7 +360,7 @@ def test_given_nhs_number_not_present_in_headers_results_in_error_response(
         response,
         is_response()
         .with_status_code(HTTPStatus.FORBIDDEN)
-        .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
+        .with_headers(has_entries({"Content-Type": "application/fhir+json", "nhs-login-nhs-number": "123"}))
         .and_body(
             is_json_that(
                 has_entries(
