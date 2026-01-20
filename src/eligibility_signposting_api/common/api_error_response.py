@@ -128,7 +128,7 @@ INTERNAL_SERVER_ERROR = APIErrorResponse(
     fhir_display_message="An unexpected internal server error occurred.",
 )
 
-NHS_NUMBER_MISMATCH_ERROR = APIErrorResponse(
+NHS_NUMBER_ERROR = APIErrorResponse(
     status_code=HTTPStatus.FORBIDDEN,
     fhir_issue_code=FHIRIssueCode.FORBIDDEN,
     fhir_issue_severity=FHIRIssueSeverity.ERROR,

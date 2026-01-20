@@ -20,16 +20,15 @@ class TestValidateNHSNumber:
     @pytest.mark.parametrize(
         ("path_nhs", "header_nhs", "expected_result", "expected_log_msg"),
         [
-            (None, None, False, "NHS number is not present in path"),
-            ("1234567890", None, True, None),
-            (None, "1234567890", False, "NHS number is not present in path"),
+            ("1234567890", None, False, "NHS number mismatch"),
+            ("1234567890", "", False, "NHS number mismatch"),
             ("1234567890", "0987654321", False, "NHS number mismatch"),
             ("1234567890", "1234567890", True, None),
         ],
     )
-    def test_validate_nhs_number(self, path_nhs, header_nhs, expected_result, expected_log_msg, caplog):
+    def test_validate_nhs_number_in_header(self, path_nhs, header_nhs, expected_result, expected_log_msg, caplog):
         with caplog.at_level(logging.ERROR):
-            result = request_validator.validate_nhs_number(path_nhs, header_nhs)
+            result = request_validator.validate_nhs_number_in_header(path_nhs, header_nhs)
 
         assert result == expected_result
 
@@ -40,7 +39,14 @@ class TestValidateNHSNumber:
 
 
 class TestValidateRequestParams:
-    def test_validate_request_params_success(self, app, caplog):
+    @pytest.mark.parametrize(
+        "headers",
+        [
+            {},  # header missing entirely - request from application restricted consumer
+            {"nhs-login-nhs-number": "1234567890"},  # valid request from consumer
+        ],
+    )
+    def test_validate_request_params_success(self, headers, app, caplog):
         mock_api = MagicMock(return_value="success")
 
         decorator = request_validator.validate_request_params()
@@ -48,7 +54,7 @@ class TestValidateRequestParams:
 
         with app.test_request_context(
             "/dummy?id=1234567890",
-            headers={"nhs-login-nhs-number": "1234567890"},
+            headers=headers,
             method="GET",
         ):
             with caplog.at_level(logging.INFO):
@@ -58,7 +64,15 @@ class TestValidateRequestParams:
             assert any("NHS numbers from the request" in record.message for record in caplog.records)
             assert not any(record.levelname == "ERROR" for record in caplog.records)
 
-    def test_validate_request_params_nhs_mismatch(self, app, caplog):
+    @pytest.mark.parametrize(
+        "headers",
+        [
+            {"nhs-login-nhs-number": None},  # not valid
+            {"nhs-login-nhs-number": ""},  # not valid
+            {"nhs-login-nhs-number": "9834567890"},  # not valid, due to mismatch
+        ],
+    )
+    def test_validate_request_params_nhs_mismatch(self, headers, app, caplog):
         mock_api = MagicMock()
 
         decorator = request_validator.validate_request_params()
@@ -66,7 +80,7 @@ class TestValidateRequestParams:
 
         with app.test_request_context(
             "/dummy?id=1234567890",
-            headers={"nhs-login-nhs-number": "0987654321"},
+            headers=headers,
             method="GET",
         ):
             with caplog.at_level(logging.INFO):
