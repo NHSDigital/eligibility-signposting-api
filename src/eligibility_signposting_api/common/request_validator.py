@@ -40,10 +40,6 @@ def validate_query_params(query_params: dict[str, str]) -> tuple[bool, ResponseR
 
 
 def validate_nhs_number_in_header(path_nhs: str | None, header_nhs: str | None) -> bool:
-    if not path_nhs:
-        logger.error("NHS number is not present in path", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
-        return False
-
     if header_nhs != path_nhs:
         logger.error("NHS number mismatch", extra={"header_nhs": header_nhs, "path_nhs": path_nhs})
         return False
