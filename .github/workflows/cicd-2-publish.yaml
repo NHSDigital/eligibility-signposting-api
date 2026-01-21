@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - hotfix/*
+      - fix/workflow-dev-tag-issue
   workflow_dispatch: {}
 
 concurrency:
