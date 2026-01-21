@@ -660,6 +660,10 @@ def rules_bucket(s3_client: BaseClient) -> Generator[BucketName]:
     bucket_name = BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket"))
     s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": AWS_REGION})
     yield bucket_name
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    if "Contents" in response:
+        objects_to_delete = [{"Key": obj["Key"]} for obj in response["Contents"]]
+        s3_client.delete_objects(Bucket=bucket_name, Delete={"Objects": objects_to_delete})
     s3_client.delete_bucket(Bucket=bucket_name)
 
 
@@ -668,6 +672,10 @@ def consumer_mapping_bucket(s3_client: BaseClient) -> Generator[BucketName]:
     bucket_name = BucketName(os.getenv("CONSUMER_MAPPING_BUCKET_NAME", "test-consumer-mapping-bucket"))
     s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": AWS_REGION})
     yield bucket_name
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    if "Contents" in response:
+        objects_to_delete = [{"Key": obj["Key"]} for obj in response["Contents"]]
+        s3_client.delete_objects(Bucket=bucket_name, Delete={"Objects": objects_to_delete})
     s3_client.delete_bucket(Bucket=bucket_name)
 
 

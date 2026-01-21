@@ -7,12 +7,13 @@ from flask import request
 from flask.typing import ResponseReturnValue
 
 from eligibility_signposting_api.common.api_error_response import (
+    CONSUMER_ID_NOT_PROVIDED_ERROR,
     INVALID_CATEGORY_ERROR,
     INVALID_CONDITION_FORMAT_ERROR,
     INVALID_INCLUDE_ACTIONS_ERROR,
-    NHS_NUMBER_ERROR, CONSUMER_ID_NOT_PROVIDED_ERROR,
+    NHS_NUMBER_ERROR,
 )
-from eligibility_signposting_api.config.constants import NHS_NUMBER_HEADER, CONSUMER_ID
+from eligibility_signposting_api.config.constants import CONSUMER_ID, NHS_NUMBER_HEADER
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,6 @@ def validate_request_params() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> ResponseReturnValue:  # noqa:ANN002,ANN003
-
             consumer_id = request.headers.get(CONSUMER_ID)
             if not consumer_id:
                 message = "You are not authorised to request"

@@ -17,12 +17,13 @@ from hamcrest import (
 )
 
 from eligibility_signposting_api.config.constants import CONSUMER_ID
-from eligibility_signposting_api.model.campaign_config import CampaignConfig
+from eligibility_signposting_api.model.campaign_config import CampaignConfig, RuleComparator
 from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import (
     NHSNumber,
 )
 from eligibility_signposting_api.repos.campaign_repo import BucketName
+from tests.fixtures.builders.model import rule
 
 
 class TestBaseLine:
@@ -1161,7 +1162,7 @@ class TestEligibilityResponseWithVariousInputs:
     @pytest.mark.parametrize(
         ("consumer_id", "expected_campaign_id"),
         [
-            #Consumer requesting for ALL
+            # Consumer requesting for ALL
             # Consumer is mapped only to RSV_campaign_id_1
             ("consumer-id-1", "RSV_campaign_id_1"),
             # Consumer  is mapped only to RSV_campaign_id_2
@@ -1178,6 +1179,7 @@ class TestEligibilityResponseWithVariousInputs:
     )
     @pytest.mark.parametrize(
         ("campaign_configs", "consumer_mappings", "requested_conditions", "requested_category"),
+        # consumer mappings and campaign configs are static here
         [
             (
                 [
@@ -1204,7 +1206,7 @@ class TestEligibilityResponseWithVariousInputs:
         ],
         indirect=["campaign_configs", "consumer_mappings"],
     )
-    def test_if_correct_campaign_is_chosen_for_the_consumer_if_there_exists_multiple_campaign_per_target(  # noqa : PLR0913
+    def test_if_correct_campaign_is_chosen_for_the_consumer_when_multiple_campaign_exists_per_target_giving_same_status(  # noqa : PLR0913
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
@@ -1238,3 +1240,125 @@ class TestEligibilityResponseWithVariousInputs:
             assert_that(audit_data["response"]["condition"][0].get("campaignId"), equal_to(expected_campaign_id))
         else:
             assert_that(len(audit_data["response"]["condition"]), equal_to(0))
+
+    def test_if_campaign_having_best_status_is_chosen_if_there_exists_multiple_campaign_per_target(  # noqa : PLR0913
+        self,
+        client: FlaskClient,
+        persisted_person_pc_sw19: NHSNumber,
+        s3_client: BaseClient,
+        consumer_mapping_bucket: BucketName,
+        rules_bucket: BucketName,
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+    ):
+        # Given
+        consumer_id = "consumer-n3bs-jo4hn-ce4na"
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), CONSUMER_ID: consumer_id}
+
+        # Consumer Mapping Data
+        s3_client.put_object(
+            Bucket=consumer_mapping_bucket,
+            Key="consumer_mapping.json",
+            Body=json.dumps(
+                {
+                    consumer_id: [
+                        {"Campaign": "RSV_campaign_id_not_actionable"},
+                        {"Campaign": "RSV_campaign_id_actionable"},
+                    ],
+                }
+            ),
+            ContentType="application/json",
+        )
+
+        # Campaign configs
+        campaign_1 = rule.CampaignConfigFactory.build(
+            id="RSV_campaign_id_not_actionable",
+            target="RSV",
+            type="V",
+            iterations=[
+                rule.IterationFactory.build(
+                    iteration_rules=[
+                        rule.PostcodeSuppressionRuleFactory.build(name="Exclude SW19", description=""),
+                    ],
+                    iteration_cohorts=[
+                        rule.IterationCohortFactory.build(
+                            cohort_label="cohort1",
+                            cohort_group="cohort_group1",
+                            positive_description="positive_description",
+                        )
+                    ],
+                    status_text=None,
+                )
+            ],
+        )
+
+        campaign_2 = rule.CampaignConfigFactory.build(
+            id="RSV_campaign_id_actionable",
+            target="RSV",
+            type="V",
+            iterations=[
+                rule.IterationFactory.build(
+                    iteration_rules=[
+                        rule.PostcodeSuppressionRuleFactory.build(name="Exclude M4", comparator=RuleComparator("M4")),
+                    ],
+                    iteration_cohorts=[
+                        rule.IterationCohortFactory.build(
+                            cohort_label="cohort1",
+                            cohort_group="cohort_group1",
+                            positive_description="positive_description",
+                        )
+                    ],
+                    status_text=None,
+                )
+            ],
+        )
+
+        for campaign in [campaign_1, campaign_2]:
+            s3_client.put_object(
+                Bucket=rules_bucket,
+                Key=f"{campaign.id}.json",
+                Body=json.dumps({"CampaignConfig": campaign.model_dump(by_alias=True)}),
+                ContentType="application/json",
+            )
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.OK)
+            .and_text(
+                is_json_that(
+                    has_entry(
+                        "processedSuggestions",
+                        equal_to(
+                            [
+                                {
+                                    "condition": "RSV",
+                                    "status": "Actionable",
+                                    "eligibilityCohorts": [
+                                        {
+                                            "cohortCode": "cohort_group1",
+                                            "cohortStatus": "Actionable",
+                                            "cohortText": "positive_description",
+                                        }
+                                    ],
+                                    "actions": [
+                                        {
+                                            "actionCode": "action_code",
+                                            "actionType": "defaultcomms",
+                                            "description": "",
+                                            "urlLabel": "",
+                                            "urlLink": "",
+                                        }
+                                    ],
+                                    "suitabilityRules": [],
+                                    "statusText": "You should have the RSV vaccine",
+                                }
+                            ]
+                        ),
+                    )
+                )
+            ),
+        )

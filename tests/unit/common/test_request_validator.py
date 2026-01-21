@@ -42,7 +42,7 @@ class TestValidateRequestParams:
     @pytest.mark.parametrize(
         "headers",
         [
-            {},  # header missing entirely - request from application restricted consumer
+            {},  # nhs header missing entirely - request from application restricted consumer
             {"nhs-login-nhs-number": "1234567890"},  # valid request from consumer
         ],
     )
@@ -54,7 +54,7 @@ class TestValidateRequestParams:
 
         with app.test_request_context(
             "/dummy?id=1234567890",
-            headers=headers,
+            headers={"consumer-id": "some-consumer"} | headers,
             method="GET",
         ):
             with caplog.at_level(logging.INFO):
@@ -80,7 +80,7 @@ class TestValidateRequestParams:
 
         with app.test_request_context(
             "/dummy?id=1234567890",
-            headers=headers,
+            headers={"consumer-id": "some-id"} | headers,
             method="GET",
         ):
             with caplog.at_level(logging.INFO):
