@@ -1161,6 +1161,7 @@ class TestEligibilityResponseWithVariousInputs:
     @pytest.mark.parametrize(
         ("consumer_id", "expected_campaign_id"),
         [
+            #Consumer requesting for ALL
             # Consumer is mapped only to RSV_campaign_id_1
             ("consumer-id-1", "RSV_campaign_id_1"),
             # Consumer  is mapped only to RSV_campaign_id_2
@@ -1180,6 +1181,7 @@ class TestEligibilityResponseWithVariousInputs:
         [
             (
                 [
+                    # Campaign configs in S3
                     ("RSV", "RSV_campaign_id_1"),
                     ("RSV", "RSV_campaign_id_2"),
                     ("RSV", "RSV_campaign_id_3"),
@@ -1188,6 +1190,7 @@ class TestEligibilityResponseWithVariousInputs:
                     ("RSV", "RSV_campaign_id_6"),
                 ],
                 {
+                    # Consumer mappings in S3
                     "consumer-id-1": [{"Campaign": "RSV_campaign_id_1"}],
                     "consumer-id-2": [{"Campaign": "RSV_campaign_id_2"}],
                     "consumer-id-3a": [{"Campaign": "RSV_campaign_id_3"}, {"Campaign": "RSV_campaign_id_4"}],

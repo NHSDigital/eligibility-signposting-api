@@ -10,9 +10,9 @@ from eligibility_signposting_api.common.api_error_response import (
     INVALID_CATEGORY_ERROR,
     INVALID_CONDITION_FORMAT_ERROR,
     INVALID_INCLUDE_ACTIONS_ERROR,
-    NHS_NUMBER_ERROR,
+    NHS_NUMBER_ERROR, CONSUMER_ID_NOT_PROVIDED_ERROR,
 )
-from eligibility_signposting_api.config.constants import NHS_NUMBER_HEADER
+from eligibility_signposting_api.config.constants import NHS_NUMBER_HEADER, CONSUMER_ID
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +50,14 @@ def validate_request_params() -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> ResponseReturnValue:  # noqa:ANN002,ANN003
+
+            consumer_id = request.headers.get(CONSUMER_ID)
+            if not consumer_id:
+                message = "You are not authorised to request"
+                return CONSUMER_ID_NOT_PROVIDED_ERROR.log_and_generate_response(
+                    log_message=message, diagnostics=message
+                )
+
             path_nhs_number = str(kwargs.get("nhs_number")) if kwargs.get("nhs_number") else None
 
             if not path_nhs_number:
