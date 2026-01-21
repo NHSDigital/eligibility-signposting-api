@@ -38,11 +38,8 @@ jobs:
         run: |
           # Get the full SHA from the triggering run
           FULL_SHA="${{ github.event.workflow_run.head_sha }}"
-          # Cut it to 7 characters (standard short SHA)
-          SHORT_SHA=$(echo $FULL_SHA | cut -c1-7)
-
-          echo "name=dev-$SHORT_SHA" >> $GITHUB_OUTPUT
-          echo "Resolved version name: dev-$SHORT_SHA"
+          echo "name=dev-$FULL_SHA" >> $GITHUB_OUTPUT
+          echo "Resolved version name: dev-$FULL_SHA"
 
   deploy:
     name: "Deploy to TEST (approval required)"
