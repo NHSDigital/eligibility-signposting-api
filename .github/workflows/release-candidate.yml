@@ -103,9 +103,9 @@ jobs:
       - name: "Get S3 bucket name"
         id: bucket
         run: |
-          cd infrastructure/stacks/api-layer
-          terraform init -backend=true
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          cd infrastructure
+          make terraform env=dev stack=api-layer tf-command=init workspace=default
+          BUCKET=$(terraform -chdir=./stacks/api-layer output -raw lambda_artifact_bucket)
           echo "name=$BUCKET" >> $GITHUB_OUTPUT
           echo "📦 S3 Bucket: $BUCKET"
 
@@ -237,8 +237,9 @@ jobs:
       - name: "Get test S3 bucket"
         id: test_bucket
         run: |
-          cd infrastructure/stacks/api-layer
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          cd infrastructure
+          make terraform env=test stack=api-layer tf-command=init workspace=default
+          BUCKET=$(terraform -chdir=./stacks/api-layer output -raw lambda_artifact_bucket)
           echo "name=$BUCKET" >> $GITHUB_OUTPUT
 
       - name: "Upload lambda to test S3"
@@ -381,8 +382,9 @@ jobs:
       - name: "Get preprod S3 bucket"
         id: preprod_bucket
         run: |
-          cd infrastructure/stacks/api-layer
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          cd infrastructure
+          make terraform env=preprod stack=api-layer tf-command=init workspace=default
+          BUCKET=$(terraform -chdir=./stacks/api-layer output -raw lambda_artifact_bucket)
           echo "name=$BUCKET" >> $GITHUB_OUTPUT
 
       - name: "Upload lambda to preprod S3"
