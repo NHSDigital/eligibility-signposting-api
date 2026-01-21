@@ -46,6 +46,77 @@ class TestBaseLine:
             is_response().with_status_code(HTTPStatus.OK).and_text(is_json_that(has_key("processedSuggestions"))),
         )
 
+    @pytest.mark.parametrize(
+        "headers",
+        [
+            {},  # header missing entirely, valid
+        ],
+    )
+    def test_nhs_number_given_in_path_but_no_nhs_number_header_present(
+        self,
+        client: FlaskClient,
+        persisted_person: NHSNumber,
+        campaign_config: CampaignConfig,  # noqa: ARG002
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+        headers: dict,
+    ):
+        # Given
+        # When
+        response = client.get(f"/patient-check/{persisted_person}", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response().with_status_code(HTTPStatus.OK).and_text(is_json_that(has_key("processedSuggestions"))),
+        )
+
+    @pytest.mark.parametrize(
+        "headers",
+        [
+            {"nhs-login-nhs-number": None},  # header present but empty, invalid
+            {"nhs-login-nhs-number": ""},  # header present but blank, invalid
+        ],
+    )
+    def test_nhs_number_in_path_and_header_present_but_empty_or_none(
+        self,
+        headers: dict,
+        client: FlaskClient,
+        persisted_person: NHSNumber,
+        campaign_config: CampaignConfig,  # noqa: ARG002
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+    ):
+        # When
+        response = client.get(f"/patient-check/{persisted_person}", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.FORBIDDEN)
+            .and_text(is_json_that(has_entries(resourceType="OperationOutcome"))),
+        )
+
+    def test_nhs_number_given_but_header_nhs_number_doesnt_match(
+        self,
+        client: FlaskClient,
+        persisted_person: NHSNumber,
+        campaign_config: CampaignConfig,  # noqa: ARG002
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+    ):
+        # Given
+        headers = {"nhs-login-nhs-number": f"123{persisted_person!s}"}
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person}", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.FORBIDDEN)
+            .and_text(is_json_that(has_entries(resourceType="OperationOutcome"))),
+        )
+
     def test_no_nhs_number_given(self, client: FlaskClient):
         # Given
 
