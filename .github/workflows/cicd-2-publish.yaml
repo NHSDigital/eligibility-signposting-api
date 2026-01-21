@@ -3,6 +3,10 @@
 # Does not create GitHub Releases or production tags (v1.x.x).
 
 name: "2. CD | Deploy to Dev"
+run-name: >
+  ${{ github.workflow }} |
+  ${{ github.event_name == 'workflow_dispatch' && 'Manual Run' || github.event.head_commit.message }} |
+  ${{ github.sha }}
 
 on:
   push:
