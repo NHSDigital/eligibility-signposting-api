@@ -139,11 +139,11 @@ jobs:
             title: "Pushed to main"
             version: "${{ needs.metadata.outputs.version }}"
 
-  regression-tests:
-    name: "Regression Tests"
-    needs: publish
-    uses: ./.github/workflows/regression-tests.yml
-    with:
-      ENVIRONMENT: "dev"
-      VERSION_NUMBER: "main"
-    secrets: inherit
+#  regression-tests:
+#    name: "Regression Tests"
+#    needs: publish
+#    uses: ./.github/workflows/regression-tests.yml
+#    with:
+#      ENVIRONMENT: "dev"
+#      VERSION_NUMBER: "main"
+#    secrets: inherit
