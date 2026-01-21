@@ -57,13 +57,13 @@ class TestBaseLine:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config: CampaignConfig,  # noqa: ARG002
+        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
         headers: dict,
     ):
         # Given
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers=headers)
+        response = client.get(f"/patient-check/{persisted_person}", headers = {"consumer-id": "some-id"} | headers)
 
         # Then
         assert_that(
@@ -83,11 +83,12 @@ class TestBaseLine:
         headers: dict,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config: CampaignConfig,  # noqa: ARG002
+        consumer_id: ConsumerId,
+        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers=headers)
+        response = client.get(f"/patient-check/{persisted_person}", headers = {"consumer-id": consumer_id} | headers)
 
         # Then
         assert_that(
@@ -101,14 +102,15 @@ class TestBaseLine:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        campaign_config: CampaignConfig,  # noqa: ARG002
+        consumer_id: ConsumerId,
+        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
         headers = {"nhs-login-nhs-number": f"123{persisted_person!s}"}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers=headers)
+        response = client.get(f"/patient-check/{persisted_person}", headers = {"consumer-id": consumer_id} | headers)
 
         # Then
         assert_that(
