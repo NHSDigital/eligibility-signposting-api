@@ -5,7 +5,7 @@
 name: "2. CD | Deploy to Dev"
 run-name: >
   ${{ github.workflow }} |
-  ${{ format('{0}', substr(github.sha, 0, 7)) }} |
+  ${{ github.sha[0:7] }} |
   ${{ github.event_name == 'workflow_dispatch' && 'Manual Run' || (github.event.workflow_run.head_commit.message || github.event.head_commit.message) }} |
   ${{ github.event.workflow_run.created_at || github.event.created_at }}
 
