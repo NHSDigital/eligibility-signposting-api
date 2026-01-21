@@ -83,7 +83,7 @@ jobs:
         run: |
           git fetch --tags --force
           SHA="${{ github.event.workflow_run.head_sha }}"
-          TAG=$(git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | grep '^dev-' | head -n1 || true)
+          TAG=$(git for-each-ref --sort=-refname --format '%(refname:short)' refs/tags | grep '^dev-' | head -n1 || true)
           if [ -z "$TAG" ]; then
             echo "Using the dev tag provided in the input field" >&2
             TAG="${{ inputs.ref }}"
