@@ -44,7 +44,7 @@ jobs:
           echo "nodejs_version=$(grep "^nodejs" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
           echo "python_version=$(grep "^nodejs" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
           echo "terraform_version=$(grep "^terraform" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
-          echo "version=dev-$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+          echo "version=dev-$SHORT_SHA" >> $GITHUB_OUTPUT
 
       - name: "List variables"
         run: |

@@ -81,15 +81,15 @@ jobs:
       - name: "Resolve the dev-* tag for this commit"
         id: tag
         run: |
-          git fetch --tags --force
-          SHA="${{ github.event.workflow_run.head_sha }}"
-          TAG=$(git tag --points-at "$SHA" | grep '^dev-' | head -n1 || true)
-          if [ -z "$TAG" ]; then
-            echo "Using the dev tag provided in the input field" >&2
-            TAG="${{ inputs.ref }}"
-          fi
-          echo "name=$TAG" >> $GITHUB_OUTPUT
-          echo "Resolved tag: $TAG"
+          # 1. Get the full SHA of whatever ref we are on
+          FULL_SHA=$(git rev-parse HEAD)
+          # 2. Derive the Short SHA (consistent with Dev/Test)
+          SHORT_SHA=$(echo $FULL_SHA | cut -c1-7)
+
+          # 3. Define the artifact name to look for
+          # This matches the 'dev-SHORT_SHA' format
+          echo "name=dev-$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Resolved artifact lookup tag: dev-$SHORT_SHA"
 
       - name: "Resolve promoted environment"
         id: promoted_env

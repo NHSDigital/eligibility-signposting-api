@@ -33,18 +33,16 @@ jobs:
         run: |
           echo "terraform_version=$(grep '^terraform' .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
 
-      - name: "Resolve the dev-* tag for this commit"
+      - name: "Resolve version from SHA"
         id: tag
         run: |
-          git fetch --tags --force
-          SHA="${{ github.event.workflow_run.head_sha }}"
-          TAG=$(git tag --points-at "$SHA" | grep '^dev-' | head -n1 || true)
-          if [ -z "$TAG" ]; then
-            echo "No dev-* tag found on $SHA" >&2
-            exit 1
-          fi
-          echo "name=$TAG" >> $GITHUB_OUTPUT
-          echo "Resolved tag: $TAG"
+          # Get the full SHA from the triggering run
+          FULL_SHA="${{ github.event.workflow_run.head_sha }}"
+          # Cut it to 7 characters (standard short SHA)
+          SHORT_SHA=$(echo $FULL_SHA | cut -c1-7)
+
+          echo "name=dev-$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Resolved version name: dev-$SHORT_SHA"
 
   deploy:
     name: "Deploy to TEST (approval required)"
