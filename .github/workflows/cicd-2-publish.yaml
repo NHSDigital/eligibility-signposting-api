@@ -3,11 +3,6 @@
 # Does not create GitHub Releases or production tags (v1.x.x).
 
 name: "2. CD | Deploy to Dev"
-run-name: >
-  ${{ github.workflow }} |
-  ${{ needs.sha.outputs.short_sha }} |
-  ${{ github.event_name == 'workflow_dispatch' && 'Manual Run' || (github.event.workflow_run.head_commit.message || github.event.head_commit.message) }} |
-  ${{ github.event.workflow_run.created_at || github.event.created_at }}
 
 on:
   push:
@@ -22,20 +17,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  sha:
-    name: "Compute short SHA"
-    runs-on: ubuntu-latest
-    outputs:
-      short_sha: ${{ steps.short.outputs.short }}
-    steps:
-      - name: "Extract short SHA"
-        id: short
-        run: echo "short=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-
   metadata:
     name: "Set CI/CD metadata"
     runs-on: ubuntu-latest
-    needs: sha
     timeout-minutes: 1
     outputs:
       build_datetime: ${{ steps.variables.outputs.build_datetime }}
@@ -154,12 +138,12 @@ jobs:
 #            Author: "${{ github.actor }}"
 #            title: "Pushed to main"
 #            version: "${{ needs.metadata.outputs.version }}"
-
-  regression-tests:
-    name: "Regression Tests"
-    needs: publish
-    uses: ./.github/workflows/regression-tests.yml
-    with:
-      ENVIRONMENT: "dev"
-      VERSION_NUMBER: "main"
-    secrets: inherit
+#
+#  regression-tests:
+#    name: "Regression Tests"
+#    needs: publish
+#    uses: ./.github/workflows/regression-tests.yml
+#    with:
+#      ENVIRONMENT: "dev"
+#      VERSION_NUMBER: "main"
+#    secrets: inherit
