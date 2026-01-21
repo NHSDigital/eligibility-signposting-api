@@ -128,17 +128,17 @@ jobs:
           git tag ${{ needs.metadata.outputs.version }}
           git push origin ${{ needs.metadata.outputs.version }}
 
-#      - name: "Notify Slack on PR merge"
-#        uses: slackapi/slack-github-action@v2.1.1
-#        with:
-#          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-#          webhook-type: webhook-trigger
-#          payload: |
-#            status: "${{ job.status }}"
-#            link: "https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
-#            Author: "${{ github.actor }}"
-#            title: "Pushed to main"
-#            version: "${{ needs.metadata.outputs.version }}"
+      - name: "Notify Slack on PR merge"
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: webhook-trigger
+          payload: |
+            status: "${{ job.status }}"
+            link: "https://github.com/${{ github.repository }}/commit/${{ github.sha }}"
+            Author: "${{ github.actor }}"
+            title: "Pushed to main"
+            version: "${{ needs.metadata.outputs.version }}"
 
   regression-tests:
     name: "Regression Tests"
