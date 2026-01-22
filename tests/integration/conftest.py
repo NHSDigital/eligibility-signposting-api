@@ -655,6 +655,38 @@ def persisted_person_with_no_person_attribute_type(
         person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
 
 
+@pytest.fixture
+def person_with_covid_vaccination(
+    person_table: Any, faker: Faker, hashing_service: HashingService
+) -> Generator[eligibility_status.NHSNumber]:
+    """
+    Fixture for a person with a COVID vaccination on 2026-01-28.
+    Used for testing derived values (ADD_DAYS function).
+    """
+    nhs_num = faker.nhs_number()
+    nhs_number = eligibility_status.NHSNumber(nhs_num)
+    nhs_num_hash = hashing_service.hash_with_current_secret(nhs_num)
+
+    date_of_birth = eligibility_status.DateOfBirth(faker.date_of_birth(minimum_age=77, maximum_age=77))
+
+    for row in (
+        rows := person_rows_builder(
+            nhs_number=nhs_num_hash,
+            date_of_birth=date_of_birth,
+            postcode="HP1",
+            cohorts=["cohort_label1"],
+            vaccines={"COVID": {"LAST_SUCCESSFUL_DATE": "20260128"}},
+            icb="QE1",
+        ).data
+    ):
+        person_table.put_item(Item=row)
+
+    yield nhs_number
+
+    for row in rows:
+        person_table.delete_item(Key={"NHS_NUMBER": row["NHS_NUMBER"], "ATTRIBUTE_TYPE": row["ATTRIBUTE_TYPE"]})
+
+
 @pytest.fixture(scope="session")
 def rules_bucket(s3_client: BaseClient) -> Generator[BucketName]:
     bucket_name = BucketName(os.getenv("RULES_BUCKET_NAME", "test-rules-bucket"))
@@ -986,6 +1018,136 @@ def campaign_config_with_invalid_tokens(s3_client: BaseClient, rules_bucket: Buc
                         negative_description=(
                             "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: [[TARGET.RSV.LAST_SUCCESSFUL_DATE]]"
                         ),
+                    )
+                ],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture
+def campaign_config_with_derived_values(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
+    """Campaign config with derived values for testing ADD_DAYS function."""
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="COVID",
+        iterations=[
+            rule.IterationFactory.build(
+                default_comms_routing="DERIVED_VALUES_TEST|DERIVED_VALUES_NEXT_DOSE",
+                actions_mapper=rule.ActionsMapperFactory.build(
+                    root={
+                        "DERIVED_VALUES_TEST": AvailableAction(
+                            ActionType="DataValue",
+                            ExternalRoutingCode="DateOfLastVaccination",
+                            ActionDescription="[[TARGET.COVID.LAST_SUCCESSFUL_DATE]]",
+                        ),
+                        "DERIVED_VALUES_NEXT_DOSE": AvailableAction(
+                            ActionType="DataValue",
+                            ExternalRoutingCode="DateOfNextEarliestVaccination",
+                            ActionDescription="[[TARGET.COVID.NEXT_DOSE_DUE:ADD_DAYS(91)]]",
+                        ),
+                    }
+                ),
+                iteration_rules=[],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort_label1",
+                        cohort_group="cohort_group1",
+                        positive_description="Positive Description",
+                        negative_description="Negative Description",
+                    )
+                ],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture
+def campaign_config_with_derived_values_formatted(
+    s3_client: BaseClient, rules_bucket: BucketName
+) -> Generator[CampaignConfig]:
+    """Campaign config with derived values and date formatting."""
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="COVID",
+        iterations=[
+            rule.IterationFactory.build(
+                default_comms_routing="DERIVED_VALUES_FORMATTED",
+                actions_mapper=rule.ActionsMapperFactory.build(
+                    root={
+                        "DERIVED_VALUES_FORMATTED": AvailableAction(
+                            ActionType="DataValue",
+                            ExternalRoutingCode="DateOfNextEarliestVaccination",
+                            ActionDescription="[[TARGET.COVID.NEXT_DOSE_DUE:ADD_DAYS(91):DATE(%d %B %Y)]]",
+                        ),
+                    }
+                ),
+                iteration_rules=[],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort_label1",
+                        cohort_group="cohort_group1",
+                        positive_description="Positive Description",
+                        negative_description="Negative Description",
+                    )
+                ],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture
+def campaign_config_with_multiple_add_days(
+    s3_client: BaseClient, rules_bucket: BucketName
+) -> Generator[CampaignConfig]:
+    """Campaign config with multiple actions using ADD_DAYS with different parameters."""
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="COVID",
+        iterations=[
+            rule.IterationFactory.build(
+                default_comms_routing="DERIVED_LAST_DATE|DERIVED_NEXT_DOSE_91|DERIVED_NEXT_DOSE_61",
+                actions_mapper=rule.ActionsMapperFactory.build(
+                    root={
+                        "DERIVED_LAST_DATE": AvailableAction(
+                            ActionType="DataValue",
+                            ExternalRoutingCode="DateOfLastVaccination",
+                            ActionDescription="[[TARGET.COVID.LAST_SUCCESSFUL_DATE]]",
+                        ),
+                        "DERIVED_NEXT_DOSE_91": AvailableAction(
+                            ActionType="DataValue",
+                            ExternalRoutingCode="DateOfNextDoseAt91Days",
+                            ActionDescription="[[TARGET.COVID.NEXT_DOSE_DUE:ADD_DAYS(91)]]",
+                        ),
+                        "DERIVED_NEXT_DOSE_61": AvailableAction(
+                            ActionType="DataValue",
+                            ExternalRoutingCode="DateOfNextDoseAt61Days",
+                            ActionDescription="[[TARGET.COVID.NEXT_DOSE_DUE:ADD_DAYS(61)]]",
+                        ),
+                    }
+                ),
+                iteration_rules=[],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort_label1",
+                        cohort_group="cohort_group1",
+                        positive_description="Positive Description",
+                        negative_description="Negative Description",
                     )
                 ],
             )
