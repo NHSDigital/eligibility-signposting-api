@@ -21,6 +21,13 @@ on:
       commit_message:
         type: string
         required: true
+      ref:
+        type: string
+        required: true
+      release_type:
+        type: string
+        required: false
+        default: "rc"
   workflow_dispatch:
     inputs:
       ref:
