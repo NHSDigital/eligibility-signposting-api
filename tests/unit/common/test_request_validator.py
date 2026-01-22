@@ -7,6 +7,7 @@ from flask import request
 
 from eligibility_signposting_api.common import request_validator
 from eligibility_signposting_api.common.request_validator import logger
+from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
 
 @pytest.fixture(autouse=True)
@@ -54,7 +55,7 @@ class TestValidateRequestParams:
 
         with app.test_request_context(
             "/dummy?id=1234567890",
-            headers={"consumer-id": "some-consumer"} | headers,
+            headers={UNIQUE_CONSUMER_HEADER: "some-consumer"} | headers,
             method="GET",
         ):
             with caplog.at_level(logging.INFO):
@@ -80,7 +81,7 @@ class TestValidateRequestParams:
 
         with app.test_request_context(
             "/dummy?id=1234567890",
-            headers={"consumer-id": "some-id"} | headers,
+            headers={UNIQUE_CONSUMER_HEADER: "some-id"} | headers,
             method="GET",
         ):
             with caplog.at_level(logging.INFO):
@@ -108,7 +109,7 @@ class TestValidateRequestParams:
             app.test_request_context(
                 "/dummy?id=1234567890",
                 headers={
-                    "consumer-id": "some-consumer",
+                    UNIQUE_CONSUMER_HEADER: "some-consumer",
                     "nhs-login-nhs-number": "1234567890",
                 },
                 method="GET",

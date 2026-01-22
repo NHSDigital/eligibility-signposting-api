@@ -52,6 +52,7 @@ AWS_PREVIOUS_SECRET = "test_value_old"  # noqa: S105
 
 UNIQUE_CONSUMER_HEADER = "nhsd-application-id"
 
+
 @pytest.fixture(scope="session")
 def localstack(request: pytest.FixtureRequest) -> URL:
     if url := os.getenv("RUNNING_LOCALSTACK_URL", None):

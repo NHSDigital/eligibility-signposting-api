@@ -204,11 +204,10 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
         invoke_url,
         headers={
             "nhs-login-nhs-number": str(persisted_person),
-            UNIQUE_CONSUMER_HEADER: consumer_id,
             "x_request_id": "x_request_id",
             "x_correlation_id": "x_correlation_id",
             "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
-            "nhsd_application_id": "nhsd_application_id",
+            "nhsd-application-id": consumer_id,
         },
         params={"includeActions": "Y"},
         timeout=10,
@@ -230,7 +229,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
         "xRequestId": "x_request_id",
         "xCorrelationId": "x_correlation_id",
         "nhsdEndUserOrganisationOds": "nhsd_end_user_organisation_ods",
-        "nhsdApplicationId": "nhsd_application_id",
+        "nhsdApplicationId": consumer_id,
     }
     expected_query_params = {"category": None, "conditions": None, "includeActions": "Y"}
 
@@ -453,11 +452,10 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
         invoke_url,
         headers={
             "nhs-login-nhs-number": str(persisted_person_all_cohorts),
-            UNIQUE_CONSUMER_HEADER: consumer_id,
             "x_request_id": "x_request_id",
             "x_correlation_id": "x_correlation_id",
             "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
-            "nhsd_application_id": "nhsd_application_id",
+            "nhsd_application_id": consumer_id,
         },
         params={"includeActions": "Y", "category": "VACCINATIONS", "conditions": "COVID,FLU,RSV"},
         timeout=10,
@@ -477,7 +475,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
         "xRequestId": "x_request_id",
         "xCorrelationId": "x_correlation_id",
         "nhsdEndUserOrganisationOds": "nhsd_end_user_organisation_ods",
-        "nhsdApplicationId": "nhsd_application_id",
+        "nhsdApplicationId": consumer_id,
     }
     expected_query_params = {"category": "VACCINATIONS", "conditions": "COVID,FLU,RSV", "includeActions": "Y"}
 
@@ -596,11 +594,10 @@ def test_no_active_iteration_returns_empty_processed_suggestions(
         invoke_url,
         headers={
             "nhs-login-nhs-number": str(persisted_person_all_cohorts),
-            UNIQUE_CONSUMER_HEADER: consumer_id,
             "x_request_id": "x_request_id",
             "x_correlation_id": "x_correlation_id",
             "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
-            "nhsd_application_id": "nhsd_application_id",
+            "nhsd_application_id": consumer_id,
         },
         params={"includeActions": "Y", "category": "VACCINATIONS", "conditions": "COVID,FLU,RSV"},
         timeout=10,

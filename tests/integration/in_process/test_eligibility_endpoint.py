@@ -63,7 +63,9 @@ class TestBaseLine:
     ):
         # Given
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers={UNIQUE_CONSUMER_HEADER: "some-id"} | headers)
+        response = client.get(
+            f"/patient-check/{persisted_person}", headers={UNIQUE_CONSUMER_HEADER: "some-id"} | headers
+        )
 
         # Then
         assert_that(
@@ -88,7 +90,9 @@ class TestBaseLine:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers={UNIQUE_CONSUMER_HEADER: consumer_id} | headers)
+        response = client.get(
+            f"/patient-check/{persisted_person}", headers={UNIQUE_CONSUMER_HEADER: consumer_id} | headers
+        )
 
         # Then
         assert_that(
@@ -110,7 +114,9 @@ class TestBaseLine:
         headers = {"nhs-login-nhs-number": f"123{persisted_person!s}"}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers={UNIQUE_CONSUMER_HEADER: consumer_id} | headers)
+        response = client.get(
+            f"/patient-check/{persisted_person}", headers={UNIQUE_CONSUMER_HEADER: consumer_id} | headers
+        )
 
         # Then
         assert_that(

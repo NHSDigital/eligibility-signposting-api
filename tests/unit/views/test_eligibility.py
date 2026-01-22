@@ -41,6 +41,7 @@ from tests.fixtures.builders.model.eligibility import (
     EligibilityStatusFactory,
 )
 from tests.fixtures.matchers.eligibility import is_eligibility_cohort
+from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ def test_security_headers_present_on_successful_response(app: Flask, client: Fla
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
     ):
         # When
-        headers = {"nhs-login-nhs-number": "9876543210", "Consumer-Id": "test_consumer_id"}
+        headers = {"nhs-login-nhs-number": "9876543210", UNIQUE_CONSUMER_HEADER: "test_consumer_id"}
         response = client.get("/patient-check/9876543210", headers=headers)
 
         # Then
@@ -130,7 +131,7 @@ def test_security_headers_present_on_error_response(app: Flask, client: FlaskCli
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
     ):
         # When
-        headers = {"nhs-login-nhs-number": "9876543210", "consumer-id": "test_customer_id"}
+        headers = {"nhs-login-nhs-number": "9876543210", UNIQUE_CONSUMER_HEADER: "test_customer_id"}
         response = client.get("/patient-check/9876543210", headers=headers)
 
         # Then
@@ -179,7 +180,7 @@ def test_nhs_number_given(app: Flask, client: FlaskClient):
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(12345), "consumer-id": "test_customer_id"}
+        headers = {"nhs-login-nhs-number": str(12345), UNIQUE_CONSUMER_HEADER: "test_customer_id"}
 
         # When
         response = client.get("/patient-check/12345", headers=headers)
@@ -192,7 +193,7 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
     # Given
     with get_app_container(app).override.service(EligibilityService, new=FakeUnknownPersonEligibilityService()):
         # Given
-        headers = {"nhs-login-nhs-number": str(12345), "consumer-id": "test_customer_id"}
+        headers = {"nhs-login-nhs-number": str(12345), UNIQUE_CONSUMER_HEADER: "test_customer_id"}
 
         # When
         response = client.get("/patient-check/", headers=headers)
@@ -231,7 +232,7 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
 
 def test_unexpected_error(app: Flask, client: FlaskClient):
     # Given
-    headers = {"nhs-login-nhs-number": str(12345), "consumer-id": "test_customer_id"}
+    headers = {"nhs-login-nhs-number": str(12345), UNIQUE_CONSUMER_HEADER: "test_customer_id"}
 
     with get_app_container(app).override.service(EligibilityService, new=FakeUnexpectedErrorEligibilityService()):
         response = client.get("/patient-check/12345", headers=headers)
@@ -442,7 +443,8 @@ def test_excludes_nulls_via_build_response(client: FlaskClient):
         ),
     ):
         response = client.get(
-            "/patient-check/12345", headers={"nhs-login-nhs-number": str(12345), "consumer-id": "test_customer_id"}
+            "/patient-check/12345",
+            headers={"nhs-login-nhs-number": str(12345), UNIQUE_CONSUMER_HEADER: "test_customer_id"},
         )
         assert response.status_code == HTTPStatus.OK
 
@@ -496,7 +498,8 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
         ),
     ):
         response = client.get(
-            "/patient-check/12345", headers={"nhs-login-nhs-number": str(12345), "consumer-id": "test_customer_id"}
+            "/patient-check/12345",
+            headers={"nhs-login-nhs-number": str(12345), UNIQUE_CONSUMER_HEADER: "test_customer_id"},
         )
         assert response.status_code == HTTPStatus.OK
 
@@ -602,7 +605,7 @@ def test_consumer_id_is_passed_to_service(app: Flask, client: FlaskClient):
         get_app_container(app).override.service(EligibilityService, new=mock_service),
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
     ):
-        headers = {"nhs-login-nhs-number": "1234567890", "Consumer-Id": "specific_consumer_123"}
+        headers = {"nhs-login-nhs-number": "1234567890", UNIQUE_CONSUMER_HEADER: "specific_consumer_123"}
 
         # When
         client.get("/patient-check/1234567890", headers=headers)
