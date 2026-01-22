@@ -7,6 +7,10 @@ from wireup import service
 
 from eligibility_signposting_api.config.constants import ALLOWED_CONDITIONS
 from eligibility_signposting_api.model.person import Person
+from eligibility_signposting_api.services.processors.derived_values import (
+    DerivedValueContext,
+    get_registry,
+)
 from eligibility_signposting_api.services.processors.token_parser import ParsedToken, TokenParser
 
 TARGET_ATTRIBUTE_LEVEL = "TARGET"
@@ -21,6 +25,7 @@ ALLOWED_TARGET_ATTRIBUTES = {
     "BOOKED_APPOINTMENT_PROVIDER",
     "LAST_INVITE_DATE",
     "LAST_INVITE_STATUS",
+    "NEXT_DOSE_DUE",
 }
 
 
@@ -85,12 +90,91 @@ class TokenProcessor:
         if TokenProcessor.should_replace_with_empty(parsed_token, present_attributes):
             return ""
 
+        # Check if this is a derived value (has a function like ADD_DAYS)
+        if parsed_token.function_name:
+            return TokenProcessor.get_derived_value(parsed_token, person_data, present_attributes, token)
+
         found_attribute, key_to_replace = TokenProcessor.find_matching_attribute(parsed_token, person_data)
 
         if not found_attribute or not key_to_replace:
             TokenProcessor.handle_token_not_found(parsed_token, token)
+            # handle_token_not_found always raises, but the type checker needs help
+            msg = "Unreachable"
+            raise RuntimeError(msg)  # pragma: no cover
 
         return TokenProcessor.apply_formatting(found_attribute, key_to_replace, parsed_token.format)
+
+    @staticmethod
+    def get_derived_value(
+        parsed_token: ParsedToken,
+        person_data: list[dict],
+        present_attributes: set,
+        token: str,
+    ) -> str:
+        """Calculate a derived value using the registered handler.
+
+        Args:
+            parsed_token: The parsed token containing function information
+            person_data: List of person attribute dictionaries
+            present_attributes: Set of attribute types present in person data
+            token: The original token string for error messages
+
+        Returns:
+            The calculated derived value as a string
+
+        Raises:
+            ValueError: If no handler is registered or attribute not found
+        """
+        registry = get_registry()
+
+        function_name = parsed_token.function_name
+        if not function_name:
+            message = f"No function specified in token '{token}'."
+            raise ValueError(message)
+
+        if not registry.has_handler(function_name):
+            message = f"Unknown function '{function_name}' in token '{token}'."
+            raise ValueError(message)
+
+        # For TARGET level tokens, validate the condition is allowed
+        if parsed_token.attribute_level == TARGET_ATTRIBUTE_LEVEL:
+            is_allowed_condition = parsed_token.attribute_name in ALLOWED_CONDITIONS.__args__
+            is_allowed_target_attr = parsed_token.attribute_value in ALLOWED_TARGET_ATTRIBUTES
+
+            # If condition is not allowed, raise error
+            if not is_allowed_condition:
+                TokenProcessor.handle_token_not_found(parsed_token, token)
+
+            # If vaccine type is not in person data but is allowed, return empty
+            if parsed_token.attribute_name not in present_attributes:
+                if is_allowed_target_attr:
+                    return ""
+                TokenProcessor.handle_token_not_found(parsed_token, token)
+
+        try:
+            target_attribute = parsed_token.attribute_value or parsed_token.attribute_name
+            source_attribute = registry.get_source_attribute(
+                function_name,
+                target_attribute,
+                parsed_token.function_args,
+            )
+
+            context = DerivedValueContext(
+                person_data=person_data,
+                attribute_name=parsed_token.attribute_name,
+                source_attribute=source_attribute,
+                function_args=parsed_token.function_args,
+                date_format=parsed_token.format,
+            )
+
+            return registry.calculate(
+                function_name=function_name,
+                context=context,
+            )
+        except ValueError as e:
+            # Re-raise with more context
+            message = f"Error calculating derived value for token '{token}': {e}"
+            raise ValueError(message) from e
 
     @staticmethod
     def should_replace_with_empty(parsed_token: ParsedToken, present_attributes: set) -> bool:
