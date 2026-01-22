@@ -1,9 +1,22 @@
 name: "3. CD | Deploy to Test"
+run-name: >
+  ${{ github.workflow }} |
+  ${{ inputs.short_sha }} |
+  ${{ inputs.tag }} |
+  ${{ inputs.commit_message }}
 
 on:
-  workflow_run:
-    workflows: ["2. CD | Deploy to Dev"]
-    types: [completed]
+  workflow_call:
+    inputs:
+      short_sha:
+        type: string
+        required: true
+      tag:
+        type: string
+        required: true
+      commit_message:
+        type: string
+        required: true
 
 concurrency:
   group: test-deployments

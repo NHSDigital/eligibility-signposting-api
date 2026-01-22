@@ -1,13 +1,26 @@
 name: "4. CD | Deploy to PreProd"
+run-name: >
+  ${{ github.workflow }} |
+  ${{ inputs.short_sha }} |
+  ${{ inputs.tag }} |
+  ${{ inputs.commit_message }}
 
 concurrency:
   group: preprod-deploy
   cancel-in-progress: false
 
 on:
-  workflow_run:
-    workflows: ["3. CD | Deploy to Test"]
-    types: [completed]
+  workflow_call:
+    inputs:
+      short_sha:
+        type: string
+        required: true
+      tag:
+        type: string
+        required: true
+      commit_message:
+        type: string
+        required: true
   workflow_dispatch:
     inputs:
       ref:

@@ -50,6 +50,7 @@ jobs:
           echo "python_version=$(grep "^nodejs" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
           echo "terraform_version=$(grep "^terraform" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
           echo "version=dev-$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+          echo "shortsha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - name: "List variables"
         run: |
@@ -151,3 +152,27 @@ jobs:
 #      ENVIRONMENT: "dev"
 #      VERSION_NUMBER: "main"
 #    secrets: inherit
+
+  trigger-test:
+    name: "Chain -> Test"
+    needs: [metadata, publish]
+    if: success()
+    uses: ./.github/workflows/cicd-3-test-deploy.yaml
+    with:
+      tag: ${{ needs.metadata.outputs.version }}
+      commit_message: ${{ github.event.head_commit.message || 'Manual Run' }}
+      short_sha: ${{ needs.metadata.outputs.shortsha }}
+    secrets: inherit
+
+  trigger-preprod:
+    name: "Chain -> PreProd"
+    needs: [metadata, trigger-test]
+    if: success()
+    uses: ./.github/workflows/cicd-4-preprod-deploy.yaml
+    with:
+      ref: ${{ needs.metadata.outputs.version }}
+      release_type: "rc"
+      tag: ${{ needs.metadata.outputs.version }}
+      commit_message: ${{ github.event.head_commit.message || 'Manual Run' }}
+      short_sha: ${{ needs.metadata.outputs.shortsha }}
+    secrets: inherit
