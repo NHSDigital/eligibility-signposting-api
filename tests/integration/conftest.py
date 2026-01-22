@@ -1364,7 +1364,7 @@ def create_and_put_consumer_mapping_in_s3(
 
 
 @pytest.fixture(scope="class")
-def consumer_mapped_to_campaign_having_invalid_tokens(
+def consumer_to_active_campaign_having_invalid_tokens_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
     campaign_config_with_invalid_tokens: CampaignConfig,
@@ -1378,7 +1378,7 @@ def consumer_mapped_to_campaign_having_invalid_tokens(
 
 
 @pytest.fixture(scope="class")
-def consumer_mapped_to_campaign_having_tokens(
+def consumer_to_active_campaign_having_tokens_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
     campaign_config_with_tokens: CampaignConfig,
@@ -1392,7 +1392,7 @@ def consumer_mapped_to_campaign_having_tokens(
 
 
 @pytest.fixture(scope="class")
-def consumer_mapped_to_rsv_campaign(
+def consumer_to_active_rsv_campaign_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
     rsv_campaign_config: CampaignConfig,
@@ -1406,7 +1406,7 @@ def consumer_mapped_to_rsv_campaign(
 
 
 @pytest.fixture(scope="class")
-def consumer_mapped_to_campaign_having_and_rule(
+def consumer_to_active_campaign_having_and_rule_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
     campaign_config_with_and_rule: CampaignConfig,
@@ -1420,7 +1420,7 @@ def consumer_mapped_to_campaign_having_and_rule(
 
 
 @pytest.fixture
-def consumer_mapped_to_campaign_missing_descriptions_and_rule_text(
+def consumer_to_active_campaign_missing_descriptions_and_rule_text_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     campaign_config_with_missing_descriptions_missing_rule_text: CampaignConfig,
@@ -1434,7 +1434,7 @@ def consumer_mapped_to_campaign_missing_descriptions_and_rule_text(
 
 
 @pytest.fixture
-def consumer_mapped_to_campaign_having_rules_with_rule_code(
+def consumer_to_active_campaign_having_rules_with_rule_code_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     campaign_config_with_rules_having_rule_code: CampaignConfig,
@@ -1448,7 +1448,7 @@ def consumer_mapped_to_campaign_having_rules_with_rule_code(
 
 
 @pytest.fixture
-def consumer_mapped_to_campaign_having_rules_with_rule_mapper(
+def consumer_to_active_campaign_having_rules_with_rule_mapper_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     campaign_config_with_rules_having_rule_mapper: CampaignConfig,
@@ -1462,7 +1462,7 @@ def consumer_mapped_to_campaign_having_rules_with_rule_mapper(
 
 
 @pytest.fixture
-def consumer_mapped_to_campaign_having_only_virtual_cohort(
+def consumer_to_active_campaign_having_only_virtual_cohort_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     campaign_config_with_virtual_cohort: CampaignConfig,
@@ -1476,7 +1476,7 @@ def consumer_mapped_to_campaign_having_only_virtual_cohort(
 
 
 @pytest.fixture
-def consumer_mapped_to_campaign_config_with_derived_values(
+def consumer_to_active_campaign_config_with_derived_values_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     campaign_config_with_derived_values: CampaignConfig,
@@ -1490,7 +1490,7 @@ def consumer_mapped_to_campaign_config_with_derived_values(
 
 
 @pytest.fixture
-def consumer_mapped_to_campaign_config_with_derived_values_formatted(
+def consumer_to_active_campaign_config_with_derived_values_formatted_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     campaign_config_with_derived_values_formatted: CampaignConfig,
@@ -1504,7 +1504,7 @@ def consumer_mapped_to_campaign_config_with_derived_values_formatted(
 
 
 @pytest.fixture
-def consumer_mapped_to_campaign_config_with_multiple_add_days(
+def consumer_to_active_campaign_config_with_multiple_add_days_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     campaign_config_with_multiple_add_days: CampaignConfig,
@@ -1518,7 +1518,7 @@ def consumer_mapped_to_campaign_config_with_multiple_add_days(
 
 
 @pytest.fixture
-def consumer_mapped_to_campaign_having_inactive_iteration_config(
+def consumer_to_campaign_having_inactive_iteration_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
     inactive_iteration_config: list[CampaignConfig],
@@ -1540,7 +1540,7 @@ def consumer_mapped_to_campaign_having_inactive_iteration_config(
 
 
 @pytest.fixture(scope="class")
-def consumer_mapped_to_multiple_campaign_configs(
+def consumer_to_multiple_campaign_configs_mapping(
     multiple_campaign_configs: list[CampaignConfig],
     consumer_id: ConsumerId,
     s3_client: BaseClient,

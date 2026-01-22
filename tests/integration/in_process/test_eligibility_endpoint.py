@@ -32,7 +32,7 @@ class TestBaseLine:
         client: FlaskClient,
         persisted_person: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -57,7 +57,7 @@ class TestBaseLine:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
         headers: dict,
     ):
@@ -84,7 +84,7 @@ class TestBaseLine:
         client: FlaskClient,
         persisted_person: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # When
@@ -103,7 +103,7 @@ class TestBaseLine:
         client: FlaskClient,
         persisted_person: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -160,7 +160,7 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person_no_cohorts: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -206,7 +206,7 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -252,7 +252,7 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -304,7 +304,7 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         headers = {"nhs-login-nhs-number": str(persisted_77yo_person), CONSUMER_ID: consumer_id}
@@ -357,7 +357,7 @@ class TestStandardResponse:
         client: FlaskClient,
         persisted_person: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapped_to_campaign_having_and_rule: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_having_and_rule_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
@@ -412,7 +412,7 @@ class TestVirtualCohortResponse:
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
-        consumer_mapped_to_campaign_having_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_having_only_virtual_cohort_mapping: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -458,7 +458,7 @@ class TestVirtualCohortResponse:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        consumer_mapped_to_campaign_having_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_having_only_virtual_cohort_mapping: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -510,7 +510,7 @@ class TestVirtualCohortResponse:
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        consumer_mapped_to_campaign_having_only_virtual_cohort: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_having_only_virtual_cohort_mapping: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -566,7 +566,7 @@ class TestResponseOnMissingAttributes:
         self,
         client: FlaskClient,
         persisted_person_no_cohorts: NHSNumber,
-        consumer_mapped_to_campaign_missing_descriptions_and_rule_text: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_missing_descriptions_and_rule_text_mapping: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -606,7 +606,7 @@ class TestResponseOnMissingAttributes:
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
-        consumer_mapped_to_campaign_missing_descriptions_and_rule_text: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_missing_descriptions_and_rule_text_mapping: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -646,7 +646,7 @@ class TestResponseOnMissingAttributes:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        consumer_mapped_to_campaign_missing_descriptions_and_rule_text: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_missing_descriptions_and_rule_text_mapping: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -692,7 +692,7 @@ class TestResponseOnMissingAttributes:
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        consumer_mapped_to_campaign_missing_descriptions_and_rule_text: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_missing_descriptions_and_rule_text_mapping: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -740,7 +740,7 @@ class TestResponseOnMissingAttributes:
         self,
         client: FlaskClient,
         persisted_77yo_person: NHSNumber,
-        consumer_mapped_to_campaign_missing_descriptions_and_rule_text: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_missing_descriptions_and_rule_text_mapping: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -816,7 +816,7 @@ class TestEligibilityResponseWithVariousInputs:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        consumer_mapped_to_campaign_having_rules_with_rule_code: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_having_rules_with_rule_code_mapping: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
@@ -868,7 +868,7 @@ class TestEligibilityResponseWithVariousInputs:
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
-        consumer_mapped_to_campaign_having_rules_with_rule_mapper: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_having_rules_with_rule_mapper_mapping: ConsumerMapping,  # noqa: ARG002
         consumer_id: ConsumerId,
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):

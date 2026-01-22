@@ -55,7 +55,7 @@ class TestDerivedValues:
         client: FlaskClient,
         person_with_covid_vaccination: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapped_to_campaign_config_with_derived_values: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_config_with_derived_values_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         """
@@ -128,7 +128,7 @@ class TestDerivedValues:
         client: FlaskClient,
         person_with_covid_vaccination: NHSNumber,
         consumer_id: ConsumerId,
-        consumer_mapped_to_campaign_config_with_derived_values_formatted: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_config_with_derived_values_formatted_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         """
@@ -182,7 +182,7 @@ class TestMultipleActionsWithAddDays:
         self,
         client: FlaskClient,
         consumer_id: ConsumerId,
-        consumer_mapped_to_campaign_config_with_multiple_add_days: ConsumerMapping,  # noqa: ARG002
+        consumer_to_active_campaign_config_with_multiple_add_days_mapping: ConsumerMapping,  # noqa: ARG002
         person_with_covid_vaccination: NHSNumber,
     ):
         """
