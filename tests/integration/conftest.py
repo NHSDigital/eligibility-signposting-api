@@ -21,7 +21,6 @@ from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import (
     AvailableAction,
     CampaignConfig,
-    CampaignID,
     EndDate,
     RuleCode,
     RuleEntry,
@@ -1567,30 +1566,6 @@ def consumer_mappings(
     request, s3_client: BaseClient, consumer_mapping_bucket: BucketName
 ) -> Generator[ConsumerMapping]:
     consumer_mapping = ConsumerMapping.model_validate(getattr(request, "param", {}))
-    consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
-    s3_client.put_object(
-        Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
-        Body=json.dumps(consumer_mapping_data),
-        ContentType="application/json",
-    )
-    yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
-
-
-@pytest.fixture(scope="class")
-def consumer_mapped_to_with_various_targets(
-    s3_client: BaseClient, consumer_mapping_bucket: BucketName
-) -> Generator[ConsumerMapping]:
-    consumer_mapping = ConsumerMapping.model_validate({})
-
-    consumer_mapping.root[ConsumerId("23-mic7heal-jor6don")] = [
-        ConsumerCampaign(Campaign=CampaignID("campaign_start_date")),
-        ConsumerCampaign(Campaign=CampaignID("campaign_start_date_plus_one_day")),
-        ConsumerCampaign(Campaign=CampaignID("campaign_today")),
-        ConsumerCampaign(Campaign=CampaignID("campaign_tomorrow")),
-    ]
-
     consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
     s3_client.put_object(
         Bucket=consumer_mapping_bucket,
