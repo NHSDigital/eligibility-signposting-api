@@ -38,7 +38,7 @@ jobs:
         run: |
           git fetch --tags --force
           SHA="${{ github.event.workflow_run.head_sha }}"
-          TAG=$(git tag --points-at "$SHA" | grep '^dev-' | head -n1 || true)
+          TAG=$(git tag --points-at "$SHA" | grep '^dev-' | sort -r | head -n1 || true)
           if [ -z "$TAG" ]; then
             echo "No dev-* tag found on $SHA" >&2
             exit 1
