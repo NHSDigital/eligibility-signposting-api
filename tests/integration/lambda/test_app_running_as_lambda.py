@@ -353,7 +353,8 @@ def test_given_nhs_number_not_present_in_headers_results_in_valid_for_applicatio
 def test_given_nhs_number_key_present_in_headers_have_no_value_results_in_error_response(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    campaign_config: CampaignConfig,  # noqa:ARG001
+    consumer_id:ConsumerId,
+    consumer_mapped_to_rsv_campaign : ConsumerMapping,  # noqa:ARG001
     api_gateway_endpoint: URL,
 ):
     # Given
@@ -361,7 +362,7 @@ def test_given_nhs_number_key_present_in_headers_have_no_value_results_in_error_
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": ""},
+        headers={"nhs-login-nhs-number": "", "consumer-id": consumer_id},
         timeout=10,
     )
 
