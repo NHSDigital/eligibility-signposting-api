@@ -45,6 +45,7 @@ from hamcrest import (
 
 from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import NHSNumber
+from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
 
 class TestDerivedValues:
@@ -78,7 +79,7 @@ class TestDerivedValues:
             ]
         """
         # Given
-        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination), "consumer-id": str(consumer_id)}
+        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination), UNIQUE_CONSUMER_HEADER: str(consumer_id)}
 
         # When
         response = client.get(
@@ -142,7 +143,7 @@ class TestDerivedValues:
             - DateOfNextEarliestVaccination shows "29 April 2026" (formatted output)
         """
         # Given
-        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination), "consumer-id": str(consumer_id)}
+        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination), UNIQUE_CONSUMER_HEADER: str(consumer_id)}
 
         # When
         response = client.get(
@@ -210,7 +211,7 @@ class TestMultipleActionsWithAddDays:
         function with different parameters.
         """
         # Given
-        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination), "consumer-id": str(consumer_id)}
+        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination), UNIQUE_CONSUMER_HEADER: str(consumer_id)}
 
         # When
         response = client.get(

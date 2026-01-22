@@ -23,6 +23,7 @@ from eligibility_signposting_api.model.eligibility_status import (
 )
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from tests.fixtures.builders.model import rule
+from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
 
 class TestBaseLine:
@@ -35,7 +36,7 @@ class TestBaseLine:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}", headers=headers)
@@ -62,7 +63,7 @@ class TestBaseLine:
     ):
         # Given
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers={"consumer-id": "some-id"} | headers)
+        response = client.get(f"/patient-check/{persisted_person}", headers={UNIQUE_CONSUMER_HEADER: "some-id"} | headers)
 
         # Then
         assert_that(
@@ -87,7 +88,7 @@ class TestBaseLine:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers={"consumer-id": consumer_id} | headers)
+        response = client.get(f"/patient-check/{persisted_person}", headers={UNIQUE_CONSUMER_HEADER: consumer_id} | headers)
 
         # Then
         assert_that(
@@ -109,7 +110,7 @@ class TestBaseLine:
         headers = {"nhs-login-nhs-number": f"123{persisted_person!s}"}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers={"consumer-id": consumer_id} | headers)
+        response = client.get(f"/patient-check/{persisted_person}", headers={UNIQUE_CONSUMER_HEADER: consumer_id} | headers)
 
         # Then
         assert_that(
@@ -163,7 +164,7 @@ class TestStandardResponse:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y", headers=headers)
@@ -209,7 +210,7 @@ class TestStandardResponse:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
@@ -255,7 +256,7 @@ class TestStandardResponse:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -306,7 +307,7 @@ class TestStandardResponse:
         consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
-        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
@@ -360,7 +361,7 @@ class TestStandardResponse:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -416,7 +417,7 @@ class TestVirtualCohortResponse:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
@@ -462,7 +463,7 @@ class TestVirtualCohortResponse:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -514,7 +515,7 @@ class TestVirtualCohortResponse:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
@@ -570,7 +571,7 @@ class TestResponseOnMissingAttributes:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person_no_cohorts), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_no_cohorts}?includeActions=Y", headers=headers)
@@ -610,7 +611,7 @@ class TestResponseOnMissingAttributes:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
@@ -650,7 +651,7 @@ class TestResponseOnMissingAttributes:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -696,7 +697,7 @@ class TestResponseOnMissingAttributes:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=Y", headers=headers)
@@ -744,7 +745,7 @@ class TestResponseOnMissingAttributes:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_77yo_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_77yo_person}?includeActions=N", headers=headers)
@@ -820,7 +821,7 @@ class TestEligibilityResponseWithVariousInputs:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -872,7 +873,7 @@ class TestEligibilityResponseWithVariousInputs:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(f"/patient-check/{persisted_person}?includeActions=Y", headers=headers)
@@ -1137,7 +1138,7 @@ class TestEligibilityResponseWithVariousInputs:
         expected_targets: list[str],
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         response = client.get(
@@ -1222,7 +1223,7 @@ class TestEligibilityResponseWithVariousInputs:
         expected_campaign_id: list[str],
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(persisted_person), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # When
         client.get(
@@ -1253,7 +1254,7 @@ class TestEligibilityResponseWithVariousInputs:
     ):
         # Given
         consumer_id = "consumer-n3bs-jo4hn-ce4na"
-        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), "consumer-id": consumer_id}
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
 
         # Consumer Mapping Data
         s3_client.put_object(

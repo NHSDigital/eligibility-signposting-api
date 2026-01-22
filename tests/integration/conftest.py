@@ -50,6 +50,7 @@ AWS_SECRET_NAME = "test_secret"  # noqa: S105
 AWS_CURRENT_SECRET = "test_value"  # noqa: S105
 AWS_PREVIOUS_SECRET = "test_value_old"  # noqa: S105
 
+UNIQUE_CONSUMER_HEADER = "nhsd-application-id"
 
 @pytest.fixture(scope="session")
 def localstack(request: pytest.FixtureRequest) -> URL:
