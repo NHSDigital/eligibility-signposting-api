@@ -353,8 +353,8 @@ def test_given_nhs_number_not_present_in_headers_results_in_valid_for_applicatio
 def test_given_nhs_number_key_present_in_headers_have_no_value_results_in_error_response(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    consumer_id:ConsumerId,
-    consumer_mapped_to_rsv_campaign : ConsumerMapping,  # noqa:ARG001
+    consumer_id: ConsumerId,
+    consumer_mapped_to_rsv_campaign: ConsumerMapping,  # noqa:ARG001
     api_gateway_endpoint: URL,
 ):
     # Given

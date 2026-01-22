@@ -63,7 +63,7 @@ class TestBaseLine:
     ):
         # Given
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers = {"consumer-id": "some-id"} | headers)
+        response = client.get(f"/patient-check/{persisted_person}", headers={"consumer-id": "some-id"} | headers)
 
         # Then
         assert_that(
@@ -78,7 +78,7 @@ class TestBaseLine:
             {"nhs-login-nhs-number": ""},  # header present but blank, invalid
         ],
     )
-    def test_nhs_number_in_path_and_header_present_but_empty_or_none(
+    def test_nhs_number_in_path_and_header_present_but_empty_or_none(  # noqa: PLR0913
         self,
         headers: dict,
         client: FlaskClient,
@@ -88,7 +88,7 @@ class TestBaseLine:
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers = {"consumer-id": consumer_id} | headers)
+        response = client.get(f"/patient-check/{persisted_person}", headers={"consumer-id": consumer_id} | headers)
 
         # Then
         assert_that(
@@ -110,7 +110,7 @@ class TestBaseLine:
         headers = {"nhs-login-nhs-number": f"123{persisted_person!s}"}
 
         # When
-        response = client.get(f"/patient-check/{persisted_person}", headers = {"consumer-id": consumer_id} | headers)
+        response = client.get(f"/patient-check/{persisted_person}", headers={"consumer-id": consumer_id} | headers)
 
         # Then
         assert_that(
