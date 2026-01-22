@@ -1477,6 +1477,48 @@ def consumer_mapped_to_campaign_having_only_virtual_cohort(
 
 
 @pytest.fixture
+def consumer_mapped_to_campaign_config_with_derived_values(
+    s3_client: BaseClient,
+    consumer_mapping_bucket: ConsumerMapping,
+    campaign_config_with_derived_values: CampaignConfig,
+    consumer_id: ConsumerId,
+):
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_derived_values, consumer_id, consumer_mapping_bucket, s3_client
+    )
+    yield consumer_mapping
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+
+
+@pytest.fixture
+def consumer_mapped_to_campaign_config_with_derived_values_formatted(
+    s3_client: BaseClient,
+    consumer_mapping_bucket: ConsumerMapping,
+    campaign_config_with_derived_values_formatted: CampaignConfig,
+    consumer_id: ConsumerId,
+):
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_derived_values_formatted, consumer_id, consumer_mapping_bucket, s3_client
+    )
+    yield consumer_mapping
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+
+
+@pytest.fixture
+def consumer_mapped_to_campaign_config_with_multiple_add_days(
+    s3_client: BaseClient,
+    consumer_mapping_bucket: ConsumerMapping,
+    campaign_config_with_multiple_add_days: CampaignConfig,
+    consumer_id: ConsumerId,
+):
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_multiple_add_days, consumer_id, consumer_mapping_bucket, s3_client
+    )
+    yield consumer_mapping
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+
+
+@pytest.fixture
 def consumer_mapped_to_campaign_having_inactive_iteration_config(
     s3_client: BaseClient,
     consumer_mapping_bucket: ConsumerMapping,
