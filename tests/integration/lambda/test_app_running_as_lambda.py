@@ -23,7 +23,6 @@ from hamcrest import (
 )
 from yarl import URL
 
-from eligibility_signposting_api.config.constants import CONSUMER_ID
 from eligibility_signposting_api.model.campaign_config import CampaignConfig
 from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import NHSNumber
@@ -52,7 +51,7 @@ def test_install_and_call_lambda_flask(
             "accept": "application/json",
             "content-type": "application/json",
             "nhs-login-nhs-number": str(persisted_person),
-            CONSUMER_ID: consumer_id,
+            "consumer-id": consumer_id,
         },
         "pathParameters": {"id": str(persisted_person)},
         "requestContext": {
@@ -99,7 +98,7 @@ def test_install_and_call_flask_lambda_over_http(
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": str(persisted_person), CONSUMER_ID: consumer_id},
+        headers={"nhs-login-nhs-number": str(persisted_person), "consumer-id": consumer_id},
         timeout=10,
     )
 
@@ -127,7 +126,7 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(  # noqa: PLR0913
     invoke_url = f"{api_gateway_endpoint}/patient-check/{nhs_number}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": str(nhs_number), CONSUMER_ID: consumer_id},
+        headers={"nhs-login-nhs-number": str(nhs_number), "consumer-id": consumer_id},
         timeout=10,
     )
 
@@ -204,7 +203,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
         invoke_url,
         headers={
             "nhs-login-nhs-number": str(persisted_person),
-            CONSUMER_ID: consumer_id,
+            "consumer-id": consumer_id,
             "x_request_id": "x_request_id",
             "x_correlation_id": "x_correlation_id",
             "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
@@ -409,7 +408,7 @@ def test_validation_of_query_params_when_all_are_valid(
     invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": persisted_person, CONSUMER_ID: consumer_id},
+        headers={"nhs-login-nhs-number": persisted_person, "consumer-id": consumer_id},
         params={"category": "VACCINATIONS", "conditions": "COVID19", "includeActions": "N"},
         timeout=10,
     )
@@ -453,7 +452,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
         invoke_url,
         headers={
             "nhs-login-nhs-number": str(persisted_person_all_cohorts),
-            CONSUMER_ID: consumer_id,
+            "consumer-id": consumer_id,
             "x_request_id": "x_request_id",
             "x_correlation_id": "x_correlation_id",
             "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
@@ -596,7 +595,7 @@ def test_no_active_iteration_returns_empty_processed_suggestions(
         invoke_url,
         headers={
             "nhs-login-nhs-number": str(persisted_person_all_cohorts),
-            CONSUMER_ID: consumer_id,
+            "consumer-id": consumer_id,
             "x_request_id": "x_request_id",
             "x_correlation_id": "x_correlation_id",
             "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
@@ -636,7 +635,7 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": str(person_with_all_data), CONSUMER_ID: consumer_id},
+        headers={"nhs-login-nhs-number": str(person_with_all_data), "consumer-id": consumer_id},
         timeout=10,
     )
 
@@ -687,7 +686,7 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
     invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
     response = httpx.get(
         invoke_url,
-        headers={"nhs-login-nhs-number": str(person_with_all_data), CONSUMER_ID: consumer_id},
+        headers={"nhs-login-nhs-number": str(person_with_all_data), "consumer-id": consumer_id},
         timeout=10,
     )
 
