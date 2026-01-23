@@ -365,6 +365,9 @@ data "aws_iam_policy_document" "s3_consumer_mapping_kms_key_policy" {
     resources = ["*"]
   }
 
+  #checkov:skip=CKV_AWS_111: Relying on permission boundry
+  #checkov:skip=CKV_AWS_356: Relying on permission boundry
+  #checkov:skip=CKV_AWS_109: Relying on permission boundry
   statement {
     sid    = "AllowLambdaDecrypt"
     effect = "Allow"
