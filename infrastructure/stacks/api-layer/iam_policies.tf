@@ -361,8 +361,13 @@ data "aws_iam_policy_document" "s3_consumer_mapping_kms_key_policy" {
       type = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-    actions = ["kms:*"]
-    resources = ["*"]
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:GenerateDataKey",
+      "kms:DescribeKey",
+    ]
+    resources = [module.s3_consumer_mappings_bucket.storage_bucket_kms_key_arn]
   }
 
   statement {
