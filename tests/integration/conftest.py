@@ -1352,7 +1352,9 @@ def create_and_put_consumer_mapping_in_s3(
     campaign_config: CampaignConfig, consumer_id: str, consumer_mapping_bucket, s3_client
 ) -> ConsumerMapping:
     consumer_mapping = ConsumerMapping.model_validate({})
-    campaign_entry = ConsumerCampaign(Campaign=campaign_config.id, Description="Test description for campaign mapping")
+    campaign_entry = ConsumerCampaign(
+        CampaignConfigId=campaign_config.id, Description="Test description for campaign mapping"
+    )
 
     consumer_mapping.root[ConsumerId(consumer_id)] = [campaign_entry]
     consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
@@ -1528,7 +1530,8 @@ def consumer_to_campaign_having_inactive_iteration_mapping(
 ):
     mapping = ConsumerMapping.model_validate({})
     mapping.root[consumer_id] = [
-        ConsumerCampaign(Campaign=cc.id, Description=f"Description for {cc.id}") for cc in inactive_iteration_config
+        ConsumerCampaign(CampaignConfigId=cc.id, Description=f"Description for {cc.id}")
+        for cc in inactive_iteration_config
     ]
 
     s3_client.put_object(
@@ -1550,7 +1553,8 @@ def consumer_to_multiple_campaign_configs_mapping(
 ) -> Generator[ConsumerMapping]:
     mapping = ConsumerMapping.model_validate({})
     mapping.root[consumer_id] = [
-        ConsumerCampaign(Campaign=cc.id, Description=f"Description for {cc.id}") for cc in multiple_campaign_configs
+        ConsumerCampaign(CampaignConfigId=cc.id, Description=f"Description for {cc.id}")
+        for cc in multiple_campaign_configs
     ]
 
     s3_client.put_object(

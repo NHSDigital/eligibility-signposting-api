@@ -8,7 +8,7 @@ ConsumerId = NewType("ConsumerId", str)
 
 
 class ConsumerCampaign(BaseModel):
-    campaign: CampaignID = Field(alias="Campaign")
+    campaign_config_id: CampaignID = Field(alias="CampaignConfigId")
     description: str | None = Field(default=None, alias="Description")
 
 

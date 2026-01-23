@@ -38,4 +38,4 @@ class ConsumerMappingRepo:
         if mapping_result is None:
             return None
 
-        return [item.campaign for item in mapping_result]
+        return [item.campaign_config_id for item in mapping_result]
