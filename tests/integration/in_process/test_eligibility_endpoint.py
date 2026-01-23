@@ -944,8 +944,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"CampaignConfigId": "RSV_campaign_id"},
-                        {"CampaignConfigId": "COVID_campaign_id"},
+                        {"CampaignConfigID": "RSV_campaign_id"},
+                        {"CampaignConfigID": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -962,8 +962,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"CampaignConfigId": "RSV_campaign_id"},
-                        {"CampaignConfigId": "COVID_campaign_id"},
+                        {"CampaignConfigID": "RSV_campaign_id"},
+                        {"CampaignConfigID": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -980,8 +980,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"CampaignConfigId": "RSV_campaign_id"},
-                        {"CampaignConfigId": "COVID_campaign_id"},
+                        {"CampaignConfigID": "RSV_campaign_id"},
+                        {"CampaignConfigID": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -1001,8 +1001,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"CampaignConfigId": "RSV_campaign_id"},
-                        {"CampaignConfigId": "COVID_campaign_id"},
+                        {"CampaignConfigID": "RSV_campaign_id"},
+                        {"CampaignConfigID": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -1017,8 +1017,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"CampaignConfigId": "RSV_campaign_id"},
-                        {"CampaignConfigId": "COVID_campaign_id"},
+                        {"CampaignConfigID": "RSV_campaign_id"},
+                        {"CampaignConfigID": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -1033,8 +1033,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"CampaignConfigId": "RSV_campaign_id"},
-                        {"CampaignConfigId": "COVID_campaign_id"},
+                        {"CampaignConfigID": "RSV_campaign_id"},
+                        {"CampaignConfigID": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -1054,8 +1054,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"CampaignConfigId": "RSV_campaign_id"},
-                        {"CampaignConfigId": "COVID_campaign_id"},
+                        {"CampaignConfigID": "RSV_campaign_id"},
+                        {"CampaignConfigID": "COVID_campaign_id"},
                     ]
                 },
                 "another-consumer-id",
@@ -1072,8 +1072,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"CampaignConfigId": "RSV_campaign_id"},
-                        {"CampaignConfigId": "COVID_campaign_id"},
+                        {"CampaignConfigID": "RSV_campaign_id"},
+                        {"CampaignConfigID": "COVID_campaign_id"},
                     ]
                 },
                 "another-consumer-id",
@@ -1093,8 +1093,8 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     "consumer-id": [
-                        {"CampaignConfigId": "RSV_campaign_id"},
-                        {"CampaignConfigId": "COVID_campaign_id"},
+                        {"CampaignConfigID": "RSV_campaign_id"},
+                        {"CampaignConfigID": "COVID_campaign_id"},
                     ]
                 },
                 "consumer-id",
@@ -1201,21 +1201,21 @@ class TestEligibilityResponseWithVariousInputs:
                 ],
                 {
                     # Consumer mappings in S3
-                    "consumer-id-1": [{"CampaignConfigId": "RSV_campaign_id_1"}],
-                    "consumer-id-2": [{"CampaignConfigId": "RSV_campaign_id_2"}],
+                    "consumer-id-1": [{"CampaignConfigID": "RSV_campaign_id_1"}],
+                    "consumer-id-2": [{"CampaignConfigID": "RSV_campaign_id_2"}],
                     "consumer-id-3a": [
-                        {"CampaignConfigId": "RSV_campaign_id_3"},
-                        {"CampaignConfigId": "RSV_campaign_id_4"},
+                        {"CampaignConfigID": "RSV_campaign_id_3"},
+                        {"CampaignConfigID": "RSV_campaign_id_4"},
                     ],
                     "consumer-id-3b": [
-                        {"CampaignConfigId": "RSV_campaign_id_4"},
-                        {"CampaignConfigId": "RSV_campaign_id_3"},
+                        {"CampaignConfigID": "RSV_campaign_id_4"},
+                        {"CampaignConfigID": "RSV_campaign_id_3"},
                     ],
                     "consumer-id-4": [
-                        {"CampaignConfigId": "inactive_RSV_campaign_id_5"},
-                        {"CampaignConfigId": "RSV_campaign_id_6"},
+                        {"CampaignConfigID": "inactive_RSV_campaign_id_5"},
+                        {"CampaignConfigID": "RSV_campaign_id_6"},
                     ],
-                    "consumer-id-5": [{"CampaignConfigId": "inactive_RSV_campaign_id_5"}],
+                    "consumer-id-5": [{"CampaignConfigID": "inactive_RSV_campaign_id_5"}],
                 },
                 "RSV",
                 "VACCINATIONS",
@@ -1278,8 +1278,8 @@ class TestEligibilityResponseWithVariousInputs:
             Body=json.dumps(
                 {
                     consumer_id: [
-                        {"CampaignConfigId": "RSV_campaign_id_not_actionable"},
-                        {"CampaignConfigId": "RSV_campaign_id_actionable"},
+                        {"CampaignConfigID": "RSV_campaign_id_not_actionable"},
+                        {"CampaignConfigID": "RSV_campaign_id_actionable"},
                     ],
                 }
             ),
