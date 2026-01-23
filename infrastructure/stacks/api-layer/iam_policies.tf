@@ -329,14 +329,8 @@ data "aws_iam_policy_document" "s3_rules_kms_key_policy" {
       type = "AWS"
       identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
-
-    actions = [
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:GenerateDataKey",
-      "kms:DescribeKey",
-    ]
-    resources = [module.s3_rules_bucket.storage_bucket_kms_key_arn]
+    actions = ["kms:*"]
+    resources = ["*"]
   }
 
   statement {
@@ -347,7 +341,7 @@ data "aws_iam_policy_document" "s3_rules_kms_key_policy" {
       identifiers = [aws_iam_role.eligibility_lambda_role.arn]
     }
     actions = ["kms:Decrypt"]
-    resources = [module.s3_rules_bucket.storage_bucket_kms_key_arn]
+    resources = ["*"]
   }
 }
 
@@ -384,7 +378,7 @@ data "aws_iam_policy_document" "s3_consumer_mapping_kms_key_policy" {
       identifiers = [aws_iam_role.eligibility_lambda_role.arn]
     }
     actions = ["kms:Decrypt"]
-    resources = [module.s3_consumer_mappings_bucket.storage_bucket_kms_key_arn]
+    resources = ["*"]
   }
 }
 
