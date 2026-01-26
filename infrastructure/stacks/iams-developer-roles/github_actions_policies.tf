@@ -217,6 +217,8 @@ resource "aws_iam_policy" "s3_management" {
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules-access-logs/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit-access-logs",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-consumer-map-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-consumer-map-access-logs/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs",
