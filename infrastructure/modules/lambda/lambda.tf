@@ -17,14 +17,15 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
 
   environment {
     variables = {
-      PERSON_TABLE_NAME          = var.eligibility_status_table_name,
-      RULES_BUCKET_NAME          = var.eligibility_rules_bucket_name,
-      KINESIS_AUDIT_STREAM_TO_S3 = var.kinesis_audit_stream_to_s3_name
-      ENV                        = var.environment
-      LOG_LEVEL                  = var.log_level
-      ENABLE_XRAY_PATCHING       = var.enable_xray_patching
-      API_DOMAIN_NAME            = var.api_domain_name
-      HASHING_SECRET_NAME        = var.hashing_secret_name
+      PERSON_TABLE_NAME            = var.eligibility_status_table_name,
+      RULES_BUCKET_NAME            = var.eligibility_rules_bucket_name,
+      CONSUMER_MAPPING_BUCKET_NAME = var.eligibility_consumer_mappings_bucket_name,
+      KINESIS_AUDIT_STREAM_TO_S3   = var.kinesis_audit_stream_to_s3_name
+      ENV                          = var.environment
+      LOG_LEVEL                    = var.log_level
+      ENABLE_XRAY_PATCHING         = var.enable_xray_patching
+      API_DOMAIN_NAME              = var.api_domain_name
+      HASHING_SECRET_NAME          = var.hashing_secret_name
     }
   }
 

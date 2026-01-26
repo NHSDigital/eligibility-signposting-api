@@ -7,6 +7,7 @@ from flask import request
 
 from eligibility_signposting_api.common import request_validator
 from eligibility_signposting_api.common.request_validator import logger
+from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
 
 @pytest.fixture(autouse=True)
@@ -42,7 +43,7 @@ class TestValidateRequestParams:
     @pytest.mark.parametrize(
         "headers",
         [
-            {},  # header missing entirely - request from application restricted consumer
+            {},  # nhs header missing entirely - request from application restricted consumer
             {"nhs-login-nhs-number": "1234567890"},  # valid request from consumer
         ],
     )
@@ -54,7 +55,7 @@ class TestValidateRequestParams:
 
         with app.test_request_context(
             "/dummy?id=1234567890",
-            headers=headers,
+            headers={UNIQUE_CONSUMER_HEADER: "some-consumer"} | headers,
             method="GET",
         ):
             with caplog.at_level(logging.INFO):
@@ -80,7 +81,7 @@ class TestValidateRequestParams:
 
         with app.test_request_context(
             "/dummy?id=1234567890",
-            headers=headers,
+            headers={UNIQUE_CONSUMER_HEADER: "some-id"} | headers,
             method="GET",
         ):
             with caplog.at_level(logging.INFO):
@@ -97,6 +98,58 @@ class TestValidateRequestParams:
             assert issue["details"]["coding"][0]["display"] == "Access has been denied to process this request."
             assert issue["diagnostics"] == "You are not authorised to request information for the supplied NHS Number"
             assert response.headers["Content-Type"] == "application/fhir+json"
+
+    def test_validate_request_params_consumer_id_present(self, app, caplog):
+        mock_api = MagicMock(return_value="ok")
+
+        decorator = request_validator.validate_request_params()
+        dummy_route = decorator(mock_api)
+
+        with (
+            app.test_request_context(
+                "/dummy?id=1234567890",
+                headers={
+                    UNIQUE_CONSUMER_HEADER: "some-consumer",
+                    "nhs-login-nhs-number": "1234567890",
+                },
+                method="GET",
+            ),
+            caplog.at_level(logging.INFO),
+        ):
+            response = dummy_route(nhs_number=request.args.get("id"))
+
+        mock_api.assert_called_once()
+        assert response == "ok"
+        assert not any(record.levelname == "ERROR" for record in caplog.records)
+
+    def test_validate_request_params_missing_consumer_id(self, app, caplog):
+        mock_api = MagicMock()
+
+        decorator = request_validator.validate_request_params()
+        dummy_route = decorator(mock_api)
+
+        with (
+            app.test_request_context(
+                "/dummy?id=1234567890",
+                headers={"nhs-login-nhs-number": "1234567890"},  # no consumer ID
+                method="GET",
+            ),
+            caplog.at_level(logging.ERROR),
+        ):
+            response = dummy_route(nhs_number=request.args.get("id"))
+
+        mock_api.assert_not_called()
+
+        assert response is not None
+        assert response.status_code == HTTPStatus.FORBIDDEN
+        response_json = response.json
+
+        issue = response_json["issue"][0]
+        assert issue["code"] == "forbidden"
+        assert issue["details"]["coding"][0]["code"] == "ACCESS_DENIED"
+        assert issue["details"]["coding"][0]["display"] == "Access has been denied to process this request."
+        assert issue["diagnostics"] == "You are not authorised to request"
+        assert response.headers["Content-Type"] == "application/fhir+json"
 
 
 class TestValidateQueryParameters:
