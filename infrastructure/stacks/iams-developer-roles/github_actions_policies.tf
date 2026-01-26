@@ -209,6 +209,8 @@ resource "aws_iam_policy" "s3_management" {
         Resource = [
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-consumer-map",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-consumer-map/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules-access-logs",
