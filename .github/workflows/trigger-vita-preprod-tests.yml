@@ -7,7 +7,5 @@ jobs:
   call-vita-tests:
     name: Call Vita Integration Tests
     uses: NHSDigital/eligibility-signposting-api-regression-tests/.github/workflows/my-vaccs-int-tests.yml@main
-    with:
-      environment: preprod
     secrets:
-      ELID_PREPROD_AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      ELID_PREPROD_AWS_ACCOUNT_ID: ${{ secrets.PREPROD_AWS_ACCOUNT_ID }}
