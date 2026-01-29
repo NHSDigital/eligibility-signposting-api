@@ -43,8 +43,9 @@ from hamcrest import (
     none,
 )
 
-from eligibility_signposting_api.model.campaign_config import CampaignConfig
+from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import NHSNumber
+from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
 
 class TestDerivedValues:
@@ -54,7 +55,8 @@ class TestDerivedValues:
         self,
         client: FlaskClient,
         person_with_covid_vaccination: NHSNumber,
-        campaign_config_with_derived_values: CampaignConfig,  # noqa: ARG002
+        consumer_id: ConsumerId,
+        consumer_to_active_campaign_config_with_derived_values_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         """
@@ -77,7 +79,7 @@ class TestDerivedValues:
             ]
         """
         # Given
-        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination)}
+        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination), UNIQUE_CONSUMER_HEADER: str(consumer_id)}
 
         # When
         response = client.get(
@@ -126,7 +128,8 @@ class TestDerivedValues:
         self,
         client: FlaskClient,
         person_with_covid_vaccination: NHSNumber,
-        campaign_config_with_derived_values_formatted: CampaignConfig,  # noqa: ARG002
+        consumer_id: ConsumerId,
+        consumer_to_active_campaign_config_with_derived_values_formatted_mapping: ConsumerMapping,  # noqa: ARG002
         secretsmanager_client: BaseClient,  # noqa: ARG002
     ):
         """
@@ -140,7 +143,7 @@ class TestDerivedValues:
             - DateOfNextEarliestVaccination shows "29 April 2026" (formatted output)
         """
         # Given
-        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination)}
+        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination), UNIQUE_CONSUMER_HEADER: str(consumer_id)}
 
         # When
         response = client.get(
@@ -179,7 +182,8 @@ class TestMultipleActionsWithAddDays:
     def test_multiple_actions_with_different_add_days_parameters(
         self,
         client: FlaskClient,
-        campaign_config_with_multiple_add_days: CampaignConfig,  # noqa: ARG002
+        consumer_id: ConsumerId,
+        consumer_to_active_campaign_config_with_multiple_add_days_mapping: ConsumerMapping,  # noqa: ARG002
         person_with_covid_vaccination: NHSNumber,
     ):
         """
@@ -207,7 +211,7 @@ class TestMultipleActionsWithAddDays:
         function with different parameters.
         """
         # Given
-        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination)}
+        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination), UNIQUE_CONSUMER_HEADER: str(consumer_id)}
 
         # When
         response = client.get(
