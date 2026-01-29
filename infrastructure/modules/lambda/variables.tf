@@ -44,6 +44,11 @@ variable "eligibility_rules_bucket_name" {
   type        = string
 }
 
+variable "eligibility_consumer_mappings_bucket_name" {
+  description = "consumer mappings bucket name"
+  type        = string
+}
+
 variable "eligibility_status_table_name" {
   description = "eligibility datastore table name"
   type        = string

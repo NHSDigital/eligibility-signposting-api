@@ -1,0 +1,11 @@
+name: Trigger Vita Preprod Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  call-vita-tests:
+    name: Call Vita Integration Tests
+    uses: NHSDigital/eligibility-signposting-api-regression-tests/.github/workflows/my-vaccs-int-tests.yml@main
+    secrets:
+      ELID_PREPROD_AWS_ACCOUNT_ID: ${{ secrets.PREPROD_AWS_ACCOUNT_ID }}

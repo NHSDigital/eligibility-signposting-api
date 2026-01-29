@@ -29,10 +29,10 @@ from eligibility_signposting_api.model.eligibility_status import (
 )
 from eligibility_signposting_api.services import EligibilityService, UnknownPersonError
 from eligibility_signposting_api.views.eligibility import (
+    _get_or_default_query_params,
     build_actions,
     build_eligibility_cohorts,
     build_suitability_results,
-    get_or_default_query_params,
 )
 from eligibility_signposting_api.views.response_model import eligibility_response
 from tests.fixtures.builders.model.eligibility import (
@@ -41,6 +41,7 @@ from tests.fixtures.builders.model.eligibility import (
     EligibilityStatusFactory,
 )
 from tests.fixtures.matchers.eligibility import is_eligibility_cohort
+from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ class FakeEligibilityService(EligibilityService):
         _include_actions: str,
         _conditions: list[str],
         _category: str,
+        _consumer_id: str,
     ) -> EligibilityStatus:
         return EligibilityStatusFactory.build()
 
@@ -74,6 +76,7 @@ class FakeUnknownPersonEligibilityService(EligibilityService):
         _include_actions: str,
         _conditions: list[str],
         _category: str,
+        _consumer_id: str,
     ) -> EligibilityStatus:
         raise UnknownPersonError
 
@@ -100,7 +103,7 @@ def test_security_headers_present_on_successful_response(app: Flask, client: Fla
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
     ):
         # When
-        headers = {"nhs-login-nhs-number": "9876543210"}
+        headers = {"nhs-login-nhs-number": "9876543210", UNIQUE_CONSUMER_HEADER: "test_consumer_id"}
         response = client.get("/patient-check/9876543210", headers=headers)
 
         # Then
@@ -128,7 +131,7 @@ def test_security_headers_present_on_error_response(app: Flask, client: FlaskCli
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
     ):
         # When
-        headers = {"nhs-login-nhs-number": "9876543210"}
+        headers = {"nhs-login-nhs-number": "9876543210", UNIQUE_CONSUMER_HEADER: "test_customer_id"}
         response = client.get("/patient-check/9876543210", headers=headers)
 
         # Then
@@ -177,7 +180,7 @@ def test_nhs_number_given(app: Flask, client: FlaskClient):
         get_app_container(app).override.service(AuditService, new=FakeAuditService()),
     ):
         # Given
-        headers = {"nhs-login-nhs-number": str(12345)}
+        headers = {"nhs-login-nhs-number": str(12345), UNIQUE_CONSUMER_HEADER: "test_customer_id"}
 
         # When
         response = client.get("/patient-check/12345", headers=headers)
@@ -190,7 +193,7 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
     # Given
     with get_app_container(app).override.service(EligibilityService, new=FakeUnknownPersonEligibilityService()):
         # Given
-        headers = {"nhs-login-nhs-number": str(12345)}
+        headers = {"nhs-login-nhs-number": str(12345), UNIQUE_CONSUMER_HEADER: "test_customer_id"}
 
         # When
         response = client.get("/patient-check/", headers=headers)
@@ -229,7 +232,7 @@ def test_no_nhs_number_given(app: Flask, client: FlaskClient):
 
 def test_unexpected_error(app: Flask, client: FlaskClient):
     # Given
-    headers = {"nhs-login-nhs-number": str(12345)}
+    headers = {"nhs-login-nhs-number": str(12345), UNIQUE_CONSUMER_HEADER: "test_customer_id"}
 
     with get_app_container(app).override.service(EligibilityService, new=FakeUnexpectedErrorEligibilityService()):
         response = client.get("/patient-check/12345", headers=headers)
@@ -439,7 +442,10 @@ def test_excludes_nulls_via_build_response(client: FlaskClient):
             return_value=mocked_response,
         ),
     ):
-        response = client.get("/patient-check/12345", headers={"nhs-login-nhs-number": str(12345)})
+        response = client.get(
+            "/patient-check/12345",
+            headers={"nhs-login-nhs-number": str(12345), UNIQUE_CONSUMER_HEADER: "test_customer_id"},
+        )
         assert response.status_code == HTTPStatus.OK
 
         payload = json.loads(response.data)
@@ -491,7 +497,10 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
             return_value=mocked_response,
         ),
     ):
-        response = client.get("/patient-check/12345", headers={"nhs-login-nhs-number": str(12345)})
+        response = client.get(
+            "/patient-check/12345",
+            headers={"nhs-login-nhs-number": str(12345), UNIQUE_CONSUMER_HEADER: "test_customer_id"},
+        )
         assert response.status_code == HTTPStatus.OK
 
         payload = json.loads(response.data)
@@ -507,7 +516,7 @@ def test_build_response_include_values_that_are_not_null(client: FlaskClient):
 
 def test_get_or_default_query_params_with_no_args(app: Flask):
     with app.test_request_context("/patient-check"):
-        result = get_or_default_query_params()
+        result = _get_or_default_query_params()
 
         expected = {"category": "ALL", "conditions": ["ALL"], "includeActions": "Y"}
 
@@ -516,7 +525,7 @@ def test_get_or_default_query_params_with_no_args(app: Flask):
 
 def test_get_or_default_query_params_with_all_args(app: Flask):
     with app.test_request_context("/patient-check?includeActions=Y&category=VACCINATIONS&conditions=FLU"):
-        result = get_or_default_query_params()
+        result = _get_or_default_query_params()
 
         expected = {"includeActions": "Y", "category": "VACCINATIONS", "conditions": ["FLU"]}
 
@@ -525,7 +534,7 @@ def test_get_or_default_query_params_with_all_args(app: Flask):
 
 def test_get_or_default_query_params_with_partial_args(app: Flask):
     with app.test_request_context("/patient-check?includeActions=N"):
-        result = get_or_default_query_params()
+        result = _get_or_default_query_params()
 
         expected = {"includeActions": "N", "category": "ALL", "conditions": ["ALL"]}
 
@@ -534,13 +543,13 @@ def test_get_or_default_query_params_with_partial_args(app: Flask):
 
 def test_get_or_default_query_params_with_lowercase_y(app: Flask):
     with app.test_request_context("/patient-check?includeActions=y"):
-        result = get_or_default_query_params()
+        result = _get_or_default_query_params()
         assert_that(result["includeActions"], is_("Y"))
 
 
 def test_get_or_default_query_params_missing_include_actions(app: Flask):
     with app.test_request_context("/patient-check?category=SCREENING&conditions=COVID19,FLU"):
-        result = get_or_default_query_params()
+        result = _get_or_default_query_params()
 
         expected = {"includeActions": "Y", "category": "SCREENING", "conditions": ["COVID19", "FLU"]}
 
@@ -581,3 +590,30 @@ def test_status_endpoint(app: Flask, client: FlaskClient):
                 )
             ),
         )
+
+
+def test_consumer_id_is_passed_to_service(app: Flask, client: FlaskClient):
+    """
+    Verifies that the consumer ID from the header is actually passed
+    to the eligibility service call.
+    """
+    # Given
+    mock_service = MagicMock(spec=EligibilityService)
+    mock_service.get_eligibility_status.return_value = EligibilityStatusFactory.build()
+
+    with (
+        get_app_container(app).override.service(EligibilityService, new=mock_service),
+        get_app_container(app).override.service(AuditService, new=FakeAuditService()),
+    ):
+        headers = {"nhs-login-nhs-number": "1234567890", UNIQUE_CONSUMER_HEADER: "specific_consumer_123"}
+
+        # When
+        client.get("/patient-check/1234567890", headers=headers)
+
+        # Then
+        # Verify the 5th positional argument or the keyword argument 'consumer_id'
+        mock_service.get_eligibility_status.assert_called_once()
+        args, _kwargs = mock_service.get_eligibility_status.call_args
+
+        # Check that 'specific_consumer_123' was the consumer_id passed
+        assert args[4] == "specific_consumer_123"
