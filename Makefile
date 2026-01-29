@@ -11,7 +11,11 @@ install-python:
 
 #Configures Git Hooks, which are scripts that run given a specified event.
 .git/hooks/pre-commit:
-	cp scripts/pre-commit .git/hooks/pre-commit
+	@if [ -f scripts/pre-commit ]; then \
+		cp scripts/pre-commit .git/hooks/pre-commit; \
+	else \
+		echo "Warning: scripts/pre-commit not found, skipping git hook installation"; \
+	fi
 
 #Condensed Target to run all targets above.
 install: install-python .git/hooks/pre-commit
