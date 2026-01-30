@@ -444,3 +444,167 @@ class TestTokenProcessor:
 
         assert result.status_text == f"Your DOB is: {expected}."
         assert result.condition_name == f"FLU vaccine on: {expected}."
+
+
+class TestCustomTargetAttributeNames:
+    """Test that custom target attribute names work with derived values."""
+
+    def test_custom_target_attribute_with_add_days_when_data_present(self):
+        """Test that custom target attributes like NEXT_BOOKING_AVAILABLE work when data is present."""
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20260128"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("Test"),
+            status=Status.actionable,
+            status_text=StatusText(
+                "Next booking: [[TARGET.COVID.NEXT_BOOKING_AVAILABLE:ADD_DAYS(71, LAST_SUCCESSFUL_DATE)]]"
+            ),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        result = TokenProcessor.find_and_replace_tokens(person, condition)
+
+        # 2026-01-28 + 71 days = 2026-04-09
+        assert result.status_text == "Next booking: 20260409"
+
+    def test_custom_target_attribute_with_add_days_and_formatting(self):
+        """Test that custom target attributes work with both ADD_DAYS and DATE formatting."""
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20260128"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("Test"),
+            status=Status.actionable,
+            status_text=StatusText(
+                "Date: [[TARGET.COVID.NEXT_BOOKING_AVAILABLE:ADD_DAYS(71, LAST_SUCCESSFUL_DATE):DATE(%d %B %Y)]]"
+            ),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        result = TokenProcessor.find_and_replace_tokens(person, condition)
+
+        # 2026-01-28 + 71 days = 2026-04-09, formatted as "09 April 2026"
+        assert result.status_text == "Date: 09 April 2026"
+
+    def test_custom_target_attribute_returns_empty_when_condition_not_present(self):
+        """Test that custom target attributes return empty string when condition data not present."""
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
+                # No COVID data present
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("Test"),
+            status=Status.actionable,
+            status_text=StatusText(
+                "Next booking: [[TARGET.COVID.NEXT_BOOKING_AVAILABLE:ADD_DAYS(71, LAST_SUCCESSFUL_DATE)]]"
+            ),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        result = TokenProcessor.find_and_replace_tokens(person, condition)
+
+        # Should return empty string when condition data is not present
+        assert result.status_text == "Next booking: "
+
+    def test_multiple_custom_target_attributes_with_different_functions(self):
+        """Test multiple custom target attributes with different parameters."""
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20260128"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("Test"),
+            status=Status.actionable,
+            status_text=StatusText(
+                "First: [[TARGET.COVID.CUSTOM_FIELD_A:ADD_DAYS(30, LAST_SUCCESSFUL_DATE)]] "
+                "Second: [[TARGET.COVID.CUSTOM_FIELD_B:ADD_DAYS(60, LAST_SUCCESSFUL_DATE)]]"
+            ),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        result = TokenProcessor.find_and_replace_tokens(person, condition)
+
+        # 2026-01-28 + 30 = 2026-02-27, + 60 = 2026-03-29
+        assert result.status_text == "First: 20260227 Second: 20260329"
+
+    def test_custom_target_attribute_raises_error_for_invalid_condition(self):
+        """Test that invalid condition names still raise errors even with custom target attributes."""
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "PERSON", "AGE": "30"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("Test"),
+            status=Status.actionable,
+            status_text=StatusText("Invalid: [[TARGET.INVALID_CONDITION.CUSTOM_FIELD:ADD_DAYS(30)]]"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        with pytest.raises(ValueError, match="Invalid attribute name 'CUSTOM_FIELD'"):
+            TokenProcessor.find_and_replace_tokens(person, condition)
+
+    def test_non_derived_token_with_invalid_target_attribute_raises_error(self):
+        """Test that non-derived tokens (without functions) validate target attributes strictly."""
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20260128"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("Test"),
+            status=Status.actionable,
+            status_text=StatusText("Invalid: [[TARGET.COVID.CUSTOM_INVALID_FIELD]]"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        # Non-derived tokens should only allow ALLOWED_TARGET_ATTRIBUTES
+        with pytest.raises(ValueError, match="Invalid attribute name 'CUSTOM_INVALID_FIELD'"):
+            TokenProcessor.find_and_replace_tokens(person, condition)
+
+    def test_non_derived_token_with_valid_target_attribute_works(self):
+        """Test that non-derived tokens with valid target attributes work correctly."""
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20260128"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("Test"),
+            status=Status.actionable,
+            status_text=StatusText("Last date: [[TARGET.COVID.LAST_SUCCESSFUL_DATE]]"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        result = TokenProcessor.find_and_replace_tokens(person, condition)
+
+        assert result.status_text == "Last date: 20260128"

@@ -94,6 +94,9 @@ class TokenProcessor:
         if parsed_token.function_name:
             return TokenProcessor.get_derived_value(parsed_token, person_data, present_attributes, token)
 
+        # For non-derived tokens, validate that target attributes are allowed
+        TokenProcessor.validate_target_attribute(parsed_token, token)
+
         found_attribute, key_to_replace = TokenProcessor.find_matching_attribute(parsed_token, person_data)
 
         if not found_attribute or not key_to_replace:
@@ -139,17 +142,16 @@ class TokenProcessor:
         # For TARGET level tokens, validate the condition is allowed
         if parsed_token.attribute_level == TARGET_ATTRIBUTE_LEVEL:
             is_allowed_condition = parsed_token.attribute_name in ALLOWED_CONDITIONS.__args__
-            is_allowed_target_attr = parsed_token.attribute_value in ALLOWED_TARGET_ATTRIBUTES
 
             # If condition is not allowed, raise error
             if not is_allowed_condition:
                 TokenProcessor.handle_token_not_found(parsed_token, token)
 
-            # If vaccine type is not in person data but is allowed, return empty
+            # If vaccine type is not in person data, return empty string
+            # For derived values, any target attribute name is allowed (e.g., NEXT_BOOKING_AVAILABLE)
+            # since it's just a placeholder that may be surfaced in the future
             if parsed_token.attribute_name not in present_attributes:
-                if is_allowed_target_attr:
-                    return ""
-                TokenProcessor.handle_token_not_found(parsed_token, token)
+                return ""
 
         try:
             target_attribute = parsed_token.attribute_value or parsed_token.attribute_name
@@ -184,6 +186,26 @@ class TokenProcessor:
         is_attr_not_present = parsed_token.attribute_name not in present_attributes
 
         return all([is_target_level, is_allowed_condition, is_allowed_target_attr, is_attr_not_present])
+
+    @staticmethod
+    def validate_target_attribute(parsed_token: ParsedToken, token: str) -> None:
+        """Validate that target attribute is allowed for non-derived tokens.
+
+        For regular (non-derived) tokens, only allow known target attributes.
+        Derived values with functions can use any custom target attribute name.
+
+        Args:
+            parsed_token: The parsed token to validate
+            token: The original token string for error messages
+
+        Raises:
+            ValueError: If the target attribute is not in ALLOWED_TARGET_ATTRIBUTES
+        """
+        if (
+            parsed_token.attribute_level == TARGET_ATTRIBUTE_LEVEL
+            and parsed_token.attribute_value not in ALLOWED_TARGET_ATTRIBUTES
+        ):
+            TokenProcessor.handle_token_not_found(parsed_token, token)
 
     @staticmethod
     def find_matching_attribute(parsed_token: ParsedToken, person_data: list[dict]) -> tuple[dict | None, str | None]:
