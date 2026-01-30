@@ -137,7 +137,7 @@ jobs:
 
       - name: "Upload lambda artifact"
         if: steps.check.outputs.exists == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: lambda-${{ needs.validate.outputs.dev_tag }}
           path: dist/lambda.zip
@@ -185,7 +185,7 @@ jobs:
           echo "✅ Uploaded artifact to s3://$BUCKET/artifacts/$TAG/lambda.zip"
 
       - name: "Upload lambda artifact"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: lambda-${{ needs.validate.outputs.dev_tag }}
           path: dist/lambda.zip
