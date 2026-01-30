@@ -608,3 +608,47 @@ class TestCustomTargetAttributeNames:
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
         assert result.status_text == "Last date: 20260128"
+
+    def test_person_level_attribute_with_add_days_without_explicit_source(self):
+        """Test that ADD_DAYS works on PERSON-level attributes without explicit source."""
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "PERSON", "DATE_OF_BIRTH": "19900327"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("Test"),
+            status=Status.actionable,
+            status_text=StatusText("Future date: [[PERSON.DATE_OF_BIRTH:ADD_DAYS(91)]]"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        result = TokenProcessor.find_and_replace_tokens(person, condition)
+
+        # 1990-03-27 + 91 days = 1990-06-26
+        assert result.status_text == "Future date: 19900626"
+
+    def test_person_level_attribute_with_add_days_explicit_source(self):
+        """Test that ADD_DAYS works on PERSON-level attributes with explicit source."""
+        person = Person(
+            [
+                {"ATTRIBUTE_TYPE": "PERSON", "DATE_OF_BIRTH": "19900327"},
+            ]
+        )
+
+        condition = Condition(
+            condition_name=ConditionName("Test"),
+            status=Status.actionable,
+            status_text=StatusText("Future date: [[PERSON.DATE_OF_BIRTH:ADD_DAYS(91, DATE_OF_BIRTH)]]"),
+            cohort_results=[],
+            suitability_rules=[],
+            actions=[],
+        )
+
+        result = TokenProcessor.find_and_replace_tokens(person, condition)
+
+        # 1990-03-27 + 91 days = 1990-06-26
+        assert result.status_text == "Future date: 19900626"

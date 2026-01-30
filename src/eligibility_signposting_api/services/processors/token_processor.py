@@ -167,6 +167,7 @@ class TokenProcessor:
                 source_attribute=source_attribute,
                 function_args=parsed_token.function_args,
                 date_format=parsed_token.format,
+                attribute_level=parsed_token.attribute_level,
             )
 
             return registry.calculate(
