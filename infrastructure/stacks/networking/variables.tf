@@ -13,3 +13,8 @@ variable "API_PRIVATE_KEY_CERT" {
   description = "The private key for the signed Client Certificate"
   sensitive   = true
 }
+variable "PROXYGEN_PRIVATE_KEY" {
+  type        = string
+  description = "The private key for Proxygen authentication"
+  sensitive   = true
+}

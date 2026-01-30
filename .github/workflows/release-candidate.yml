@@ -103,9 +103,9 @@ jobs:
       - name: "Get S3 bucket name"
         id: bucket
         run: |
-          cd infrastructure/stacks/api-layer
-          terraform init -backend=true
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          cd infrastructure
+          make terraform env=dev stack=api-layer tf-command=init workspace=default
+          BUCKET=$(terraform -chdir=./stacks/api-layer output -raw lambda_artifact_bucket)
           echo "name=$BUCKET" >> $GITHUB_OUTPUT
           echo "📦 S3 Bucket: $BUCKET"
 
@@ -123,6 +123,25 @@ jobs:
             echo "❌ Artifact NOT found: s3://$BUCKET/$S3_KEY"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: "Download artifact for workflow reuse"
+        if: steps.check.outputs.exists == 'true'
+        run: |
+          TAG="${{ needs.validate.outputs.dev_tag }}"
+          BUCKET="${{ steps.bucket.outputs.name }}"
+          mkdir -p ./dist
+          aws s3 cp \
+            "s3://$BUCKET/artifacts/$TAG/lambda.zip" \
+            ./dist/lambda.zip \
+            --region eu-west-2
+
+      - name: "Upload lambda artifact"
+        if: steps.check.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-${{ needs.validate.outputs.dev_tag }}
+          path: dist/lambda.zip
+          if-no-files-found: error
 
   rebuild-artifact:
     name: "Rebuild and upload artifact (if missing)"
@@ -165,6 +184,13 @@ jobs:
             --region eu-west-2
           echo "✅ Uploaded artifact to s3://$BUCKET/artifacts/$TAG/lambda.zip"
 
+      - name: "Upload lambda artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-${{ needs.validate.outputs.dev_tag }}
+          path: dist/lambda.zip
+          if-no-files-found: error
+
   deploy-to-test:
     name: "Deploy to Test (optional)"
     runs-on: ubuntu-latest
@@ -189,21 +215,11 @@ jobs:
         with:
           terraform_version: $(grep '^terraform' .tool-versions | cut -f2 -d' ')
 
-      - name: "Configure AWS Credentials (dev) - to download artifact"
-        uses: aws-actions/configure-aws-credentials@v5
+      - name: "Download lambda artifact"
+        uses: actions/download-artifact@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
-          aws-region: eu-west-2
-
-      - name: "Download lambda from S3 (dev bucket)"
-        run: |
-          TAG="${{ needs.validate.outputs.dev_tag }}"
-          BUCKET="${{ needs.verify-artifact.outputs.s3_bucket }}"
-          mkdir -p ./dist
-          aws s3 cp \
-            "s3://$BUCKET/artifacts/$TAG/lambda.zip" \
-            ./dist/lambda.zip \
-            --region eu-west-2
+          name: lambda-${{ needs.validate.outputs.dev_tag }}
+          path: dist
 
       - name: "Configure AWS Credentials (test)"
         uses: aws-actions/configure-aws-credentials@v5
@@ -220,6 +236,7 @@ jobs:
           TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
           TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
           TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
+          TF_VAR_OPERATOR_EMAILS: ${{ vars.SECRET_ROTATION_OPERATOR_EMAILS }}
         run: |
           mkdir -p ./build
           echo "🚀 Deploying ${{ needs.validate.outputs.dev_tag }} to TEST"
@@ -237,8 +254,9 @@ jobs:
       - name: "Get test S3 bucket"
         id: test_bucket
         run: |
-          cd infrastructure/stacks/api-layer
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          cd infrastructure
+          make terraform env=test stack=api-layer tf-command=init workspace=default
+          BUCKET=$(terraform -chdir=./stacks/api-layer output -raw lambda_artifact_bucket)
           echo "name=$BUCKET" >> $GITHUB_OUTPUT
 
       - name: "Upload lambda to test S3"
@@ -295,42 +313,11 @@ jobs:
         with:
           terraform_version: $(grep '^terraform' .tool-versions | cut -f2 -d' ')
 
-      - name: "Determine source bucket (test or dev)"
-        id: source
-        run: |
-          if [[ "${{ inputs.deploy_to_test }}" == "true" ]]; then
-            echo "environment=test" >> $GITHUB_OUTPUT
-          else
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          fi
-
-      - name: "Configure AWS Credentials (source) - to download artifact"
-        uses: aws-actions/configure-aws-credentials@v5
+      - name: "Download lambda artifact"
+        uses: actions/download-artifact@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
-          aws-region: eu-west-2
-
-      - name: "Get source S3 bucket"
-        id: source_bucket
-        env:
-          ENV: ${{ steps.source.outputs.environment }}
-        run: |
-          cd infrastructure
-          make terraform env=$ENV stack=api-layer tf-command=init workspace=default
-          cd stacks/api-layer
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
-          echo "name=$BUCKET" >> $GITHUB_OUTPUT
-          echo "📦 Source bucket ($ENV): $BUCKET"
-
-      - name: "Download lambda from source S3"
-        run: |
-          TAG="${{ needs.validate.outputs.dev_tag }}"
-          BUCKET="${{ steps.source_bucket.outputs.name }}"
-          mkdir -p ./dist
-          aws s3 cp \
-            "s3://$BUCKET/artifacts/$TAG/lambda.zip" \
-            ./dist/lambda.zip \
-            --region eu-west-2
+          name: lambda-${{ needs.validate.outputs.dev_tag }}
+          path: dist
 
       - name: "Configure AWS Credentials (preprod)"
         uses: aws-actions/configure-aws-credentials@v5
@@ -347,6 +334,7 @@ jobs:
           TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
           TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
           TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
+          TF_VAR_OPERATOR_EMAILS: ${{ vars.SECRET_ROTATION_OPERATOR_EMAILS }}
         run: |
           mkdir -p ./build
           echo "🚀 Deploying ${{ needs.validate.outputs.dev_tag }} to PREPROD"
@@ -381,8 +369,9 @@ jobs:
       - name: "Get preprod S3 bucket"
         id: preprod_bucket
         run: |
-          cd infrastructure/stacks/api-layer
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          cd infrastructure
+          make terraform env=preprod stack=api-layer tf-command=init workspace=default
+          BUCKET=$(terraform -chdir=./stacks/api-layer output -raw lambda_artifact_bucket)
           echo "name=$BUCKET" >> $GITHUB_OUTPUT
 
       - name: "Upload lambda to preprod S3"
