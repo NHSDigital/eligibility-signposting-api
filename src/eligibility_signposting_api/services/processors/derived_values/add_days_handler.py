@@ -108,8 +108,12 @@ class AddDaysHandler(DerivedValueHandler):
         if not source_attr:
             return None
 
+        # For PERSON-level attributes, look for ATTRIBUTE_TYPE == "PERSON"
+        # For TARGET-level attributes, look for ATTRIBUTE_TYPE == context.attribute_name (e.g., "COVID")
+        attribute_type_to_match = "PERSON" if context.attribute_level == "PERSON" else context.attribute_name
+
         for attribute in context.person_data:
-            if attribute.get("ATTRIBUTE_TYPE") == context.attribute_name:
+            if attribute.get("ATTRIBUTE_TYPE") == attribute_type_to_match:
                 return attribute.get(source_attr)
 
         return None
