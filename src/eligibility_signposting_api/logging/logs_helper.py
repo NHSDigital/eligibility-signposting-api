@@ -20,6 +20,8 @@ def log_request_ids_from_headers() -> Callable:
                     "x_request_id": headers.get("X-Request-ID"),
                     "x_correlation_id": headers.get("X-Correlation-ID"),
                     "gateway_request_id": gateway_request_id,
+                    "nhse_product_id": headers.get("nhse-product-id"),
+                    "nhsd_application_id": headers.get("nhsd-application-id"),
                 },
             )
             return func(event, context)

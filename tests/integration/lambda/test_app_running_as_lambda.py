@@ -231,6 +231,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
         "xCorrelationId": "x_correlation_id",
         "nhsdEndUserOrganisationOds": "nhsd_end_user_organisation_ods",
         "nhsdApplicationId": "nhsd-application-id",
+        "nhseProductId": consumer_id,
     }
     expected_query_params = {"category": None, "conditions": None, "includeActions": "Y"}
 
@@ -478,6 +479,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
         "xCorrelationId": "x_correlation_id",
         "nhsdEndUserOrganisationOds": "nhsd_end_user_organisation_ods",
         "nhsdApplicationId": "nhsd-application-id",
+        "nhseProductId": consumer_id,
     }
     expected_query_params = {"category": "VACCINATIONS", "conditions": "COVID,FLU,RSV", "includeActions": "Y"}
 
