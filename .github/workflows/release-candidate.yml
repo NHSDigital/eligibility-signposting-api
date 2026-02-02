@@ -355,8 +355,9 @@ jobs:
         id: release
         env:
           DEV_TAG: ${{ needs.validate.outputs.dev_tag }}
-          RELEASE_TYPE: ${{ inputs.release_type }}
+          INPUT_RELEASE_TYPE: ${{ inputs.release_type }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENVIRONMENT: preprod
         run: |
           pip install requests
           python scripts/workflow/tag_and_release.py
