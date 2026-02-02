@@ -15,6 +15,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     StatusText,
 )
 from eligibility_signposting_api.model.person import Person
+from eligibility_signposting_api.services.processors.token_parser import ParsedToken
 from eligibility_signposting_api.services.processors.token_processor import TokenProcessor
 
 
@@ -652,3 +653,61 @@ class TestCustomTargetAttributeNames:
 
         # 1990-03-27 + 91 days = 1990-06-26
         assert result.status_text == "Future date: 19900626"
+
+    def test_derived_value_with_no_function_name_raises_error(self):
+        """Test that derived tokens without function name raise ValueError."""
+        # This would happen if token parsing goes wrong somehow
+        parsed_token = ParsedToken(
+            attribute_level="TARGET",
+            attribute_name="COVID",
+            attribute_value="NEXT_DOSE_DUE",
+            function_name=None,  # This should cause the error
+            function_args=None,
+            format=None,
+        )
+
+        with pytest.raises(ValueError, match="No function specified in token"):
+            TokenProcessor.get_derived_value(
+                parsed_token=parsed_token,
+                person_data=[{"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"}],
+                present_attributes={"COVID"},
+                token="[[TARGET.COVID.NEXT_DOSE_DUE:]]",  # Malformed token
+            )
+
+    def test_derived_value_with_unknown_function_raises_error(self):
+        """Test that derived tokens with unknown function raise ValueError."""
+        parsed_token = ParsedToken(
+            attribute_level="TARGET",
+            attribute_name="COVID",
+            attribute_value="NEXT_DOSE_DUE",
+            function_name="UNKNOWN_FUNCTION",  # This function doesn't exist
+            function_args="30",
+            format=None,
+        )
+
+        with pytest.raises(ValueError, match="Unknown function 'UNKNOWN_FUNCTION' in token"):
+            TokenProcessor.get_derived_value(
+                parsed_token=parsed_token,
+                person_data=[{"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"}],
+                present_attributes={"COVID"},
+                token="[[TARGET.COVID.NEXT_DOSE_DUE:UNKNOWN_FUNCTION(30)]]",
+            )
+
+    def test_derived_value_handler_exception_gets_wrapped(self):
+        """Test that exceptions from derived value handlers are wrapped with context."""
+        parsed_token = ParsedToken(
+            attribute_level="TARGET",
+            attribute_name="COVID",
+            attribute_value="NEXT_DOSE_DUE",
+            function_name="ADD_DAYS",
+            function_args="invalid_arg",  # This will cause the handler to raise ValueError
+            format=None,
+        )
+
+        with pytest.raises(ValueError, match=r"Error calculating derived value for token.*Invalid days argument"):
+            TokenProcessor.get_derived_value(
+                parsed_token=parsed_token,
+                person_data=[{"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"}],
+                present_attributes={"COVID"},
+                token="[[TARGET.COVID.NEXT_DOSE_DUE:ADD_DAYS(invalid_arg)]]",
+            )
