@@ -9,11 +9,12 @@ class DerivedValueContext:
 
     Attributes:
         person_data: List of person attribute dictionaries
-        attribute_name: The condition/vaccine type (e.g., 'COVID', 'RSV') or person attribute (e.g., 'DATE_OF_BIRTH')
+        attribute_name: The condition/vaccine type (e.g., 'COVID', 'RSV') or person/cohort attribute
+                        (e.g., 'DATE_OF_BIRTH')
         source_attribute: The source attribute to derive from (e.g., 'LAST_SUCCESSFUL_DATE')
         function_args: Arguments passed to the function (e.g., number of days)
         date_format: Optional date format string for output formatting
-        attribute_level: The level of the attribute ('TARGET' or 'PERSON')
+        attribute_level: The level of the attribute ('TARGET', 'PERSON' or 'COHORT')
     """
 
     person_data: list[dict[str, Any]]
