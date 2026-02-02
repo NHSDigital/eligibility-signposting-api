@@ -7,6 +7,15 @@ module "s3_rules_bucket" {
   workspace    = terraform.workspace
 }
 
+module "s3_consumer_mappings_bucket" {
+  source       = "../../modules/s3"
+  bucket_name  = "consumer-map"
+  environment  = var.environment
+  project_name = var.project_name
+  stack_name   = local.stack_name
+  workspace    = terraform.workspace
+}
+
 module "s3_audit_bucket" {
   source                 = "../../modules/s3"
   bucket_name            = "eli-audit"

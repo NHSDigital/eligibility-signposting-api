@@ -83,7 +83,7 @@ jobs:
         run: |
           git fetch --tags --force
           SHA="${{ github.event.workflow_run.head_sha }}"
-          TAG=$(git tag --points-at "$SHA" | grep '^dev-' | head -n1 || true)
+          TAG=$(git tag --points-at "$SHA" | grep '^dev-' | sort -r | head -n1 || true)
           if [ -z "$TAG" ]; then
             echo "Using the dev tag provided in the input field" >&2
             TAG="${{ inputs.ref }}"
@@ -203,6 +203,7 @@ jobs:
           TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
           TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
           TF_VAR_OPERATOR_EMAILS: ${{ vars.SECRET_ROTATION_OPERATOR_EMAILS }}
+          TF_VAR_PROXYGEN_PRIVATE_KEY: ${{ secrets.PROXYGEN_PRIVATE_KEY_PROD }}
 
         working-directory: ./infrastructure
         shell: bash
