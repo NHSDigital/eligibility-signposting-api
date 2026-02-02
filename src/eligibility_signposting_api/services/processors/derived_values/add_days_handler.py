@@ -96,7 +96,7 @@ class AddDaysHandler(DerivedValueHandler):
     def _find_source_date(self, context: DerivedValueContext) -> str | None:
         """Find the source date value from person data.
 
-        For PERSON-level attributes, looks for ATTRIBUTE_TYPE == "PERSON".
+        For PERSON/COHORT-level attributes, looks for ATTRIBUTE_TYPE == attribute_level.
         For TARGET-level attributes, looks for ATTRIBUTE_TYPE == context.attribute_name (e.g., "COVID").
 
         Args:
@@ -109,7 +109,10 @@ class AddDaysHandler(DerivedValueHandler):
         if not source_attr:
             return None
 
-        attribute_type_to_match = "PERSON" if context.attribute_level == "PERSON" else context.attribute_name
+        if context.attribute_level in ("PERSON", "COHORT"):
+            attribute_type_to_match = context.attribute_level
+        else:
+            attribute_type_to_match = context.attribute_name
 
         for attribute in context.person_data:
             if attribute.get("ATTRIBUTE_TYPE") == attribute_type_to_match:
