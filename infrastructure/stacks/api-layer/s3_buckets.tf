@@ -9,7 +9,7 @@ module "s3_rules_bucket" {
 
 module "s3_consumer_mappings_bucket" {
   source       = "../../modules/s3"
-  bucket_name  = "eli-consumer-map"
+  bucket_name  = "consumer-map"
   environment  = var.environment
   project_name = var.project_name
   stack_name   = local.stack_name
