@@ -103,7 +103,7 @@ jobs:
           TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
           TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
           TF_VAR_OPERATOR_EMAILS: ${{ vars.SECRET_ROTATION_OPERATOR_EMAILS }}
-          TF_VAR_PROXYGEN_PRIVATE_KEY: ""
+          TF_VAR_PROXYGEN_PRIVATE_KEY: ${{ secrets.PROXYGEN_PRIVATE_KEY_PROD }}
 
         run: |
           mkdir -p ./build

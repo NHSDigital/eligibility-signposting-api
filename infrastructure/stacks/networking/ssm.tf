@@ -1,5 +1,5 @@
 resource "aws_ssm_parameter" "proxygen_private_key" {
-  count = var.environment == "prod" || var.environment == "preprod" ? 1 : 0
+  count = var.environment == "dev" ? 1 : 0
   name  = "/${var.environment}/proxygen/private_key"
   type  = "SecureString"
   key_id = aws_kms_key.networking_ssm_key.id
