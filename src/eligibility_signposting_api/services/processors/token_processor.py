@@ -90,18 +90,15 @@ class TokenProcessor:
         if TokenProcessor.should_replace_with_empty(parsed_token, present_attributes):
             return ""
 
-        # Check if this is a derived value (has a function like ADD_DAYS)
         if parsed_token.function_name:
             return TokenProcessor.get_derived_value(parsed_token, person_data, present_attributes, token)
 
-        # For non-derived tokens, validate that target attributes are allowed
         TokenProcessor.validate_target_attribute(parsed_token, token)
 
         found_attribute, key_to_replace = TokenProcessor.find_matching_attribute(parsed_token, person_data)
 
         if not found_attribute or not key_to_replace:
             TokenProcessor.handle_token_not_found(parsed_token, token)
-            # handle_token_not_found always raises, but the type checker needs help
             msg = "Unreachable"
             raise RuntimeError(msg)  # pragma: no cover
 
@@ -115,6 +112,11 @@ class TokenProcessor:
         token: str,
     ) -> str:
         """Calculate a derived value using the registered handler.
+
+        For TARGET level tokens, validates that the condition is allowed before processing.
+        If the vaccine type is not in person data, returns an empty string.
+        For derived values, any target attribute name is allowed (e.g., NEXT_BOOKING_AVAILABLE)
+        since it's just a placeholder that may be surfaced in the future.
 
         Args:
             parsed_token: The parsed token containing function information
@@ -139,17 +141,12 @@ class TokenProcessor:
             message = f"Unknown function '{function_name}' in token '{token}'."
             raise ValueError(message)
 
-        # For TARGET level tokens, validate the condition is allowed
         if parsed_token.attribute_level == TARGET_ATTRIBUTE_LEVEL:
             is_allowed_condition = parsed_token.attribute_name in ALLOWED_CONDITIONS.__args__
 
-            # If condition is not allowed, raise error
             if not is_allowed_condition:
                 TokenProcessor.handle_token_not_found(parsed_token, token)
 
-            # If vaccine type is not in person data, return empty string
-            # For derived values, any target attribute name is allowed (e.g., NEXT_BOOKING_AVAILABLE)
-            # since it's just a placeholder that may be surfaced in the future
             if parsed_token.attribute_name not in present_attributes:
                 return ""
 
@@ -175,7 +172,6 @@ class TokenProcessor:
                 context=context,
             )
         except ValueError as e:
-            # Re-raise with more context
             message = f"Error calculating derived value for token '{token}': {e}"
             raise ValueError(message) from e
 

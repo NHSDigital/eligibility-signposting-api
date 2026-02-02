@@ -27,7 +27,6 @@ class AddDaysHandler(DerivedValueHandler):
 
     function_name: str = "ADD_DAYS"
 
-    # Mapping of derived attribute names to their source attributes
     DERIVED_ATTRIBUTE_SOURCES: ClassVar[dict[str, str]] = {
         "NEXT_DOSE_DUE": "LAST_SUCCESSFUL_DATE",
     }
@@ -62,7 +61,6 @@ class AddDaysHandler(DerivedValueHandler):
             The source attribute name (e.g., 'LAST_SUCCESSFUL_DATE')
         """
         if function_args and "," in function_args:
-            # Extract source from args if present (second argument)
             parts = [p.strip() for p in function_args.split(",")]
             if len(parts) > 1 and parts[1]:
                 return parts[1].upper()
@@ -98,6 +96,9 @@ class AddDaysHandler(DerivedValueHandler):
     def _find_source_date(self, context: DerivedValueContext) -> str | None:
         """Find the source date value from person data.
 
+        For PERSON-level attributes, looks for ATTRIBUTE_TYPE == "PERSON".
+        For TARGET-level attributes, looks for ATTRIBUTE_TYPE == context.attribute_name (e.g., "COVID").
+
         Args:
             context: The derived value context
 
@@ -108,8 +109,6 @@ class AddDaysHandler(DerivedValueHandler):
         if not source_attr:
             return None
 
-        # For PERSON-level attributes, look for ATTRIBUTE_TYPE == "PERSON"
-        # For TARGET-level attributes, look for ATTRIBUTE_TYPE == context.attribute_name (e.g., "COVID")
         attribute_type_to_match = "PERSON" if context.attribute_level == "PERSON" else context.attribute_name
 
         for attribute in context.person_data:
@@ -132,7 +131,6 @@ class AddDaysHandler(DerivedValueHandler):
         Returns:
             Number of days to add
         """
-        # Priority 1: Token argument (if non-empty)
         if context.function_args:
             args = context.function_args.split(",")[0].strip()
             if args:
@@ -142,11 +140,9 @@ class AddDaysHandler(DerivedValueHandler):
                     message = f"Invalid days argument '{args}' for ADD_DAYS function. Expected an integer."
                     raise ValueError(message) from e
 
-        # Priority 2: Vaccine-specific configuration
         if context.attribute_name in self.vaccine_type_days:
             return self.vaccine_type_days[context.attribute_name]
 
-        # Priority 3: Default
         return self.default_days
 
     def _add_days_to_date(self, date_str: str, days: int) -> datetime:
