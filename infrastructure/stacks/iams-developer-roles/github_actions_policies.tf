@@ -400,6 +400,7 @@ resource "aws_iam_policy" "api_infrastructure" {
           "ssm:ListTagsForResource",
           "ssm:PutParameter",
           "ssm:AddTagsToResource",
+          "ssm:DeleteParameter",
 
           # acm
           "acm:ListTagsForCertificate",
@@ -457,6 +458,8 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:NHSDAudit_trail_log_group*",
           "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/*",
           "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/splunk/*",
+          "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/ptl/*",
+          "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/prod/*",
           "arn:aws:acm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:certificate/*",
           "arn:aws:events:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:rule/cloudwatch-alarm-state-change-to-splunk*",
           "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/webacl/*",
