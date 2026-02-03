@@ -246,3 +246,65 @@ class TestMultipleActionsWithAddDays:
                 has_item(has_entries(actionCode="DateOfNextDoseAt61Days", description="20260330")),
             ),
         )
+
+
+class TestCustomTargetAttributeNames:
+    """Test that custom target attribute names work with derived values in integration."""
+
+    def test_custom_target_attribute_with_derived_value(
+        self,
+        client: FlaskClient,
+        person_with_covid_vaccination: NHSNumber,
+        consumer_id: ConsumerId,
+        consumer_to_active_campaign_config_with_custom_target_attributes_mapping: ConsumerMapping,  # noqa: ARG002
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+    ):
+        """
+        Test that custom target attribute names like NEXT_BOOKING_AVAILABLE work with derived values.
+
+        This tests the issue reported in production where:
+            [[TARGET.COVID.NEXT_BOOKING_AVAILABLE:ADD_DAYS(71, LAST_SUCCESSFUL_DATE):DATE(%d %B %Y)]]
+        was raising a ValueError.
+
+        Given:
+            - A person with COVID vaccination on 2026-01-28
+            - A campaign config using a custom target attribute: NEXT_BOOKING_AVAILABLE
+            - The token: [[TARGET.COVID.NEXT_BOOKING_AVAILABLE:ADD_DAYS(71, LAST_SUCCESSFUL_DATE):DATE(%d %B %Y)]]
+
+        Expected:
+            - Should calculate 2026-01-28 + 71 days = 2026-04-09
+            - Should format as "09 April 2026"
+            - Should NOT raise ValueError about invalid attribute name
+        """
+        # Given
+        headers = {"nhs-login-nhs-number": str(person_with_covid_vaccination), UNIQUE_CONSUMER_HEADER: str(consumer_id)}
+
+        # When
+        response = client.get(
+            f"/patient-check/{person_with_covid_vaccination}?includeActions=Y",
+            headers=headers,
+        )
+
+        # Then
+        assert_that(
+            response,
+            is_response().with_status_code(HTTPStatus.OK).and_text(is_json_that(has_key("processedSuggestions"))),
+        )
+
+        body = response.get_json()
+        assert_that(body, is_not(none()))
+        processed_suggestions = body.get("processedSuggestions", [])
+
+        covid_suggestion = next(
+            (s for s in processed_suggestions if s.get("condition") == "COVID"),
+            None,
+        )
+        assert_that(covid_suggestion, is_not(none()))
+
+        actions = covid_suggestion.get("actions", [])  # type: ignore[union-attr]
+
+        # Verify the custom target attribute with derived value works correctly
+        assert_that(
+            actions,
+            has_item(has_entries(actionCode="NextBookingAvailable", description="09 April 2026")),
+        )
