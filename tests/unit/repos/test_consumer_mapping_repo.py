@@ -31,8 +31,6 @@ class TestConsumerMappingRepo:
             ]
         }
 
-        mock_s3_client.list_objects.return_value = {"Contents": [{"Key": "mappings.json"}]}
-
         body_json = json.dumps(mapping_data).encode("utf-8")
         mock_s3_client.get_object.return_value = {"Body": MagicMock(read=lambda: body_json)}
 
@@ -41,8 +39,7 @@ class TestConsumerMappingRepo:
 
         # Then
         assert result == expected_campaign_ids
-        mock_s3_client.list_objects.assert_called_once_with(Bucket="test-bucket")
-        mock_s3_client.get_object.assert_called_once_with(Bucket="test-bucket", Key="mappings.json")
+        mock_s3_client.get_object.assert_called_once_with(Bucket="test-bucket", Key="consumer_mapping_config.json")
 
     def test_get_permitted_campaign_ids_returns_none_when_missing(self, repo, mock_s3_client):
         """
@@ -51,7 +48,6 @@ class TestConsumerMappingRepo:
         """
         valid_schema_data = {"other-user": [{"CampaignConfigID": "camp-1", "Description": "Some description"}]}
 
-        mock_s3_client.list_objects.return_value = {"Contents": [{"Key": "mappings.json"}]}
         body_json = json.dumps(valid_schema_data).encode("utf-8")
         mock_s3_client.get_object.return_value = {"Body": MagicMock(read=lambda: body_json)}
 
