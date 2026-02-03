@@ -1,9 +1,14 @@
 resource "aws_ssm_parameter" "proxygen_private_key" {
-  count = var.environment == "dev" ? 1 : 0
-  name  = "/${var.environment}/proxygen/private_key"
-  type  = "SecureString"
+  for_each = var.environment == "dev" ? {
+    ptl  = { path = "/ptl/proxygen/private_key", value = var.PROXYGEN_PRIVATE_KEY_PTL }
+    prod = { path = "/prod/proxygen/private_key", value = var.PROXYGEN_PRIVATE_KEY_PROD }
+  } : {}
+
+  name   = each.value.path
+  type   = "SecureString"
   key_id = aws_kms_key.networking_ssm_key.id
-  value = var.PROXYGEN_PRIVATE_KEY
+  value  = each.value.value
+
   tier  = "Advanced"
 
   tags = {
