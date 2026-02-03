@@ -193,6 +193,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "ssm:ListTagsForResource",
       "ssm:PutParameter",
       "ssm:AddTagsToResource",
+      "ssm:DeleteParameter",
 
       # WAFv2 - web application firewall management
       "wafv2:CreateWebACL",
