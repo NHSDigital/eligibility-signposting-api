@@ -43,7 +43,5 @@ class ConsumerMappingRepo:
         except ClientError as e:
             if e.response["Error"]["Code"] == "NoSuchKey":
                 return None
-            logger.exception(
-                "Error while reading consumer mapping config file : %s", CONSUMER_MAPPING_FILE_NAME, exc_info=e
-            )
+            logger.exception("Error while reading consumer mapping config file : %s", CONSUMER_MAPPING_FILE_NAME)
             raise
