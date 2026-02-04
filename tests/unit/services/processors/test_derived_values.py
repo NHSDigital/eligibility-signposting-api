@@ -260,6 +260,38 @@ class TestAddDaysHandler:
         # 2025-01-01 + 30 days = 2025-01-31
         assert_that(result, is_(equal_to("20250131")))
 
+    def test_calculate_returns_empty_when_source_attribute_is_none(self):
+        """Test that empty string is returned when source_attribute is None."""
+        handler = AddDaysHandler(default_days=91)
+        context = DerivedValueContext(
+            person_data=[{"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"}],
+            attribute_name="COVID",
+            source_attribute=None,  # This should cause early return None in _find_source_date
+            function_args=None,
+            date_format=None,
+            attribute_level="TARGET",
+        )
+
+        result = handler.calculate(context)
+
+        assert_that(result, is_(equal_to("")))
+
+    def test_calculate_returns_empty_when_source_attribute_is_empty(self):
+        """Test that empty string is returned when source_attribute is empty string."""
+        handler = AddDaysHandler(default_days=91)
+        context = DerivedValueContext(
+            person_data=[{"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20250101"}],
+            attribute_name="COVID",
+            source_attribute="",  # This should cause early return None in _find_source_date
+            function_args=None,
+            date_format=None,
+            attribute_level="TARGET",
+        )
+
+        result = handler.calculate(context)
+
+        assert_that(result, is_(equal_to("")))
+
 
 class TestDerivedValueRegistry:
     """Tests for the DerivedValueRegistry class."""

@@ -1,4 +1,5 @@
 import pytest
+from hamcrest import assert_that, calling, equal_to, is_, raises
 
 from eligibility_signposting_api.services.processors.token_parser import TokenParser
 
@@ -21,10 +22,10 @@ class TestTokenParser:
     )
     def test_parse_valid_tokens(self, token, expected_level, expected_name, expected_value, expected_format):
         parsed_token = TokenParser.parse(token)
-        assert parsed_token.attribute_level == expected_level
-        assert parsed_token.attribute_name == expected_name
-        assert parsed_token.attribute_value == expected_value
-        assert parsed_token.format == expected_format
+        assert_that(parsed_token.attribute_level, is_(equal_to(expected_level)))
+        assert_that(parsed_token.attribute_name, is_(equal_to(expected_name)))
+        assert_that(parsed_token.attribute_value, is_(equal_to(expected_value)))
+        assert_that(parsed_token.format, is_(equal_to(expected_format)))
 
     @pytest.mark.parametrize(
         "token",
@@ -38,8 +39,10 @@ class TestTokenParser:
         ],
     )
     def test_parse_invalid_tokens_raises_error(self, token):
-        with pytest.raises(ValueError, match=r"Invalid token\."):
-            TokenParser.parse(token)
+        assert_that(
+            calling(TokenParser.parse).with_args(token),
+            raises(ValueError, pattern=r"Invalid token\."),
+        )
 
     @pytest.mark.parametrize(
         "token",
@@ -52,12 +55,14 @@ class TestTokenParser:
         ],
     )
     def test_parse_invalid_token_format_raises_error(self, token):
-        with pytest.raises(ValueError, match=r"Invalid token format\."):
-            TokenParser.parse(token)
+        assert_that(
+            calling(TokenParser.parse).with_args(token),
+            raises(ValueError, pattern=r"Invalid token format\."),
+        )
 
     def test_parse_function_token_valid(self):
         """Test that valid function tokens are parsed correctly."""
         # This used to be invalid, but now we support custom functions
         parsed = TokenParser.parse("[[PERSON.DATE_OF_BIRTH:SOME_FUNC(abc)]]")
-        assert parsed.function_name == "SOME_FUNC"
-        assert parsed.function_args == "abc"
+        assert_that(parsed.function_name, is_(equal_to("SOME_FUNC")))
+        assert_that(parsed.function_args, is_(equal_to("abc")))

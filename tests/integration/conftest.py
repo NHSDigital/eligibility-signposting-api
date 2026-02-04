@@ -1162,6 +1162,48 @@ def campaign_config_with_multiple_add_days(
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
+@pytest.fixture
+def campaign_config_with_custom_target_attributes(
+    s3_client: BaseClient, rules_bucket: BucketName
+) -> Generator[CampaignConfig]:
+    """Campaign config with custom target attribute names for derived values."""
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="COVID",
+        iterations=[
+            rule.IterationFactory.build(
+                default_comms_routing="CUSTOM_BOOKING_DATE",
+                actions_mapper=rule.ActionsMapperFactory.build(
+                    root={
+                        "CUSTOM_BOOKING_DATE": AvailableAction(
+                            ActionType="DataValue",
+                            ExternalRoutingCode="NextBookingAvailable",
+                            ActionDescription=(
+                                "[[TARGET.COVID.NEXT_BOOKING_AVAILABLE:ADD_DAYS(71, LAST_SUCCESSFUL_DATE):"
+                                "DATE(%d %B %Y)]]"
+                            ),
+                        ),
+                    }
+                ),
+                iteration_rules=[],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort_label1",
+                        cohort_group="cohort_group1",
+                        positive_description="Positive Description",
+                        negative_description="Negative Description",
+                    )
+                ],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
 @pytest.fixture(scope="class")
 def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
@@ -1519,6 +1561,20 @@ def consumer_to_active_campaign_config_with_multiple_add_days_mapping(
     )
     yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
+
+
+@pytest.fixture
+def consumer_to_active_campaign_config_with_custom_target_attributes_mapping(
+    s3_client: BaseClient,
+    consumer_mapping_bucket: ConsumerMapping,
+    campaign_config_with_custom_target_attributes: CampaignConfig,
+    consumer_id: ConsumerId,
+):
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_custom_target_attributes, consumer_id, consumer_mapping_bucket, s3_client
+    )
+    yield consumer_mapping
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
 
 
 @pytest.fixture
