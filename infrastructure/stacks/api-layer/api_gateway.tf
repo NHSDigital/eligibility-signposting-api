@@ -64,7 +64,6 @@ resource "aws_api_gateway_stage" "eligibility-signposting-api" {
                         "caller": "$context.identity.caller",
                         "httpMethod": "$context.httpMethod",
                         "ip": "$context.identity.sourceIp",
-                        "nhse_product_id": "$context.request.header.nhse-product-id",
                         "protocol": "$context.protocol",
                         "requestId": "$context.requestId",
                         "requestTime": "$context.requestTime",
