@@ -5,6 +5,8 @@ from typing import Any
 
 from mangum.types import LambdaContext, LambdaEvent
 
+from eligibility_signposting_api.config.constants import CONSUMER_ID
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,6 +22,8 @@ def log_request_ids_from_headers() -> Callable:
                     "x_request_id": headers.get("X-Request-ID"),
                     "x_correlation_id": headers.get("X-Correlation-ID"),
                     "gateway_request_id": gateway_request_id,
+                    "nhse_product_id": headers.get(CONSUMER_ID),
+                    "nhsd_application_id": headers.get("nhsd-application-id"),
                 },
             )
             return func(event, context)

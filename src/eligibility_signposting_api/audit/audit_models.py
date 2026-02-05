@@ -17,6 +17,7 @@ class RequestAuditHeader(CamelCaseBaseModel):
     x_correlation_id: str | None = None
     nhsd_end_user_organisation_ods: str | None = None
     nhsd_application_id: str | None = None
+    nhse_product_id: str | None = None
 
 
 class RequestAuditQueryParams(CamelCaseBaseModel):
