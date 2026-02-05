@@ -2,7 +2,7 @@
 
 import re
 
-import pytest
+from hamcrest import assert_that, calling, equal_to, is_, raises
 
 from eligibility_signposting_api.model.eligibility_status import (
     Condition,
@@ -37,7 +37,7 @@ class TestTokenProcessorDerivedValues:
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
         # 2025-01-01 + 91 days = 2025-04-02
-        assert result.status_text == "Next dose due: 20250402"
+        assert_that(result.status_text, is_(equal_to("Next dose due: 20250402")))
 
     def test_next_dose_due_with_date_format(self):
         """Test NEXT_DOSE_DUE with date formatting."""
@@ -58,7 +58,7 @@ class TestTokenProcessorDerivedValues:
 
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
-        assert result.status_text == "You can book from 02 April 2025"
+        assert_that(result.status_text, is_(equal_to("You can book from 02 April 2025")))
 
     def test_next_dose_due_different_days(self):
         """Test NEXT_DOSE_DUE with different number of days."""
@@ -80,7 +80,7 @@ class TestTokenProcessorDerivedValues:
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
         # 2025-06-01 + 365 days = 2026-06-01
-        assert result.status_text == "Next dose: 01/06/2026"
+        assert_that(result.status_text, is_(equal_to("Next dose: 01/06/2026")))
 
     def test_missing_vaccine_data_returns_empty(self):
         """Test that missing vaccine data returns empty string for derived values."""
@@ -101,7 +101,7 @@ class TestTokenProcessorDerivedValues:
 
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
-        assert result.condition_name == "Next COVID dose: "
+        assert_that(result.condition_name, is_(equal_to("Next COVID dose: ")))
 
     def test_missing_last_successful_date_returns_empty(self):
         """Test that missing source date returns empty string."""
@@ -122,7 +122,7 @@ class TestTokenProcessorDerivedValues:
 
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
-        assert result.status_text == "Next dose: "
+        assert_that(result.status_text, is_(equal_to("Next dose: ")))
 
     def test_custom_target_without_mapping_returns_empty(self):
         """Test unknown target without source override returns empty string."""
@@ -143,7 +143,7 @@ class TestTokenProcessorDerivedValues:
 
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
-        assert result.status_text == "Due: "
+        assert_that(result.status_text, is_(equal_to("Due: ")))
 
     def test_custom_target_with_source_override_uses_override(self):
         """Test custom target with explicit source override derives date."""
@@ -164,7 +164,7 @@ class TestTokenProcessorDerivedValues:
 
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
-        assert result.status_text == "Next dose: 20250131"
+        assert_that(result.status_text, is_(equal_to("Next dose: 20250131")))
 
     def test_mixed_regular_and_derived_tokens(self):
         """Test mixing regular tokens with derived value tokens."""
@@ -189,7 +189,7 @@ class TestTokenProcessorDerivedValues:
 
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
-        assert result.status_text == "At age 65, your next dose is from 02 April 2025"
+        assert_that(result.status_text, is_(equal_to("At age 65, your next dose is from 02 April 2025")))
 
     def test_unknown_function_raises_error(self):
         """Test that unknown function name raises ValueError."""
@@ -208,8 +208,10 @@ class TestTokenProcessorDerivedValues:
             actions=[],
         )
 
-        with pytest.raises(ValueError, match="Unknown function 'UNKNOWN_FUNC'"):
-            TokenProcessor.find_and_replace_tokens(person, condition)
+        assert_that(
+            calling(TokenProcessor.find_and_replace_tokens).with_args(person, condition),
+            raises(ValueError, pattern="Unknown function 'UNKNOWN_FUNC'"),
+        )
 
     def test_multiple_derived_tokens(self):
         """Test multiple derived value tokens in same text."""
@@ -233,7 +235,7 @@ class TestTokenProcessorDerivedValues:
 
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
-        assert result.status_text == "COVID: 20250402, FLU: 20260601"
+        assert_that(result.status_text, is_(equal_to("COVID: 20250402, FLU: 20260601")))
 
     def test_derived_value_uses_default_days_without_args(self):
         """Test that empty function args uses default days from handler config."""
@@ -256,7 +258,7 @@ class TestTokenProcessorDerivedValues:
 
         # Should use the default 91 days configured in __init__.py
         # 2025-01-01 + 91 days = 2025-04-02
-        assert result.status_text == "Next dose: 20250402"
+        assert_that(result.status_text, is_(equal_to("Next dose: 20250402")))
 
     def test_case_insensitive_function_name(self):
         """Test that function names are case insensitive."""
@@ -277,7 +279,7 @@ class TestTokenProcessorDerivedValues:
 
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
-        assert result.status_text == "20250402"
+        assert_that(result.status_text, is_(equal_to("20250402")))
 
     def test_not_allowed_condition_with_derived_raises_error(self):
         """Test that non-allowed conditions raise error for derived values."""
@@ -299,5 +301,7 @@ class TestTokenProcessorDerivedValues:
         expected_error = re.escape(
             "Invalid attribute name 'NEXT_DOSE_DUE' in token '[[TARGET.YELLOW_FEVER.NEXT_DOSE_DUE:ADD_DAYS(91)]]'."
         )
-        with pytest.raises(ValueError, match=expected_error):
-            TokenProcessor.find_and_replace_tokens(person, condition)
+        assert_that(
+            calling(TokenProcessor.find_and_replace_tokens).with_args(person, condition),
+            raises(ValueError, pattern=expected_error),
+        )
