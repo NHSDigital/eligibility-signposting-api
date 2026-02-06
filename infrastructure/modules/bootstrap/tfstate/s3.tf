@@ -80,7 +80,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "tfstate_bucket" {
     }
 
     expiration {
-      days = 90
+      days = 1200
     }
 
     noncurrent_version_transition {
