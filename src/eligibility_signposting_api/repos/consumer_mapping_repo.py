@@ -1,11 +1,16 @@
 import json
+import logging
 from typing import Annotated, NewType
 
 from botocore.client import BaseClient
+from botocore.exceptions import ClientError
 from wireup import Inject, service
 
+from eligibility_signposting_api.config.constants import CONSUMER_MAPPING_FILE_NAME
 from eligibility_signposting_api.model.campaign_config import CampaignID
 from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
+
+logger = logging.getLogger(__name__)
 
 BucketName = NewType("BucketName", str)
 
@@ -24,18 +29,19 @@ class ConsumerMappingRepo:
         self.bucket_name = bucket_name
 
     def get_permitted_campaign_ids(self, consumer_id: ConsumerId) -> list[CampaignID] | None:
-        objects = self.s3_client.list_objects(Bucket=self.bucket_name).get("Contents")
+        try:
+            response = self.s3_client.get_object(Bucket=self.bucket_name, Key=CONSUMER_MAPPING_FILE_NAME)
+            body = response["Body"].read()
 
-        if not objects:
-            return None
+            mapping_result = ConsumerMapping.model_validate(json.loads(body)).get(consumer_id)
 
-        consumer_mappings_obj = objects[0]
-        response = self.s3_client.get_object(Bucket=self.bucket_name, Key=consumer_mappings_obj["Key"])
-        body = response["Body"].read()
+            if mapping_result is None:
+                return None
 
-        mapping_result = ConsumerMapping.model_validate(json.loads(body)).get(consumer_id)
+            return [item.campaign_config_id for item in mapping_result]
 
-        if mapping_result is None:
-            return None
-
-        return [item.campaign_config_id for item in mapping_result]
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                return None
+            logger.exception("Error while reading consumer mapping config file : %s", CONSUMER_MAPPING_FILE_NAME)
+            raise

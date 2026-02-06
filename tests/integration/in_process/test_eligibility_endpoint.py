@@ -1274,7 +1274,7 @@ class TestEligibilityResponseWithVariousInputs:
         # Consumer Mapping Data
         s3_client.put_object(
             Bucket=consumer_mapping_bucket,
-            Key="consumer_mapping.json",
+            Key="consumer_mapping_config.json",
             Body=json.dumps(
                 {
                     consumer_id: [

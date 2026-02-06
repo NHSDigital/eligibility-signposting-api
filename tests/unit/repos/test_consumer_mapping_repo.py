@@ -2,6 +2,7 @@ import json
 from unittest.mock import MagicMock
 
 import pytest
+from botocore.exceptions import ClientError
 
 from eligibility_signposting_api.model.consumer_mapping import ConsumerId
 from eligibility_signposting_api.repos.consumer_mapping_repo import BucketName, ConsumerMappingRepo
@@ -31,8 +32,6 @@ class TestConsumerMappingRepo:
             ]
         }
 
-        mock_s3_client.list_objects.return_value = {"Contents": [{"Key": "mappings.json"}]}
-
         body_json = json.dumps(mapping_data).encode("utf-8")
         mock_s3_client.get_object.return_value = {"Body": MagicMock(read=lambda: body_json)}
 
@@ -41,8 +40,7 @@ class TestConsumerMappingRepo:
 
         # Then
         assert result == expected_campaign_ids
-        mock_s3_client.list_objects.assert_called_once_with(Bucket="test-bucket")
-        mock_s3_client.get_object.assert_called_once_with(Bucket="test-bucket", Key="mappings.json")
+        mock_s3_client.get_object.assert_called_once_with(Bucket="test-bucket", Key="consumer_mapping_config.json")
 
     def test_get_permitted_campaign_ids_returns_none_when_missing(self, repo, mock_s3_client):
         """
@@ -51,7 +49,6 @@ class TestConsumerMappingRepo:
         """
         valid_schema_data = {"other-user": [{"CampaignConfigID": "camp-1", "Description": "Some description"}]}
 
-        mock_s3_client.list_objects.return_value = {"Contents": [{"Key": "mappings.json"}]}
         body_json = json.dumps(valid_schema_data).encode("utf-8")
         mock_s3_client.get_object.return_value = {"Body": MagicMock(read=lambda: body_json)}
 
@@ -60,3 +57,25 @@ class TestConsumerMappingRepo:
 
         # Then
         assert result is None
+
+    def test_get_permitted_campaign_ids_returns_none_when_file_not_in_s3(self, repo, mock_s3_client):
+        # Given: S3 returns a NoSuchKey error
+        error_response = {"Error": {"Code": "NoSuchKey", "Message": "Not Found"}}
+        mock_s3_client.get_object.side_effect = ClientError(error_response, "GetObject")
+
+        # When
+        result = repo.get_permitted_campaign_ids(ConsumerId("any-user"))
+
+        # Then
+        assert result is None
+
+    def test_get_permitted_campaign_ids_raises_client_error(self, repo, mock_s3_client):
+        # Given: An S3 error that is NOT 'NoSuchKey' (e.g, Access denied error)
+        error_response = {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}}
+        mock_s3_client.get_object.side_effect = ClientError(error_response, "GetObject")
+
+        # When / Then: Verify the error is re-raised
+        with pytest.raises(ClientError) as exc_info:
+            repo.get_permitted_campaign_ids(ConsumerId("any-user"))
+
+        assert exc_info.value.response["Error"]["Code"] == "AccessDenied"
