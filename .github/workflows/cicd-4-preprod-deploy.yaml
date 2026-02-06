@@ -36,7 +36,7 @@ jobs:
       this_sha:     ${{ steps.resolver.outputs.this_sha }}
       latest_sha:   ${{ steps.resolver.outputs.latest_test_sha }}
       release_type: ${{ steps.release_type.outputs.release_type }}
-
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     env:
       TEST_WORKFLOW_ID: "190123511" # this will need updating if the workflow is recreated
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -97,3 +97,4 @@ jobs:
       ref:          ${{ needs.metadata.outputs.ref }}
       release_type: ${{ needs.metadata.outputs.release_type }}
     secrets: inherit
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
