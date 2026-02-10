@@ -42,7 +42,7 @@ jobs:
           python-version: "3.11"
 
       - name: Configure AWS Credentials (${{ matrix.env_config.name }})
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets[matrix.env_config.account_secret] }}:role/service-roles/github-actions-api-deployment-role
           aws-region: eu-west-2
