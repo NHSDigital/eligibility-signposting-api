@@ -216,7 +216,7 @@ jobs:
           terraform_version: $(grep '^terraform' .tool-versions | cut -f2 -d' ')
 
       - name: "Download lambda artifact"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: lambda-${{ needs.validate.outputs.dev_tag }}
           path: dist
@@ -317,7 +317,7 @@ jobs:
           terraform_version: $(grep '^terraform' .tool-versions | cut -f2 -d' ')
 
       - name: "Download lambda artifact"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: lambda-${{ needs.validate.outputs.dev_tag }}
           path: dist
