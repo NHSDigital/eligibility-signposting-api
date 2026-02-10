@@ -1,33 +1,24 @@
 import logging
-from collections.abc import Callable
-from functools import wraps
-from typing import Any
 
-from mangum.types import LambdaContext, LambdaEvent
+from flask import request
 
 from eligibility_signposting_api.config.constants import CONSUMER_ID
 
 logger = logging.getLogger(__name__)
 
+#TODO needs manual testing
+def log_request_trace_metadata():
+    """Replaces @log_request_ids_from_headers for Fargate."""
+    headers = request.headers
 
-def log_request_ids_from_headers() -> Callable:
-    def decorator(func: Callable) -> Callable:
-        @wraps(func)
-        def wrapper(event: LambdaEvent, context: LambdaContext) -> dict[str, Any] | None:
-            gateway_request_id = (event.get("requestContext") or {}).get("requestId")
-            headers = event.get("headers") or {}
-            logger.info(
-                "request trace metadata",
-                extra={
-                    "x_request_id": headers.get("X-Request-ID"),
-                    "x_correlation_id": headers.get("X-Correlation-ID"),
-                    "gateway_request_id": gateway_request_id,
-                    "nhse_product_id": headers.get(CONSUMER_ID),
-                    "nhsd_application_id": headers.get("nhsd-application-id"),
-                },
-            )
-            return func(event, context)
-
-        return wrapper
-
-    return decorator
+    # In Fargate/ALB, X-Amzn-Trace-Id is the standard tracing header
+    logger.info(
+        "request trace metadata",
+        extra={
+            "x_request_id": headers.get("X-Request-ID"),
+            "x_correlation_id": headers.get("X-Correlation-ID"),
+            "gateway_request_id": headers.get("X-Amzn-Trace-Id"),
+            "nhse_product_id": headers.get(CONSUMER_ID),
+            "nhsd_application_id": headers.get("nhsd-application-id"),
+        },
+    )

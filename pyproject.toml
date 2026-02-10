@@ -35,6 +35,7 @@ pyhamcrest = "^2.1.0"
 boto3 = "^1.40.57"
 botocore = "^1.40.76"
 aws-xray-sdk = "2.15.0"
+gunicorn = "^23.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.14.10"
@@ -52,7 +53,6 @@ awscli-local = "^0.22.2"
 polyfactory = "^3.2.0"
 pyright = "^1.1.407"
 brunns-matchers = "^2.9.0"
-localstack = "^4.12.0"
 pytest-docker = "^3.2.3"
 stamina = "^25.2.0"
 pytest-freezer = "^0.4.9"
@@ -63,6 +63,7 @@ behave = "^1.3.3"
 python-dotenv = "^1.2.1"
 openapi-spec-validator = "^0.7.2"
 pip-licenses = "^5.5.0"
+cachetools = "^6.2.0"
 
 
 [tool.poetry-plugin-lambda-build]
