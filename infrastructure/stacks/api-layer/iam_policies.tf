@@ -273,8 +273,8 @@ data "aws_iam_policy_document" "s3_audit_bucket_policy" {
   }
 }
 
-# Attach s3 write policy to lambda write role
-resource "aws_iam_role_policy" "lambda_s3_audit_write_policy" {
+# Attach s3 write policy to lambda write role - rename below to lambda_s3_audit_write_policy
+resource "aws_iam_role_policy" "external_s3_write_policy" {
   name   = "S3WriteAccess"
   role   = aws_iam_role.eligibility_lambda_role.id
   policy = data.aws_iam_policy_document.s3_audit_bucket_policy.json
