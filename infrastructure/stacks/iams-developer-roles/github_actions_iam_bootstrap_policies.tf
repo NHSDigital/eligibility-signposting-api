@@ -72,7 +72,11 @@ data "aws_iam_policy_document" "iam_bootstrap_iam_management" {
       "iam:Get*",
       "iam:List*",
     ]
-    resources = ["*"]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/*",
+    ]
   }
 
   # DENY: Prevent modifying the bootstrap role itself
