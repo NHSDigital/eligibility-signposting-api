@@ -44,6 +44,7 @@ module "s3_lambda_artifact_bucket" {
   workspace    = terraform.workspace
 }
 
+# needed by github workflows to store the lambda artifacts
 output "lambda_artifact_bucket" {
   value = module.s3_lambda_artifact_bucket.storage_bucket_name
 }
