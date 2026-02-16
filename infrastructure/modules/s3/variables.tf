@@ -4,7 +4,7 @@ variable "bucket_name" {
 }
 
 variable "bucket_expiration_days" {
-  default     = 90
+  default     = 1200
   description = "How long to keep bucket contents before expiring"
   type        = number
 }

@@ -48,6 +48,7 @@ class AuditContext:
                     x_correlation_id=request.headers.get("X-Correlation-ID"),
                     nhsd_end_user_organisation_ods=request.headers.get("NHSD-End-User-Organisation-ODS"),
                     nhsd_application_id=request.headers.get("nhsd-application-id"),
+                    nhse_product_id=request.headers.get("nhse-product-id"),
                 )
             ),
             query_params=(

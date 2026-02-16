@@ -273,7 +273,7 @@ data "aws_iam_policy_document" "s3_audit_bucket_policy" {
   }
 }
 
-# Attach s3 write policy to external write role
+# Attach s3 write policy to lambda write role - rename below to lambda_s3_audit_write_policy
 resource "aws_iam_role_policy" "external_s3_write_policy" {
   name   = "S3WriteAccess"
   role   = aws_iam_role.eligibility_lambda_role.id
@@ -351,6 +351,7 @@ resource "aws_kms_key_policy" "s3_rules_kms_key" {
   policy = data.aws_iam_policy_document.s3_rules_kms_key_policy.json
 }
 
+# KMS key policy for consumer mapping file
 data "aws_iam_policy_document" "s3_consumer_mapping_kms_key_policy" {
   #checkov:skip=CKV_AWS_111: Root user needs full KMS key management
   #checkov:skip=CKV_AWS_356: Root user needs full KMS key management
@@ -754,4 +755,61 @@ resource "aws_iam_policy" "rotation_sfn_policy" {
 resource "aws_iam_role_policy_attachment" "attach_rotation_sfn" {
   role       = aws_iam_role.rotation_sfn_role.name
   policy_arn = aws_iam_policy.rotation_sfn_policy.arn
+}
+
+#DQ policies
+# Policy doc for S3 DQ bucket
+data "aws_iam_policy_document" "s3_dq_bucket_policy" {
+  statement {
+    sid = "AllowSSLRequestsOnly"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketLocation",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject", // Critical for Spark staging/committing
+      "s3:AbortMultipartUpload" // Important for large dataframes if job fails
+    ]
+    resources = [
+      module.s3_dq_metrics_bucket.storage_bucket_arn,
+      "${module.s3_dq_metrics_bucket.storage_bucket_arn}/*",
+    ]
+    condition {
+      test     = "Bool"
+      values = ["true"]
+      variable = "aws:SecureTransport"
+    }
+  }
+}
+
+# Attach DQ s3 write policy to external write role
+resource "aws_iam_role_policy" "external_dq_s3_write_policy" {
+  count = length(aws_iam_role.write_access_role)
+  name   = "S3DQWriteAccess"
+  role   = aws_iam_role.write_access_role[count.index].id
+  policy = data.aws_iam_policy_document.s3_dq_bucket_policy.json
+}
+
+# KMS access policy for S3 DQ bucket to external write role
+data "aws_iam_policy_document" "s3_dq_kms_access_policy" {
+  statement {
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = [
+      module.s3_dq_metrics_bucket.storage_bucket_kms_key_arn
+    ]
+  }
+}
+
+# Attach KMS policy to external write role
+resource "aws_iam_role_policy" "external_s3_kms_access_policy" {
+  count = length(aws_iam_role.write_access_role)
+  name   = "KMSAccessForS3DQ"
+  role   = aws_iam_role.write_access_role[count.index].id
+  policy = data.aws_iam_policy_document.s3_dq_kms_access_policy.json
 }

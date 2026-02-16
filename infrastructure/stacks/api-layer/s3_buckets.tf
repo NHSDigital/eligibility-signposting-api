@@ -44,6 +44,11 @@ module "s3_lambda_artifact_bucket" {
   workspace    = terraform.workspace
 }
 
-output "lambda_artifact_bucket" {
-  value = module.s3_lambda_artifact_bucket.storage_bucket_name
+module "s3_dq_metrics_bucket" {
+  source       = "../../modules/s3"
+  bucket_name  = "dq-metrics"
+  environment  = var.environment
+  project_name = var.project_name
+  stack_name   = local.stack_name
+  workspace    = terraform.workspace
 }

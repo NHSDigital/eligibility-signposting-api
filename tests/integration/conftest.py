@@ -50,7 +50,7 @@ AWS_SECRET_NAME = "test_secret"  # noqa: S105
 AWS_CURRENT_SECRET = "test_value"  # noqa: S105
 AWS_PREVIOUS_SECRET = "test_value_old"  # noqa: S105
 
-UNIQUE_CONSUMER_HEADER = "nhsd-application-id"
+UNIQUE_CONSUMER_HEADER = "nhse-product-id"
 
 
 @pytest.fixture(scope="session")
@@ -1402,7 +1402,7 @@ def create_and_put_consumer_mapping_in_s3(
     consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
     s3_client.put_object(
         Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
+        Key="consumer_mapping_config.json",
         Body=json.dumps(consumer_mapping_data),
         ContentType="application/json",
     )
@@ -1420,7 +1420,7 @@ def consumer_to_active_campaign_having_invalid_tokens_mapping(
         campaign_config_with_invalid_tokens, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture(scope="class")
@@ -1434,7 +1434,7 @@ def consumer_to_active_campaign_having_tokens_mapping(
         campaign_config_with_tokens, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture(scope="class")
@@ -1448,7 +1448,7 @@ def consumer_to_active_rsv_campaign_mapping(
         rsv_campaign_config, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture(scope="class")
@@ -1462,7 +1462,7 @@ def consumer_to_active_campaign_having_and_rule_mapping(
         campaign_config_with_and_rule, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture
@@ -1476,7 +1476,7 @@ def consumer_to_active_campaign_missing_descriptions_and_rule_text_mapping(
         campaign_config_with_missing_descriptions_missing_rule_text, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture
@@ -1490,7 +1490,7 @@ def consumer_to_active_campaign_having_rules_with_rule_code_mapping(
         campaign_config_with_rules_having_rule_code, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture
@@ -1504,7 +1504,7 @@ def consumer_to_active_campaign_having_rules_with_rule_mapper_mapping(
         campaign_config_with_rules_having_rule_mapper, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture
@@ -1518,7 +1518,7 @@ def consumer_to_active_campaign_having_only_virtual_cohort_mapping(
         campaign_config_with_virtual_cohort, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture
@@ -1532,7 +1532,7 @@ def consumer_to_active_campaign_config_with_derived_values_mapping(
         campaign_config_with_derived_values, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture
@@ -1546,7 +1546,7 @@ def consumer_to_active_campaign_config_with_derived_values_formatted_mapping(
         campaign_config_with_derived_values_formatted, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture
@@ -1560,7 +1560,7 @@ def consumer_to_active_campaign_config_with_multiple_add_days_mapping(
         campaign_config_with_multiple_add_days, consumer_id, consumer_mapping_bucket, s3_client
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture
@@ -1592,12 +1592,12 @@ def consumer_to_campaign_having_inactive_iteration_mapping(
 
     s3_client.put_object(
         Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
+        Key="consumer_mapping_config.json",
         Body=json.dumps(mapping.model_dump(by_alias=True)),
         ContentType="application/json",
     )
     yield mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture(scope="class")
@@ -1615,12 +1615,12 @@ def consumer_to_multiple_campaign_configs_mapping(
 
     s3_client.put_object(
         Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
+        Key="consumer_mapping_config.json",
         Body=json.dumps(mapping.model_dump(by_alias=True)),
         ContentType="application/json",
     )
     yield mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture
@@ -1631,12 +1631,12 @@ def consumer_mappings(
     consumer_mapping_data = consumer_mapping.model_dump(by_alias=True)
     s3_client.put_object(
         Bucket=consumer_mapping_bucket,
-        Key="consumer_mapping.json",
+        Key="consumer_mapping_config.json",
         Body=json.dumps(consumer_mapping_data),
         ContentType="application/json",
     )
     yield consumer_mapping
-    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 # If you put StubSecretRepo in a separate module, import it instead
