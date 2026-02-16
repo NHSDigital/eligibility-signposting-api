@@ -104,8 +104,10 @@ jobs:
     if: >-
       always() &&
       (needs.deploy-dev.result == 'success' || needs.deploy-dev.result == 'skipped') &&
-      (needs.metadata.outputs.target_env == 'all' ||
-       needs.metadata.outputs.target_env == 'test')
+      (
+        needs.metadata.outputs.target_env == 'all' ||
+        needs.metadata.outputs.target_env == 'test'
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: test
@@ -148,8 +150,10 @@ jobs:
     if: >-
       always() &&
       (needs.deploy-test.result == 'success' || needs.deploy-test.result == 'skipped') &&
-      (needs.metadata.outputs.target_env == 'all' ||
-       needs.metadata.outputs.target_env == 'preprod')
+      (
+        needs.metadata.outputs.target_env == 'all' ||
+        needs.metadata.outputs.target_env == 'preprod'
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: preprod
@@ -192,8 +196,10 @@ jobs:
     if: >-
       always() &&
       (needs.deploy-preprod.result == 'success' || needs.deploy-preprod.result == 'skipped') &&
-      (needs.metadata.outputs.target_env == 'all' ||
-       needs.metadata.outputs.target_env == 'prod')
+      (
+        needs.metadata.outputs.target_env == 'all' ||
+        needs.metadata.outputs.target_env == 'prod'
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: prod
