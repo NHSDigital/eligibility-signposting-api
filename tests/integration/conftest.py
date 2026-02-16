@@ -54,6 +54,10 @@ UNIQUE_CONSUMER_HEADER = "nhse-product-id"
 
 MOTO_PORT = 5000
 
+@pytest.fixture(scope="session")
+def docker_compose_project_name():
+    return "tests"
+
 @pytest.fixture(scope="session", autouse=True)
 def aws_credentials():
     """Mocked AWS Credentials for moto."""
@@ -63,18 +67,17 @@ def aws_credentials():
     os.environ["AWS_SESSION_TOKEN"] = "dummy_session_token"
     os.environ["AWS_DEFAULT_REGION"] = AWS_REGION
 
+
 @pytest.fixture(scope="session")
 def moto_server(request: pytest.FixtureRequest) -> URL:
     docker_services = request.getfixturevalue("docker_services")
+    # This must match the container_name in docker-compose
     docker_ip = request.getfixturevalue("docker_ip")
-
-    # Change "moto" to "moto-server" to match your docker-compose.yml
+    # port_for maps the INTERNAL 5000 to whatever random EXTERNAL port was assigned
     port = docker_services.port_for("moto-server", 5000)
     url = URL(f"http://{docker_ip}:{port}")
 
-    docker_services.wait_until_responsive(
-        timeout=30.0, pause=0.1, check=lambda: is_responsive(url)
-    )
+    docker_services.wait_until_responsive(timeout=30.0, pause=0.2, check=lambda: is_responsive(url))
     return url
 
 
@@ -257,8 +260,8 @@ def lambda_zip() -> Path:
 def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -> Generator[str]:
     function_name = "eligibility_signposting_api"
 
-    # Use the container name 'moto-server' on the internal Docker network
-    moto_internal_endpoint = "http://moto-server:5000"
+    # Use the INTERNAL docker name. Inside the Docker network, Moto is always 5000.
+    moto_internal = "http://moto-server:5000"
 
     with lambda_zip.open("rb") as zipfile:
         lambda_client.create_function(
@@ -269,20 +272,17 @@ def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -
             Code={"ZipFile": zipfile.read()},
             Environment={
                 "Variables": {
-                    # IMPORTANT: These must use the internal Docker DNS name
-                    "DYNAMODB_ENDPOINT": moto_internal_endpoint,
-                    "S3_ENDPOINT": moto_internal_endpoint,
-                    "FIREHOSE_ENDPOINT": moto_internal_endpoint,
-                    "SECRET_MANAGER_ENDPOINT": moto_internal_endpoint,
+                    "DYNAMODB_ENDPOINT": moto_internal,
+                    "S3_ENDPOINT": moto_internal,
+                    "SECRET_MANAGER_ENDPOINT": moto_internal,
+                    "FIREHOSE_ENDPOINT": moto_internal,
                     "AWS_REGION": AWS_REGION,
-                    "LOG_LEVEL": "DEBUG",
                 }
             },
         )
     wait_for_function_active(function_name, lambda_client)
     yield function_name
     lambda_client.delete_function(FunctionName=function_name)
-
 
 @pytest.fixture(autouse=True)
 def clean_audit_bucket(s3_client: BaseClient, audit_bucket: str):
@@ -386,7 +386,9 @@ def configured_api_gateway(api_gateway_client, lambda_client, flask_function: st
     api_gateway_client.create_deployment(restApiId=rest_api_id, stageName="dev")
 
     # 8. Construct the Moto-compatible Invoke URL
-    moto_base_url = str(localstack).rstrip("/")
+    # Inside configured_api_gateway fixture
+    moto_base_url = str(moto_server).rstrip("/")
+    # Moto routes via: /restapis/<id>/<stage>/_user_request_/<path>
     invoke_url = f"{moto_base_url}/restapis/{rest_api_id}/dev/_user_request_"
 
     return {
