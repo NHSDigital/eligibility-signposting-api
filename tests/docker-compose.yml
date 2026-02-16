@@ -1,12 +1,16 @@
 services:
   moto-server:
     image: motoserver/moto:latest
+    container_name: moto-server
     ports:
       - "4566:5000"
     environment:
       - MOTO_PORT=5000
       - MOTO_LAMBDA_EXECUTOR=docker
+      # 1. Map the runtime to official AWS image
       - MOTO_LAMBDA_IMAGE_PYTHON313=public.ecr.aws/lambda/python:3.13
+      # 2. Tell Moto to place the Lambda container on the same network
+      - MOTO_DOCKER_NETWORK=test-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
