@@ -52,21 +52,29 @@ AWS_PREVIOUS_SECRET = "test_value_old"  # noqa: S105
 
 UNIQUE_CONSUMER_HEADER = "nhse-product-id"
 
+MOTO_PORT = 5000
+
+@pytest.fixture(scope="session", autouse=True)
+def aws_credentials():
+    """Mocked AWS Credentials for moto."""
+    os.environ["AWS_ACCESS_KEY_ID"] = "dummy_key"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "dummy_secret"
+    os.environ["AWS_SECURITY_TOKEN"] = "dummy_token"
+    os.environ["AWS_SESSION_TOKEN"] = "dummy_session_token"
+    os.environ["AWS_DEFAULT_REGION"] = AWS_REGION
 
 @pytest.fixture(scope="session")
-def localstack(request: pytest.FixtureRequest) -> URL:
-    if url := os.getenv("RUNNING_LOCALSTACK_URL", None):
-        logger.info("localstack already running on %s", url)
-        return URL(url)
+def moto_server(request: pytest.FixtureRequest) -> URL:
+    docker_services = request.getfixturevalue("docker_services")
+    docker_ip = request.getfixturevalue("docker_ip")
 
-    docker_ip: str = request.getfixturevalue("docker_ip")
-    docker_services: Services = request.getfixturevalue("docker_services")
-
-    logger.info("Starting localstack")
-    port = docker_services.port_for("localstack", 4566)
+    # Change "moto" to "moto-server" to match your docker-compose.yml
+    port = docker_services.port_for("moto-server", 5000)
     url = URL(f"http://{docker_ip}:{port}")
-    docker_services.wait_until_responsive(timeout=30.0, pause=0.1, check=lambda: is_responsive(url))
-    logger.info("localstack running on %s", url)
+
+    docker_services.wait_until_responsive(
+        timeout=30.0, pause=0.1, check=lambda: is_responsive(url)
+    )
     return url
 
 
@@ -82,57 +90,56 @@ def is_responsive(url: URL) -> bool:
 
 @pytest.fixture(scope="session")
 def boto3_session() -> Session:
-    return Session(aws_access_key_id="fake", aws_secret_access_key="fake", region_name=AWS_REGION)
+    return Session(aws_access_key_id="fake", aws_secret_access_key="fake", aws_session_token="fake", region_name=AWS_REGION)
+
+@pytest.fixture(scope="session")
+def api_gateway_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("apigateway", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def api_gateway_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("apigateway", endpoint_url=str(localstack))
+def lambda_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("lambda", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def lambda_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("lambda", endpoint_url=str(localstack))
+def dynamodb_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("dynamodb", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def dynamodb_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("dynamodb", endpoint_url=str(localstack))
+def dynamodb_resource(boto3_session: Session, moto_server: URL) -> ServiceResource:
+    return boto3_session.resource("dynamodb", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def dynamodb_resource(boto3_session: Session, localstack: URL) -> ServiceResource:
-    return boto3_session.resource("dynamodb", endpoint_url=str(localstack))
+def logs_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("logs", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def logs_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("logs", endpoint_url=str(localstack))
+def iam_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("iam", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def iam_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("iam", endpoint_url=str(localstack))
+def s3_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("s3", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def s3_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("s3", endpoint_url=str(localstack))
+def firehose_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("firehose", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def firehose_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("firehose", endpoint_url=str(localstack))
-
-
-@pytest.fixture(scope="session")
-def secretsmanager_client(boto3_session: Session, localstack: URL) -> BaseClient:
+def secretsmanager_client(boto3_session: Session, moto_server: URL) -> BaseClient:
     """
-    Provides a boto3 Secrets Manager client bound to LocalStack.
+    Provides a boto3 Secrets Manager client bound to Moto.
     Seeds a test secret for use in integration tests.
     """
     client: BaseClient = boto3_session.client(
-        service_name="secretsmanager", endpoint_url=str(localstack), region_name="eu-west-1"
+        service_name="secretsmanager", endpoint_url=str(moto_server), region_name="eu-west-1"
     )
 
     secret_name = AWS_SECRET_NAME
@@ -231,14 +238,28 @@ def iam_role(iam_client: BaseClient) -> Generator[str]:
 
 @pytest.fixture(scope="session")
 def lambda_zip() -> Path:
-    build_result = subprocess.run(["make", "build"], capture_output=True, text=True, check=False)  # noqa: S607
-    assert build_result.returncode == 0, f"'make build' failed: {build_result.stderr}"
-    return Path("dist/lambda.zip")
+    # Run the build command
+    build_result = subprocess.run(["make", "build"], capture_output=True, text=True, check=False)
+
+    # If it fails, print the actual stderr so you can see WHY in the pytest logs
+    if build_result.returncode != 0:
+        pytest.fail(
+            f"'make build' failed with code {build_result.returncode}.\nSTDOUT: {build_result.stdout}\nSTDERR: {build_result.stderr}")
+
+    zip_path = Path("dist/lambda.zip")
+    if not zip_path.exists():
+        pytest.fail(f"Build succeeded but {zip_path} was not created.")
+
+    return zip_path
 
 
 @pytest.fixture(scope="session")
 def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -> Generator[str]:
     function_name = "eligibility_signposting_api"
+
+    # Use the container name 'moto-server' on the internal Docker network
+    moto_internal_endpoint = "http://moto-server:5000"
+
     with lambda_zip.open("rb") as zipfile:
         lambda_client.create_function(
             FunctionName=function_name,
@@ -246,22 +267,19 @@ def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -
             Role=iam_role,
             Handler="eligibility_signposting_api.app.lambda_handler",
             Code={"ZipFile": zipfile.read()},
-            Architectures=["x86_64"],
-            Timeout=180,
             Environment={
                 "Variables": {
-                    "DYNAMODB_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
-                    "S3_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
-                    "FIREHOSE_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
-                    "SECRET_MANAGER_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
+                    # IMPORTANT: These must use the internal Docker DNS name
+                    "DYNAMODB_ENDPOINT": moto_internal_endpoint,
+                    "S3_ENDPOINT": moto_internal_endpoint,
+                    "FIREHOSE_ENDPOINT": moto_internal_endpoint,
+                    "SECRET_MANAGER_ENDPOINT": moto_internal_endpoint,
                     "AWS_REGION": AWS_REGION,
                     "LOG_LEVEL": "DEBUG",
                 }
             },
         )
-    logger.info("loaded zip")
     wait_for_function_active(function_name, lambda_client)
-    logger.info("function active")
     yield function_name
     lambda_client.delete_function(FunctionName=function_name)
 
@@ -304,23 +322,32 @@ def wait_for_function_active(function_name, lambda_client):
 
 
 @pytest.fixture(scope="session")
-def configured_api_gateway(api_gateway_client, lambda_client, flask_function: str):
+def configured_api_gateway(api_gateway_client, lambda_client, flask_function: str, moto_server: URL):
     region = lambda_client.meta.region_name
 
-    api = api_gateway_client.create_rest_api(name="API Gateway Lambda integration")
+    # 1. Create the REST API
+    api = api_gateway_client.create_rest_api(
+        name="API Gateway Lambda integration",
+        endpointConfiguration={'types': ['REGIONAL']}
+    )
     rest_api_id = api["id"]
 
+    # 2. Get Root Resource ID
     resources = api_gateway_client.get_resources(restApiId=rest_api_id)
     root_id = next(item["id"] for item in resources["items"] if item["path"] == "/")
 
+    # 3. Create Resource Path: /patient-check/{id}
     patient_check_res = api_gateway_client.create_resource(
         restApiId=rest_api_id, parentId=root_id, pathPart="patient-check"
     )
     patient_check_id = patient_check_res["id"]
 
-    id_res = api_gateway_client.create_resource(restApiId=rest_api_id, parentId=patient_check_id, pathPart="{id}")
+    id_res = api_gateway_client.create_resource(
+        restApiId=rest_api_id, parentId=patient_check_id, pathPart="{id}"
+    )
     resource_id = id_res["id"]
 
+    # 4. Create GET Method
     api_gateway_client.put_method(
         restApiId=rest_api_id,
         resourceId=resource_id,
@@ -329,11 +356,13 @@ def configured_api_gateway(api_gateway_client, lambda_client, flask_function: st
         requestParameters={"method.request.path.id": True},
     )
 
-    # Integration with actual region
+    # 5. Setup Lambda Integration
+    # Moto uses account 123456789012 by default
     lambda_uri = (
         f"arn:aws:apigateway:{region}:lambda:path/2015-03-31/functions/"
-        f"arn:aws:lambda:{region}:000000000000:function:{flask_function}/invocations"
+        f"arn:aws:lambda:{region}:123456789012:function:{flask_function}/invocations"
     )
+
     api_gateway_client.put_integration(
         restApiId=rest_api_id,
         resourceId=resource_id,
@@ -344,28 +373,31 @@ def configured_api_gateway(api_gateway_client, lambda_client, flask_function: st
         passthroughBehavior="WHEN_NO_MATCH",
     )
 
-    # Permission with matching region
+    # 6. Add Permission for API Gateway to invoke Lambda
     lambda_client.add_permission(
         FunctionName=flask_function,
         StatementId="apigateway-access",
         Action="lambda:InvokeFunction",
         Principal="apigateway.amazonaws.com",
-        SourceArn=f"arn:aws:execute-api:{region}:000000000000:{rest_api_id}/*/GET/patient-check/*",
+        SourceArn=f"arn:aws:execute-api:{region}:123456789012:{rest_api_id}/*/GET/patient-check/*",
     )
 
-    # Deploy the API
+    # 7. Create Deployment and Stage
     api_gateway_client.create_deployment(restApiId=rest_api_id, stageName="dev")
+
+    # 8. Construct the Moto-compatible Invoke URL
+    moto_base_url = str(localstack).rstrip("/")
+    invoke_url = f"{moto_base_url}/restapis/{rest_api_id}/dev/_user_request_"
 
     return {
         "rest_api_id": rest_api_id,
         "resource_id": resource_id,
-        "invoke_url": f"http://{rest_api_id}.execute-api.localhost.localstack.cloud:4566/dev/patient-check/{{id}}",
+        "invoke_url": invoke_url,
     }
-
 
 @pytest.fixture
 def api_gateway_endpoint(configured_api_gateway: dict) -> URL:
-    return URL(f"http://{configured_api_gateway['rest_api_id']}.execute-api.localhost.localstack.cloud:4566/dev")
+    return URL(configured_api_gateway["invoke_url"])
 
 
 @pytest.fixture(scope="session")
@@ -727,17 +759,22 @@ def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
 
 @pytest.fixture(autouse=True)
 def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketName) -> dict[str, Any]:
-    return firehose_client.create_delivery_stream(
-        DeliveryStreamName="test_kinesis_audit_stream_to_s3",
-        DeliveryStreamType="DirectPut",
-        ExtendedS3DestinationConfiguration={
-            "BucketARN": f"arn:aws:s3:::{audit_bucket}",
-            "RoleARN": "arn:aws:iam::000000000000:role/firehose_delivery_role",
-            "Prefix": "audit-logs/",
-            "BufferingHints": {"SizeInMBs": 1, "IntervalInSeconds": 60},
-            "CompressionFormat": "UNCOMPRESSED",
-        },
-    )
+    stream_name = "test_kinesis_audit_stream_to_s3"
+
+    try:
+        return firehose_client.create_delivery_stream(
+            DeliveryStreamName=stream_name,
+            DeliveryStreamType="DirectPut",
+            ExtendedS3DestinationConfiguration={
+                "BucketARN": f"arn:aws:s3:::{audit_bucket}",
+                "RoleARN": "arn:aws:iam::123456789012:role/firehose_delivery_role",
+                "Prefix": "audit-logs/",
+                "BufferingHints": {"SizeInMBs": 1, "IntervalInSeconds": 60},
+                "CompressionFormat": "UNCOMPRESSED",
+            },
+        )
+    except firehose_client.exceptions.ResourceInUseException:
+        return firehose_client.describe_delivery_stream(DeliveryStreamName=stream_name)
 
 
 @pytest.fixture(scope="class")
