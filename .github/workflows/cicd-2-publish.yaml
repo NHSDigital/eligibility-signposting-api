@@ -94,13 +94,9 @@ jobs:
           aws-region: eu-west-2
 
       - name: "Deploy IAM roles (iams-developer-roles stack)"
-        env:
-          ENVIRONMENT: dev
         working-directory: ./infrastructure
         run: |
-          make terraform-init env=$ENVIRONMENT stack=iams-developer-roles
-          terraform -chdir=./stacks/iams-developer-roles plan -var="environment=$ENVIRONMENT" -out=tfplan
-          terraform -chdir=./stacks/iams-developer-roles apply -auto-approve tfplan
+          make terraform env=dev stack=iams-developer-roles tf-command=apply workspace=default
 
       - name: "Configure AWS Credentials (Main Deployment Role)"
         uses: aws-actions/configure-aws-credentials@v6
