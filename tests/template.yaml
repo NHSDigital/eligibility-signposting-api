@@ -25,7 +25,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       # Point this to the location of your zip file relative to the template
-      CodeUri: ../dist/lambda.zip
+      CodeUri: ./dist/lambda.zip
       Events:
         GetEligibility:
           Type: Api

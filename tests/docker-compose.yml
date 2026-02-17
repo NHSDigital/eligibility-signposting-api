@@ -22,14 +22,16 @@ services:
       - tests/locals.json
       - --docker-network
       - tests_test-network
-      # Force SAM to use the host gateway to find the Lambda container
       - --container-host
       - host.docker.internal
       - --container-host-interface
       - 0.0.0.0
     volumes:
-      - ..:/var/opt:ro
       - /var/run/docker.sock:/var/run/docker.sock
+      # Mount project root to /var/opt inside the container
+      - ${PWD}/..:/var/opt:ro
+      # CRITICAL: Create a 'tmp' folder in your 'tests' directory and mount it to /tmp
+      - ${PWD}/tmp:/tmp:rw
     working_dir: /var/opt
     ports:
       - "3000:3000"
@@ -37,8 +39,8 @@ services:
       - AWS_ACCESS_KEY_ID=testing
       - AWS_SECRET_ACCESS_KEY=testing
       - AWS_DEFAULT_REGION=eu-west-1
-      # Give it more breathing room for the handshake
-      - SAM_CLI_CONTAINER_CONNECTION_TIMEOUT=60
+      # Tell SAM the host's absolute path for the Zip and the shared /tmp
+      - SAM_DOCKER_VOLUME_BASEDIR=/Users/karthikeyanthangavel/PycharmProjects/eligibility-signposting-api
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
