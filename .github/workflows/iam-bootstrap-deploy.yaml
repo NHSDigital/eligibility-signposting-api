@@ -1,33 +1,22 @@
+# Manual IAM deployment for emergency or ad-hoc use.
+# Normal IAM deployments happen automatically as part of cicd-2-publish and base-deploy.
 name: "IAM Bootstrap | Deploy IAM Roles"
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "infrastructure/stacks/iams-developer-roles/**"
   workflow_dispatch:
     inputs:
       environment:
-        description: "Environment to deploy (leave blank for all)"
-        required: false
+        description: "Environment to deploy"
+        required: true
         type: choice
         options:
-          - all
           - dev
           - test
           - preprod
           - prod
-  workflow_call:
-    inputs:
-      environment:
-        description: "Environment to deploy"
-        required: false
-        type: string
-        default: "all"
 
 concurrency:
-  group: iam-bootstrap-deploy
+  group: iam-bootstrap-${{ inputs.environment }}
   cancel-in-progress: false
 
 permissions:
@@ -35,44 +24,24 @@ permissions:
   id-token: write
 
 jobs:
-  metadata:
-    name: "Resolve CI/CD metadata"
+  deploy:
+    name: "Deploy IAM roles → ${{ inputs.environment }}"
     runs-on: ubuntu-latest
-    timeout-minutes: 2
-    outputs:
-      terraform_version: ${{ steps.vars.outputs.terraform_version }}
-      target_env: ${{ steps.vars.outputs.target_env }}
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v6
 
-      - name: "Set variables"
+      - name: "Resolve Terraform version"
         id: vars
         run: |
           echo "terraform_version=$(grep '^terraform' .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
 
-          # Determine which environment(s) to deploy
-          INPUT_ENV="${{ inputs.environment || 'all' }}"
-          echo "target_env=$INPUT_ENV" >> $GITHUB_OUTPUT
-          echo "Target environment: $INPUT_ENV"
-
-  deploy-dev:
-    name: "Deploy IAM roles → dev"
-    needs: metadata
-    if: >-
-      needs.metadata.outputs.target_env == 'all' ||
-      needs.metadata.outputs.target_env == 'dev'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: dev
-    steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v6
-
       - name: "Setup Terraform"
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
+          terraform_version: ${{ steps.vars.outputs.terraform_version }}
 
       - name: "Configure AWS Credentials (IAM Bootstrap Role)"
         uses: aws-actions/configure-aws-credentials@v6
@@ -80,158 +49,12 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-iam-bootstrap-role
           aws-region: eu-west-2
 
-      - name: "Terraform Init"
+      - name: "Terraform Plan"
         working-directory: ./infrastructure
         run: |
-          make terraform-init env=dev stack=iams-developer-roles
-
-      - name: "Terraform Plan"
-        working-directory: ./infrastructure/stacks/iams-developer-roles
-        run: |
-          terraform plan -var="environment=dev" -out=tfplan
-          echo "### Dev IAM Plan" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          terraform show -no-color tfplan >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          make terraform env=${{ inputs.environment }} stack=iams-developer-roles tf-command=plan workspace=default
 
       - name: "Terraform Apply"
-        working-directory: ./infrastructure/stacks/iams-developer-roles
-        run: terraform apply -auto-approve tfplan
-
-  deploy-test:
-    name: "Deploy IAM roles → test (approval required)"
-    needs: [metadata, deploy-dev]
-    if: >-
-      always() &&
-      (needs.deploy-dev.result == 'success' || needs.deploy-dev.result == 'skipped') &&
-      (
-        needs.metadata.outputs.target_env == 'all' ||
-        needs.metadata.outputs.target_env == 'test'
-      )
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: test
-    steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v6
-
-      - name: "Setup Terraform"
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
-
-      - name: "Configure AWS Credentials (IAM Bootstrap Role)"
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-iam-bootstrap-role
-          aws-region: eu-west-2
-
-      - name: "Terraform Init"
         working-directory: ./infrastructure
         run: |
-          make terraform-init env=test stack=iams-developer-roles
-
-      - name: "Terraform Plan"
-        working-directory: ./infrastructure/stacks/iams-developer-roles
-        run: |
-          terraform plan -var="environment=test" -out=tfplan
-          echo "### Test IAM Plan" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          terraform show -no-color tfplan >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: "Terraform Apply"
-        working-directory: ./infrastructure/stacks/iams-developer-roles
-        run: terraform apply -auto-approve tfplan
-
-  deploy-preprod:
-    name: "Deploy IAM roles → preprod (approval required)"
-    needs: [metadata, deploy-test]
-    if: >-
-      always() &&
-      (needs.deploy-test.result == 'success' || needs.deploy-test.result == 'skipped') &&
-      (
-        needs.metadata.outputs.target_env == 'all' ||
-        needs.metadata.outputs.target_env == 'preprod'
-      )
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: preprod
-    steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v6
-
-      - name: "Setup Terraform"
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
-
-      - name: "Configure AWS Credentials (IAM Bootstrap Role)"
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-iam-bootstrap-role
-          aws-region: eu-west-2
-
-      - name: "Terraform Init"
-        working-directory: ./infrastructure
-        run: |
-          make terraform-init env=preprod stack=iams-developer-roles
-
-      - name: "Terraform Plan"
-        working-directory: ./infrastructure/stacks/iams-developer-roles
-        run: |
-          terraform plan -var="environment=preprod" -out=tfplan
-          echo "### Preprod IAM Plan" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          terraform show -no-color tfplan >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: "Terraform Apply"
-        working-directory: ./infrastructure/stacks/iams-developer-roles
-        run: terraform apply -auto-approve tfplan
-
-  deploy-prod:
-    name: "Deploy IAM roles → prod (approval required)"
-    needs: [metadata, deploy-preprod]
-    if: >-
-      always() &&
-      (needs.deploy-preprod.result == 'success' || needs.deploy-preprod.result == 'skipped') &&
-      (
-        needs.metadata.outputs.target_env == 'all' ||
-        needs.metadata.outputs.target_env == 'prod'
-      )
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: prod
-    steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v6
-
-      - name: "Setup Terraform"
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
-
-      - name: "Configure AWS Credentials (IAM Bootstrap Role)"
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-iam-bootstrap-role
-          aws-region: eu-west-2
-
-      - name: "Terraform Init"
-        working-directory: ./infrastructure
-        run: |
-          make terraform-init env=prod stack=iams-developer-roles
-
-      - name: "Terraform Plan"
-        working-directory: ./infrastructure/stacks/iams-developer-roles
-        run: |
-          terraform plan -var="environment=prod" -out=tfplan
-          echo "### Prod IAM Plan" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          terraform show -no-color tfplan >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: "Terraform Apply"
-        working-directory: ./infrastructure/stacks/iams-developer-roles
-        run: terraform apply -auto-approve tfplan
+          make terraform env=${{ inputs.environment }} stack=iams-developer-roles tf-command=apply workspace=default
