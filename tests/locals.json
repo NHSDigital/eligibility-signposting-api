@@ -1,0 +1,6 @@
+{
+  "EligibilityFunction": {
+    "PYTHONPATH": "/var/task",
+    "AWS_REGION": "eu-west-1"
+  }
+}
