@@ -580,7 +580,7 @@ def person_with_all_data(
             gender="0",
             postcode="SW18",
             cohorts=["cohort_label1", "cohort_label2"],
-            vaccines={"RSV": {"LAST_SUCCESSFUL_DATE": None}},
+            vaccines={"RSV": {"LAST_SUCCESSFUL_DATE": None, "SUCCESSFUL_PROCEDURE_COUNT": "3"}},
             icb="QE1",
             gp_practice="C81002",
             pcn="U78207",
@@ -952,12 +952,19 @@ def campaign_config_with_tokens(s3_client: BaseClient, rules_bucket: BucketName)
                             ActionDescription="## Token - PERSON.GENDER: [[PERSON.GENDER]].",
                             UrlLabel="Token - PERSON.DATE_OF_BIRTH: [[PERSON.DATE_OF_BIRTH]].",
                         ),
+                        "TOKEN_TEST3": AvailableAction(
+                            ActionType="ButtonAuthLink",
+                            ExternalRoutingCode="BookNBS",
+                            ActionDescription="## "
+                            "Token - TARGET.RSV.SUCCESSFUL_PROCEDURE_COUNT: [[TARGET.RSV.SUCCESSFUL_PROCEDURE_COUNT]].",
+                            UrlLabel="",
+                        ),
                     }
                 ),
                 iteration_rules=[
                     rule.PostcodeSuppressionRuleFactory.build(),
                     rule.PersonAgeSuppressionRuleFactory.build(),
-                    rule.ICBNonEligibleActionRuleFactory.build(comms_routing="TOKEN_TEST|TOKEN_TEST2"),
+                    rule.ICBNonEligibleActionRuleFactory.build(comms_routing="TOKEN_TEST|TOKEN_TEST2|TOKEN_TEST3"),
                     rule.ICBNonActionableActionRuleFactory.build(comms_routing="TOKEN_TEST"),
                 ],
                 iteration_cohorts=[
