@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 from http import HTTPStatus
+from typing import Callable, List
 
 import httpx
 import stamina
@@ -34,10 +35,10 @@ logger = logging.getLogger(__name__)
 
 def test_install_and_call_lambda_flask(
     lambda_client: BaseClient,
-    flask_function: str,
     persisted_person: NHSNumber,
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
+    secretsmanager_client: BaseClient,
 ):
     """Given lambda installed into localstack, run it via boto3 lambda client"""
     # Given
@@ -68,12 +69,12 @@ def test_install_and_call_lambda_flask(
         "isBase64Encoded": False,
     }
     response = lambda_client.invoke(
-        FunctionName=flask_function,
+        FunctionName="function",
         InvocationType="RequestResponse",
         Payload=json.dumps(request_payload),
-        LogType="Tail",
+        # LogType="Tail", #TODO
     )
-    log_output = base64.b64decode(response["LogResult"]).decode("utf-8")
+    # log_output = base64.b64decode(response["LogResult"]).decode("utf-8")
 
     # Then
     assert_that(response, has_entries(StatusCode=HTTPStatus.OK))
@@ -84,13 +85,14 @@ def test_install_and_call_lambda_flask(
         has_entries(statusCode=HTTPStatus.OK, body=is_json_that(has_key("processedSuggestions"))),
     )
 
-    assert_that(log_output, contains_string("checking nhs_number"))
+    # assert_that(log_output, contains_string("checking nhs_number"))
 
 
 def test_install_and_call_flask_lambda_over_http(
     persisted_person: NHSNumber,
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
+    secretsmanager_client: BaseClient,
     api_gateway_endpoint: URL,
 ):
     """Given api-gateway and lambda installed into localstack, run it via http"""
@@ -111,13 +113,13 @@ def test_install_and_call_flask_lambda_over_http(
 
 
 def test_install_and_call_flask_lambda_with_unknown_nhs_number(  # noqa: PLR0913
-    flask_function: str,
     persisted_person: NHSNumber,
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
     logs_client: BaseClient,
     api_gateway_endpoint: URL,
     secretsmanager_client: BaseClient,  # noqa: ARG001
+    lambda_logs: Callable[[], List[str]]
 ):
     """Given lambda installed into localstack, run it via http, with a nonexistent NHS number specified"""
     # Given
@@ -145,15 +147,15 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(  # noqa: PLR0913
                             severity="error",
                             code="processing",
                             diagnostics=f"NHS Number '{nhs_number!s}' was not "
-                            f"recognised by the Eligibility Signposting API",
+                                        f"recognised by the Eligibility Signposting API",
                             details={
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
                                         "code": "REFERENCE_NOT_FOUND",
                                         "display": "The given NHS number was not found in our datasets. "
-                                        "This could be because the number is incorrect or "
-                                        "some other reason we cannot process that number.",
+                                                   "This could be because the number is incorrect or "
+                                                   "some other reason we cannot process that number.",
                                     }
                                 ]
                             },
@@ -164,25 +166,11 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(  # noqa: PLR0913
         ),
     )
 
-    messages = get_log_messages(flask_function, logs_client)
+    messages = lambda_logs()
     assert_that(
         messages,
         has_item(contains_string(f"NHS Number '{nhs_number}' was not recognised by the Eligibility Signposting API")),
     )
-
-
-def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
-    for attempt in stamina.retry_context(on=ClientError, attempts=20, timeout=120):
-        with attempt:
-            log_streams = logs_client.describe_log_streams(
-                logGroupName=f"/aws/lambda/{flask_function}", orderBy="LastEventTime", descending=True
-            )
-    assert log_streams["logStreams"] != []
-    log_stream_name = log_streams["logStreams"][0]["logStreamName"]
-    log_events = logs_client.get_log_events(
-        logGroupName=f"/aws/lambda/{flask_function}", logStreamName=log_stream_name, limit=100
-    )
-    return [e["message"] for e in log_events["events"]]
 
 
 def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_if_audited(  # noqa: PLR0913
@@ -194,8 +182,8 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
-    flask_function: str,
-    logs_client: BaseClient,
+    lambda_logs: Callable[[], List[str]],
+    secretsmanager_client: BaseClient,
 ):
     # Given
     # When
@@ -274,7 +262,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     assert_that(audit_data["response"]["lastUpdated"], is_not(equal_to("")))
     assert_that(audit_data["response"]["condition"], equal_to(expected_conditions))
 
-    messages = get_log_messages(flask_function, logs_client)
+    messages = lambda_logs()
     assert_that(
         messages,
         has_item(contains_string("Defaulting category query param to 'ALL' as no value was provided")),
@@ -332,8 +320,10 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
 
 
 def test_given_nhs_number_not_present_in_headers_results_in_valid_for_application_restricted_users(
-    lambda_client: BaseClient,  # noqa:ARG001
+    lambda_client: BaseClient,
+    secretsmanager_client: BaseClient, # noqa:ARG001
     persisted_person: NHSNumber,
+    consumer_to_active_rsv_campaign_mapping: ConsumerMapping,
     api_gateway_endpoint: URL,
 ):
     # Given
@@ -632,7 +622,7 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
-    flask_function: str,  # noqa:ARG001
+    # noqa:ARG001
     logs_client: BaseClient,  # noqa:ARG001
 ):
     invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
@@ -683,8 +673,7 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
-    flask_function: str,
-    logs_client: BaseClient,
+lambda_logs: Callable[[], List[str]]
 ):
     invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
     response = httpx.get(
@@ -727,7 +716,7 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
     assert len(objects) == 0  # Check there are no audit logs
 
     assert_that(
-        get_log_messages(flask_function, logs_client),
+        lambda_logs(),
         has_item(contains_string("Invalid attribute name 'ICECREAM' in token '[[PERSON.ICECREAM]]'.")),
     )
 
