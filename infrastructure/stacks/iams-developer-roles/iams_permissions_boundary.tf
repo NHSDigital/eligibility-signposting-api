@@ -295,3 +295,148 @@ resource "aws_iam_policy" "permissions_boundary" {
     }
   )
 }
+
+data "aws_iam_policy_document" "iam_bootstrap_permissions_boundary" {
+  # Allow IAM operations on project-scoped resources
+  statement {
+    sid    = "AllowProjectIamOperations"
+    effect = "Allow"
+    actions = [
+      "iam:GetRole*",
+      "iam:GetPolicy*",
+      "iam:ListRole*",
+      "iam:ListPolicies",
+      "iam:ListAttachedRolePolicies",
+      "iam:ListPolicyVersions",
+      "iam:ListPolicyTags",
+      "iam:ListOpenIDConnectProviders",
+      "iam:ListOpenIDConnectProviderTags",
+      "iam:GetOpenIDConnectProvider",
+      "iam:CreateRole",
+      "iam:DeleteRole",
+      "iam:UpdateRole",
+      "iam:UpdateAssumeRolePolicy",
+      "iam:PutRolePolicy",
+      "iam:PutRolePermissionsBoundary",
+      "iam:AttachRolePolicy",
+      "iam:DetachRolePolicy",
+      "iam:CreatePolicy*",
+      "iam:DeletePolicy*",
+      "iam:TagRole",
+      "iam:TagPolicy",
+      "iam:UntagRole",
+      "iam:UntagPolicy",
+      "iam:PassRole",
+      "iam:CreateServiceLinkedRole",
+      "iam:TagOpenIDConnectProvider",
+      "iam:UntagOpenIDConnectProvider",
+      "iam:CreateOpenIDConnectProvider",
+      "iam:DeleteOpenIDConnectProvider",
+      "iam:UpdateOpenIDConnectProviderThumbprint",
+      "iam:AddClientIDToOpenIDConnectProvider",
+      "iam:RemoveClientIDFromOpenIDConnectProvider",
+    ]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-roles/github-actions-api-deployment-role",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-roles/github-actions-iam-bootstrap-role",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-terraform-developer-role",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/terraform-developer-role",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${upper(var.project_name)}-*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${lower(var.project_name)}-*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/service-policies/*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${local.stack_name}-*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com",
+    ]
+  }
+
+  # Allow read-only IAM access for Terraform plan/state discovery
+  statement {
+    sid    = "AllowIamReadAccess"
+    effect = "Allow"
+    actions = [
+      "iam:Get*",
+      "iam:List*",
+    ]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/*",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/*",
+    ]
+  }
+
+  # Allow Terraform state bucket access
+  statement {
+    sid    = "AllowTerraformStateAccess"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "${local.terraform_state_bucket_arn}",
+      "${local.terraform_state_bucket_arn}/*",
+    ]
+  }
+
+  # Allow Terraform state locking via DynamoDB
+  statement {
+    sid    = "AllowTerraformStateLocking"
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:DeleteItem",
+    ]
+    resources = [
+      "arn:aws:dynamodb:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-*-terraform-lock",
+    ]
+  }
+
+  # DENY: Prevent the bootstrap role from modifying its own policies
+  statement {
+    sid    = "DenyBootstrapSelfModification"
+    effect = "Deny"
+    actions = [
+      "iam:AttachRolePolicy",
+      "iam:DetachRolePolicy",
+      "iam:PutRolePolicy",
+      "iam:DeleteRolePolicy",
+      "iam:UpdateAssumeRolePolicy",
+      "iam:PutRolePermissionsBoundary",
+      "iam:DeleteRolePermissionsBoundary",
+    ]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-roles/github-actions-iam-bootstrap-role",
+    ]
+  }
+
+  # DENY: Prevent the bootstrap role from modifying its own permissions boundary
+  statement {
+    sid    = "DenyBootstrapBoundaryModification"
+    effect = "Deny"
+    actions = [
+      "iam:CreatePolicyVersion",
+      "iam:DeletePolicy",
+      "iam:DeletePolicyVersion",
+      "iam:SetDefaultPolicyVersion",
+    ]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${lower(var.project_name)}-iam-bootstrap-permissions-boundary",
+    ]
+  }
+}
+
+resource "aws_iam_policy" "iam_bootstrap_permissions_boundary" {
+  name        = "${lower(var.project_name)}-iam-bootstrap-permissions-boundary"
+  description = "Permissions boundary for the GitHub Actions IAM Bootstrap role - scoped to IAM and Terraform state only"
+  policy      = data.aws_iam_policy_document.iam_bootstrap_permissions_boundary.json
+
+  tags = merge(
+    local.tags,
+    {
+      Stack = "iams-developer-roles"
+    }
+  )
+}

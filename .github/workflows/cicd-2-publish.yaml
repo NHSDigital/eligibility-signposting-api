@@ -87,7 +87,18 @@ jobs:
           name: lambda-${{ needs.metadata.outputs.version }}
           path: dist/lambda.zip
 
-      - name: "Configure AWS Credentials"
+      - name: "Configure AWS Credentials (IAM Bootstrap Role)"
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-iam-bootstrap-role
+          aws-region: eu-west-2
+
+      - name: "Deploy IAM roles (iams-developer-roles stack)"
+        working-directory: ./infrastructure
+        run: |
+          make terraform env=dev stack=iams-developer-roles tf-command=apply workspace=default
+
+      - name: "Configure AWS Credentials (Main Deployment Role)"
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
