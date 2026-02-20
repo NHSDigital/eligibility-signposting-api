@@ -80,6 +80,7 @@ def test_install_and_call_lambda_flask(  # noqa: PLR0913
         has_entries(statusCode=HTTPStatus.OK, body=is_json_that(has_key("processedSuggestions"))),
     )
 
+    # assert logs from lambda container
     messages = lambda_logs()
     assert_that(messages, has_item(contains_string("checking nhs_number")))
 
