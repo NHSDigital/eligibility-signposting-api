@@ -98,8 +98,8 @@ def lambda_runtime_url(request, lambda_zip):  # noqa: ARG001
     base_url = URL(f"http://{docker_ip}:{port}")
 
     docker_services.wait_until_responsive(
-        timeout=30.0,
-        pause=0.5,
+        timeout=60.0,
+        pause=1,
         check=lambda: is_responsive(base_url),
     )
 
