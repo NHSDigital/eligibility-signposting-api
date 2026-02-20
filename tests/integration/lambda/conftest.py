@@ -1,7 +1,6 @@
 import os
 import shutil
 import subprocess
-from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -142,38 +141,16 @@ def lambda_client(boto3_session: Session, lambda_runtime_url: URL) -> BaseClient
     return boto3_session.client("lambda", endpoint_url=str(lambda_runtime_url))
 
 
-@pytest.fixture
-def lambda_logs(docker_services) -> Callable[[], list[str]]:
-    """Return a callable that fetches the latest lambda-api logs."""
+def get_lambda_logs(docker_services) -> list[str]:
+    """
+    Fetch logs from the lambda-api container using the internal pytest-docker executor.
+    This replaces manual subprocess calls and path resolution.
+    """
+    try:
+        result = docker_services._docker_compose.execute("logs --no-color lambda-api")  # noqa: SLF001
 
-    def _get_messages() -> list[str]:
-        return get_lambda_logs(docker_services)
+        output = result.decode("utf-8") if isinstance(result, bytes) else str(result)
 
-    return _get_messages
-
-
-def get_lambda_logs(docker_services) -> list[str]:  # noqa :ARG001
-    """Fetch logs from the lambda-api container."""
-    raw_docker = shutil.which("docker")
-    if not raw_docker:
-        return ["Error: Docker not found"]
-
-    docker_path = Path(raw_docker).resolve()
-    project_root = get_project_root()
-    compose_file = (project_root / "tests" / "docker-compose.yml").resolve()
-
-    result = subprocess.run(  # noqa: S603
-        [
-            str(docker_path),
-            "compose",
-            "-f",
-            str(compose_file),
-            "logs",
-            "--no-color",
-            "lambda-api",
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return [line.split("|", 1)[-1].strip() for line in result.stdout.splitlines()]
+        return [line.split("|", 1)[-1].strip() for line in output.splitlines()]
+    except Exception as e:  # noqa: BLE001
+        return [f"Error fetching logs: {e!s}"]

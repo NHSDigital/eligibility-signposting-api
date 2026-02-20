@@ -13,6 +13,7 @@ from boto3.resources.base import ServiceResource
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from faker import Faker
+from httpx import RequestError
 from yarl import URL
 
 from eligibility_signposting_api.model import eligibility_status
@@ -82,12 +83,12 @@ def moto_server(request: pytest.FixtureRequest) -> URL:
 
 def is_responsive(url: URL) -> bool:
     try:
-        response = httpx.get(str(url), timeout=2.0)
-    except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.TimeoutException):
+        response = httpx.get(str(url))
+        response.raise_for_status()
+    except RequestError:
         return False
     else:
-        # Use the constant instead of the raw number
-        return response.status_code < HTTP_SERVER_ERROR
+        return True
 
 
 @pytest.fixture(scope="session")
