@@ -1,13 +1,10 @@
-import base64
 import json
 import logging
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable, List
 
 import httpx
-import stamina
 from botocore.client import BaseClient
-from botocore.exceptions import ClientError
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.response import is_response
 from freezegun import freeze_time
@@ -38,7 +35,7 @@ def test_install_and_call_lambda_flask(
     persisted_person: NHSNumber,
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
-    secretsmanager_client: BaseClient,
+    secretsmanager_client: BaseClient,  # noqa :ARG001
 ):
     """Given lambda installed into localstack, run it via boto3 lambda client"""
     # Given
@@ -92,7 +89,7 @@ def test_install_and_call_flask_lambda_over_http(
     persisted_person: NHSNumber,
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
-    secretsmanager_client: BaseClient,
+    secretsmanager_client: BaseClient,  # noqa:ARG001
     api_gateway_endpoint: URL,
 ):
     """Given api-gateway and lambda installed into localstack, run it via http"""
@@ -116,10 +113,9 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(  # noqa: PLR0913
     persisted_person: NHSNumber,
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
-    logs_client: BaseClient,
     api_gateway_endpoint: URL,
     secretsmanager_client: BaseClient,  # noqa: ARG001
-    lambda_logs: Callable[[], List[str]]
+    lambda_logs: Callable[[], list[str]],
 ):
     """Given lambda installed into localstack, run it via http, with a nonexistent NHS number specified"""
     # Given
@@ -147,15 +143,15 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(  # noqa: PLR0913
                             severity="error",
                             code="processing",
                             diagnostics=f"NHS Number '{nhs_number!s}' was not "
-                                        f"recognised by the Eligibility Signposting API",
+                            f"recognised by the Eligibility Signposting API",
                             details={
                                 "coding": [
                                     {
                                         "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
                                         "code": "REFERENCE_NOT_FOUND",
                                         "display": "The given NHS number was not found in our datasets. "
-                                                   "This could be because the number is incorrect or "
-                                                   "some other reason we cannot process that number.",
+                                        "This could be because the number is incorrect or "
+                                        "some other reason we cannot process that number.",
                                     }
                                 ]
                             },
@@ -182,8 +178,8 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
-    lambda_logs: Callable[[], List[str]],
-    secretsmanager_client: BaseClient,
+    lambda_logs: Callable[[], list[str]],
+    secretsmanager_client: BaseClient,  # noqa:ARG001
 ):
     # Given
     # When
@@ -320,10 +316,10 @@ def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_resu
 
 
 def test_given_nhs_number_not_present_in_headers_results_in_valid_for_application_restricted_users(
-    lambda_client: BaseClient,
-    secretsmanager_client: BaseClient, # noqa:ARG001
+    lambda_client: BaseClient,  # noqa:ARG001
+    secretsmanager_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    consumer_to_active_rsv_campaign_mapping: ConsumerMapping,
+    consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa:ARG001
     api_gateway_endpoint: URL,
 ):
     # Given
@@ -622,8 +618,6 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
-    # noqa:ARG001
-    logs_client: BaseClient,  # noqa:ARG001
 ):
     invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
     response = httpx.get(
@@ -673,7 +667,7 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
     s3_client: BaseClient,
     audit_bucket: BucketName,
     api_gateway_endpoint: URL,
-lambda_logs: Callable[[], List[str]]
+    lambda_logs: Callable[[], list[str]],
 ):
     invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
     response = httpx.get(

@@ -3,7 +3,7 @@ import json
 import logging
 import os
 from collections.abc import Callable, Generator
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import httpx
 import pytest
@@ -37,9 +37,6 @@ from tests.fixtures.builders.model import rule
 from tests.fixtures.builders.model.rule import RulesMapperFactory
 from tests.fixtures.builders.repos.person import person_rows_builder
 
-if TYPE_CHECKING:
-    pass
-
 logger = logging.getLogger(__name__)
 
 AWS_REGION = "eu-west-1"
@@ -52,6 +49,8 @@ UNIQUE_CONSUMER_HEADER = "nhse-product-id"
 
 MOTO_PORT = 5000
 
+HTTP_SERVER_ERROR = 500
+
 
 @pytest.fixture(scope="session")
 def docker_compose_project_name():
@@ -62,9 +61,9 @@ def docker_compose_project_name():
 def aws_credentials():
     """Mocked AWS Credentials for moto."""
     os.environ["AWS_ACCESS_KEY_ID"] = "dummy_key"
-    os.environ["AWS_SECRET_ACCESS_KEY"] = "dummy_secret"
-    os.environ["AWS_SECURITY_TOKEN"] = "dummy_token"
-    os.environ["AWS_SESSION_TOKEN"] = "dummy_session_token"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "dummy_secret"  # noqa: S105
+    os.environ["AWS_SECURITY_TOKEN"] = "dummy_token"  # noqa: S105
+    os.environ["AWS_SESSION_TOKEN"] = "dummy_session_token"  # noqa: S105
     os.environ["AWS_DEFAULT_REGION"] = AWS_REGION
 
 
@@ -84,23 +83,29 @@ def moto_server(request: pytest.FixtureRequest) -> URL:
 def is_responsive(url: URL) -> bool:
     try:
         response = httpx.get(str(url), timeout=2.0)
-        return response.status_code < 500
     except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.TimeoutException):
         return False
+    else:
+        # Use the constant instead of the raw number
+        return response.status_code < HTTP_SERVER_ERROR
 
 
 @pytest.fixture(scope="session")
 def boto3_session() -> Session:
-    return Session(aws_access_key_id="fake", aws_secret_access_key="fake", aws_session_token="fake", region_name=AWS_REGION)
+    return Session(
+        aws_access_key_id="fake", aws_secret_access_key="fake", aws_session_token="fake", region_name=AWS_REGION
+    )
 
 
 @pytest.fixture(scope="session")
 def dynamodb_client(boto3_session: Session, moto_server: URL) -> BaseClient:
     return boto3_session.client("dynamodb", endpoint_url=str(moto_server))
 
+
 @pytest.fixture(scope="session")
 def dynamodb_resource(boto3_session: Session, moto_server: URL) -> ServiceResource:
     return boto3_session.resource("dynamodb", endpoint_url=str(moto_server))
+
 
 def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
     for attempt in stamina.retry_context(on=ClientError, attempts=20, timeout=120):
@@ -114,10 +119,6 @@ def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
         logGroupName=f"/aws/lambda/{flask_function}", logStreamName=log_stream_name, limit=100
     )
     return [e["message"] for e in log_events["events"]]
-
-@pytest.fixture(scope="session")
-def logs_client(boto3_session: Session, moto_server: URL) -> BaseClient:
-    return boto3_session.client("logs", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")

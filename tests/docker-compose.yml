@@ -1,6 +1,7 @@
 services:
   moto-server:
     #used for s3, dynamodb, kinesis, secret manager
+    # lambda cannot be used, because its 3.11 (older)
     image: motoserver/moto:latest
     container_name: moto-server
     ports:
