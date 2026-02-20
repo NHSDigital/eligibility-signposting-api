@@ -96,14 +96,10 @@ def is_responsive(url: URL) -> bool:
 def boto3_session() -> Session:
     return Session(aws_access_key_id="fake", aws_secret_access_key="fake", aws_session_token="fake", region_name=AWS_REGION)
 
-@pytest.fixture(scope="session")
-def lambda_client(boto3_session: Session, lambda_runtime_url: URL) -> BaseClient:
-    return boto3_session.client("lambda", endpoint_url=str(lambda_runtime_url))
 
 @pytest.fixture(scope="session")
 def dynamodb_client(boto3_session: Session, moto_server: URL) -> BaseClient:
     return boto3_session.client("dynamodb", endpoint_url=str(moto_server))
-
 
 @pytest.fixture(scope="session")
 def dynamodb_resource(boto3_session: Session, moto_server: URL) -> ServiceResource:

@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Callable
 
 import pytest
+from boto3 import Session
+from botocore.client import BaseClient
 from yarl import URL
 
 from tests.integration.conftest import is_responsive
@@ -52,6 +54,9 @@ def lambda_runtime_url(request: pytest.FixtureRequest, lambda_zip: Path) -> URL:
     )
     return base_url
 
+@pytest.fixture(scope="session")
+def lambda_client(boto3_session: Session, lambda_runtime_url: URL) -> BaseClient:
+    return boto3_session.client("lambda", endpoint_url=str(lambda_runtime_url))
 
 @pytest.fixture(scope="session")
 def api_gateway_endpoint(request: pytest.FixtureRequest, lambda_runtime_url) -> URL:
