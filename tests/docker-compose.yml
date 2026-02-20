@@ -18,7 +18,7 @@ services:
       - "4567:8080"
     platform: linux/amd64
     volumes:
-      - ../dist:/tmp:ro
+      - ../dist/lambda.zip:/tmp/lambda.zip:ro
     environment:
       - AWS_ACCESS_KEY_ID=dummy_key
       - AWS_SECRET_ACCESS_KEY=dummy_secret
