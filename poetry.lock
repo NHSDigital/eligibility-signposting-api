@@ -1730,14 +1730,14 @@ source = ["Cython (>=3.0.11,<3.1.0)"]
 
 [[package]]
 name = "mangum"
-version = "0.19.0"
+version = "0.20.0"
 description = "AWS Lambda support for ASGI applications"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "mangum-0.19.0-py3-none-any.whl", hash = "sha256:e500b35f495d5e68ac98bc97334896d6101523f2ee2c57ba6a61893b65266e59"},
-    {file = "mangum-0.19.0.tar.gz", hash = "sha256:e388e7c491b7b67970f8234e46fd4a7b21ff87785848f418de08148f71cf0bd6"},
+    {file = "mangum-0.20.0-py3-none-any.whl", hash = "sha256:c945eadc41916f73b6086c0c69935ef4b1d23d27de8dc74ed47b20e204335407"},
+    {file = "mangum-0.20.0.tar.gz", hash = "sha256:0050447b60d832dcc45cc9d917c9e0f4e9174e2d9630f621d567510d51d286bd"},
 ]
 
 [package.dependencies]
@@ -3741,4 +3741,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "383eb0e3581570630fc52690d61866a180122fe61c891bea564a82f354a99992"
+content-hash = "d18872cda84f5109ee42533a687c1824768e6f9538742b4f3840d5775ca2efa2"
