@@ -30,16 +30,16 @@ from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 logger = logging.getLogger(__name__)
 
 
-def test_install_and_call_lambda_flask(
+def test_install_and_call_lambda_flask(  # noqa: PLR0913
     lambda_client: BaseClient,
     persisted_person: NHSNumber,
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
     secretsmanager_client: BaseClient,  # noqa :ARG001
+    lambda_logs: Callable[[], list[str]],
 ):
     """Given lambda installed into localstack, run it via boto3 lambda client"""
     # Given
-
     # When
     request_payload = {
         "version": "2.0",
@@ -69,9 +69,7 @@ def test_install_and_call_lambda_flask(
         FunctionName="function",
         InvocationType="RequestResponse",
         Payload=json.dumps(request_payload),
-        # LogType="Tail", #TODO
     )
-    # log_output = base64.b64decode(response["LogResult"]).decode("utf-8")
 
     # Then
     assert_that(response, has_entries(StatusCode=HTTPStatus.OK))
@@ -82,7 +80,8 @@ def test_install_and_call_lambda_flask(
         has_entries(statusCode=HTTPStatus.OK, body=is_json_that(has_key("processedSuggestions"))),
     )
 
-    # assert_that(log_output, contains_string("checking nhs_number"))
+    messages = lambda_logs()
+    assert_that(messages, has_item(contains_string("checking nhs_number")))
 
 
 def test_install_and_call_flask_lambda_over_http(

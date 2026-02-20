@@ -103,13 +103,15 @@ def lambda_runtime_url(request, lambda_zip):  # noqa: ARG001
         check=lambda: is_responsive(base_url),
     )
 
-    return base_url
+    yield base_url
 
-
-@pytest.fixture(scope="session")
-def lambda_client(boto3_session: Session, lambda_runtime_url: URL) -> BaseClient:
-    """Return a boto3 Lambda client pointing at the simulated lambda runtime."""
-    return boto3_session.client("lambda", endpoint_url=str(lambda_runtime_url))
+    subprocess.run(  # noqa: S603
+        [docker_path, "compose", "-f", str(compose_file), "rm", "-f", "-s", "lambda-api", "api-gateway-mock"],
+        check=False,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
 
 
 @pytest.fixture(scope="session")
@@ -132,6 +134,12 @@ def api_gateway_endpoint(request: pytest.FixtureRequest, lambda_runtime_url):  #
     )
 
     return base_url
+
+
+@pytest.fixture(scope="session")
+def lambda_client(boto3_session: Session, lambda_runtime_url: URL) -> BaseClient:
+    """Return a boto3 Lambda client pointing at the simulated lambda runtime."""
+    return boto3_session.client("lambda", endpoint_url=str(lambda_runtime_url))
 
 
 @pytest.fixture
@@ -168,5 +176,4 @@ def get_lambda_logs(docker_services) -> list[str]:  # noqa :ARG001
         text=True,
         check=False,
     )
-
-    return [line.partition("|")[-1].strip() for line in result.stdout.splitlines()]
+    return [line.split("|", 1)[-1].strip() for line in result.stdout.splitlines()]
