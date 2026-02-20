@@ -1,5 +1,6 @@
 services:
   moto-server:
+    #used for s3, dynamodb, kinesis, secret manager
     image: motoserver/moto:latest
     container_name: moto-server
     ports:
@@ -8,6 +9,8 @@ services:
       - test-network
 
   lambda-api:
+    #used for lambda simulation
+    profiles: ["lambda-test"]
     image: public.ecr.aws/lambda/python:3.13
     container_name: lambda-api
     ports:
@@ -39,6 +42,8 @@ services:
       - test-network
 
   api-gateway-mock:
+    #used for api gateway simulation
+    profiles: ["lambda-test"]
     image: openresty/openresty:alpine
     ports:
       - "9123:9123"
