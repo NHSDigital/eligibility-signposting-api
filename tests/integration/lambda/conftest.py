@@ -57,7 +57,7 @@ def lambda_runtime_url(request, lambda_zip: Path) -> URL:  # noqa : ARG001
     docker_services = request.getfixturevalue("docker_services")
     docker_ip = request.getfixturevalue("docker_ip")
 
-    docker_services._docker_compose.execute("up lambda-api")  # noqa : SLF001
+    docker_services._docker_compose.execute("up -d lambda-api")  # noqa : SLF001
 
     port = docker_services.port_for("lambda-api", 8080)
     base_url = URL(f"http://{docker_ip}:{port}")
@@ -78,7 +78,7 @@ def api_gateway_endpoint(request, lambda_runtime_url: URL) -> URL:  # noqa: ARG0
     docker_services = request.getfixturevalue("docker_services")
     docker_ip = request.getfixturevalue("docker_ip")
 
-    docker_services._docker_compose.execute("up api-gateway-mock")  # noqa: SLF001
+    docker_services._docker_compose.execute("up -d api-gateway-mock")  # noqa: SLF001
 
     port = docker_services.port_for("api-gateway-mock", 9123)
     url = URL(f"http://{docker_ip}:{port}")
