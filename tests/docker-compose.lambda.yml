@@ -1,17 +1,8 @@
-services:
-  moto-server:
-    #used for s3, dynamodb, kinesis, secret manager
-    # lambda cannot be used, because its 3.11 (older)
-    image: motoserver/moto:latest
-    container_name: moto-server
-    ports:
-      - "4566:5000"
-    networks:
-      - test-network
+include:
+  - docker-compose.moto.yml
 
+services:
   lambda-api:
-    #used for lambda simulation
-    profiles: ["lambda-test"]
     image: public.ecr.aws/lambda/python:3.13
     container_name: lambda-api
     ports:
@@ -37,19 +28,22 @@ services:
         mkdir -p /var/task &&
         python3 -m zipfile -e /tmp/lambda.zip /var/task &&
         exec /usr/local/bin/aws-lambda-rie python3 -m awslambdaric eligibility_signposting_api.app.lambda_handler
-    depends_on:
-      - moto-server
     networks:
       - test-network
+    depends_on:
+      moto-server:
+        condition: service_healthy
+
 
   api-gateway-mock:
     #used for api gateway simulation
-    profiles: ["lambda-test"]
     image: openresty/openresty:alpine
     ports:
       - "9123:9123"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - lambda-api
     networks:
       - test-network
 

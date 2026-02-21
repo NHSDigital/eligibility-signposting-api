@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from collections.abc import Callable, Generator
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -53,11 +54,6 @@ MOTO_PORT = 5000
 HTTP_SERVER_ERROR = 500
 
 
-@pytest.fixture(scope="session")
-def docker_compose_project_name():
-    return "tests"
-
-
 @pytest.fixture(scope="session", autouse=True)
 def aws_credentials():
     """Mocked AWS Credentials for moto."""
@@ -69,15 +65,41 @@ def aws_credentials():
 
 
 @pytest.fixture(scope="session")
+def docker_compose_file(pytestconfig):
+    root = Path(pytestconfig.rootpath) / "tests"
+    return [str(root / "docker-compose.moto.yml"), str(root / "docker-compose.lambda.yml")]
+
+
+@pytest.fixture(scope="session")
+def docker_compose_project_name():
+    return "eligibility-integration"
+
+
+@pytest.fixture(scope="session")
+def docker_setup():
+    return []
+
+
+@pytest.fixture(scope="session")
+def docker_compose_services():
+    return []
+
+
+@pytest.fixture(scope="session")
 def moto_server(request: pytest.FixtureRequest) -> URL:
     docker_services = request.getfixturevalue("docker_services")
-    # This must match the container_name in docker-compose
     docker_ip = request.getfixturevalue("docker_ip")
-    # port_for maps the INTERNAL 5000 to whatever random EXTERNAL port was assigned
+
+    docker_services._docker_compose.execute("up -d moto-server")  # noqa : SLF001
+
     port = docker_services.port_for("moto-server", 5000)
     url = URL(f"http://{docker_ip}:{port}")
 
-    docker_services.wait_until_responsive(timeout=30.0, pause=0.2, check=lambda: is_responsive(url))
+    docker_services.wait_until_responsive(
+        timeout=30.0,
+        pause=0.2,
+        check=lambda: is_responsive(url),
+    )
     return url
 
 

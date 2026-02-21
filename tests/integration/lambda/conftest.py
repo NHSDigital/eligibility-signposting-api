@@ -1,11 +1,12 @@
-import os
 import shutil
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 from boto3 import Session
 from botocore.client import BaseClient
+from pytest_docker import Services
 from yarl import URL
 
 from tests.integration.conftest import is_responsive
@@ -52,87 +53,42 @@ def lambda_zip() -> Path:
 
 
 @pytest.fixture(scope="session")
-def lambda_runtime_url(request, lambda_zip):  # noqa: ARG001
-    """
-    Start the lambda simulation using docker compose.
-    """
+def lambda_runtime_url(request, lambda_zip: Path) -> URL:  # noqa : ARG001
     docker_services = request.getfixturevalue("docker_services")
     docker_ip = request.getfixturevalue("docker_ip")
-    project_root = get_project_root()
-    compose_file = project_root / "tests/docker-compose.yml"
 
-    # Activate the profile without using the --profile flag
-    env = os.environ.copy()
-    env["COMPOSE_PROFILES"] = "lambda-test"
-
-    docker_path = shutil.which("docker")
-    if not docker_path:
-        pytest.fail("Docker executable not found in PATH")
-
-    result = subprocess.run(  # noqa: S603
-        [
-            docker_path,
-            "compose",
-            "-f",
-            str(compose_file),
-            "up",
-            "-d",
-            "--build",
-            "--force-recreate",
-            "lambda-api",
-            "api-gateway-mock",
-        ],
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    if result.returncode != 0:
-        pytest.fail(
-            f"Docker compose failed with code {result.returncode}.\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-        )
+    docker_services._docker_compose.execute("up lambda-api")  # noqa : SLF001
 
     port = docker_services.port_for("lambda-api", 8080)
     base_url = URL(f"http://{docker_ip}:{port}")
 
+    # The RIE expects this path for invocations
+    health_url = base_url / "2015-03-31/functions/function/invocations"
+
     docker_services.wait_until_responsive(
         timeout=60.0,
-        pause=1,
-        check=lambda: is_responsive(base_url),
+        pause=2,
+        check=lambda: is_responsive(health_url),
     )
-
-    yield base_url
-
-    subprocess.run(  # noqa: S603
-        [docker_path, "compose", "-f", str(compose_file), "rm", "-f", "-s", "lambda-api", "api-gateway-mock"],
-        check=False,
-        env=env,
-        capture_output=True,
-        text=True,
-    )
+    return base_url
 
 
 @pytest.fixture(scope="session")
-def api_gateway_endpoint(request: pytest.FixtureRequest, lambda_runtime_url):  # noqa: ARG001
-    """
-    Start and validate the API Gateway mock.
-    """
+def api_gateway_endpoint(request, lambda_runtime_url: URL) -> URL:  # noqa: ARG001
     docker_services = request.getfixturevalue("docker_services")
     docker_ip = request.getfixturevalue("docker_ip")
 
+    docker_services._docker_compose.execute("up api-gateway-mock")  # noqa: SLF001
+
     port = docker_services.port_for("api-gateway-mock", 9123)
-
-    base_url = URL(f"http://{docker_ip}:{port}")
-    health_url = URL(f"http://{docker_ip}:{port}/health")
-
+    url = URL(f"http://{docker_ip}:{port}")
+    health_url = url / "health"
     docker_services.wait_until_responsive(
         timeout=30.0,
-        pause=1.0,
+        pause=0.2,
         check=lambda: is_responsive(health_url),
     )
-
-    return base_url
+    return url
 
 
 @pytest.fixture(scope="session")
@@ -154,3 +110,13 @@ def get_lambda_logs(docker_services) -> list[str]:
         return [line.split("|", 1)[-1].strip() for line in output.splitlines()]
     except Exception as e:  # noqa: BLE001
         return [f"Error fetching logs: {e!s}"]
+
+
+@pytest.fixture
+def lambda_logs(docker_services: Services) -> Callable[[], list[str]]:
+    """Fixture to provide access to container logs."""
+
+    def _get_messages() -> list[str]:
+        return get_lambda_logs(docker_services)
+
+    return _get_messages
