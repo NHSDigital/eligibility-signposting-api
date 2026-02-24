@@ -813,3 +813,94 @@ resource "aws_iam_role_policy" "external_s3_kms_access_policy" {
   role   = aws_iam_role.write_access_role[count.index].id
   policy = data.aws_iam_policy_document.s3_dq_kms_access_policy.json
 }
+
+# DQ S3 bucket KMS key policy
+data "aws_iam_policy_document" "dq_metrics_kms_key_bucket_policy" {
+  #checkov:skip=CKV_AWS_111: Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_356: Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_109: Root user needs full KMS key management
+
+  # Allow root user to have full control
+  statement {
+    sid    = "EnableIamUserPermissions"
+    effect = "Allow"
+    principals {
+      type = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions = ["kms:*"]
+    resources = ["*"]
+  }
+  # Allow external write role to use the KMS key
+  statement {
+    sid    = "AllowAuditKeyAccess"
+    effect = "Allow"
+    principals {
+      type = "AWS"
+      identifiers = aws_iam_role.write_access_role[*].arn
+    }
+    actions = [
+      "kms:Decrypt",
+      "kms:Encrypt",
+      "kms:GenerateDataKey",
+      "kms:DescribeKey"
+    ]
+    resources = ["*"]
+  }
+}
+
+# Attach KMS key policy to S3 DQ bucket KMS key
+resource "aws_kms_key_policy" "dq_s3_kms_key_attachment" {
+  key_id = module.s3_dq_metrics_bucket.storage_bucket_kms_key_id
+  policy = data.aws_iam_policy_document.dq_metrics_kms_key_bucket_policy.json
+}
+
+# DQ Metrics S3 permissions policy
+data "aws_iam_policy_document" "dq_metrics_bucket_policy" {
+  statement {
+    sid = "AllowBucketAccess"
+    effect = "Allow"
+    principals {
+      type = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions = [
+      "s3:GetObject",
+      "s3:ListBucket",
+    ]
+    resources = module.s3_dq_metrics_bucket.storage_bucket_arn
+
+    condition {
+      test     = "Bool"
+      values = ["true"]
+      variable = "aws:SecureTransport"
+    }
+  },
+  statement {
+    sid = "AllowObjectAccess"
+    effect = "Allow"
+    principals {
+      type = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+      "s3:AbortMultipartUpload"
+    ]
+    resources = "${module.s3_dq_metrics_bucket.storage_bucket_arn}/*"
+
+    condition {
+      test     = "Bool"
+      values = ["true"]
+      variable = "aws:SecureTransport"
+    }
+  }
+}
+
+# Attach S3 bucket policy to DQ Metrics bucket
+resource "aws_s3_bucket_policy" "dq_metrics_bucket_policy_attachment" {
+  bucket = module.s3_dq_metrics_bucket.storage_bucket_id
+  policy = data.aws_iam_policy_document.dq_metrics_bucket_policy.json
+}
