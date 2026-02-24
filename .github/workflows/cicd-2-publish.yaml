@@ -62,7 +62,7 @@ jobs:
       contents: write
     steps:
       - name: "Setup Terraform"
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ needs.metadata.outputs.terraform_version }}
 
