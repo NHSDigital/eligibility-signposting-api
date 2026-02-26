@@ -63,6 +63,7 @@ behave = "^1.3.3"
 python-dotenv = "^1.2.1"
 openapi-spec-validator = "^0.7.2"
 pip-licenses = "^5.5.0"
+vulture = "^2.14"
 
 
 [tool.poetry-plugin-lambda-build]
@@ -115,3 +116,11 @@ exclude_lines = [
   "if TYPE_CHECKING:",
   "raise NotImplementedError",
 ]
+
+[tool.vulture]
+min_confidence = 80
+paths = ["src/", "tests/"]
+#ignore_names = ["*_pb2.py", "migrations/"]
+ignore_decorators = ["@app.route", "@click.command"]
+#ignore_decorators = ["@app.*", "@pytest.*"]
+

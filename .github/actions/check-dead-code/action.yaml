@@ -15,4 +15,5 @@ runs:
 
     - name: Run Vulture
       shell: bash
-      run: poetry run vulture . --min-confidence 80
+      run: poetry run vulture . --min-confidence 80 --exit-non-zero-on-found
+
