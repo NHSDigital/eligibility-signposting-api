@@ -67,7 +67,7 @@ def aws_credentials():
 @pytest.fixture(scope="session")
 def docker_compose_file(pytestconfig):
     root = Path(pytestconfig.rootpath) / "tests"
-    return [str(root / "docker-compose.moto.yml"), str(root / "docker-compose.lambda.yml")]
+    return [str(root / "docker-compose.mock_aws.yml")]
 
 
 @pytest.fixture(scope="session")

@@ -3,7 +3,6 @@ import logging
 from collections.abc import Callable
 from http import HTTPStatus
 
-import httpx
 from botocore.client import BaseClient
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.response import is_response
@@ -19,7 +18,6 @@ from hamcrest import (
     has_key,
     is_not,
 )
-from yarl import URL
 
 from eligibility_signposting_api.model.campaign_config import CampaignConfig
 from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
@@ -90,17 +88,16 @@ def test_install_and_call_flask_lambda_over_http(
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
     secretsmanager_client: BaseClient,  # noqa:ARG001
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
 ):
     """Given api-gateway and lambda installed into localstack, run it via http"""
     # Given
     # When
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
-    response = httpx.get(
-        invoke_url,
-        headers={"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id},
-        timeout=10,
-    )
+    headers = {"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id}
+
+    invoke_path = f"/patient-check/{persisted_person}"
+
+    response = invoke_with_mock_apigw_request(invoke_path, headers)
 
     # Then
     assert_that(
@@ -113,7 +110,7 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(  # noqa: PLR0913
     persisted_person: NHSNumber,
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
     secretsmanager_client: BaseClient,  # noqa: ARG001
     lambda_logs: Callable[[], list[str]],
 ):
@@ -122,12 +119,9 @@ def test_install_and_call_flask_lambda_with_unknown_nhs_number(  # noqa: PLR0913
     nhs_number = f"123{persisted_person}"
 
     # When
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{nhs_number}"
-    response = httpx.get(
-        invoke_url,
-        headers={"nhs-login-nhs-number": str(nhs_number), UNIQUE_CONSUMER_HEADER: consumer_id},
-        timeout=10,
-    )
+    invoke_path = f"/patient-check/{nhs_number}"
+    headers = {"nhs-login-nhs-number": str(nhs_number), UNIQUE_CONSUMER_HEADER: consumer_id}
+    response = invoke_with_mock_apigw_request(invoke_path, headers)
 
     assert_that(
         response,
@@ -177,26 +171,24 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
     lambda_logs: Callable[[], list[str]],
     secretsmanager_client: BaseClient,  # noqa:ARG001
 ):
     # Given
+    invoke_path = f"/patient-check/{persisted_person}"
+    headers = {
+        "nhs-login-nhs-number": str(persisted_person),
+        "x_request_id": "x_request_id",
+        "x_correlation_id": "x_correlation_id",
+        "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
+        "nhsd-application-id": "nhsd-application-id",
+        "NHSE-Product-ID": consumer_id,
+    }
+    params = {"includeActions": "Y"}
+
     # When
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
-    response = httpx.get(
-        invoke_url,
-        headers={
-            "nhs-login-nhs-number": str(persisted_person),
-            "x_request_id": "x_request_id",
-            "x_correlation_id": "x_correlation_id",
-            "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
-            "nhsd-application-id": "nhsd-application-id",
-            "NHSE-Product-ID": consumer_id,
-        },
-        params={"includeActions": "Y"},
-        timeout=10,
-    )
+    response = invoke_with_mock_apigw_request(path=invoke_path, headers=headers, params=params)
 
     # Then
     assert_that(
@@ -272,16 +264,14 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
 def test_given_nhs_number_in_path_does_not_match_with_nhs_number_in_headers_results_in_error_response(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
 ):
     # Given
     # When
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
-    response = httpx.get(
-        invoke_url,
-        headers={"nhs-login-nhs-number": f"123{persisted_person!s}", UNIQUE_CONSUMER_HEADER: "test_consumer_id"},
-        timeout=10,
-    )
+    invoke_path = f"/patient-check/{persisted_person}"
+    headers = {"nhs-login-nhs-number": f"123{persisted_person!s}", UNIQUE_CONSUMER_HEADER: "test_consumer_id"}
+
+    response = invoke_with_mock_apigw_request(invoke_path, headers)
 
     # Then
     assert_that(
@@ -320,16 +310,13 @@ def test_given_nhs_number_not_present_in_headers_results_in_valid_for_applicatio
     secretsmanager_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa:ARG001
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
 ):
     # Given
     # When
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
-    response = httpx.get(
-        invoke_url,
-        headers={UNIQUE_CONSUMER_HEADER: "test_consumer_id"},
-        timeout=10,
-    )
+    invoke_path = f"/patient-check/{persisted_person}"
+    headers = {UNIQUE_CONSUMER_HEADER: "test_consumer_id"}
+    response = invoke_with_mock_apigw_request(invoke_path, headers)
 
     assert_that(
         response,
@@ -342,16 +329,13 @@ def test_given_nhs_number_key_present_in_headers_have_no_value_results_in_error_
     persisted_person: NHSNumber,
     consumer_id: ConsumerId,
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa:ARG001
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
 ):
     # Given
     # When
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
-    response = httpx.get(
-        invoke_url,
-        headers={"nhs-login-nhs-number": "", UNIQUE_CONSUMER_HEADER: consumer_id},
-        timeout=10,
-    )
+    invoke_path = f"/patient-check/{persisted_person}"
+    headers = {"nhs-login-nhs-number": "", UNIQUE_CONSUMER_HEADER: consumer_id}
+    response = invoke_with_mock_apigw_request(invoke_path, headers)
 
     # Then
     assert_that(
@@ -389,17 +373,15 @@ def test_validation_of_query_params_when_all_are_valid(
     persisted_person: NHSNumber,
     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
     consumer_id: ConsumerId,
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
 ):
     # Given
     # When
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
-    response = httpx.get(
-        invoke_url,
-        headers={"nhs-login-nhs-number": persisted_person, UNIQUE_CONSUMER_HEADER: consumer_id},
-        params={"category": "VACCINATIONS", "conditions": "COVID19", "includeActions": "N"},
-        timeout=10,
-    )
+    invoke_path = f"/patient-check/{persisted_person}"
+    headers = {"nhs-login-nhs-number": persisted_person, UNIQUE_CONSUMER_HEADER: consumer_id}
+    params = {"category": "VACCINATIONS", "conditions": "COVID19", "includeActions": "N"}
+
+    response = invoke_with_mock_apigw_request(invoke_path, headers, params)
 
     # Then
     assert_that(response, is_response().with_status_code(HTTPStatus.OK))
@@ -408,17 +390,15 @@ def test_validation_of_query_params_when_all_are_valid(
 def test_validation_of_query_params_when_invalid_conditions_is_specified(
     lambda_client: BaseClient,  # noqa:ARG001
     persisted_person: NHSNumber,
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
 ):
     # Given
     # When
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person}"
-    response = httpx.get(
-        invoke_url,
-        headers={"nhs-login-nhs-number": persisted_person, UNIQUE_CONSUMER_HEADER: "test_consumer_id"},
-        params={"category": "ALL", "conditions": "23-097"},
-        timeout=10,
-    )
+    invoke_path = f"/patient-check/{persisted_person}"
+    headers = {"nhs-login-nhs-number": persisted_person, UNIQUE_CONSUMER_HEADER: "test_consumer_id"}
+    params = {"category": "ALL", "conditions": "23-097"}
+
+    response = invoke_with_mock_apigw_request(invoke_path, headers, params)
 
     # Then
     assert_that(response, is_response().with_status_code(HTTPStatus.BAD_REQUEST))
@@ -432,24 +412,25 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
     consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
     secretsmanager_client: BaseClient,  # noqa: ARG001
 ):
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person_all_cohorts}"
-    response = httpx.get(
-        invoke_url,
-        headers={
-            "nhs-login-nhs-number": str(persisted_person_all_cohorts),
-            "x_request_id": "x_request_id",
-            "x_correlation_id": "x_correlation_id",
-            "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
-            "nhsd-application-id": "nhsd-application-id",
-            "NHSE-Product-ID": consumer_id,
-        },
-        params={"includeActions": "Y", "category": "VACCINATIONS", "conditions": "COVID,FLU,RSV"},
-        timeout=10,
-    )
+    # Given
+    invoke_path = f"/patient-check/{persisted_person_all_cohorts}"
+    headers = {
+        "nhs-login-nhs-number": str(persisted_person_all_cohorts),
+        "x_request_id": "x_request_id",
+        "x_correlation_id": "x_correlation_id",
+        "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
+        "nhsd-application-id": "nhsd-application-id",
+        "NHSE-Product-ID": consumer_id,
+    }
+    params = {"includeActions": "Y", "category": "VACCINATIONS", "conditions": "COVID,FLU,RSV"}
 
+    # When
+    response = invoke_with_mock_apigw_request(path=invoke_path, headers=headers, params=params)
+
+    # Then
     assert_that(
         response,
         is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
@@ -577,22 +558,20 @@ def test_no_active_iteration_returns_empty_processed_suggestions(
     persisted_person_all_cohorts: NHSNumber,
     consumer_to_campaign_having_inactive_iteration_mapping: ConsumerMapping,  # noqa:ARG001
     consumer_id: ConsumerId,
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
 ):
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{persisted_person_all_cohorts}"
-    response = httpx.get(
-        invoke_url,
-        headers={
-            "nhs-login-nhs-number": str(persisted_person_all_cohorts),
-            "x_request_id": "x_request_id",
-            "x_correlation_id": "x_correlation_id",
-            "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
-            "nhsd-application-id": "nhsd-application-id",
-            "NHSE-Product-ID": consumer_id,
-        },
-        params={"includeActions": "Y", "category": "VACCINATIONS", "conditions": "COVID,FLU,RSV"},
-        timeout=10,
-    )
+    invoke_path = f"/patient-check/{persisted_person_all_cohorts}"
+    headers = {
+        "nhs-login-nhs-number": str(persisted_person_all_cohorts),
+        "x_request_id": "x_request_id",
+        "x_correlation_id": "x_correlation_id",
+        "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
+        "nhsd-application-id": "nhsd-application-id",
+        "NHSE-Product-ID": consumer_id,
+    }
+    params = {"includeActions": "Y", "category": "VACCINATIONS", "conditions": "COVID,FLU,RSV"}
+
+    response = invoke_with_mock_apigw_request(invoke_path, headers, params)
 
     assert_that(
         response,
@@ -617,14 +596,11 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
 ):
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
-    response = httpx.get(
-        invoke_url,
-        headers={"nhs-login-nhs-number": str(person_with_all_data), UNIQUE_CONSUMER_HEADER: consumer_id},
-        timeout=10,
-    )
+    invoke_path = f"/patient-check/{person_with_all_data}"
+    headers = {"nhs-login-nhs-number": str(person_with_all_data), UNIQUE_CONSUMER_HEADER: consumer_id}
+    response = invoke_with_mock_apigw_request(invoke_path, headers)
 
     assert_that(
         response,
@@ -668,15 +644,12 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
     consumer_id: ConsumerId,
     s3_client: BaseClient,
     audit_bucket: BucketName,
-    api_gateway_endpoint: URL,
+    invoke_with_mock_apigw_request,
     lambda_logs: Callable[[], list[str]],
 ):
-    invoke_url = f"{api_gateway_endpoint}/patient-check/{person_with_all_data}"
-    response = httpx.get(
-        invoke_url,
-        headers={"nhs-login-nhs-number": str(person_with_all_data), UNIQUE_CONSUMER_HEADER: consumer_id},
-        timeout=10,
-    )
+    invoke_path = f"/patient-check/{person_with_all_data}"
+    headers = {"nhs-login-nhs-number": str(person_with_all_data), UNIQUE_CONSUMER_HEADER: consumer_id}
+    response = invoke_with_mock_apigw_request(invoke_path, headers)
 
     assert_that(
         response,
@@ -717,15 +690,12 @@ def test_incorrect_token_causes_internal_server_error(  # noqa: PLR0913
     )
 
 
-def test_status_end_point(api_gateway_endpoint: URL):
+def test_status_end_point(invoke_with_mock_apigw_request):
     """Given api-gateway and lambda installed into localstack, run it via http"""
     # Given
     # When
-    invoke_url = f"{api_gateway_endpoint}/patient-check/_status"
-    response = httpx.get(
-        invoke_url,
-        timeout=10,
-    )
+    invoke_path = "/patient-check/_status"
+    response = invoke_with_mock_apigw_request(path=invoke_path)
 
     # Then
     assert_that(
