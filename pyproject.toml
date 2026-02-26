@@ -52,7 +52,6 @@ awscli-local = "^0.22.2"
 polyfactory = "^3.2.0"
 pyright = "^1.1.407"
 brunns-matchers = "^2.9.0"
-localstack = "^4.12.0"
 pytest-docker = "^3.2.3"
 stamina = "^25.2.0"
 pytest-freezer = "^0.4.9"
@@ -63,7 +62,7 @@ behave = "^1.3.3"
 python-dotenv = "^1.2.1"
 openapi-spec-validator = "^0.7.2"
 pip-licenses = "^5.5.0"
-
+cachetools = "^7.0.1"
 
 [tool.poetry-plugin-lambda-build]
 docker-image = "public.ecr.aws/sam/build-python3.13:1.139-x86_64"  # See https://gallery.ecr.aws/search?searchTerm=%22python%22&architecture=x86-64&popularRegistries=amazon&verified=verified&operatingSystems=Linux

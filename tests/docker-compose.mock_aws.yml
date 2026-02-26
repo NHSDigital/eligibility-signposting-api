@@ -1,0 +1,50 @@
+services:
+  moto-server:
+    #used for s3, dynamodb, kinesis, secret manager
+    # lambda cannot be used, because its 3.11 (older)
+    image: motoserver/moto:latest
+    container_name: moto-server
+    ports:
+      - "4566:5000"
+    networks:
+      - test-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5000/" ]
+      interval: 1s
+      timeout: 1s
+      retries: 30
+  lambda-api:
+    image: public.ecr.aws/lambda/python:3.13
+    container_name: lambda-api
+    ports:
+      - "4567:8080"
+    platform: linux/amd64
+    volumes:
+      - ../dist/lambda.zip:/tmp/lambda.zip:ro
+    environment:
+      - AWS_ACCESS_KEY_ID=dummy_key
+      - AWS_SECRET_ACCESS_KEY=dummy_secret
+      - AWS_DEFAULT_REGION=eu-west-1
+      - PYTHONPATH=/var/task
+      - AWS_ENDPOINT_URL=http://moto-server:5000
+      - DYNAMODB_ENDPOINT=http://moto-server:5000
+      - S3_ENDPOINT=http://moto-server:5000
+      - SECRET_MANAGER_ENDPOINT=http://moto-server:5000
+      - FIREHOSE_ENDPOINT=http://moto-server:5000
+      - LOG_LEVEL=INFO
+    entrypoint: /bin/sh
+    command:
+      - "-c"
+      - |
+        mkdir -p /var/task &&
+        python3 -m zipfile -e /tmp/lambda.zip /var/task &&
+        exec /usr/local/bin/aws-lambda-rie python3 -m awslambdaric eligibility_signposting_api.app.lambda_handler
+    networks:
+      - test-network
+    depends_on:
+      moto-server:
+        condition: service_healthy
+
+networks:
+  test-network:
+    driver: bridge

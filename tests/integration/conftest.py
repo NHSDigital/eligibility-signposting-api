@@ -2,10 +2,9 @@ import datetime
 import json
 import logging
 import os
-import subprocess
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import httpx
 import pytest
@@ -13,6 +12,7 @@ import stamina
 from boto3 import Session
 from boto3.resources.base import ServiceResource
 from botocore.client import BaseClient
+from botocore.exceptions import ClientError
 from faker import Faker
 from httpx import RequestError
 from yarl import URL
@@ -39,9 +39,6 @@ from tests.fixtures.builders.model import rule
 from tests.fixtures.builders.model.rule import RulesMapperFactory
 from tests.fixtures.builders.repos.person import person_rows_builder
 
-if TYPE_CHECKING:
-    from pytest_docker.plugin import Services
-
 logger = logging.getLogger(__name__)
 
 AWS_REGION = "eu-west-1"
@@ -52,21 +49,57 @@ AWS_PREVIOUS_SECRET = "test_value_old"  # noqa: S105
 
 UNIQUE_CONSUMER_HEADER = "nhse-product-id"
 
+MOTO_PORT = 5000
+
+HTTP_SERVER_ERROR = 500
+
+
+@pytest.fixture(scope="session", autouse=True)
+def aws_credentials():
+    """Mocked AWS Credentials for moto."""
+    os.environ["AWS_ACCESS_KEY_ID"] = "dummy_key"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "dummy_secret"  # noqa: S105
+    os.environ["AWS_SECURITY_TOKEN"] = "dummy_token"  # noqa: S105
+    os.environ["AWS_SESSION_TOKEN"] = "dummy_session_token"  # noqa: S105
+    os.environ["AWS_DEFAULT_REGION"] = AWS_REGION
+
 
 @pytest.fixture(scope="session")
-def localstack(request: pytest.FixtureRequest) -> URL:
-    if url := os.getenv("RUNNING_LOCALSTACK_URL", None):
-        logger.info("localstack already running on %s", url)
-        return URL(url)
+def docker_compose_file(pytestconfig):
+    root = Path(pytestconfig.rootpath) / "tests"
+    return [str(root / "docker-compose.mock_aws.yml")]
 
-    docker_ip: str = request.getfixturevalue("docker_ip")
-    docker_services: Services = request.getfixturevalue("docker_services")
 
-    logger.info("Starting localstack")
-    port = docker_services.port_for("localstack", 4566)
+@pytest.fixture(scope="session")
+def docker_compose_project_name():
+    return "eligibility-integration"
+
+
+@pytest.fixture(scope="session")
+def docker_setup():
+    return []
+
+
+@pytest.fixture(scope="session")
+def docker_compose_services():
+    return []
+
+
+@pytest.fixture(scope="session")
+def moto_server(request: pytest.FixtureRequest) -> URL:
+    docker_services = request.getfixturevalue("docker_services")
+    docker_ip = request.getfixturevalue("docker_ip")
+
+    docker_services._docker_compose.execute("up -d moto-server")  # noqa : SLF001
+
+    port = docker_services.port_for("moto-server", 5000)
     url = URL(f"http://{docker_ip}:{port}")
-    docker_services.wait_until_responsive(timeout=30.0, pause=0.1, check=lambda: is_responsive(url))
-    logger.info("localstack running on %s", url)
+
+    docker_services.wait_until_responsive(
+        timeout=30.0,
+        pause=0.2,
+        check=lambda: is_responsive(url),
+    )
     return url
 
 
@@ -82,57 +115,58 @@ def is_responsive(url: URL) -> bool:
 
 @pytest.fixture(scope="session")
 def boto3_session() -> Session:
-    return Session(aws_access_key_id="fake", aws_secret_access_key="fake", region_name=AWS_REGION)
+    return Session(
+        aws_access_key_id="fake", aws_secret_access_key="fake", aws_session_token="fake", region_name=AWS_REGION
+    )
 
 
 @pytest.fixture(scope="session")
-def api_gateway_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("apigateway", endpoint_url=str(localstack))
+def dynamodb_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("dynamodb", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def lambda_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("lambda", endpoint_url=str(localstack))
+def dynamodb_resource(boto3_session: Session, moto_server: URL) -> ServiceResource:
+    return boto3_session.resource("dynamodb", endpoint_url=str(moto_server))
+
+
+def get_log_messages(flask_function: str, logs_client: BaseClient) -> list[str]:
+    for attempt in stamina.retry_context(on=ClientError, attempts=20, timeout=120):
+        with attempt:
+            log_streams = logs_client.describe_log_streams(
+                logGroupName=f"/aws/lambda/{flask_function}", orderBy="LastEventTime", descending=True
+            )
+    assert log_streams["logStreams"] != []
+    log_stream_name = log_streams["logStreams"][0]["logStreamName"]
+    log_events = logs_client.get_log_events(
+        logGroupName=f"/aws/lambda/{flask_function}", logStreamName=log_stream_name, limit=100
+    )
+    return [e["message"] for e in log_events["events"]]
 
 
 @pytest.fixture(scope="session")
-def dynamodb_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("dynamodb", endpoint_url=str(localstack))
+def iam_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("iam", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def dynamodb_resource(boto3_session: Session, localstack: URL) -> ServiceResource:
-    return boto3_session.resource("dynamodb", endpoint_url=str(localstack))
+def s3_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("s3", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def logs_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("logs", endpoint_url=str(localstack))
+def firehose_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("firehose", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
-def iam_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("iam", endpoint_url=str(localstack))
-
-
-@pytest.fixture(scope="session")
-def s3_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("s3", endpoint_url=str(localstack))
-
-
-@pytest.fixture(scope="session")
-def firehose_client(boto3_session: Session, localstack: URL) -> BaseClient:
-    return boto3_session.client("firehose", endpoint_url=str(localstack))
-
-
-@pytest.fixture(scope="session")
-def secretsmanager_client(boto3_session: Session, localstack: URL) -> BaseClient:
+def secretsmanager_client(boto3_session: Session, moto_server: URL) -> BaseClient:
     """
-    Provides a boto3 Secrets Manager client bound to LocalStack.
+    Provides a boto3 Secrets Manager client bound to Moto.
     Seeds a test secret for use in integration tests.
     """
     client: BaseClient = boto3_session.client(
-        service_name="secretsmanager", endpoint_url=str(localstack), region_name="eu-west-1"
+        service_name="secretsmanager", endpoint_url=str(moto_server), region_name="eu-west-1"
     )
 
     secret_name = AWS_SECRET_NAME
@@ -159,113 +193,6 @@ def secretsmanager_client(boto3_session: Session, localstack: URL) -> BaseClient
     return client
 
 
-@pytest.fixture(scope="session")
-def iam_role(iam_client: BaseClient) -> Generator[str]:
-    role_name = "LambdaExecutionRole"
-    policy_name = "LambdaCloudWatchPolicy"
-
-    # Define IAM Trust Policy for Lambda Execution Role
-    trust_policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}
-        ],
-    }
-
-    # Create IAM Role
-    role = iam_client.create_role(
-        RoleName=role_name,
-        AssumeRolePolicyDocument=json.dumps(trust_policy),
-        Description="Role for Lambda execution with CloudWatch logging permissions",
-    )
-
-    # Define IAM Policy for CloudWatch Logs
-    log_policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
-                "Resource": "arn:aws:logs:*:*:*",
-            }
-        ],
-    }
-    dynamodb_policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": [
-                    "dynamodb:GetItem",
-                    "dynamodb:PutItem",
-                    "dynamodb:UpdateItem",
-                    "dynamodb:DeleteItem",
-                    "dynamodb:Scan",
-                    "dynamodb:Query",
-                ],
-                "Resource": "arn:aws:dynamodb:*:*:table/*",
-            }
-        ],
-    }
-
-    # Create CloudWatch Logs policy (as before)
-    log_policy_resp = iam_client.create_policy(PolicyName=policy_name, PolicyDocument=json.dumps(log_policy))
-    log_policy_arn = log_policy_resp["Policy"]["Arn"]
-    iam_client.attach_role_policy(RoleName=role_name, PolicyArn=log_policy_arn)
-
-    # Create DynamoDB policy
-    ddb_policy_resp = iam_client.create_policy(
-        PolicyName="LambdaDynamoDBPolicy", PolicyDocument=json.dumps(dynamodb_policy)
-    )
-    ddb_policy_arn = ddb_policy_resp["Policy"]["Arn"]
-    iam_client.attach_role_policy(RoleName=role_name, PolicyArn=ddb_policy_arn)
-
-    yield role["Role"]["Arn"]
-
-    iam_client.detach_role_policy(RoleName=role_name, PolicyArn=log_policy_arn)
-    iam_client.delete_policy(PolicyArn=log_policy_arn)
-    iam_client.detach_role_policy(RoleName=role_name, PolicyArn=ddb_policy_arn)
-    iam_client.delete_policy(PolicyArn=ddb_policy_arn)
-    iam_client.delete_role(RoleName=role_name)
-
-
-@pytest.fixture(scope="session")
-def lambda_zip() -> Path:
-    build_result = subprocess.run(["make", "build"], capture_output=True, text=True, check=False)  # noqa: S607
-    assert build_result.returncode == 0, f"'make build' failed: {build_result.stderr}"
-    return Path("dist/lambda.zip")
-
-
-@pytest.fixture(scope="session")
-def flask_function(lambda_client: BaseClient, iam_role: str, lambda_zip: Path) -> Generator[str]:
-    function_name = "eligibility_signposting_api"
-    with lambda_zip.open("rb") as zipfile:
-        lambda_client.create_function(
-            FunctionName=function_name,
-            Runtime="python3.13",
-            Role=iam_role,
-            Handler="eligibility_signposting_api.app.lambda_handler",
-            Code={"ZipFile": zipfile.read()},
-            Architectures=["x86_64"],
-            Timeout=180,
-            Environment={
-                "Variables": {
-                    "DYNAMODB_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
-                    "S3_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
-                    "FIREHOSE_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
-                    "SECRET_MANAGER_ENDPOINT": os.getenv("LOCALSTACK_INTERNAL_ENDPOINT", "http://localstack:4566/"),
-                    "AWS_REGION": AWS_REGION,
-                    "LOG_LEVEL": "DEBUG",
-                }
-            },
-        )
-    logger.info("loaded zip")
-    wait_for_function_active(function_name, lambda_client)
-    logger.info("function active")
-    yield function_name
-    lambda_client.delete_function(FunctionName=function_name)
-
-
 @pytest.fixture(autouse=True)
 def clean_audit_bucket(s3_client: BaseClient, audit_bucket: str):
     objects_to_delete = []
@@ -280,92 +207,6 @@ def clean_audit_bucket(s3_client: BaseClient, audit_bucket: str):
             Bucket=audit_bucket,
             Delete={"Objects": objects_to_delete, "Quiet": True},
         )
-
-
-@pytest.fixture(scope="session")
-def flask_function_url(lambda_client: BaseClient, flask_function: str) -> URL:
-    response = lambda_client.create_function_url_config(FunctionName=flask_function, AuthType="NONE")
-    return URL(response["FunctionUrl"])
-
-
-class FunctionNotActiveError(Exception):
-    """Lambda Function not yet active"""
-
-
-def wait_for_function_active(function_name, lambda_client):
-    for attempt in stamina.retry_context(on=FunctionNotActiveError, attempts=20, timeout=120):
-        with attempt:
-            logger.info("waiting")
-            response = lambda_client.get_function(FunctionName=function_name)
-            function_state = response["Configuration"]["State"]
-            logger.info("function_state %s", function_state)
-            if function_state != "Active":
-                raise FunctionNotActiveError
-
-
-@pytest.fixture(scope="session")
-def configured_api_gateway(api_gateway_client, lambda_client, flask_function: str):
-    region = lambda_client.meta.region_name
-
-    api = api_gateway_client.create_rest_api(name="API Gateway Lambda integration")
-    rest_api_id = api["id"]
-
-    resources = api_gateway_client.get_resources(restApiId=rest_api_id)
-    root_id = next(item["id"] for item in resources["items"] if item["path"] == "/")
-
-    patient_check_res = api_gateway_client.create_resource(
-        restApiId=rest_api_id, parentId=root_id, pathPart="patient-check"
-    )
-    patient_check_id = patient_check_res["id"]
-
-    id_res = api_gateway_client.create_resource(restApiId=rest_api_id, parentId=patient_check_id, pathPart="{id}")
-    resource_id = id_res["id"]
-
-    api_gateway_client.put_method(
-        restApiId=rest_api_id,
-        resourceId=resource_id,
-        httpMethod="GET",
-        authorizationType="NONE",
-        requestParameters={"method.request.path.id": True},
-    )
-
-    # Integration with actual region
-    lambda_uri = (
-        f"arn:aws:apigateway:{region}:lambda:path/2015-03-31/functions/"
-        f"arn:aws:lambda:{region}:000000000000:function:{flask_function}/invocations"
-    )
-    api_gateway_client.put_integration(
-        restApiId=rest_api_id,
-        resourceId=resource_id,
-        httpMethod="GET",
-        type="AWS_PROXY",
-        integrationHttpMethod="POST",
-        uri=lambda_uri,
-        passthroughBehavior="WHEN_NO_MATCH",
-    )
-
-    # Permission with matching region
-    lambda_client.add_permission(
-        FunctionName=flask_function,
-        StatementId="apigateway-access",
-        Action="lambda:InvokeFunction",
-        Principal="apigateway.amazonaws.com",
-        SourceArn=f"arn:aws:execute-api:{region}:000000000000:{rest_api_id}/*/GET/patient-check/*",
-    )
-
-    # Deploy the API
-    api_gateway_client.create_deployment(restApiId=rest_api_id, stageName="dev")
-
-    return {
-        "rest_api_id": rest_api_id,
-        "resource_id": resource_id,
-        "invoke_url": f"http://{rest_api_id}.execute-api.localhost.localstack.cloud:4566/dev/patient-check/{{id}}",
-    }
-
-
-@pytest.fixture
-def api_gateway_endpoint(configured_api_gateway: dict) -> URL:
-    return URL(f"http://{configured_api_gateway['rest_api_id']}.execute-api.localhost.localstack.cloud:4566/dev")
 
 
 @pytest.fixture(scope="session")
@@ -727,17 +568,22 @@ def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
 
 @pytest.fixture(autouse=True)
 def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketName) -> dict[str, Any]:
-    return firehose_client.create_delivery_stream(
-        DeliveryStreamName="test_kinesis_audit_stream_to_s3",
-        DeliveryStreamType="DirectPut",
-        ExtendedS3DestinationConfiguration={
-            "BucketARN": f"arn:aws:s3:::{audit_bucket}",
-            "RoleARN": "arn:aws:iam::000000000000:role/firehose_delivery_role",
-            "Prefix": "audit-logs/",
-            "BufferingHints": {"SizeInMBs": 1, "IntervalInSeconds": 60},
-            "CompressionFormat": "UNCOMPRESSED",
-        },
-    )
+    stream_name = "test_kinesis_audit_stream_to_s3"
+
+    try:
+        return firehose_client.create_delivery_stream(
+            DeliveryStreamName=stream_name,
+            DeliveryStreamType="DirectPut",
+            ExtendedS3DestinationConfiguration={
+                "BucketARN": f"arn:aws:s3:::{audit_bucket}",
+                "RoleARN": "arn:aws:iam::123456789012:role/firehose_delivery_role",
+                "Prefix": "audit-logs/",
+                "BufferingHints": {"SizeInMBs": 1, "IntervalInSeconds": 60},
+                "CompressionFormat": "UNCOMPRESSED",
+            },
+        )
+    except firehose_client.exceptions.ResourceInUseException:
+        return firehose_client.describe_delivery_stream(DeliveryStreamName=stream_name)
 
 
 @pytest.fixture(scope="class")
