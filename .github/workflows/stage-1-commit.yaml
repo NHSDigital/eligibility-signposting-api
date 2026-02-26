@@ -157,3 +157,13 @@ jobs:
         uses: actions/checkout@v6
       - name: "Run OWASP Dependency Scan"
         uses: ./.github/actions/owasp-dependency-scan
+  check-dead-code:
+    name: "Check for dead code"
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v6
+      - name: "Check for dead code"
+        uses: ./.github/actions/check-dead-code
+

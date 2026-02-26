@@ -1,0 +1,18 @@
+name: "Check Dead Code"
+description: "Runs Vulture to detect unused Python code."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.13"
+
+    - name: Install dependencies
+      shell: bash
+      run: make dependencies install-python
+
+    - name: Run Vulture
+      shell: bash
+      run: poetry run vulture . --min-confidence 80
