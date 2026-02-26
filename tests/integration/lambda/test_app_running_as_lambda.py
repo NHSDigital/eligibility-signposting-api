@@ -639,6 +639,7 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     assert response_actions[0]["urlLabel"] == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
     assert response_actions[1]["description"] == "## Token - PERSON.GENDER: 0."
     assert response_actions[1]["urlLabel"] == "Token - PERSON.DATE_OF_BIRTH: 19900228."
+    assert response_actions[2]["description"] == "## Token - TARGET.RSV.SUCCESSFUL_PROCEDURE_COUNT: 3."
     assert response_eligibility_cohorts[0]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: "
     assert response_eligibility_cohorts[1]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
 
@@ -655,6 +656,7 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     assert audit_actions[0]["actionUrlLabel"] == "Token - PERSON.DATE_OF_BIRTH:DATE(%d %B %Y): 28 February 1990."
     assert audit_actions[1]["actionDescription"] == "## Token - PERSON.GENDER: 0."
     assert audit_actions[1]["actionUrlLabel"] == "Token - PERSON.DATE_OF_BIRTH: 19900228."
+    assert audit_actions[2]["actionDescription"] == "## Token - TARGET.RSV.SUCCESSFUL_PROCEDURE_COUNT: 3."
     assert audit_eligibility_cohorts[0]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE: "
     assert audit_eligibility_cohorts[1]["cohortText"] == "Token - TARGET.RSV.LAST_SUCCESSFUL_DATE:DATE(%d %B %Y): "
 

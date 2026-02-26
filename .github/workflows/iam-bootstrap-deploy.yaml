@@ -1,0 +1,60 @@
+# Manual IAM deployment for emergency or ad-hoc use.
+# Normal IAM deployments happen automatically as part of cicd-2-publish and base-deploy.
+name: "IAM Bootstrap | Deploy IAM Roles"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - preprod
+          - prod
+
+concurrency:
+  group: iam-bootstrap-${{ inputs.environment }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: "Deploy IAM roles → ${{ inputs.environment }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v6
+
+      - name: "Resolve Terraform version"
+        id: vars
+        run: |
+          echo "terraform_version=$(grep '^terraform' .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
+
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ steps.vars.outputs.terraform_version }}
+
+      - name: "Configure AWS Credentials (IAM Bootstrap Role)"
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-iam-bootstrap-role
+          aws-region: eu-west-2
+
+      - name: "Terraform Plan"
+        working-directory: ./infrastructure
+        run: |
+          make terraform env=${{ inputs.environment }} stack=iams-developer-roles tf-command=plan workspace=default
+
+      - name: "Terraform Apply"
+        working-directory: ./infrastructure
+        run: |
+          make terraform env=${{ inputs.environment }} stack=iams-developer-roles tf-command=apply workspace=default
