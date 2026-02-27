@@ -73,7 +73,7 @@ jobs:
           aws-region: eu-west-2
 
       - name: "Download lambda artefact from dev workflow"
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: lambda-${{ needs.metadata.outputs.tag }}
           path: ./dist
