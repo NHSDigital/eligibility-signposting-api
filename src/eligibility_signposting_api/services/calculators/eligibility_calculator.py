@@ -11,12 +11,12 @@ from wireup import service
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.model import campaign_config, eligibility_status
 from eligibility_signposting_api.model.eligibility_status import (
+    BestIterationResult,
     CohortGroupResult,
     Condition,
     ConditionName,
     EligibilityStatus,
     IterationResult,
-    IterationResultSummary,
     Reason,
     Status,
     StatusText,
@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from eligibility_signposting_api.model.campaign_config import (
         CampaignConfig,
         CohortLabel,
+        IterationName,
     )
     from eligibility_signposting_api.model.person import Person
 
@@ -80,32 +81,31 @@ class EligibilityCalculator:
 
         return best_status, best_cohorts
 
-    def get_eligibility_status(
-        self, include_actions: str, conditions: list[str], requested_category: str
-    ) -> EligibilityStatus:
+    def get_eligibility_status(self, include_actions: str, conditions: list[str], category: str) -> EligibilityStatus:
         include_actions_flag = include_actions.upper() == "Y"
         condition_results: dict[ConditionName, IterationResult] = {}
         final_result = []
 
-        requested_cc_with_active_iteration = (
-            self.campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(
-                self.campaign_configs, conditions, requested_category
-            )
+        requested_grouped_campaigns = self.campaign_evaluator.get_requested_grouped_campaigns(
+            self.campaign_configs, conditions, category
         )
-        for condition_name, campaign in requested_cc_with_active_iteration:
-            iteration_result_summary = self.evaluate_iteration_result_summary(campaign)
+        for condition_name, campaign_group in requested_grouped_campaigns:
+            best_iteration_result = self.get_best_iteration_result(campaign_group)
+
+            if best_iteration_result is None:
+                continue
 
             matched_action_detail = self.action_rule_handler.get_actions(
                 self.person,
-                iteration_result_summary.active_iteration,
-                iteration_result_summary.iteration_result,
+                best_iteration_result.active_iteration,
+                best_iteration_result.iteration_result,
                 include_actions_flag=include_actions_flag,
             )
 
-            iteration_result_summary = TokenProcessor.find_and_replace_tokens(self.person, iteration_result_summary)
+            best_iteration_result = TokenProcessor.find_and_replace_tokens(self.person, best_iteration_result)
             matched_action_detail = TokenProcessor.find_and_replace_tokens(self.person, matched_action_detail)
 
-            condition_results[condition_name] = iteration_result_summary.iteration_result
+            condition_results[condition_name] = best_iteration_result.iteration_result
             condition_results[condition_name].actions = matched_action_detail.actions
 
             condition: Condition = self.build_condition(
@@ -116,34 +116,56 @@ class EligibilityCalculator:
 
             AuditContext.append_audit_condition(
                 condition_name,
-                iteration_result_summary,
+                best_iteration_result,
                 matched_action_detail,
             )
 
         # Consolidate all the results and return
         return eligibility_status.EligibilityStatus(conditions=final_result)
 
-    def evaluate_iteration_result_summary(
-        self, campaign_with_active_iteration: CampaignConfig
-    ) -> IterationResultSummary:
-        active_iteration = campaign_with_active_iteration.current_iteration
-        cohort_results: dict[CohortLabel, CohortGroupResult] = self.rule_processor.get_cohort_group_results(
-            self.person, active_iteration
+    def get_best_iteration_result(self, campaign_group: list[CampaignConfig]) -> BestIterationResult | None:
+        sorted_campaigns = sorted(campaign_group, key=lambda c: c.start_date, reverse=True)
+
+        iteration_results = self.get_iteration_results(sorted_campaigns)
+
+        if not iteration_results:
+            return None
+
+        (_best_iteration_name, best_iteration_result) = max(
+            iteration_results.items(),
+            key=lambda item: next(iter(item[1].cohort_results.values())).status.value
+            # Below handles the case where there are no cohort results
+            if item[1].cohort_results
+            else -1,
         )
 
-        # Determine Result between cohorts - get the best
-        status, best_cohorts = self.get_the_best_cohort_memberships(cohort_results)
-        status_text = self.get_status_text(
-            active_iteration.status_text, ConditionName(campaign_with_active_iteration.target), status
-        )
+        return best_iteration_result
 
-        return IterationResultSummary(
-            IterationResult(status, status_text, best_cohorts, []),
-            active_iteration,
-            campaign_with_active_iteration.id,
-            campaign_with_active_iteration.version,
-            cohort_results,
-        )
+    def get_iteration_results(self, campaign_group: list[CampaignConfig]) -> dict[IterationName, BestIterationResult]:
+        iteration_results: dict[IterationName, BestIterationResult] = {}
+
+        for cc in campaign_group:
+            try:
+                active_iteration = cc.current_iteration
+            except StopIteration:
+                logger.info("Skipping campaign ID %s as no active iteration was found.", cc.id)
+                continue
+            cohort_results: dict[CohortLabel, CohortGroupResult] = self.rule_processor.get_cohort_group_results(
+                self.person, active_iteration
+            )
+
+            # Determine Result between cohorts - get the best
+            status, best_cohorts = self.get_the_best_cohort_memberships(cohort_results)
+            status_text = self.get_status_text(active_iteration.status_text, ConditionName(cc.target), status)
+
+            iteration_results[active_iteration.name] = BestIterationResult(
+                IterationResult(status, status_text, best_cohorts, []),
+                active_iteration,
+                cc.id,
+                cc.version,
+                cohort_results,
+            )
+        return iteration_results
 
     @staticmethod
     def get_status_text(
