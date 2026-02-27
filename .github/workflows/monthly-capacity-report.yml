@@ -75,7 +75,7 @@ jobs:
           python-version: "3.11"
 
       - name: Download all dashboard exports
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: dashboard_exports
           pattern: dashboard-*
