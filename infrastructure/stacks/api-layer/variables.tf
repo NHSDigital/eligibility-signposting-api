@@ -13,7 +13,7 @@ variable "SPLUNK_HEC_ENDPOINT" {
 variable "waf_enabled_environments" {
   type        = list(string)
   description = "Environments in which WAF resources are deployed. Adjust to disable in test after evaluation."
-  default     = ["dev", "preprod", "prod"]
+  default     = ["preprod", "prod"]
 }
 
 variable "OPERATOR_EMAILS" {
