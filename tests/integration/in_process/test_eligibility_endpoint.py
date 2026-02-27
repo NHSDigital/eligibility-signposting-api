@@ -1,5 +1,5 @@
 import json
-from datetime import date, timedelta, datetime, timezone
+from datetime import UTC, date, datetime, timedelta
 from http import HTTPStatus
 
 import pytest
@@ -26,7 +26,10 @@ from eligibility_signposting_api.repos.campaign_repo import BucketName
 from tests.fixtures.builders.model import rule
 from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
-today = lambda: datetime.now(timezone.utc).date()
+
+def today():
+    return datetime.now(UTC).date()
+
 
 class TestBaseLine:
     def test_nhs_number_given(
@@ -1226,7 +1229,7 @@ class TestEligibilityResponseWithVariousInputs:
         ],
         indirect=["campaign_configs", "consumer_mappings"],
     )
-    def test_if_correct_campaign_is_chosen_for_the_consumer_when_multiple_campaign_exists_per_target_giving_same_status(
+    def test_if_correct_campaign_is_chosen_for_the_consumer_when_multiple_campaign_exists_per_target_giving_same_status(  # noqa : PLR0913
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
@@ -1412,7 +1415,7 @@ class TestEligibilityResponseWithVariousInputs:
             ),
         ],
     )
-    def test_if_campaign_having_best_status_is_chosen_if_there_exists_multiple_campaign_per_target_diff_start_date(
+    def test_if_campaign_having_best_status_is_chosen_if_there_exists_multiple_campaign_per_target_diff_start_date(  # noqa : PLR0913
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
