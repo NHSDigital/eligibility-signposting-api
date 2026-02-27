@@ -49,7 +49,7 @@ jobs:
           make dependencies install-python
           make build
       - name: "Upload lambda artefact"
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lambda
           path: dist/lambda.zip
