@@ -1,4 +1,5 @@
 import json
+from datetime import date, timedelta, datetime, timezone
 from http import HTTPStatus
 
 import pytest
@@ -25,6 +26,7 @@ from eligibility_signposting_api.repos.campaign_repo import BucketName
 from tests.fixtures.builders.model import rule
 from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
+today = lambda: datetime.now(timezone.utc).date()
 
 class TestBaseLine:
     def test_nhs_number_given(
@@ -1192,10 +1194,11 @@ class TestEligibilityResponseWithVariousInputs:
             (
                 [
                     # Campaign configs in S3
+                    # Note: Configs are uploaded in order so the start date would be newer down the order.
                     ("RSV", "RSV_campaign_id_1"),
                     ("RSV", "RSV_campaign_id_2"),
-                    ("RSV", "RSV_campaign_id_3"),
                     ("RSV", "RSV_campaign_id_4"),
+                    ("RSV", "RSV_campaign_id_3"),
                     ("RSV", "inactive_RSV_campaign_id_5", "inactive"),  # inactive iteration
                     ("RSV", "RSV_campaign_id_6"),
                 ],
@@ -1223,7 +1226,7 @@ class TestEligibilityResponseWithVariousInputs:
         ],
         indirect=["campaign_configs", "consumer_mappings"],
     )
-    def test_if_correct_campaign_is_chosen_for_the_consumer_when_multiple_campaign_exists_per_target_giving_same_status(  # noqa : PLR0913
+    def test_if_correct_campaign_is_chosen_for_the_consumer_when_multiple_campaign_exists_per_target_giving_same_status(
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
@@ -1379,3 +1382,137 @@ class TestEligibilityResponseWithVariousInputs:
                 )
             ),
         )
+
+    @pytest.mark.parametrize(
+        ("campaign_1_start_date", "campaign_2_start_date", "postcode_for_comparator", "expected_campaign_id"),
+        [
+            (
+                ("RSV_campaign_id_1", today()),
+                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                "SW19",  # postcode for resulting in not-actionable
+                "RSV_campaign_id_1",
+            ),
+            (
+                ("RSV_campaign_id_1", today() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today()),
+                "SW19",  # postcode for resulting in not-actionable
+                "RSV_campaign_id_2",
+            ),
+            (
+                ("RSV_campaign_id_1", today()),
+                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                "M4",  # postcode for resulting in actionable
+                "RSV_campaign_id_1",
+            ),
+            (
+                ("RSV_campaign_id_1", today() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today()),
+                "M4",  # postcode for resulting in actionable
+                "RSV_campaign_id_2",
+            ),
+        ],
+    )
+    def test_if_campaign_having_best_status_is_chosen_if_there_exists_multiple_campaign_per_target_diff_start_date(
+        self,
+        client: FlaskClient,
+        persisted_person_pc_sw19: NHSNumber,
+        s3_client: BaseClient,
+        consumer_mapping_bucket: BucketName,
+        rules_bucket: BucketName,
+        audit_bucket: BucketName,
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+        campaign_1_start_date: tuple[str, date],
+        campaign_2_start_date: tuple[str, date],
+        postcode_for_comparator: str,
+        expected_campaign_id: NHSNumber,
+    ):
+        # Given
+        consumer_id = "consumer-n3bs-jo4hn-ce4na"
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
+
+        # Consumer Mapping Data
+        s3_client.put_object(
+            Bucket=consumer_mapping_bucket,
+            Key="consumer_mapping_config.json",
+            Body=json.dumps(
+                {
+                    consumer_id: [
+                        {"CampaignConfigID": "RSV_campaign_id_1"},
+                        {"CampaignConfigID": "RSV_campaign_id_2"},
+                    ],
+                }
+            ),
+            ContentType="application/json",
+        )
+
+        # Campaign configs
+        campaign_1 = rule.CampaignConfigFactory.build(
+            id=campaign_1_start_date[0],
+            target="RSV",
+            start_date=campaign_1_start_date[1],
+            type="V",
+            iterations=[
+                rule.IterationFactory.build(
+                    iteration_rules=[
+                        rule.PostcodeSuppressionRuleFactory.build(
+                            name="Exclude M4", comparator=RuleComparator(postcode_for_comparator)
+                        ),
+                    ],
+                    iteration_cohorts=[
+                        rule.IterationCohortFactory.build(
+                            cohort_label="cohort1",
+                            cohort_group="cohort_group1",
+                            positive_description="positive_description",
+                        )
+                    ],
+                    status_text=None,
+                )
+            ],
+        )
+
+        campaign_2 = rule.CampaignConfigFactory.build(
+            id=campaign_2_start_date[0],
+            target="RSV",
+            type="V",
+            start_date=campaign_2_start_date[1],
+            iterations=[
+                rule.IterationFactory.build(
+                    iteration_rules=[
+                        rule.PostcodeSuppressionRuleFactory.build(
+                            name="Exclude M4", comparator=RuleComparator(postcode_for_comparator)
+                        ),
+                    ],
+                    iteration_cohorts=[
+                        rule.IterationCohortFactory.build(
+                            cohort_label="cohort1",
+                            cohort_group="cohort_group1",
+                            positive_description="positive_description",
+                        )
+                    ],
+                    status_text=None,
+                )
+            ],
+        )
+
+        for campaign in [campaign_1, campaign_2]:
+            s3_client.put_object(
+                Bucket=rules_bucket,
+                Key=f"{campaign.id}.json",
+                Body=json.dumps({"CampaignConfig": campaign.model_dump(by_alias=True)}),
+                ContentType="application/json",
+            )
+
+        # When
+        client.get(f"/patient-check/{persisted_person_pc_sw19}", headers=headers)
+
+        objects = s3_client.list_objects_v2(Bucket=audit_bucket).get("Contents", [])
+        object_keys = [obj["Key"] for obj in objects]
+        latest_key = sorted(object_keys)[-1]
+        audit_data = json.loads(s3_client.get_object(Bucket=audit_bucket, Key=latest_key)["Body"].read())
+
+        # Then
+        if expected_campaign_id is not None:
+            assert_that(len(audit_data["response"]["condition"]), equal_to(1))
+            assert_that(audit_data["response"]["condition"][0].get("campaignId"), equal_to(expected_campaign_id))
+        else:
+            assert_that(len(audit_data["response"]["condition"]), equal_to(0))

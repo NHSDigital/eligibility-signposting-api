@@ -124,7 +124,9 @@ class EligibilityCalculator:
         return eligibility_status.EligibilityStatus(conditions=final_result)
 
     def get_best_iteration_result(self, campaign_group: list[CampaignConfig]) -> BestIterationResult | None:
-        iteration_results = self.get_iteration_results(campaign_group)
+        sorted_campaigns = sorted(campaign_group, key=lambda c: c.start_date, reverse=True)
+
+        iteration_results = self.get_iteration_results(sorted_campaigns)
 
         if not iteration_results:
             return None
