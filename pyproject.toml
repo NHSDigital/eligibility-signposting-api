@@ -120,7 +120,4 @@ exclude_lines = [
 [tool.vulture]
 min_confidence = 80
 paths = ["src/", "tests/"]
-#ignore_names = ["*_pb2.py", "migrations/"]
-ignore_decorators = ["@app.route", "@click.command"]
-#ignore_decorators = ["@app.*", "@pytest.*"]
-
+ignore_names = ["secretsmanager_client", "consumer_*", "rule_processor_instance"]
