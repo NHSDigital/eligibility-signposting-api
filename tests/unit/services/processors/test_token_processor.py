@@ -608,18 +608,25 @@ class TestCustomTargetAttributeNames:
             raises(ValueError, pattern="Invalid attribute name 'CUSTOM_INVALID_FIELD'"),
         )
 
-    def test_non_derived_token_with_valid_target_attribute_works(self):
+    @pytest.mark.parametrize(
+        ("token", "expected"),
+        [
+            ("TARGET.COVID.LAST_SUCCESSFUL_DATE", 20260128),  # expect value which is an integer
+            ("TARGET.COVID.SUCCESSFUL_PROCEDURE_COUNT", "3"),  # expect value which is a string
+        ],
+    )
+    def test_non_derived_token_with_valid_target_attribute_works(self, token, expected):
         """Test that non-derived tokens with valid target attributes work correctly."""
         person = Person(
             [
-                {"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20260128"},
+                {"ATTRIBUTE_TYPE": "COVID", "LAST_SUCCESSFUL_DATE": "20260128", "SUCCESSFUL_PROCEDURE_COUNT": "3"},
             ]
         )
 
         condition = Condition(
             condition_name=ConditionName("Test"),
             status=Status.actionable,
-            status_text=StatusText("Last date: [[TARGET.COVID.LAST_SUCCESSFUL_DATE]]"),
+            status_text=StatusText(f"test token: [[{token}]]"),
             cohort_results=[],
             suitability_rules=[],
             actions=[],
@@ -627,7 +634,7 @@ class TestCustomTargetAttributeNames:
 
         result = TokenProcessor.find_and_replace_tokens(person, condition)
 
-        assert_that(result.status_text, is_(equal_to("Last date: 20260128")))
+        assert_that(result.status_text, is_(equal_to(f"test token: {expected}")))
 
     def test_person_level_attribute_with_add_days_without_explicit_source(self):
         """Test that ADD_DAYS works on PERSON-level attributes without explicit source."""
