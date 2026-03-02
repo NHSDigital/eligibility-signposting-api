@@ -28,12 +28,8 @@ format: ## Format and fix code
 
 format_lint: format lint
 
-# Vulture
 vulture:
 	poetry run vulture
-
-vulture-check:
-	poetry run vulture --exit-non-zero-on-found
 
 #Files to loop over in release
 _dist_include="pytest.ini poetry.lock poetry.toml pyproject.toml Makefile build/. tests"
@@ -59,7 +55,7 @@ config:: # Configure development environment (main) @Configuration
 	# TODO: Use only 'make' targets that are specific to this project, e.g. you may not need to install Node.js
 	make _install-dependencies
 
-precommit: test-unit build test-integration lint ## Pre-commit tasks
+precommit: test-unit build test-integration lint vulture ## Pre-commit tasks
 	python -m this
 
 # ==============================================================================
