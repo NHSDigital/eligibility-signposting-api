@@ -118,8 +118,9 @@ resource "aws_wafv2_web_acl" "api_gateway" {
   }
 
   # Rule 5: Geographic Block Rule - Block non-UK traffic
-  # NHS-specific requirement: block requests originating from outside GB
-  # Defence-in-depth against stolen mTLS certificates being used from outside the UK
+  # Blocks requests from outside the allowed country list.
+  # In prod: GB only - all legitimate traffic must originate from within the UK
+  # In preprod: GB + US - GitHub Actions integration tests run from US-based servers
   rule {
     name     = "BlockNonUK"
     priority = 50
@@ -132,7 +133,7 @@ resource "aws_wafv2_web_acl" "api_gateway" {
       not_statement {
         statement {
           geo_match_statement {
-            country_codes = ["GB"] # United Kingdom only (does NOT include Crown Dependencies)
+            country_codes = var.environment == "preprod" ? ["GB", "US"] : ["GB"]
           }
         }
       }

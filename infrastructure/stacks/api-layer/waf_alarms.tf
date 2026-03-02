@@ -130,6 +130,8 @@ resource "aws_cloudwatch_metric_alarm" "waf_rate_limit_blocks" {
 }
 
 # Alarm for blocked non-UK requests
+# In preprod US is also allowed (for GitHub Actions), so this alarm fires on traffic
+# from countries outside GB+US. In prod it fires on anything outside GB.
 resource "aws_cloudwatch_metric_alarm" "waf_non_uk_counted" {
   count               = local.waf_enabled ? 1 : 0
   alarm_name          = "WAF-NonUK-BlockedRequests-${local.workspace}"
