@@ -15,22 +15,35 @@ class CampaignEvaluator:
     def get_active_campaigns(self, campaign_configs: Collection[CampaignConfig]) -> list[CampaignConfig]:
         return [cc for cc in campaign_configs if cc.campaign_live]
 
-    def get_latest_campaign(self, campaign_group: list[CampaignConfig]):
-        if not campaign_group:
+    def get_campaign_with_latest_iteration(self, active_campaigns: list[CampaignConfig]) -> CampaignConfig:
+
+        """
+            Returns the campaign with the latest active iteration date.
+
+            1. Collect all campaigns with an active iteration.
+            2. Sort by iteration date (descending).
+            3. Extract the lead campaign, throwing an error if a tie for the latest date exists.
+        """
+
+        if not active_campaigns:
             return None
 
-        latest_date = max(c.start_date for c in campaign_group)
+        valid_items = [
+            (cc.current_iteration.iteration_date, cc)
+            for cc in active_campaigns if cc.current_iteration
+        ]
 
-        latest = [c for c in campaign_group if c.start_date == latest_date]
+        if not valid_items:
+            latest_date, latest_campaign = None, None
+        else:
+            max_date = max(item[0] for item in valid_items)
+            cc_with_max_iteration_date = [item for item in valid_items if item[0] == max_date]
+            if len(cc_with_max_iteration_date) > 1:
+                raise ValueError(f"Ambiguous result: {len(cc_with_max_iteration_date)} campaigns found for date {max_date}")
 
-        if len(latest) == 1:
-            return latest[0]
+            latest_date, latest_campaign = cc_with_max_iteration_date[0]
 
-        if len(latest) > 1:
-            raise ValueError(
-                f"Multiple campaigns share the latest start_date: {latest_date}")  # TODO handle it in FHIR format
-
-        return None
+        return latest_campaign
 
     def get_campaign_with_latest_active_iteration_per_target(
         self, campaign_configs: Collection[CampaignConfig], conditions: list[str], requested_category: str
@@ -52,6 +65,6 @@ class CampaignEvaluator:
             sorted(active_campaigns, key=attrgetter("target")),
             key=attrgetter("target"),
         ):
-            campaigns = [c for c in allowed_campaigns if filter_all_conditions or str(condition_name) in conditions]
+            filtered_campaigns = [c for c in allowed_campaigns if filter_all_conditions or str(condition_name) in conditions]
 
-            yield condition_name, self.get_latest_campaign(campaigns)
+            yield condition_name, self.get_campaign_with_latest_iteration(filtered_campaigns)

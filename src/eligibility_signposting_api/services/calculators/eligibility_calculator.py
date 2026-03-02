@@ -81,7 +81,9 @@ class EligibilityCalculator:
 
         return best_status, best_cohorts
 
-    def get_eligibility_status(self, include_actions: str, conditions: list[str], requested_category: str) -> EligibilityStatus:
+    def get_eligibility_status(
+        self, include_actions: str, conditions: list[str], requested_category: str
+    ) -> EligibilityStatus:
         include_actions_flag = include_actions.upper() == "Y"
         condition_results: dict[ConditionName, IterationResult] = {}
         final_result = []
@@ -89,8 +91,8 @@ class EligibilityCalculator:
         requested_grouped_campaigns = self.campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(
             self.campaign_configs, conditions, requested_category
         )
-        for condition_name, campaign_group in requested_grouped_campaigns:
-            best_iteration_result = self.get_best_iteration_result(campaign_group)
+        for condition_name, campaign in requested_grouped_campaigns:
+            best_iteration_result = self.get_best_iteration_result(campaign)
 
             if best_iteration_result is None:
                 continue
@@ -123,23 +125,8 @@ class EligibilityCalculator:
         # Consolidate all the results and return
         return eligibility_status.EligibilityStatus(conditions=final_result)
 
-    def get_best_iteration_result(self, campaign_group: list[CampaignConfig]) -> BestIterationResult | None:
-        iteration_results = self.get_iteration_results(campaign_group)
 
-        if not iteration_results:
-            return None
-
-        (_best_iteration_name, best_iteration_result) = max(
-            iteration_results.items(),
-            key=lambda item: next(iter(item[1].cohort_results.values())).status.value
-            # Below handles the case where there are no cohort results
-            if item[1].cohort_results
-            else -1,
-        )
-
-        return best_iteration_result
-
-    def get_iteration_results(self, campaign_group: list[CampaignConfig]) -> dict[IterationName, BestIterationResult]:
+    def get_iteration_results(self, campaign_group: CampaignConfig) -> dict[IterationName, BestIterationResult]:
         iteration_results: dict[IterationName, BestIterationResult] = {}
 
         for cc in campaign_group:
