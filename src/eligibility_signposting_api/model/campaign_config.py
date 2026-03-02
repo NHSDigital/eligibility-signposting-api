@@ -73,7 +73,7 @@ class RuleOperator(StrEnum):
     is_in = "in"
     not_in = "not_in"
     member_of = "MemberOf"
-    not_member_of = "NotaMemberOf"
+    not_member_of = "NotMemberOf"
     is_null = "is_null"
     is_not_null = "is_not_null"
     is_between = "between"
