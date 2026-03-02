@@ -81,13 +81,13 @@ class EligibilityCalculator:
 
         return best_status, best_cohorts
 
-    def get_eligibility_status(self, include_actions: str, conditions: list[str], category: str) -> EligibilityStatus:
+    def get_eligibility_status(self, include_actions: str, conditions: list[str], requested_category: str) -> EligibilityStatus:
         include_actions_flag = include_actions.upper() == "Y"
         condition_results: dict[ConditionName, IterationResult] = {}
         final_result = []
 
-        requested_grouped_campaigns = self.campaign_evaluator.get_requested_grouped_campaigns(
-            self.campaign_configs, conditions, category
+        requested_grouped_campaigns = self.campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(
+            self.campaign_configs, conditions, requested_category
         )
         for condition_name, campaign_group in requested_grouped_campaigns:
             best_iteration_result = self.get_best_iteration_result(campaign_group)
