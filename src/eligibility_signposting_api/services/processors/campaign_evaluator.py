@@ -45,7 +45,7 @@ class CampaignEvaluator:
             cc_with_max_iteration_date:list[CampaignConfig] = [item[1] for item in valid_items if item[0] == max_date]
             if len(cc_with_max_iteration_date) > 1:
                 raise ValueError(f"Ambiguous result: {len(cc_with_max_iteration_date)} iterations "
-                                 f"for target {cc_with_max_iteration_date[0].iteration_date}"
+                                 f"for target {cc_with_max_iteration_date[0].current_iteration.iteration_date}"
                                  f"found for date {max_date}")
 
             latest_campaign = cc_with_max_iteration_date[0]

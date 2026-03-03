@@ -30,6 +30,12 @@ from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 def today():
     return datetime.now(UTC).date()
 
+def yesterday():
+    return datetime.now(UTC).date()- timedelta(days=1)
+
+def tomorrow():
+    return datetime.now(UTC).date()+ timedelta(days=1)
+
 
 class TestBaseLine:
     def test_nhs_number_given(
@@ -1196,14 +1202,14 @@ class TestEligibilityResponseWithVariousInputs:
         [
             (
                 [
-                    # Campaign configs in S3
-                    # Note: Configs are uploaded in order so the start date would be newer down the order.
-                    ("RSV", "RSV_campaign_id_1"),
-                    ("RSV", "RSV_campaign_id_2"),
-                    ("RSV", "RSV_campaign_id_4"),
-                    ("RSV", "RSV_campaign_id_3"),
-                    ("RSV", "inactive_RSV_campaign_id_5", "inactive"),  # inactive iteration
-                    ("RSV", "RSV_campaign_id_6"),
+                    # Creates campaign configs by [target, campaign id, iteration status, iteration date]
+                    ("RSV", "RSV_campaign_id_1", "active", today()),
+                    ("RSV", "RSV_campaign_id_2", "active",today()),
+                    ("RSV", "RSV_campaign_id_3", "active", today()),
+                    ("RSV", "RSV_campaign_id_4", "active", yesterday()),
+                    # inactive iteration
+                    ("RSV", "inactive_RSV_campaign_id_5", "inactive", tomorrow()),
+                    ("RSV", "RSV_campaign_id_6", "active", today()),
                 ],
                 {
                     # Consumer mappings in S3

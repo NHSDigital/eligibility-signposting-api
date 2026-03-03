@@ -1188,12 +1188,14 @@ def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -
 
     targets = []
     campaign_id = []
-    status = []
+    iteration_status = []
+    iteration_date = []
 
     for t, _id, *rest in raw:
         targets.append(t)
         campaign_id.append(_id)
-        status.append(rest[0] if rest else None)
+        iteration_status.append(rest[0] if rest else None)
+        iteration_date.append(rest[1] if rest else None)
 
     for i in range(len(targets)):
         campaign: CampaignConfig = rule.CampaignConfigFactory.build(
@@ -1221,8 +1223,9 @@ def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -
             ],
         )
 
-        if status[i] == "inactive":
-            campaign.iterations[0].iteration_date = datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(days=7)
+        # Update iteration date
+        if iteration_status[i]:
+            campaign.iterations[0].iteration_date = iteration_date[i]
 
         campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
         key = f"{campaign.name}.json"
@@ -1304,7 +1307,7 @@ def consumer_to_active_rsv_campaign_mapping(
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="function")
 def consumer_to_active_campaign_having_and_rule_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
