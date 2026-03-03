@@ -738,7 +738,7 @@ def inactive_iteration_config(s3_client: BaseClient, rules_bucket: BucketName) -
         s3_client.delete_object(Bucket=rules_bucket, Key=key)
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="function")
 def campaign_config_with_and_rule(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
     campaign: CampaignConfig = rule.CampaignConfigFactory.build(
         target="RSV",

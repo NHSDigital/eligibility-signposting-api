@@ -1421,7 +1421,7 @@ class TestEligibilityResponseWithVariousInputs:
             ),
         ],
     )
-    def test_if_campaign_having_best_status_is_chosen_if_there_exists_multiple_campaign_per_target_diff_start_date(  # noqa : PLR0913
+    def test_if_cc_with_latest_active_iteration_is_chosen_if_exists_multiple_campaign_with_diff_iteration_date(  # noqa : PLR0913
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
