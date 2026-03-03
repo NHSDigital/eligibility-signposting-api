@@ -98,17 +98,20 @@ resource "aws_cloudwatch_metric_alarm" "waf_bad_inputs_blocks" {
 }
 
 # Alarm for rate limit violations (overall)
+# Rate limit is set to 300,000 req/5min (1000 TPS headroom over 500 TPS peak).
+# Any block at this threshold is a serious incident - a single IP would need to exceed
+# 300k requests in 5 minutes, which indicates a runaway or compromised proxy.
 resource "aws_cloudwatch_metric_alarm" "waf_rate_limit_blocks" {
   count               = local.waf_enabled ? 1 : 0
   alarm_name          = "WAF-RateLimit-Blocks-${local.workspace}"
-  alarm_description   = "Alerts when requests are rate-limited (potential DDoS)"
+  alarm_description   = "Alerts when requests are rate-limited - at 300k/5min limit this indicates a runaway or compromised proxy"
   comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
+  evaluation_periods  = 1
   metric_name         = "BlockedRequests"
   namespace           = "AWS/WAFV2"
   period              = 300
   statistic           = "Sum"
-  threshold           = 50 # Alert after 50 rate-limited requests
+  threshold           = 1 # Any block at this limit is a serious incident
   treat_missing_data  = "notBreaching"
 
   dimensions = {
@@ -174,7 +177,7 @@ resource "aws_cloudwatch_metric_alarm" "waf_all_requests_high" {
   namespace           = "AWS/WAFV2"
   period              = 300
   statistic           = "Sum"
-  threshold           = 10000 # Adjust based on expected traffic
+  threshold           = 300000 # 2x peak (500 TPS = 150k/5min); alert above 300k/5min
   treat_missing_data  = "notBreaching"
 
   dimensions = {
