@@ -2,7 +2,7 @@
 resource "aws_wafv2_web_acl" "api_gateway" {
   count       = local.waf_enabled ? 1 : 0
   name        = "${local.workspace}-eligibility-signposting-api-waf"
-  description = "WAF Web ACL for Eligibility Signposting API Gateway - Production"
+  description = "WAF Web ACL for Eligibility Signposting API Gateway"
   scope       = "REGIONAL"
 
   default_action {
