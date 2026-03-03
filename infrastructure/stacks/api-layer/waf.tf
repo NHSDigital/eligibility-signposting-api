@@ -105,7 +105,7 @@ resource "aws_wafv2_web_acl" "api_gateway" {
 
     statement {
       rate_based_statement {
-        limit              = 2000 # Requests per 5-minute period per IP
+        limit              = 300000 # 1000 TPS - we should tie this to other rate limits
         aggregate_key_type = "IP"
       }
     }
