@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Collection, Iterator
 from itertools import groupby
 from operator import attrgetter
@@ -7,6 +8,7 @@ from wireup import service
 from eligibility_signposting_api.model import eligibility_status
 from eligibility_signposting_api.model.campaign_config import CampaignConfig
 
+logger = logging.getLogger(__name__)
 
 @service
 class CampaignEvaluator:
@@ -25,13 +27,16 @@ class CampaignEvaluator:
             3. Extract the lead campaign, throwing an error if a tie for the latest date exists.
         """
 
-        if not active_campaigns:
-            return None
+        valid_items = []
 
-        valid_items = [
-            (cc.current_iteration.iteration_date, cc)
-            for cc in active_campaigns if cc.current_iteration
-        ]
+        for cc in active_campaigns:
+            if cc.current_iteration:
+                valid_items.append((cc.current_iteration.iteration_date, cc))
+            else:
+                logger.info(
+                    "Skipping campaign ID %s as no active iteration was found.",
+                    cc.id,
+                )
 
         if not valid_items:
             latest_campaign = None
@@ -39,14 +44,15 @@ class CampaignEvaluator:
             max_date = max(item[0] for item in valid_items)
             cc_with_max_iteration_date:list[CampaignConfig] = [item[1] for item in valid_items if item[0] == max_date]
             if len(cc_with_max_iteration_date) > 1:
-                raise ValueError(f"Ambiguous result: {len(cc_with_max_iteration_date)} iterations for target {cc_with_max_iteration_date[0].iteration_date}"
+                raise ValueError(f"Ambiguous result: {len(cc_with_max_iteration_date)} iterations "
+                                 f"for target {cc_with_max_iteration_date[0].iteration_date}"
                                  f"found for date {max_date}")
 
             latest_campaign = cc_with_max_iteration_date[0]
 
         return latest_campaign
 
-    def get_campaign_with_latest_active_iteration_per_target(
+    def  get_campaign_with_latest_active_iteration_per_target(
         self, campaign_configs: Collection[CampaignConfig], conditions: list[str], requested_category: str
     ) -> Iterator[tuple[eligibility_status.ConditionName, CampaignConfig]]:
         mapping = {
