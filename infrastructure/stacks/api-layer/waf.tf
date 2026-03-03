@@ -1,6 +1,4 @@
 # WAF Web ACL for API Gateway
-# Only deployed in production environment for cost optimization
-
 resource "aws_wafv2_web_acl" "api_gateway" {
   count       = local.waf_enabled ? 1 : 0
   name        = "${local.workspace}-eligibility-signposting-api-waf"
