@@ -16,16 +16,16 @@ def campaign_evaluator():
 @pytest.mark.parametrize(
     ("campaign_target", "campaign_type", "conditions_filter", "category_filter", "expected_result"),
     [
-        ("RSV", "V", ["RSV"], "VACCINATIONS", [("RSV", "V")]),
-        ("RSV", "V", ["COVID"], "VACCINATIONS", []),
-        ("RSV", "S", ["RSV"], "ALL", [("RSV", "S")]),
-        ("RSV", "S", ["ALL"], "ALL", [("RSV", "S")]),
-        ("RSV", "S", ["RSV"], "VACCINATIONS", []),
-        ("RSV", "V", ["RSV"], "ALL", [("RSV", "V")]),
-        ("FLU", "V", ["COVID", "RSV"], "ALL", []),
-        ("FLU", "S", ["ALL"], "ALL", [("FLU", "S")]),
-        ("COVID", "V", ["UNKNOWN"], "VACCINATIONS", []),
-        ("FLU", "V", ["COVID", "FLU"], "VACCINATIONS", [("FLU", "V")]),
+        ("RSV", "V", ["RSV"], "VACCINATIONS", ("RSV", "V")),
+        ("RSV", "V", ["COVID"], "VACCINATIONS", None),
+        ("RSV", "S", ["RSV"], "ALL", ("RSV", "S")),
+        ("RSV", "S", ["ALL"], "ALL", ("RSV", "S")),
+        ("RSV", "S", ["RSV"], "VACCINATIONS", None ),
+        ("RSV", "V", ["RSV"], "ALL", ("RSV", "V")),
+        ("FLU", "V", ["COVID", "RSV"], "ALL", None),
+        ("FLU", "S", ["ALL"], "ALL", ("FLU", "S")),
+        ("COVID", "V", ["UNKNOWN"], "VACCINATIONS", None),
+        ("FLU", "V", ["COVID", "FLU"], "VACCINATIONS", ("FLU", "V")),
     ],
 )
 def test_campaigns_grouped_by_condition_name_filters_correctly(  # noqa: PLR0913
@@ -36,7 +36,12 @@ def test_campaigns_grouped_by_condition_name_filters_correctly(  # noqa: PLR0913
     result = campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(
         [campaign], conditions_filter, category_filter
     )
-    assert_that([(str(name), group[0].type) for name, group in result], is_(expected_result))
+
+    actual = next(
+        ((str(name), camp.type) for name, camp in result if camp is not None),
+        None
+    )
+    assert actual == expected_result
 
 
 def test_campaigns_grouped_by_condition_name_with_no_campaigns(campaign_evaluator):
