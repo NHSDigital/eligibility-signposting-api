@@ -1334,13 +1334,14 @@ class TestEligibilityResponseWithVariousInputs:
         )
 
         # Campaign configs
-        campaign_1 = rule.CampaignConfigFactory.build(
+        campaign_1 = rule.RawCampaignConfigFactory.build(
             id=campaign_1_start_date[0],
             target="RSV",
             start_date=campaign_1_start_date[1],
             type="V",
             iterations=[
                 rule.IterationFactory.build(
+                    iteration_date=campaign_1_start_date[1],
                     iteration_rules=[
                         rule.PostcodeSuppressionRuleFactory.build(
                             name="Exclude M4", comparator=RuleComparator(postcode_for_comparator)
@@ -1358,13 +1359,14 @@ class TestEligibilityResponseWithVariousInputs:
             ],
         )
 
-        campaign_2 = rule.CampaignConfigFactory.build(
+        campaign_2 = rule.RawCampaignConfigFactory.build(
             id=campaign_2_start_date[0],
             target="RSV",
             type="V",
             start_date=campaign_2_start_date[1],
             iterations=[
                 rule.IterationFactory.build(
+                    iteration_date=campaign_2_start_date[1],
                     iteration_rules=[
                         rule.PostcodeSuppressionRuleFactory.build(
                             name="Exclude M4", comparator=RuleComparator(postcode_for_comparator)
