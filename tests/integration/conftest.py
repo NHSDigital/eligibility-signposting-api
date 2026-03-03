@@ -586,7 +586,7 @@ def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketNa
         return firehose_client.describe_delivery_stream(DeliveryStreamName=stream_name)
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def rsv_campaign_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
     campaign: CampaignConfig = rule.CampaignConfigFactory.build(
         target="RSV",
@@ -696,7 +696,7 @@ def campaign_config_with_rules_having_rule_mapper(
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def inactive_iteration_config(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     campaigns, campaign_data_keys = [], []
 
@@ -738,7 +738,7 @@ def inactive_iteration_config(s3_client: BaseClient, rules_bucket: BucketName) -
         s3_client.delete_object(Bucket=rules_bucket, Key=key)
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def campaign_config_with_and_rule(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
     campaign: CampaignConfig = rule.CampaignConfigFactory.build(
         target="RSV",
@@ -776,7 +776,7 @@ def campaign_config_with_and_rule(s3_client: BaseClient, rules_bucket: BucketNam
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def campaign_config_with_tokens(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
     campaign: CampaignConfig = rule.CampaignConfigFactory.build(
         target="RSV",
@@ -843,7 +843,7 @@ def campaign_config_with_tokens(s3_client: BaseClient, rules_bucket: BucketName)
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def campaign_config_with_invalid_tokens(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
     campaign: CampaignConfig = rule.CampaignConfigFactory.build(
         target="RSV",
@@ -1057,7 +1057,7 @@ def campaign_config_with_custom_target_attributes(
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
     campaigns, campaign_data_keys = [], []
@@ -1121,7 +1121,7 @@ def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -
         s3_client.delete_object(Bucket=rules_bucket, Key=key)
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def campaign_config_with_virtual_cohort(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[CampaignConfig]:
     campaign: CampaignConfig = rule.CampaignConfigFactory.build(
         target="COVID",
@@ -1144,7 +1144,7 @@ def campaign_config_with_virtual_cohort(s3_client: BaseClient, rules_bucket: Buc
     s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def campaign_config_with_missing_descriptions_missing_rule_text(
     s3_client: BaseClient, rules_bucket: BucketName
 ) -> Generator[CampaignConfig]:
@@ -1265,7 +1265,7 @@ def create_and_put_consumer_mapping_in_s3(
     return consumer_mapping
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def consumer_to_active_campaign_having_invalid_tokens_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
@@ -1279,7 +1279,7 @@ def consumer_to_active_campaign_having_invalid_tokens_mapping(
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def consumer_to_active_campaign_having_tokens_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
@@ -1293,7 +1293,7 @@ def consumer_to_active_campaign_having_tokens_mapping(
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def consumer_to_active_rsv_campaign_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
@@ -1307,7 +1307,7 @@ def consumer_to_active_rsv_campaign_mapping(
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def consumer_to_active_campaign_having_and_rule_mapping(
     s3_client: BaseClient,
     consumer_mapping_bucket: BucketName,
@@ -1456,7 +1456,7 @@ def consumer_to_campaign_having_inactive_iteration_mapping(
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def consumer_to_multiple_campaign_configs_mapping(
     multiple_campaign_configs: list[CampaignConfig],
     consumer_id: ConsumerId,

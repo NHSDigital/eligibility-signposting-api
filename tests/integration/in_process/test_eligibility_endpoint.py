@@ -1,5 +1,5 @@
 import json
-from datetime import date, timedelta, datetime, timezone
+from datetime import UTC, date, datetime, timedelta
 from http import HTTPStatus
 
 import pytest
@@ -26,7 +26,16 @@ from eligibility_signposting_api.repos.campaign_repo import BucketName
 from tests.fixtures.builders.model import rule
 from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
-today = lambda: datetime.now(timezone.utc).date()
+
+def today():
+    return datetime.now(UTC).date()
+
+def yesterday():
+    return datetime.now(UTC).date()- timedelta(days=1)
+
+def tomorrow():
+    return datetime.now(UTC).date()+ timedelta(days=1)
+
 
 class TestBaseLine:
     def test_nhs_number_given(
@@ -1193,14 +1202,14 @@ class TestEligibilityResponseWithVariousInputs:
         [
             (
                 [
-                    # Campaign configs in S3
-                    # Note: Configs are uploaded in order so the start date would be newer down the order.
-                    ("RSV", "RSV_campaign_id_1"),
-                    ("RSV", "RSV_campaign_id_2"),
-                    ("RSV", "RSV_campaign_id_4"),
-                    ("RSV", "RSV_campaign_id_3"),
-                    ("RSV", "inactive_RSV_campaign_id_5", "inactive"),  # inactive iteration
-                    ("RSV", "RSV_campaign_id_6"),
+                    # Creates campaign configs by [target, campaign id, iteration status, iteration date]
+                    ("RSV", "RSV_campaign_id_1", "active", today()),
+                    ("RSV", "RSV_campaign_id_2", "active",today()),
+                    ("RSV", "RSV_campaign_id_3", "active", today()),
+                    ("RSV", "RSV_campaign_id_4", "active", yesterday()),
+                    # inactive iteration
+                    ("RSV", "inactive_RSV_campaign_id_5", "inactive", tomorrow()),
+                    ("RSV", "RSV_campaign_id_6", "active", today()),
                 ],
                 {
                     # Consumer mappings in S3
@@ -1226,7 +1235,7 @@ class TestEligibilityResponseWithVariousInputs:
         ],
         indirect=["campaign_configs", "consumer_mappings"],
     )
-    def test_if_correct_campaign_is_chosen_for_the_consumer_when_multiple_campaign_exists_per_target_giving_same_status(
+    def test_if_correct_campaign_is_chosen_for_the_consumer_when_multiple_campaign_exists_per_target_giving_same_status(  # noqa : PLR0913
         self,
         client: FlaskClient,
         persisted_person: NHSNumber,
@@ -1412,7 +1421,7 @@ class TestEligibilityResponseWithVariousInputs:
             ),
         ],
     )
-    def test_if_campaign_having_best_status_is_chosen_if_there_exists_multiple_campaign_per_target_diff_start_date(
+    def test_if_campaign_having_best_status_is_chosen_if_there_exists_multiple_campaign_per_target_diff_start_date(  # noqa : PLR0913
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
