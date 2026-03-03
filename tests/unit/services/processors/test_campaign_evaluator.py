@@ -83,12 +83,20 @@ def test_campaigns_grouped_by_condition_name_with_various_categories(
 def test_campaigns_grouped_by_condition_name_with_empty_conditions_filter(campaign_evaluator):
     campaign = rule.CampaignConfigFactory.build(target="RSV", type="V")
     result = campaign_evaluator.get_campaign_with_latest_active_iteration_per_target([campaign], [], "VACCINATIONS")
-    assert_that(list(result), is_([]))
+
+    actual = [(name, camp) for name, camp in result][0]
+    assert_that(actual, is_(("RSV", None)))
 
 
 def test_campaigns_grouped_by_condition_name_groups_multiple_campaigns_for_same_target(campaign_evaluator):
-    campaign1 = rule.CampaignConfigFactory.build(target="COVID", type="V", id="C1")
-    campaign2 = rule.CampaignConfigFactory.build(target="COVID", type="V", id="C2")
+
+    # providing the start_date here, because CampaignConfigFactory used it for iteration_date
+    campaign1 = rule.CampaignConfigFactory.build(target="COVID", type="V", id="C1", start_date = datetime.datetime.now(
+        datetime.UTC).date() - datetime.timedelta(days=1),  iterations=[
+            rule.IterationFactory.build()])
+    campaign2 = rule.CampaignConfigFactory.build(target="COVID", type="V", id="C2", start_date = datetime.datetime.now(
+        datetime.UTC).date(), iterations=[
+            rule.IterationFactory.build()])
     campaign3 = rule.CampaignConfigFactory.build(target="FLU", type="V", id="F1")
     inactive_campaign = rule.CampaignConfigFactory.build(
         target="COVID", type="V", id="C3", start_date=datetime.date(2025, 4, 20), end_date=datetime.date(2025, 4, 21)
@@ -103,34 +111,34 @@ def test_campaigns_grouped_by_condition_name_groups_multiple_campaigns_for_same_
 
     assert_that(len(result), is_(2))
 
-    result_dict = {str(name): campaigns for name, campaigns in result}
+    result_dict = {str(name): campaign for name, campaign in result}
+
     assert_that("COVID" in result_dict)
     assert_that("FLU" in result_dict)
 
-    assert_that(len(result_dict["COVID"]), is_(2))
-    assert_that({c.id for c in result_dict["COVID"]}, is_({CampaignID("C1"), CampaignID("C2")}))
-
-    assert_that(len(result_dict["FLU"]), is_(1))
-    assert_that(result_dict["FLU"][0].id, is_(CampaignID("F1")))
+    assert_that(result_dict["COVID"].id, is_(CampaignID("C2")))
+    assert_that(result_dict["FLU"].id, is_(CampaignID("F1")))
 
 
-def test_campaign_grouping_is_affected_by_order_for_mixed_types(campaign_evaluator):
+def test_campaign_grouping_is_not_affected_by_order_for_mixed_types(campaign_evaluator):
     campaign_v = rule.CampaignConfigFactory.build(target="RSV", type="V")
     campaign_s = rule.CampaignConfigFactory.build(target="RSV", type="S")
 
-    evaluator_s_first = campaign_evaluator
+    # Order: S then V
     result_s_first = list(
-        evaluator_s_first.get_campaign_with_latest_active_iteration_per_target(
+        campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(
             [campaign_s, campaign_v], ["RSV"], "VACCINATIONS"
         )
     )
-    assert_that(result_s_first, is_([]))
+    # Even if S is first, it is filtered out by 'allowed_types'
+    assert_that(len(result_s_first), is_(1))
+    assert_that(result_s_first[0][1].type, is_("V"))
 
-    evaluator_v_first = campaign_evaluator
+    # Order: V then S
     result_v_first = list(
-        evaluator_v_first.get_campaign_with_latest_active_iteration_per_target(
+        campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(
             [campaign_v, campaign_s], ["RSV"], "VACCINATIONS"
         )
     )
     assert_that(len(result_v_first), is_(1))
-    assert_that(len(result_v_first[0][1]), is_(2))
+    assert_that(result_v_first[0][1].type, is_("V"))
