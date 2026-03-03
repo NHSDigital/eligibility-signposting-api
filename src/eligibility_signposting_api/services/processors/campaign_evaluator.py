@@ -72,6 +72,6 @@ class CampaignEvaluator:
             sorted(active_campaigns, key=attrgetter("target")),
             key=attrgetter("target"),
         ):
-            filtered_campaigns = [c for c in allowed_campaigns if filter_all_conditions or str(condition_name) in conditions]
+            filtered_campaigns = [c for c in campaign_group if filter_all_conditions or str(condition_name) in conditions]
 
             yield condition_name, self.get_campaign_with_latest_iteration(filtered_campaigns)
