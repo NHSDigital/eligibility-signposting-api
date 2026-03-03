@@ -15,7 +15,7 @@ class CampaignEvaluator:
     def get_active_campaigns(self, campaign_configs: Collection[CampaignConfig]) -> list[CampaignConfig]:
         return [cc for cc in campaign_configs if cc.campaign_live]
 
-    def get_campaign_with_latest_iteration(self, active_campaigns: list[CampaignConfig]) -> CampaignConfig:
+    def get_campaign_with_latest_iteration(self, active_campaigns: list[CampaignConfig]) -> CampaignConfig | None:
 
         """
             Returns the campaign with the latest active iteration date.
@@ -34,14 +34,15 @@ class CampaignEvaluator:
         ]
 
         if not valid_items:
-            latest_date, latest_campaign = None, None
+            latest_campaign = None
         else:
             max_date = max(item[0] for item in valid_items)
-            cc_with_max_iteration_date = [item for item in valid_items if item[0] == max_date]
+            cc_with_max_iteration_date:list[CampaignConfig] = [item[1] for item in valid_items if item[0] == max_date]
             if len(cc_with_max_iteration_date) > 1:
-                raise ValueError(f"Ambiguous result: {len(cc_with_max_iteration_date)} campaigns found for date {max_date}")
+                raise ValueError(f"Ambiguous result: {len(cc_with_max_iteration_date)} iterations for target {cc_with_max_iteration_date[0].iteration_date}"
+                                 f"found for date {max_date}")
 
-            latest_date, latest_campaign = cc_with_max_iteration_date[0]
+            latest_campaign = cc_with_max_iteration_date[0]
 
         return latest_campaign
 
