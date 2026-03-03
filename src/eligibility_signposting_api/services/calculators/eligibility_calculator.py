@@ -128,7 +128,7 @@ class EligibilityCalculator:
 
     def get_iteration_result(self, campaign_with_active_iteration: CampaignConfig) -> BestIterationResult:
 
-        active_iteration = campaign_with_active_iteration.active_iteration
+        active_iteration = campaign_with_active_iteration.current_iteration
         cohort_results: dict[CohortLabel, CohortGroupResult] = self.rule_processor.get_cohort_group_results(
             self.person, active_iteration
         )
