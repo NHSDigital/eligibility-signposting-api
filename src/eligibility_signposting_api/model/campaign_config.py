@@ -120,19 +120,19 @@ class IterationCohort(BaseModel):
 
     @cached_property
     def is_virtual_cohort(self) -> bool:
-            return self.virtual == Virtual.YES
+        return self.virtual == Virtual.YES
 
     @field_validator("virtual", mode="before")
     @classmethod
     def normalize_virtual(cls, value: str) -> Virtual:
         if value is None:
-                return Virtual.NO
+            return Virtual.NO
         if isinstance(value, str):
             value = value.strip().upper()
         if value == "Y":
-                return Virtual.YES
+            return Virtual.YES
         if value == "N":
-                return Virtual.NO
+            return Virtual.NO
         msg = f"Invalid value for Virtual: {value!r}"
         raise ValueError(msg)
 
@@ -161,8 +161,8 @@ class IterationRule(BaseModel):
     @field_validator("rule_stop", mode="before")
     def parse_yn_to_bool(cls, v: str | bool) -> bool:  # noqa: N805, FBT001
         if isinstance(v, str):
-                return v.upper() == "Y"
-            return v
+            return v.upper() == "Y"
+        return v
 
     _parent: Iteration | None = PrivateAttr(default=None)
 
@@ -184,7 +184,7 @@ class IterationRule(BaseModel):
             for rule_entry in self._parent.rules_mapper.values():
                 if rule_entry and self.name in rule_entry.rule_names:
                     rule_code = rule_entry.rule_code
-            return rule_code or self.code or self.name
+        return rule_code or self.code or self.name
 
     @property
     def rule_text(self) -> str:
@@ -201,7 +201,7 @@ class IterationRule(BaseModel):
             for rule_entry in self._parent.rules_mapper.values():
                 if rule_entry and self.name in rule_entry.rule_names:
                     rule_text = rule_entry.rule_text
-            return rule_text or self.description
+        return rule_text or self.description
 
     @cached_property
     def parsed_cohort_labels(self) -> list[str]:
@@ -212,11 +212,11 @@ class IterationRule(BaseModel):
             A list of cohort labels, split by comma. If no label is set, returns an empty list.
         """
         if not self.cohort_label:
-                return []
-            return [label.strip() for label in self.cohort_label.split(",") if label.strip()]
+            return []
+        return [label.strip() for label in self.cohort_label.split(",") if label.strip()]
 
     def __str__(self) -> str:
-            return json.dumps(self.model_dump(by_alias=True), indent=2)
+        return json.dumps(self.model_dump(by_alias=True), indent=2)
 
 
 class AvailableAction(BaseModel):
@@ -231,7 +231,7 @@ class AvailableAction(BaseModel):
 
 class ActionsMapper(RootModel[dict[str, AvailableAction]]):
     def get(self, key: str, default: AvailableAction | None = None) -> AvailableAction | None:
-            return self.root.get(key, default)
+        return self.root.get(key, default)
 
 
 class StatusText(BaseModel):
@@ -252,10 +252,10 @@ class RuleEntry(BaseModel):
 
 class RulesMapper(RootModel[dict[str, RuleEntry]]):
     def get(self, key: str, default: RuleEntry | None = None) -> RuleEntry | None:
-            return self.root.get(key, default)
+        return self.root.get(key, default)
 
     def values(self) -> list[RuleEntry]:
-            return list(self.root.values())
+        return list(self.root.values())
 
 
 class Iteration(BaseModel):
@@ -289,7 +289,7 @@ class Iteration(BaseModel):
     @classmethod
     def parse_dates(cls, v: str | date) -> date:
         if isinstance(v, date):
-                return v
+            return v
 
         v_str = str(v)
 
@@ -298,7 +298,7 @@ class Iteration(BaseModel):
             raise ValueError(msg)
 
         try:
-                return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
+            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
         except ValueError as err:
             msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
             raise ValueError(msg) from err
@@ -349,7 +349,7 @@ class CampaignConfig(BaseModel):
     @classmethod
     def parse_dates(cls, v: str | date) -> date:
         if isinstance(v, date):
-                return v
+            return v
 
         v_str = str(v)
 
@@ -358,7 +358,7 @@ class CampaignConfig(BaseModel):
             raise ValueError(msg)
 
         try:
-                return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
+            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
         except ValueError as err:
             msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
             raise ValueError(msg) from err
@@ -366,14 +366,14 @@ class CampaignConfig(BaseModel):
     @field_serializer("start_date", "end_date", when_used="always")
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
-            return v.strftime("%Y%m%d")
+        return v.strftime("%Y%m%d")
 
     @model_validator(mode="after")
     def check_start_and_end_dates_sensible(self) -> typing.Self:
         if self.start_date > self.end_date:
             message = f"start date {self.start_date} after end date {self.end_date}"
             raise ValueError(message)
-            return self
+        return self
 
     @model_validator(mode="after")
     def check_no_overlapping_iterations(self) -> typing.Self:
@@ -382,21 +382,21 @@ class CampaignConfig(BaseModel):
             iteration_date, count = multiple_found
             message = f"{count} iterations with iteration date {iteration_date} in campaign {self.id}"
             raise ValueError(message)
-            return self
+        return self
 
     @cached_property
     def campaign_live(self) -> bool:
         today = datetime.now(tz=UTC).date()
-            return self.start_date <= today <= self.end_date
+        return self.start_date <= today <= self.end_date
 
     @cached_property
     def current_iteration(self) -> Iteration:
         today = datetime.now(tz=UTC).date()
         iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_date"), reverse=True)
-            return next(i for i in iterations_by_date_descending if i.iteration_date <= today)
+        return next(i for i in iterations_by_date_descending if i.iteration_date <= today)
 
     def __str__(self) -> str:
-            return json.dumps(self.model_dump(by_alias=True), indent=2)
+        return json.dumps(self.model_dump(by_alias=True), indent=2)
 
 
 class Rules(BaseModel):
