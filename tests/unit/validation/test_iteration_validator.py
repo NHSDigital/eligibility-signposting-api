@@ -1,10 +1,11 @@
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC, datetime, time
 from typing import ClassVar
 
 import pytest
 from pydantic import ValidationError
 
+from rules_validation_api.validators.campaign_config_validator import CampaignConfigValidation
 from rules_validation_api.validators.iteration_validator import IterationValidation
 
 
@@ -504,3 +505,44 @@ class TestBUCValidations:
         # Assert messages contain the expected text
         assert "AttributeName must be set" in errors[0]["msg"]
         assert "AttributeName must be set" in errors[1]["msg"]
+
+    @pytest.mark.parametrize(
+        ("iteration_time_input", "default_time_iteration_input", "expected_time"),
+        [
+            # Case 1: Iteration time overrides default
+            ("14:30:00", "09:00:00", time(14, 30, 0)),
+            # Case 2: Iteration time is missing, so it uses default_iteration_time
+            (None, "09:00:00", time(9, 0, 0)),
+            # Case 3: Both are the same
+            ("10:00:00", "10:00:00", time(10, 0, 0)),
+            # Case 4: Both are None, falls back to default value (12 AM) in default_iteration_time
+            (None, None, time(0, 0, 0)),
+        ],
+    )
+    def test_iteration_get_iteration_time_property(
+        self,
+        valid_campaign_config_with_only_mandatory_fields,
+        valid_iteration_with_only_mandatory_fields,
+        iteration_time_input,
+        default_time_iteration_input,
+        expected_time,
+    ):
+        iteration_data = valid_iteration_with_only_mandatory_fields.copy()
+        iteration_data["IterationTime"] = iteration_time_input
+        iteration_data["IterationDate"] = "20250102"  # matching campaign start_date
+
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+
+        if default_time_iteration_input:
+            data["default_iteration_time"] = default_time_iteration_input
+
+        data["Iterations"] = [iteration_data]
+
+        config = CampaignConfigValidation(**data)
+
+        result = config.iterations[0].iteration_datetime
+
+        assert result.time() == expected_time, (
+            f"Failed! Input: {iteration_time_input}, Default: {default_time_iteration_input}. "
+            f"Expected {expected_time} but got {result.time()}"
+        )

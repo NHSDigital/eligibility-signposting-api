@@ -263,7 +263,7 @@ class Iteration(BaseModel):
     version: IterationVersion = Field(..., alias="Version")
     name: IterationName = Field(..., alias="Name")
     iteration_date: IterationDate = Field(..., alias="IterationDate")
-    iteration_time: IterationTime = Field(..., alias="IterationTime")
+    iteration_time: time | None = Field(default=None, alias="IterationTime")
     iteration_number: int | None = Field(None, alias="IterationNumber")
     approval_minimum: int | None = Field(None, alias="ApprovalMinimum")
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
@@ -308,21 +308,31 @@ class Iteration(BaseModel):
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
 
-    @property
-    def get_iteration_datetime(self) -> datetime:
-        iteration_time = (
-            self.iteration_time
-            or getattr(getattr(self, "parent", None), "default_iteration_time", None)
-        )
+    @field_serializer("iteration_time", when_used="always")
+    @staticmethod
+    def serialize_time(v: date, _info: SerializationInfo) -> str | None:
+        return v.strftime("%H:%M:%S") if v else None
 
-        if iteration_time is None:
-            raise ValueError("No iteration_time available on object or parent.default_iteration_time.")
+    _parent: CampaignConfig | None = PrivateAttr(default=None)
+
+    def set_parent(self, parent: CampaignConfig) -> None:
+        self._parent = parent
+
+    @cached_property
+    def iteration_datetime(self) -> datetime:
+        if self.iteration_time:
+            iteration_time = self.iteration_time
+        elif self._parent:
+            iteration_time = self._parent.default_iteration_time
+        else:
+            msg = f"No iteration_time and no parent linked for iteration {self.id}"
+            raise ValueError(msg)
 
         return datetime.combine(self.iteration_date, iteration_time)
 
-
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
+
 
 class CampaignConfig(BaseModel):
     id: CampaignID = Field(..., alias="ID")
@@ -344,6 +354,12 @@ class CampaignConfig(BaseModel):
     iterations: list[Iteration] = Field(..., min_length=1, alias="Iterations")
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
+
+    def __init__(self, **data: dict[str, typing.Any]) -> None:
+        super().__init__(**data)
+        # Ensure each rule knows its parent iteration
+        for iteration in self.iterations:
+            iteration.set_parent(self)
 
     @field_validator("start_date", "end_date", mode="before")
     @classmethod
