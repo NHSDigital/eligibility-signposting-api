@@ -16,5 +16,5 @@ regexes = [
 ]
 
 [allowlist]
-paths = ['''.terraform.lock.hcl''', '''poetry.lock''', '''yarn.lock''']
+paths = ['''.terraform.lock.hcl''', '''poetry.lock''', '''yarn.lock''', '''.github/instructions/\*.instructions.md''']
 stopwords = ['''dummy_key''', '''dummy_secret''', '''192.0.0.1''', '''prance = "^25.4.8.0"''', '''25.4.8.0''']
