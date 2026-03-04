@@ -38,6 +38,40 @@ resource "aws_api_gateway_integration" "get_patient_check" {
   ]
 }
 
+resource "aws_api_gateway_method" "get_patient_check_perf" {
+  #checkov:skip=CKV_AWS_59: API is secured via Apigee proxy with mTLS, API keys are not used
+  rest_api_id      = module.eligibility_signposting_api_gateway.rest_api_id
+  resource_id      = aws_api_gateway_resource.patient_perf.id
+  http_method      = "GET"
+  authorization    = "NONE"
+  api_key_required = false
+
+  request_validator_id = aws_api_gateway_request_validator.patient_check_validator.id
+
+  request_parameters = {
+    "method.request.path.id" = true
+  }
+
+  depends_on = [
+    aws_api_gateway_resource.patient_check_perf,
+    aws_api_gateway_resource.patient_perf,
+    aws_api_gateway_resource.patient_check,
+  ]
+}
+
+resource "aws_api_gateway_integration" "get_patient_check_perf" {
+  rest_api_id             = module.eligibility_signposting_api_gateway.rest_api_id
+  resource_id             = aws_api_gateway_resource.patient_perf.id
+  http_method             = aws_api_gateway_method.get_patient_check_perf.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = module.eligibility_signposting_lambda_function.aws_lambda_invoke_arn
+
+  depends_on = [
+    aws_api_gateway_method.get_patient_check_perf
+  ]
+}
+
 resource "aws_api_gateway_method" "get_patient_check_status" {
   #checkov:skip=CKV_AWS_59: API is secured via Apigee proxy with mTLS, API keys are not used
   #checkov:skip=CKV2_AWS_53: No request parameters to validate for static healthcheck endpoint

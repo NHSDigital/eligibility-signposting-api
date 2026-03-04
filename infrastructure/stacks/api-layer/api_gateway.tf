@@ -14,9 +14,21 @@ resource "aws_api_gateway_resource" "patient_check" {
   path_part   = "patient-check"
 }
 
+resource "aws_api_gateway_resource" "patient_check_perf" {
+  rest_api_id = module.eligibility_signposting_api_gateway.rest_api_id
+  parent_id   = aws_api_gateway_resource.patient_check.id
+  path_part   = "_perf"
+}
+
 resource "aws_api_gateway_resource" "patient" {
   rest_api_id = module.eligibility_signposting_api_gateway.rest_api_id
   parent_id   = aws_api_gateway_resource.patient_check.id
+  path_part   = "{id}"
+}
+
+resource "aws_api_gateway_resource" "patient_perf" {
+  rest_api_id = module.eligibility_signposting_api_gateway.rest_api_id
+  parent_id   = aws_api_gateway_resource.patient_check_perf.id
   path_part   = "{id}"
 }
 
@@ -34,7 +46,8 @@ resource "aws_api_gateway_deployment" "eligibility_signposting_api" {
   triggers = {
     redeployment = sha1(jsonencode([
       aws_api_gateway_integration.get_patient_check.id,
-      aws_api_gateway_integration.get_patient_check_status.id
+      aws_api_gateway_integration.get_patient_check_status.id,
+      aws_api_gateway_integration.get_patient_check_perf.id
     ]))
   }
 
