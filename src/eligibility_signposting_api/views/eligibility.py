@@ -6,6 +6,7 @@ from http import HTTPStatus
 from typing import Any
 
 from flask import Blueprint, make_response, request
+from aws_xray_sdk.core import xray_recorder
 from flask.typing import ResponseReturnValue
 from wireup import Injected
 
@@ -45,10 +46,15 @@ def api_status() -> ResponseReturnValue:
 
 @eligibility_blueprint.get("/", defaults={"nhs_number": ""})
 @eligibility_blueprint.get("/<nhs_number>")
+@eligibility_blueprint.get("/_perf/<nhs_number>")
 @validate_request_params()
 def check_eligibility(
     nhs_number: NHSNumber, eligibility_service: Injected[EligibilityService], audit_service: Injected[AuditService]
 ) -> ResponseReturnValue:
+
+    if request.path.startswith(f"/{URL_PREFIX}/_perf"):
+        xray_recorder.put_annotation("perf_test", True)
+
     logger.info("checking nhs_number %r in %r", nhs_number, eligibility_service, extra={"nhs_number": nhs_number})
 
     query_params = _get_or_default_query_params()
