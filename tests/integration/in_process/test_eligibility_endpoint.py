@@ -17,7 +17,13 @@ from hamcrest import (
     has_key,
 )
 
-from eligibility_signposting_api.model.campaign_config import CampaignConfig, RuleComparator
+from eligibility_signposting_api.model.campaign_config import (
+    CampaignConfig,
+    RuleAttributeLevel,
+    RuleComparator,
+    RuleOperator,
+    RuleType,
+)
 from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import (
     NHSNumber,
@@ -1273,35 +1279,59 @@ class TestEligibilityResponseWithVariousInputs:
             assert_that(len(audit_data["response"]["condition"]), equal_to(0))
 
     @pytest.mark.parametrize(
-        ("campaign_1_start_date", "campaign_2_start_date", "postcode_for_comparator", "expected_campaign_id"),
+        (
+            "campaign_1_start_date",
+            "campaign_2_start_date",
+            "postcode_for_comparator",
+            "cohort_for_comparator",
+            "expected_campaign_id",
+        ),
         [
             (
                 ("RSV_campaign_id_1", today()),
                 ("RSV_campaign_id_2", today() - timedelta(days=1)),
-                "SW19",  # postcode for resulting in not-actionable
+                "SW19",  # postcode for resulting in not-actionable (used by the suppression rule)
+                "cohort2",
                 "RSV_campaign_id_1",
             ),
             (
                 ("RSV_campaign_id_1", today() - timedelta(days=1)),
                 ("RSV_campaign_id_2", today()),
                 "SW19",  # postcode for resulting in not-actionable
+                "cohort2",
                 "RSV_campaign_id_2",
             ),
             (
                 ("RSV_campaign_id_1", today()),
                 ("RSV_campaign_id_2", today() - timedelta(days=1)),
                 "M4",  # postcode for resulting in actionable
+                "cohort2",
                 "RSV_campaign_id_1",
             ),
             (
                 ("RSV_campaign_id_1", today() - timedelta(days=1)),
                 ("RSV_campaign_id_2", today()),
                 "M4",  # postcode for resulting in actionable
+                "cohort2",
+                "RSV_campaign_id_2",
+            ),
+            (
+                ("RSV_campaign_id_1", today()),
+                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                "M4",  # cohort for resulting in not-eligible
+                "cohort1",
+                "RSV_campaign_id_1",
+            ),
+            (
+                ("RSV_campaign_id_1", today() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today()),
+                "M4",
+                "cohort1",  # cohort for resulting in not-eligible (used by the filter rule)
                 "RSV_campaign_id_2",
             ),
         ],
     )
-    def test_if_cc_with_latest_active_iteration_is_chosen_if_exists_multiple_campaign_with_diff_iteration_date(  # noqa : PLR0913
+    def test_if_cc_with_latest_active_iteration_is_chosen_if_exists_multiple_campaign_with_diff_iteration_date(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
@@ -1313,6 +1343,7 @@ class TestEligibilityResponseWithVariousInputs:
         campaign_1_start_date: tuple[str, date],
         campaign_2_start_date: tuple[str, date],
         postcode_for_comparator: str,
+        cohort_for_comparator: str,
         expected_campaign_id: NHSNumber,
     ):
         # Given
@@ -1344,6 +1375,13 @@ class TestEligibilityResponseWithVariousInputs:
                 rule.IterationFactory.build(
                     iteration_date=campaign_1_start_date[1],
                     iteration_rules=[
+                        rule.IterationRuleFactory.build(
+                            type=RuleType.filter,
+                            name="Exclude if cohort matches",
+                            attribute_level=RuleAttributeLevel.COHORT,
+                            comparator=RuleComparator(cohort_for_comparator),
+                            operator=RuleOperator.member_of,
+                        ),
                         rule.PostcodeSuppressionRuleFactory.build(
                             name="Exclude M4", comparator=RuleComparator(postcode_for_comparator)
                         ),
