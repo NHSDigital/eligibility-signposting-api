@@ -20,7 +20,7 @@ def campaign_evaluator():
         ("RSV", "V", ["COVID"], "VACCINATIONS", None),
         ("RSV", "S", ["RSV"], "ALL", ("RSV", "S")),
         ("RSV", "S", ["ALL"], "ALL", ("RSV", "S")),
-        ("RSV", "S", ["RSV"], "VACCINATIONS", None ),
+        ("RSV", "S", ["RSV"], "VACCINATIONS", None),
         ("RSV", "V", ["RSV"], "ALL", ("RSV", "V")),
         ("FLU", "V", ["COVID", "RSV"], "ALL", None),
         ("FLU", "S", ["ALL"], "ALL", ("FLU", "S")),
@@ -37,10 +37,7 @@ def test_campaigns_grouped_by_condition_name_filters_correctly(  # noqa: PLR0913
         [campaign], conditions_filter, category_filter
     )
 
-    actual = next(
-        ((str(name), camp.type) for name, camp in result if camp is not None),
-        None
-    )
+    actual = next(((str(name), camp.type) for name, camp in result if camp is not None), None)
     assert actual == expected_result
 
 
@@ -84,19 +81,26 @@ def test_campaigns_grouped_by_condition_name_with_empty_conditions_filter(campai
     campaign = rule.CampaignConfigFactory.build(target="RSV", type="V")
     result = campaign_evaluator.get_campaign_with_latest_active_iteration_per_target([campaign], [], "VACCINATIONS")
 
-    actual = [(name, camp) for name, camp in result][0]
+    actual = next((name, camp) for name, camp in result)
     assert_that(actual, is_(("RSV", None)))
 
 
 def test_campaigns_grouped_by_condition_name_groups_multiple_campaigns_for_same_target(campaign_evaluator):
-
     # providing the start_date here, because CampaignConfigFactory used it for iteration_date
-    campaign1 = rule.CampaignConfigFactory.build(target="COVID", type="V", id="C1", start_date = datetime.datetime.now(
-        datetime.UTC).date() - datetime.timedelta(days=1),  iterations=[
-            rule.IterationFactory.build()])
-    campaign2 = rule.CampaignConfigFactory.build(target="COVID", type="V", id="C2", start_date = datetime.datetime.now(
-        datetime.UTC).date(), iterations=[
-            rule.IterationFactory.build()])
+    campaign1 = rule.CampaignConfigFactory.build(
+        target="COVID",
+        type="V",
+        id="C1",
+        start_date=datetime.datetime.now(datetime.UTC).date() - datetime.timedelta(days=1),
+        iterations=[rule.IterationFactory.build()],
+    )
+    campaign2 = rule.CampaignConfigFactory.build(
+        target="COVID",
+        type="V",
+        id="C2",
+        start_date=datetime.datetime.now(datetime.UTC).date(),
+        iterations=[rule.IterationFactory.build()],
+    )
     campaign3 = rule.CampaignConfigFactory.build(target="FLU", type="V", id="F1")
     inactive_campaign = rule.CampaignConfigFactory.build(
         target="COVID", type="V", id="C3", start_date=datetime.date(2025, 4, 20), end_date=datetime.date(2025, 4, 21)

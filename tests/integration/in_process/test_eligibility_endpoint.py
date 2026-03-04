@@ -30,11 +30,13 @@ from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 def today():
     return datetime.now(UTC).date()
 
+
 def yesterday():
-    return datetime.now(UTC).date()- timedelta(days=1)
+    return datetime.now(UTC).date() - timedelta(days=1)
+
 
 def tomorrow():
-    return datetime.now(UTC).date()+ timedelta(days=1)
+    return datetime.now(UTC).date() + timedelta(days=1)
 
 
 class TestBaseLine:
@@ -1204,7 +1206,7 @@ class TestEligibilityResponseWithVariousInputs:
                 [
                     # Creates campaign configs by [target, campaign id, iteration status, iteration date]
                     ("RSV", "RSV_campaign_id_1", "active", today()),
-                    ("RSV", "RSV_campaign_id_2", "active",today()),
+                    ("RSV", "RSV_campaign_id_2", "active", today()),
                     ("RSV", "RSV_campaign_id_3", "active", today()),
                     ("RSV", "RSV_campaign_id_4", "active", yesterday()),
                     # inactive iteration
@@ -1269,7 +1271,6 @@ class TestEligibilityResponseWithVariousInputs:
             assert_that(audit_data["response"]["condition"][0].get("campaignId"), equal_to(expected_campaign_id))
         else:
             assert_that(len(audit_data["response"]["condition"]), equal_to(0))
-
 
     @pytest.mark.parametrize(
         ("campaign_1_start_date", "campaign_2_start_date", "postcode_for_comparator", "expected_campaign_id"),
