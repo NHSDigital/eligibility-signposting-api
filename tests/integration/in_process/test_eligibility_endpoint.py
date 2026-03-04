@@ -1445,3 +1445,100 @@ class TestEligibilityResponseWithVariousInputs:
             assert_that(audit_data["response"]["condition"][0].get("campaignId"), equal_to(expected_campaign_id))
         else:
             assert_that(len(audit_data["response"]["condition"]), equal_to(0))
+
+    def test_if_multiple_active_iterations_with_same_iteration_datetime_for_the_same_target_throws_internal_error(  # noqa: PLR0913
+        self,
+        client: FlaskClient,
+        persisted_person_pc_sw19: NHSNumber,
+        s3_client: BaseClient,
+        consumer_mapping_bucket: BucketName,
+        rules_bucket: BucketName,
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+        caplog,
+    ):
+        # Given
+        consumer_id = "consumer-n3bs-jo4hn-ce4na"
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
+
+        # Consumer Mapping Data
+        s3_client.put_object(
+            Bucket=consumer_mapping_bucket,
+            Key="consumer_mapping_config.json",
+            Body=json.dumps(
+                {
+                    consumer_id: [
+                        {"CampaignConfigID": "RSV_campaign_id_1"},
+                        {"CampaignConfigID": "RSV_campaign_id_2"},
+                    ],
+                }
+            ),
+            ContentType="application/json",
+        )
+        previous_day = yesterday()
+        # Campaign configs
+        campaign_1 = rule.RawCampaignConfigFactory.build(
+            id="RSV_campaign_id_1",
+            target="RSV",
+            start_date=previous_day,
+            type="V",
+            iterations=[rule.IterationFactory.build(iteration_date=previous_day)],
+        )
+
+        campaign_2 = rule.RawCampaignConfigFactory.build(
+            id="RSV_campaign_id_2",
+            target="RSV",
+            start_date=previous_day,
+            type="V",
+            iterations=[rule.IterationFactory.build(iteration_date=previous_day)],
+        )
+
+        for campaign in [campaign_1, campaign_2]:
+            s3_client.put_object(
+                Bucket=rules_bucket,
+                Key=f"{campaign.id}.json",
+                Body=json.dumps({"CampaignConfig": campaign.model_dump(by_alias=True)}),
+                ContentType="application/json",
+            )
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}", headers=headers)
+
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.INTERNAL_SERVER_ERROR)
+            .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
+            .and_text(
+                is_json_that(
+                    has_entries(
+                        resourceType="OperationOutcome",
+                        issue=contains_exactly(
+                            has_entries(
+                                severity="error",
+                                code="processing",
+                                diagnostics="An unexpected error occurred.",
+                                details={
+                                    "coding": [
+                                        {
+                                            "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "display": "An unexpected internal server error occurred.",
+                                        }
+                                    ]
+                                },
+                            )
+                        ),
+                    )
+                )
+            ),
+        )
+
+        err_msg = (
+            "Ambiguous result: '2' active iterations "
+            "for target RSV "
+            f"found for date '{previous_day}' "
+            "across campaign(s) ['RSV_campaign_id_1', 'RSV_campaign_id_2']"
+        )
+        assert any(err_msg in message for message in caplog.messages), (
+            f"Expected log message not found. Logged messages: {caplog.messages}"
+        )

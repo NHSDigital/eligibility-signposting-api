@@ -93,9 +93,6 @@ class EligibilityCalculator:
             )
         )
         for condition_name, campaign in requested_cc_with_active_iteration:
-            if campaign is None:
-                continue  # skipping as no active iteration was found.
-
             iteration_result_summary = self.evaluate_iteration_result_summary(campaign)
 
             matched_action_detail = self.action_rule_handler.get_actions(
