@@ -49,7 +49,7 @@ Guidelines for the eligibility-signposting-api project — a serverless AWS Lamb
 ## Performance
 
 - **DynamoDB**: Use `query()` with `KeyConditionExpression`, never `scan()`. Partition key is `NHS_NUMBER`, sort key discriminator is `ATTRIBUTE_TYPE`.
-- **S3 config loading**: Campaign configs load from S3 per request. Avoid unnecessary `list_objects` or `get_object` calls.
+- **S3 configuration loading**: Campaign configs load from S3 per request. Avoid unnecessary `list_objects` or `get_object` calls.
 - **Caching**: Feature toggles use `TTLCache` (300s). New caching should follow the same pattern with appropriate TTLs.
 - **Lambda cold starts**: Avoid heavy imports at module level. Keep wireup service graph lean.
 
@@ -61,5 +61,5 @@ Guidelines for the eligibility-signposting-api project — a serverless AWS Lamb
 ## Terraform
 
 - **Encryption**: All AWS resources (DynamoDB, S3, Lambda, Firehose, Secrets Manager) must use KMS CMK encryption.
-- **Environment parity**: Verify deletion protection and PITR are enabled for prod/preprod DynamoDB tables.
+- **Environment parity**: Verify deletion protection and PITR are enabled for production/pre-production DynamoDB tables.
 - **Safety**: Terraform changes must not destroy or replace stateful resources (DynamoDB tables, S3 buckets) unintentionally.
