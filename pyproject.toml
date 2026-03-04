@@ -63,6 +63,8 @@ python-dotenv = "^1.2.1"
 openapi-spec-validator = "^0.7.2"
 pip-licenses = "^5.5.0"
 cachetools = "^7.0.1"
+vulture = "^2.14"
+
 
 [tool.poetry-plugin-lambda-build]
 docker-image = "public.ecr.aws/sam/build-python3.13:1.139-x86_64"  # See https://gallery.ecr.aws/search?searchTerm=%22python%22&architecture=x86-64&popularRegistries=amazon&verified=verified&operatingSystems=Linux
@@ -114,3 +116,8 @@ exclude_lines = [
   "if TYPE_CHECKING:",
   "raise NotImplementedError",
 ]
+
+[tool.vulture]
+min_confidence = 80
+paths = ["src/", "tests/"]
+ignore_names = ["secretsmanager_client", "consumer_*", "rule_processor_instance"]
