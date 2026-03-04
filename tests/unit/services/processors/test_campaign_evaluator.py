@@ -79,10 +79,11 @@ def test_campaigns_grouped_by_condition_name_with_various_categories(
 
 def test_campaigns_grouped_by_condition_name_with_empty_conditions_filter(campaign_evaluator):
     campaign = rule.CampaignConfigFactory.build(target="RSV", type="V")
-    result = campaign_evaluator.get_campaign_with_latest_active_iteration_per_target([campaign], [], "VACCINATIONS")
+    result = list(
+        campaign_evaluator.get_campaign_with_latest_active_iteration_per_target([campaign], [], "VACCINATIONS")
+    )
 
-    actual = next((name, camp) for name, camp in result)
-    assert_that(actual, is_(("RSV", None)))
+    assert_that(result, is_([]))
 
 
 def test_campaigns_grouped_by_condition_name_groups_multiple_campaigns_for_same_target(campaign_evaluator):

@@ -45,9 +45,10 @@ class CampaignEvaluator:
             cc_with_max_iteration_date: list[CampaignConfig] = [item[1] for item in valid_items if item[0] == max_date]
             if len(cc_with_max_iteration_date) > 1:
                 err_msg = (
-                    f"Ambiguous result: {len(cc_with_max_iteration_date)} iterations "
-                    f"for target {cc_with_max_iteration_date[0].current_iteration.iteration_date}"
-                    f"found for date {max_date}"
+                    f"Ambiguous result: '{len(cc_with_max_iteration_date)}' active iterations "
+                    f"for target {cc_with_max_iteration_date[0].target} "
+                    f"found for date '{max_date}' "
+                    f"across campaign(s) {[cc.id for cc in cc_with_max_iteration_date]}"
                 )
                 raise ValueError(err_msg)
 
@@ -57,7 +58,7 @@ class CampaignEvaluator:
 
     def get_campaign_with_latest_active_iteration_per_target(
         self, campaign_configs: Collection[CampaignConfig], conditions: list[str], requested_category: str
-    ) -> Iterator[tuple[eligibility_status.ConditionName, CampaignConfig | None]]:
+    ) -> Iterator[tuple[eligibility_status.ConditionName, CampaignConfig]]:
         mapping = {
             "ALL": {"V", "S"},
             "VACCINATIONS": {"V"},
@@ -79,4 +80,6 @@ class CampaignEvaluator:
                 c for c in campaign_group if filter_all_conditions or str(condition_name) in conditions
             ]
 
-            yield condition_name, self.get_campaign_with_latest_iteration(filtered_campaigns)
+            campaign = self.get_campaign_with_latest_iteration(filtered_campaigns)
+            if campaign is not None:
+                yield (condition_name, campaign)
