@@ -33,15 +33,15 @@ from tests.fixtures.builders.model import rule
 from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
 
-def today() -> date:
+def today():
     return datetime.now(UTC).date()
 
 
-def yesterday() -> date:
+def yesterday():
     return datetime.now(UTC).date() - timedelta(days=1)
 
 
-def tomorrow() -> date:
+def tomorrow():
     return datetime.now(UTC).date() + timedelta(days=1)
 
 
@@ -1532,10 +1532,11 @@ class TestEligibilityResponseWithVariousInputs:
                 )
             ),
         )
+
         err_msg = (
             "Ambiguous result: '2' active iterations "
             "for target RSV "
-            f"found for datetime '{previous_day} 00:00:00+00:00' "
+            f"found for date '{previous_day}' "
             "across campaign(s) ['RSV_campaign_id_1', 'RSV_campaign_id_2']"
         )
         assert any(err_msg in message for message in caplog.messages), (

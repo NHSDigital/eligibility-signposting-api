@@ -31,7 +31,7 @@ class CampaignEvaluator:
 
         for cc in active_campaigns:
             try:
-                valid_items.append((cc.current_iteration.iteration_datetime, cc))
+                valid_items.append((cc.current_iteration.iteration_date, cc))
             except StopIteration:
                 logger.info(
                     "Skipping campaign ID %s as no active iteration was found.",
@@ -41,15 +41,13 @@ class CampaignEvaluator:
         if not valid_items:
             latest_campaign = None
         else:
-            max_date_time = max(item[0] for item in valid_items)
-            cc_with_max_iteration_date: list[CampaignConfig] = [
-                item[1] for item in valid_items if item[0] == max_date_time
-            ]
+            max_date = max(item[0] for item in valid_items)
+            cc_with_max_iteration_date: list[CampaignConfig] = [item[1] for item in valid_items if item[0] == max_date]
             if len(cc_with_max_iteration_date) > 1:
                 err_msg = (
                     f"Ambiguous result: '{len(cc_with_max_iteration_date)}' active iterations "
                     f"for target {cc_with_max_iteration_date[0].target} "
-                    f"found for datetime '{max_date_time}' "
+                    f"found for date '{max_date}' "
                     f"across campaign(s) {[cc.id for cc in cc_with_max_iteration_date]}"
                 )
                 raise ValueError(err_msg)
