@@ -318,3 +318,22 @@ class TestBUCValidations:
         data["ApprovalMinimum"] = approval_min
         data["ApprovalMaximum"] = approval_max
         CampaignConfigValidation(**data)
+
+    def test_iteration_time_overrides_default_iteration_time(
+        self,
+        valid_iteration_config_with_only_mandatory_fields,
+    ):
+        # Arrange
+        data = valid_iteration_config_with_only_mandatory_fields.copy()
+        data["default_iteration_time"] = "09:00:00"
+        data["iteration_time"] = "14:30:00"
+        config = CampaignConfigValidation(**data)
+
+        # Act
+        result = config.get_iteration_datetime
+
+        # Assert
+        assert result.time() == IterationTime(14, 30), (
+            "Expected iteration_time to take precedence over default_iteration_time"
+        )
+
