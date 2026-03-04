@@ -11,12 +11,12 @@ from wireup import service
 from eligibility_signposting_api.audit.audit_context import AuditContext
 from eligibility_signposting_api.model import campaign_config, eligibility_status
 from eligibility_signposting_api.model.eligibility_status import (
-    BestIterationResult,
     CohortGroupResult,
     Condition,
     ConditionName,
     EligibilityStatus,
     IterationResult,
+    IterationResultSummary,
     Reason,
     Status,
     StatusText,
@@ -94,21 +94,21 @@ class EligibilityCalculator:
         )
         for condition_name, campaign in requested_cc_with_active_iteration:
             if campaign is None:
-                continue
+                continue  # skipping as no active iteration was found.
 
-            best_iteration_result = self.get_iteration_result(campaign)
+            iteration_result_summary = self.evaluate_iteration_result_summary(campaign)
 
             matched_action_detail = self.action_rule_handler.get_actions(
                 self.person,
-                best_iteration_result.active_iteration,
-                best_iteration_result.iteration_result,
+                iteration_result_summary.active_iteration,
+                iteration_result_summary.iteration_result,
                 include_actions_flag=include_actions_flag,
             )
 
-            best_iteration_result = TokenProcessor.find_and_replace_tokens(self.person, best_iteration_result)
+            iteration_result_summary = TokenProcessor.find_and_replace_tokens(self.person, iteration_result_summary)
             matched_action_detail = TokenProcessor.find_and_replace_tokens(self.person, matched_action_detail)
 
-            condition_results[condition_name] = best_iteration_result.iteration_result
+            condition_results[condition_name] = iteration_result_summary.iteration_result
             condition_results[condition_name].actions = matched_action_detail.actions
 
             condition: Condition = self.build_condition(
@@ -119,14 +119,16 @@ class EligibilityCalculator:
 
             AuditContext.append_audit_condition(
                 condition_name,
-                best_iteration_result,
+                iteration_result_summary,
                 matched_action_detail,
             )
 
         # Consolidate all the results and return
         return eligibility_status.EligibilityStatus(conditions=final_result)
 
-    def get_iteration_result(self, campaign_with_active_iteration: CampaignConfig) -> BestIterationResult:
+    def evaluate_iteration_result_summary(
+        self, campaign_with_active_iteration: CampaignConfig
+    ) -> IterationResultSummary:
         active_iteration = campaign_with_active_iteration.current_iteration
         cohort_results: dict[CohortLabel, CohortGroupResult] = self.rule_processor.get_cohort_group_results(
             self.person, active_iteration
@@ -138,7 +140,7 @@ class EligibilityCalculator:
             active_iteration.status_text, ConditionName(campaign_with_active_iteration.target), status
         )
 
-        return BestIterationResult(
+        return IterationResultSummary(
             IterationResult(status, status_text, best_cohorts, []),
             active_iteration,
             campaign_with_active_iteration.id,
