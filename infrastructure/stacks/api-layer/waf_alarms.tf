@@ -98,17 +98,20 @@ resource "aws_cloudwatch_metric_alarm" "waf_bad_inputs_blocks" {
 }
 
 # Alarm for rate limit violations (overall)
+# Rate limit is set to 300,000 req/5min (1000 TPS headroom over 500 TPS peak).
+# Any block at this threshold is a serious incident - a single IP would need to exceed
+# 300k requests in 5 minutes, which indicates a runaway or compromised proxy.
 resource "aws_cloudwatch_metric_alarm" "waf_rate_limit_blocks" {
   count               = local.waf_enabled ? 1 : 0
   alarm_name          = "WAF-RateLimit-Blocks-${local.workspace}"
-  alarm_description   = "Alerts when requests are rate-limited (potential DDoS)"
+  alarm_description   = "Alerts when requests are rate-limited - at 300k/5min limit this indicates a runaway or compromised proxy"
   comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
+  evaluation_periods  = 1
   metric_name         = "BlockedRequests"
   namespace           = "AWS/WAFV2"
   period              = 300
   statistic           = "Sum"
-  threshold           = 50 # Alert after 50 rate-limited requests
+  threshold           = 1 # Any block at this limit is a serious incident
   treat_missing_data  = "notBreaching"
 
   dimensions = {
@@ -129,14 +132,16 @@ resource "aws_cloudwatch_metric_alarm" "waf_rate_limit_blocks" {
   )
 }
 
-# Alarm for non-UK rate limit violations
-resource "aws_cloudwatch_metric_alarm" "waf_non_uk_counted" {
+# Alarm for blocked non-UK requests
+# In preprod US is also allowed (for GitHub Actions), so this alarm fires on traffic
+# from countries outside GB+US. In prod it fires on anything outside GB.
+resource "aws_cloudwatch_metric_alarm" "waf_non_uk_blocked" {
   count               = local.waf_enabled ? 1 : 0
-  alarm_name          = "WAF-NonUK-CountedRequests-${local.workspace}"
-  alarm_description   = "Alerts when non-UK requests are observed (COUNT mode) by geo rule"
+  alarm_name          = "WAF-NonUK-BlockedRequests-${local.workspace}"
+  alarm_description   = "Alerts when non-UK requests are blocked by geo rule - may indicate stolen mTLS cert use from outside UK"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
-  metric_name         = "CountedRequests"
+  metric_name         = "BlockedRequests"
   namespace           = "AWS/WAFV2"
   period              = 300
   statistic           = "Sum"
@@ -145,7 +150,7 @@ resource "aws_cloudwatch_metric_alarm" "waf_non_uk_counted" {
 
   dimensions = {
     Region = var.default_aws_region
-    Rule   = "MonitorNonUK"
+    Rule   = "BlockNonUK"
     WebACL = aws_wafv2_web_acl.api_gateway[0].name
   }
 
@@ -154,8 +159,8 @@ resource "aws_cloudwatch_metric_alarm" "waf_non_uk_counted" {
   tags = merge(
     local.tags,
     {
-      Name        = "WAF-NonUK-CountedRequests"
-      Severity    = "medium"
+      Name        = "WAF-NonUK-BlockedRequests"
+      Severity    = "high"
       Environment = var.environment
     }
   )
@@ -165,14 +170,14 @@ resource "aws_cloudwatch_metric_alarm" "waf_non_uk_counted" {
 resource "aws_cloudwatch_metric_alarm" "waf_all_requests_high" {
   count               = local.waf_enabled ? 1 : 0
   alarm_name          = "WAF-AllRequests-High-${local.workspace}"
-  alarm_description   = "Monitors total request volume through WAF"
+  alarm_description   = "Monitors total allowed request volume through WAF"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "AllowedRequests"
   namespace           = "AWS/WAFV2"
   period              = 300
   statistic           = "Sum"
-  threshold           = 10000 # Adjust based on expected traffic
+  threshold           = 300000 # 2x peak (500 TPS = 150k/5min); alert above 300k/5min
   treat_missing_data  = "notBreaching"
 
   dimensions = {
@@ -192,19 +197,21 @@ resource "aws_cloudwatch_metric_alarm" "waf_all_requests_high" {
   )
 }
 
-# Alarm for monitoring counted requests (during initial count mode)
-# This helps identify if rules would block legitimate traffic
+# Alarm for counted requests (NoUserAgent_Header override)
+# The CRS NoUserAgent_Header sub-rule is kept in COUNT to allow the API proxy healthcheck.
+# This alarm alerts if count spikes unexpectedly, which could indicate rule misconfiguration
+# or unexpected traffic patterns hitting that override.
 resource "aws_cloudwatch_metric_alarm" "waf_counted_requests_monitoring" {
   count               = local.waf_enabled ? 1 : 0
   alarm_name          = "WAF-CountedRequests-Monitoring-${local.workspace}"
-  alarm_description   = "Monitors requests that would be blocked if rules were active (COUNT mode)"
+  alarm_description   = "Monitors counted requests - expected to be low volume (healthcheck NoUserAgent_Header override only)"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "CountedRequests"
   namespace           = "AWS/WAFV2"
   period              = 300
   statistic           = "Sum"
-  threshold           = 100 # Alert if many requests would be blocked
+  threshold           = 100 # Alert if count spikes beyond normal healthcheck frequency
   treat_missing_data  = "notBreaching"
 
   dimensions = {
@@ -220,7 +227,7 @@ resource "aws_cloudwatch_metric_alarm" "waf_counted_requests_monitoring" {
       Name        = "WAF-CountedRequests-Monitoring"
       Severity    = "low"
       Environment = var.environment
-      Purpose     = "Initial monitoring during COUNT mode phase"
+      Purpose     = "Monitor NoUserAgent_Header count override for healthcheck proxy"
     }
   )
 }

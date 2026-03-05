@@ -1,11 +1,8 @@
 # WAF Web ACL for API Gateway
-# Only deployed in production environment for cost optimization
-# Initially all rules are in COUNT mode to monitor traffic patterns
-
 resource "aws_wafv2_web_acl" "api_gateway" {
   count       = local.waf_enabled ? 1 : 0
   name        = "${local.workspace}-eligibility-signposting-api-waf"
-  description = "WAF Web ACL for Eligibility Signposting API Gateway - Production"
+  description = "WAF Web ACL for Eligibility Signposting API Gateway"
   scope       = "REGIONAL"
 
   default_action {
@@ -19,7 +16,7 @@ resource "aws_wafv2_web_acl" "api_gateway" {
     priority = 10
 
     override_action {
-      count {} # Start in count mode - change to none {} when ready to block
+      none {}
     }
 
     statement {
@@ -43,13 +40,21 @@ resource "aws_wafv2_web_acl" "api_gateway" {
     priority = 20
 
     override_action {
-      count {} # Start in count mode - change to none {} when ready to block
+      none {}
     }
 
     statement {
       managed_rule_group_statement {
         vendor_name = "AWS"
         name        = "AWSManagedRulesCommonRuleSet"
+
+        # Override NoUserAgent_Header to count only - APIM health checks send no User-Agent
+        rule_action_override {
+          name = "NoUserAgent_Header"
+          action_to_use {
+            count {}
+          }
+        }
       }
     }
 
@@ -93,12 +98,12 @@ resource "aws_wafv2_web_acl" "api_gateway" {
     priority = 40
 
     action {
-      count {} # Start in count mode - change to block {} when ready
+      block {}
     }
 
     statement {
       rate_based_statement {
-        limit              = 2000 # Requests per 5-minute period per IP
+        limit              = 300000 # 1000 TPS - we should tie this to other rate limits
         aggregate_key_type = "IP"
       }
     }
@@ -110,22 +115,23 @@ resource "aws_wafv2_web_acl" "api_gateway" {
     }
   }
 
-  # Rule 5: Geographic Monitoring Rule - Monitor non-UK traffic (COUNT only)
-  # NHS-specific requirement: initially monitor requests originating from outside GB
-  # This rule COUNTS any request whose geo country code is not GB (does not block)
+  # Rule 5: Geographic Block Rule - Block non-UK traffic
+  # Blocks requests from outside the allowed country list.
+  # In prod: GB only - all legitimate traffic must originate from within the UK
+  # In preprod: GB + US - GitHub Actions integration tests run from US-based servers
   rule {
-    name     = "MonitorNonUK"
+    name     = "BlockNonUK"
     priority = 50
 
     action {
-      count {}
+      block {}
     }
 
     statement {
       not_statement {
         statement {
           geo_match_statement {
-            country_codes = ["GB"] # United Kingdom only (does NOT include Crown Dependencies)
+            country_codes = var.environment == "preprod" ? ["GB", "US"] : ["GB"]
           }
         }
       }
@@ -133,7 +139,7 @@ resource "aws_wafv2_web_acl" "api_gateway" {
 
     visibility_config {
       cloudwatch_metrics_enabled = true
-      metric_name                = "MonitorNonUK"
+      metric_name                = "BlockNonUK"
       sampled_requests_enabled   = true
     }
   }
