@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from pydantic import ValidationError
 
@@ -165,11 +167,13 @@ class TestOptionalFieldsSchemaValidations:
         model = CampaignConfigValidation(**data)
         assert model.reviewer == reviewer
 
-    @pytest.mark.parametrize("iteration_time", ["14:00", "09:30", "18:45"])
-    def test_iteration_time_field(self, iteration_time, valid_campaign_config_with_only_mandatory_fields):
-        data = {**valid_campaign_config_with_only_mandatory_fields, "IterationTime": iteration_time}
+    @pytest.mark.parametrize("default_iteration_time", ["14:00:00", "09:30:00", "18:45:00"])
+    def test_default_iteration_time_field(
+        self, default_iteration_time, valid_campaign_config_with_only_mandatory_fields
+    ):
+        data = {**valid_campaign_config_with_only_mandatory_fields, "DefaultIterationTime": default_iteration_time}
         model = CampaignConfigValidation(**data)
-        assert model.iteration_time == iteration_time
+        assert model.default_iteration_time == datetime.strptime(default_iteration_time, "%H:%M:%S").time()  # noqa: DTZ007
 
     @pytest.mark.parametrize("routing", ["email", "sms", "push"])
     def test_default_comms_routing_field(self, routing, valid_campaign_config_with_only_mandatory_fields):

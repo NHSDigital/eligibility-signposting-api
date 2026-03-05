@@ -366,7 +366,7 @@ class CampaignConfig(BaseModel):
     reviewer: list[str] | None = Field(None, alias="Reviewer")
     iteration_frequency: Literal["X", "D", "W", "M", "Q", "A"] = Field(..., alias="IterationFrequency")
     iteration_type: Literal["A", "M", "S", "O"] = Field(..., alias="IterationType")
-    default_iteration_time: IterationTime = Field(default=IterationTime(time(0, 0, 0)), alias="IterationTime")
+    default_iteration_time: IterationTime = Field(default=IterationTime(time(0, 0, 0)), alias="DefaultIterationTime")
     default_comms_routing: str | None = Field(None, alias="DefaultCommsRouting")
     start_date: StartDate = Field(..., alias="StartDate")
     end_date: EndDate = Field(..., alias="EndDate")

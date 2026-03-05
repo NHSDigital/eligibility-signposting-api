@@ -182,6 +182,15 @@ class TestOptionalFieldsSchemaValidations:
         model = IterationValidation(**data)
         assert model.approval_maximum == approval_maximum
 
+    @pytest.mark.parametrize("iteration_time", ["14:00:00", "09:30:00", "18:45:00"])
+    def test_iteration_time_field(self, iteration_time, valid_campaign_config_with_only_mandatory_fields):
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "IterationTime": iteration_time,
+        }
+        model = IterationValidation(**data)
+        assert model.iteration_time == datetime.strptime(iteration_time, "%H:%M:%S").time()  # noqa: DTZ007
+
 
 class TestBUCValidations:
     book_local_1_action: ClassVar[dict] = {
@@ -510,13 +519,13 @@ class TestBUCValidations:
         ("iteration_time_input", "default_time_iteration_input", "expected_date_time"),
         [
             # Case 1: Iteration time overrides default
-            ("14:30:00", "09:00:00", datetime(2025, 1, 2, 14, 30, 0, tzinfo=UTC)),
+            ("14:30:00", "09:00:00", datetime(2025, 1, 2, 14, 30, 0)),  # noqa: DTZ001
             # Case 2: Iteration time is missing, so it uses default_iteration_time
-            (None, "09:00:00", datetime(2025, 1, 2, 9, 0, 0, tzinfo=UTC)),
+            (None, "09:00:00", datetime(2025, 1, 2, 9, 0, 0)),  # noqa: DTZ001
             # Case 3: Both are the same
-            ("10:00:00", "10:00:00", datetime(2025, 1, 2, 10, 0, 0, tzinfo=UTC)),
+            ("10:00:00", "10:00:00", datetime(2025, 1, 2, 10, 0, 0)),  # noqa: DTZ001
             # Case 4: Both are None, falls back to default value (12 AM) in default_iteration_time
-            (None, None, datetime(2025, 1, 2, 0, 0, 0, tzinfo=UTC)),
+            (None, None, datetime(2025, 1, 2, 0, 0, 0)),  # noqa: DTZ001
         ],
     )
     def test_iteration_full_datetime_validation(
