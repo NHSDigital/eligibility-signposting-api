@@ -1,5 +1,5 @@
 from collections import Counter
-from datetime import UTC, datetime, time
+from datetime import UTC, datetime
 from typing import ClassVar
 
 import pytest
@@ -507,29 +507,30 @@ class TestBUCValidations:
         assert "AttributeName must be set" in errors[1]["msg"]
 
     @pytest.mark.parametrize(
-        ("iteration_time_input", "default_time_iteration_input", "expected_time"),
+        ("iteration_time_input", "default_time_iteration_input", "expected_date_time"),
         [
             # Case 1: Iteration time overrides default
-            ("14:30:00", "09:00:00", time(14, 30, 0)),
+            ("14:30:00", "09:00:00", datetime(2025, 1, 2, 14, 30, 0)),
             # Case 2: Iteration time is missing, so it uses default_iteration_time
-            (None, "09:00:00", time(9, 0, 0)),
+            (None, "09:00:00", datetime(2025, 1, 2, 9, 0, 0)),
             # Case 3: Both are the same
-            ("10:00:00", "10:00:00", time(10, 0, 0)),
+            ("10:00:00", "10:00:00", datetime(2025, 1, 2, 10, 0, 0)),
             # Case 4: Both are None, falls back to default value (12 AM) in default_iteration_time
-            (None, None, time(0, 0, 0)),
+            (None, None, datetime(2025, 1, 2, 0, 0, 0)),
         ],
     )
-    def test_iteration_get_iteration_time_property(
+    def test_iteration_full_datetime_validation(
         self,
         valid_campaign_config_with_only_mandatory_fields,
         valid_iteration_with_only_mandatory_fields,
         iteration_time_input,
         default_time_iteration_input,
-        expected_time,
+        expected_date_time,
     ):
+        # Given
         iteration_data = valid_iteration_with_only_mandatory_fields.copy()
         iteration_data["IterationTime"] = iteration_time_input
-        iteration_data["IterationDate"] = "20250102"  # matching campaign start_date
+        iteration_data["IterationDate"] = "20250102"  # between campaign start_date and end_date
 
         data = valid_campaign_config_with_only_mandatory_fields.copy()
 
@@ -538,11 +539,13 @@ class TestBUCValidations:
 
         data["Iterations"] = [iteration_data]
 
+        # When
         config = CampaignConfigValidation(**data)
 
+        # Then
         result = config.iterations[0].iteration_datetime
 
-        assert result.time() == expected_time, (
+        assert result == expected_date_time, (
             f"Failed! Input: {iteration_time_input}, Default: {default_time_iteration_input}. "
-            f"Expected {expected_time} but got {result.time()}"
+            f"Expected {expected_date_time} but got {result}"
         )
