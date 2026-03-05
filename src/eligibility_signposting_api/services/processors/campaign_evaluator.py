@@ -49,7 +49,7 @@ class CampaignEvaluator:
                 err_msg = (
                     f"Ambiguous result: '{len(cc_with_max_iteration_date)}' active iterations "
                     f"for target {cc_with_max_iteration_date[0].target} "
-                    f"found for date '{max_date_time}' "
+                    f"found for datetime '{max_date_time}' "
                     f"across campaign(s) {[cc.id for cc in cc_with_max_iteration_date]}"
                 )
                 raise ValueError(err_msg)
