@@ -15,11 +15,11 @@ from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
     ActionDescription,
     ActionType,
-    BestIterationResult,
     CohortGroupResult,
     ConditionName,
     InternalActionCode,
     IterationResult,
+    IterationResultSummary,
     MatchedActionDetail,
     Reason,
     RuleCode,
@@ -147,7 +147,7 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g_for_actionable_
         campaign_config.RuleName("RedirectRuleName1"), campaign_config.RulePriority(1), suggested_actions
     )
 
-    best_iteration_results = BestIterationResult(
+    iteration_result_summary = IterationResultSummary(
         iteration_result,
         iteration,
         campaign_details[0],
@@ -158,7 +158,7 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g_for_actionable_
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(condition_name, best_iteration_results, matched_action_detail)
+        AuditContext.append_audit_condition(condition_name, iteration_result_summary, matched_action_detail)
 
         expected_audit_action = [
             AuditAction(
@@ -227,7 +227,7 @@ def test_should_append_audit_suppression_rules_for_actionable_status(app):
     )
     campaign_details = (CampaignID("CampaignID1"), CampaignVersion(123))
 
-    best_iteration_results = BestIterationResult(
+    iteration_result_summary = IterationResultSummary(
         iteration_result,
         iteration,
         campaign_details[0],
@@ -238,7 +238,7 @@ def test_should_append_audit_suppression_rules_for_actionable_status(app):
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(condition_name, best_iteration_results, MatchedActionDetail())
+        AuditContext.append_audit_condition(condition_name, iteration_result_summary, MatchedActionDetail())
 
         assert g.audit_log.response.condition, condition_name
         cond = g.audit_log.response.condition[0]
@@ -288,7 +288,7 @@ def test_should_append_audit_filter_rules_for_not_actionable_status(app):
     )
     campaign_details = (CampaignID("CampaignID1"), CampaignVersion(123))
 
-    best_iteration_results = BestIterationResult(
+    iteration_result_summary = IterationResultSummary(
         iteration_result,
         iteration,
         campaign_details[0],
@@ -299,7 +299,7 @@ def test_should_append_audit_filter_rules_for_not_actionable_status(app):
     with app.app_context():
         g.audit_log = AuditEvent()
 
-        AuditContext.append_audit_condition(condition_name, best_iteration_results, MatchedActionDetail())
+        AuditContext.append_audit_condition(condition_name, iteration_result_summary, MatchedActionDetail())
 
         assert g.audit_log.response.condition, condition_name
         cond = g.audit_log.response.condition[0]

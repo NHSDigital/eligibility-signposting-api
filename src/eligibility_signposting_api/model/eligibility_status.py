@@ -138,7 +138,7 @@ class IterationResult:
 
 
 @dataclass
-class BestIterationResult:
+class IterationResultSummary:
     iteration_result: IterationResult
     active_iteration: Iteration | None = None
     campaign_id: CampaignID | None = None
