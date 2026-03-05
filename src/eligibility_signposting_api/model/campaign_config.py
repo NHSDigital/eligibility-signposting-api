@@ -263,7 +263,7 @@ class Iteration(BaseModel):
     version: IterationVersion = Field(..., alias="Version")
     name: IterationName = Field(..., alias="Name")
     iteration_date: IterationDate = Field(..., alias="IterationDate")
-    iteration_time: time | None = Field(default=None, alias="IterationTime")
+    iteration_time: IterationTime | None = Field(default=None, alias="IterationTime")
     iteration_number: int | None = Field(None, alias="IterationNumber")
     approval_minimum: int | None = Field(None, alias="ApprovalMinimum")
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
@@ -303,6 +303,27 @@ class Iteration(BaseModel):
             msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
             raise ValueError(msg) from err
 
+    @field_validator("iteration_time", mode="before")
+    @classmethod
+    def parse_times(cls, v: str | time) -> time | None:
+        if not v:
+            return None
+        if isinstance(v, time):
+            return v
+
+        v_str = str(v).strip()
+
+        if re.fullmatch(r"^\d{2}:\d{2}:\d{2}$", v_str):
+            try:
+                return datetime.strptime(v_str, "%H:%M:%S").time()  # noqa: DTZ007
+            except ValueError as err:
+                msg = f"Invalid time value: {v_str}. Must be a valid time in HH:MM:SS."
+                raise ValueError(msg) from err
+
+        # If none matched, raise a format error
+        msg = f"Invalid format: {v_str}. Must be HH:MM:SS."
+        raise ValueError(msg)
+
     @field_serializer("iteration_date", when_used="always")
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
@@ -310,7 +331,7 @@ class Iteration(BaseModel):
 
     @field_serializer("iteration_time", when_used="always")
     @staticmethod
-    def serialize_time(v: date, _info: SerializationInfo) -> str | None:
+    def serialize_time(v: time, _info: SerializationInfo) -> str | None:
         return v.strftime("%H:%M:%S") if v else None
 
     _parent: CampaignConfig | None = PrivateAttr(default=None)
@@ -379,10 +400,36 @@ class CampaignConfig(BaseModel):
             msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
             raise ValueError(msg) from err
 
+    @field_validator("default_iteration_time", mode="before")
+    @classmethod
+    def parse_times(cls, v: str | time) -> time | None:
+        if not v:
+            return None
+        if isinstance(v, time):
+            return v
+
+        v_str = str(v).strip()
+
+        if re.fullmatch(r"^\d{2}:\d{2}:\d{2}$", v_str):
+            try:
+                return datetime.strptime(v_str, "%H:%M:%S").time()  # noqa: DTZ007
+            except ValueError as err:
+                msg = f"Invalid time value: {v_str}. Must be a valid time in HH:MM:SS."
+                raise ValueError(msg) from err
+
+        # If none matched, raise a format error
+        msg = f"Invalid format: {v_str}. Must be HH:MM:SS."
+        raise ValueError(msg)
+
     @field_serializer("start_date", "end_date", when_used="always")
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
+
+    @field_serializer("default_iteration_time", when_used="always")
+    @staticmethod
+    def serialize_time(v: time, _info: SerializationInfo) -> str | None:
+        return v.strftime("%H:%M:%S") if v else None
 
     @model_validator(mode="after")
     def check_start_and_end_dates_sensible(self) -> typing.Self:
