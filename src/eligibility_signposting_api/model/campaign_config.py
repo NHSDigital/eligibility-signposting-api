@@ -344,7 +344,7 @@ class Iteration(BaseModel):
         if self.iteration_time:
             iteration_time = self.iteration_time
         elif self._parent:
-            iteration_time = self._parent.default_iteration_time
+            iteration_time = self._parent.iteration_time
         else:
             msg = f"No iteration_time and no parent linked for iteration {self.id}"
             raise ValueError(msg)
@@ -366,7 +366,7 @@ class CampaignConfig(BaseModel):
     reviewer: list[str] | None = Field(None, alias="Reviewer")
     iteration_frequency: Literal["X", "D", "W", "M", "Q", "A"] = Field(..., alias="IterationFrequency")
     iteration_type: Literal["A", "M", "S", "O"] = Field(..., alias="IterationType")
-    default_iteration_time: IterationTime = Field(default=IterationTime(time(0, 0, 0)), alias="DefaultIterationTime")
+    iteration_time: IterationTime = Field(default=IterationTime(time(0, 0, 0)), alias="IterationTime")
     default_comms_routing: str | None = Field(None, alias="DefaultCommsRouting")
     start_date: StartDate = Field(..., alias="StartDate")
     end_date: EndDate = Field(..., alias="EndDate")
@@ -400,7 +400,7 @@ class CampaignConfig(BaseModel):
             msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
             raise ValueError(msg) from err
 
-    @field_validator("default_iteration_time", mode="before")
+    @field_validator("iteration_time", mode="before")
     @classmethod
     def parse_times(cls, v: str | time) -> time | None:
         if not v:
@@ -426,7 +426,7 @@ class CampaignConfig(BaseModel):
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
 
-    @field_serializer("default_iteration_time", when_used="always")
+    @field_serializer("iteration_time", when_used="always")
     @staticmethod
     def serialize_time(v: time, _info: SerializationInfo) -> str | None:
         return v.strftime("%H:%M:%S") if v else None

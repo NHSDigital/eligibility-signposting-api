@@ -1,6 +1,7 @@
 import sys
 from io import StringIO
 from unittest.mock import Mock, PropertyMock
+from datetime import UTC, datetime, timedelta
 
 from pydantic import BaseModel, ValidationError
 
@@ -83,6 +84,8 @@ def test_no_current_iteration():
 
     # iterations must be a list, not a Mock
     result.campaign_config.iterations = []
+
+    result.campaign_config.end_date = datetime.now(UTC).date() + timedelta(days=1)
 
     # current_iteration should raise StopIteration
     type(result.campaign_config).current_iteration = PropertyMock(side_effect=StopIteration)

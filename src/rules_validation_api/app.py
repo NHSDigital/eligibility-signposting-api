@@ -88,14 +88,17 @@ def display_current_iteration(result: RulesValidation) -> None:
     if is_campaign_live:
         sys.stdout.write(f"{YELLOW}Campaign is {RESET}{GREEN}LIVE{RESET}\n")
         current = config.current_iteration
-        if current:
-            sys.stdout.write(
-                f"{YELLOW}Current active Iteration Number: {RESET}{GREEN}{current.iteration_number}{RESET}\n"
-            )
-            sys.stdout.write(
-                f"{YELLOW}Current active Iteration's date&time: {RESET}{GREEN}{current.iteration_datetime}{RESET}\n"
-            )
-        else:
+
+        try:
+            current = config.current_iteration
+            if current:
+                sys.stdout.write(
+                    f"{YELLOW}Current active Iteration Number: {RESET}{GREEN}{current.iteration_number}{RESET}\n"
+                )
+                sys.stdout.write(
+                    f"{YELLOW}Current active Iteration's date&time: {RESET}{GREEN}{current.iteration_datetime}{RESET}\n"
+                )
+        except StopIteration:
             sys.stdout.write(f"{YELLOW}No active iteration could be determined{RESET}\n")
 
     else:
@@ -109,18 +112,20 @@ def display_current_iteration(result: RulesValidation) -> None:
     # ---- Next Iteration ----
     if not is_campaign_expired:
         sorted_iterations = sorted(iterations, key=attrgetter("iteration_date"))
-        next_iteration = next(
-            (i for i in sorted_iterations if i.iteration_date > today), None
-        )
 
-        if next_iteration:
-            sys.stdout.write(
-                f"{YELLOW}Next active Iteration Number: {RESET}{GREEN}{next_iteration.iteration_number}{RESET}\n"
+        try:
+            next_iteration = next(
+                (i for i in sorted_iterations if i.iteration_date > today), None
             )
-            sys.stdout.write(
-                f"{YELLOW}Next active Iteration's date&time: {RESET}{GREEN}{next_iteration.iteration_datetime}{RESET}\n"
-            )
-        else:
+
+            if next_iteration:
+                sys.stdout.write(
+                    f"{YELLOW}Next active Iteration Number: {RESET}{GREEN}{next_iteration.iteration_number}{RESET}\n"
+                )
+                sys.stdout.write(
+                    f"{YELLOW}Next active Iteration's date&time: {RESET}{GREEN}{next_iteration.iteration_datetime}{RESET}\n"
+                )
+        except StopIteration:
             sys.stdout.write(f"{YELLOW}No next active iteration could be determined{RESET}\n")
 
     # ---- Total Iterations ----

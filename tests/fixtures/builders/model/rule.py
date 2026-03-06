@@ -98,7 +98,7 @@ class RawCampaignConfigFactory(ModelFactory[CampaignConfig]):
     id = "42-hi5tch-hi5kers-gu5ide-t2o-t3he-gal6axy"
     start_date = Use(past_date)
     end_date = Use(future_date)
-    default_iteration_time = IterationTime(time(0, 0, 0))
+    iteration_time = IterationTime(time(0, 0, 0))
 
 
 class CampaignConfigFactory(RawCampaignConfigFactory):
