@@ -99,7 +99,7 @@ def display_current_iteration(result: RulesValidation) -> None:
             sys.stdout.write(f"{YELLOW}No active iteration could be determined{RESET}\n")
 
     else:
-        sys.stdout.write(f"{YELLOW}Campaign is {RESET}{GREEN}NOT LIVE{RESET}")
+        sys.stdout.write(f"{YELLOW}Campaign is {RESET}{GREEN}NOT LIVE{RESET} ")
 
         if is_campaign_expired:
             sys.stdout.write(f"{YELLOW}[EXPIRED on {config.end_date}]{RESET}\n")
