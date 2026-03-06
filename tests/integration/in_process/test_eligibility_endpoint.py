@@ -33,15 +33,15 @@ from tests.fixtures.builders.model import rule
 from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
 
-def today():
+def today() -> date:
     return datetime.now(UTC).date()
 
 
-def yesterday():
+def yesterday() -> date:
     return datetime.now(UTC).date() - timedelta(days=1)
 
 
-def tomorrow():
+def tomorrow() -> date:
     return datetime.now(UTC).date() + timedelta(days=1)
 
 

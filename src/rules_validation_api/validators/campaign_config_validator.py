@@ -35,6 +35,15 @@ class CampaignConfigValidation(CampaignConfig):
         return self
 
     @model_validator(mode="after")
+    def validate_iterations_have_unique_number(self) -> typing.Self:
+        numbers = [iteration.iteration_number for iteration in self.iterations]
+        duplicates = {i_id for i_id, count in Counter(numbers).items() if count > 1}
+        if duplicates:
+            msg = f"Iterations contain duplicate numbers: {', '.join(str(i) for i in duplicates)}"
+            raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
     def validate_campaign_has_iteration_within_schedule(self) -> typing.Self:
         errors: list[str] = []
         iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_date"))
