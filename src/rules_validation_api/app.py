@@ -97,28 +97,29 @@ def display_current_iteration(result: RulesValidation) -> None:
                 f"{YELLOW}Current active Iteration's date&time: {RESET}{GREEN}{current.iteration_datetime}{RESET}\n"
             )
 
-        # Next Iteration
-        try:
-            sorted_iterations = sorted(result.campaign_config.iterations, key=attrgetter("iteration_date"))
-            today = datetime.now(tz=UTC).date()
-            next_iteration = (
-                next(i for i in sorted_iterations if i.iteration_date > today) if sorted_iterations else None
-            )
-        except StopIteration:
-            next_iteration = None
-
-        if next_iteration:
-            sys.stdout.write(
-                f"{YELLOW}Next active Iteration Number: {RESET}{GREEN}{next_iteration.iteration_number}{RESET}\n"
-            )
-            sys.stdout.write(
-                f"{YELLOW}Next active Iteration's date&time: {RESET}{GREEN}{next_iteration.iteration_datetime}{RESET}\n"
-            )
-        else:
-            sys.stdout.write(f"{YELLOW}No next active iteration could be determined{RESET}\n")
-
     else:
         sys.stdout.write(f"{YELLOW}Campaign is {RESET}{GREEN}NOT LIVE{RESET}\n")
+
+    # Next Iteration
+    try:
+        sorted_iterations = sorted(result.campaign_config.iterations, key=attrgetter("iteration_date"))
+        today = datetime.now(tz=UTC).date()
+        next_iteration = (
+            next(i for i in sorted_iterations if i.iteration_date > today) if sorted_iterations else None
+        )
+    except StopIteration:
+        next_iteration = None
+
+    if next_iteration:
+        sys.stdout.write(
+            f"{YELLOW}Next active Iteration Number: {RESET}{GREEN}{next_iteration.iteration_number}{RESET}\n"
+        )
+        sys.stdout.write(
+            f"{YELLOW}Next active Iteration's date&time: {RESET}{GREEN}{next_iteration.iteration_datetime}{RESET}\n"
+        )
+    else:
+        sys.stdout.write(f"{YELLOW}No next active iteration could be determined{RESET}\n")
+
 
     # Total no of iterations
     sys.stdout.write(f"{YELLOW}Total iterations configured: {RESET}{GREEN}{no_of_iterations}{RESET}\n")
