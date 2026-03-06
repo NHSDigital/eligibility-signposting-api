@@ -27,14 +27,14 @@ class ActionRuleHandler:
         self,
         person: Person,
         active_iteration: Iteration | None,
-        best_iteration_result: IterationResult,
+        iteration_result: IterationResult,
         *,
         include_actions_flag: bool,
     ) -> MatchedActionDetail:
         action_detail = MatchedActionDetail()
 
         if active_iteration is not None and include_actions_flag:
-            rule_type = best_iteration_result.status.get_action_rule_type()
+            rule_type = iteration_result.status.get_action_rule_type()
             action_detail = self._handle(person, active_iteration, rule_type)
 
         return action_detail

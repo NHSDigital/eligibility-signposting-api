@@ -1,4 +1,5 @@
 import json
+from datetime import UTC, date, datetime, timedelta
 from http import HTTPStatus
 
 import pytest
@@ -16,7 +17,13 @@ from hamcrest import (
     has_key,
 )
 
-from eligibility_signposting_api.model.campaign_config import CampaignConfig, RuleComparator
+from eligibility_signposting_api.model.campaign_config import (
+    CampaignConfig,
+    RuleAttributeLevel,
+    RuleComparator,
+    RuleOperator,
+    RuleType,
+)
 from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import (
     NHSNumber,
@@ -24,6 +31,18 @@ from eligibility_signposting_api.model.eligibility_status import (
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from tests.fixtures.builders.model import rule
 from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
+
+
+def today():
+    return datetime.now(UTC).date()
+
+
+def yesterday():
+    return datetime.now(UTC).date() - timedelta(days=1)
+
+
+def tomorrow():
+    return datetime.now(UTC).date() + timedelta(days=1)
 
 
 class TestBaseLine:
@@ -1191,13 +1210,14 @@ class TestEligibilityResponseWithVariousInputs:
         [
             (
                 [
-                    # Campaign configs in S3
-                    ("RSV", "RSV_campaign_id_1"),
-                    ("RSV", "RSV_campaign_id_2"),
-                    ("RSV", "RSV_campaign_id_3"),
-                    ("RSV", "RSV_campaign_id_4"),
-                    ("RSV", "inactive_RSV_campaign_id_5", "inactive"),  # inactive iteration
-                    ("RSV", "RSV_campaign_id_6"),
+                    # Creates campaign configs by [target, campaign id, iteration status, iteration date]
+                    ("RSV", "RSV_campaign_id_1", "active", today()),
+                    ("RSV", "RSV_campaign_id_2", "active", today()),
+                    ("RSV", "RSV_campaign_id_3", "active", today()),
+                    ("RSV", "RSV_campaign_id_4", "active", yesterday()),
+                    # inactive iteration
+                    ("RSV", "inactive_RSV_campaign_id_5", "inactive", tomorrow()),
+                    ("RSV", "RSV_campaign_id_6", "active", today()),
                 ],
                 {
                     # Consumer mappings in S3
@@ -1258,14 +1278,73 @@ class TestEligibilityResponseWithVariousInputs:
         else:
             assert_that(len(audit_data["response"]["condition"]), equal_to(0))
 
-    def test_if_campaign_having_best_status_is_chosen_if_there_exists_multiple_campaign_per_target(  # noqa : PLR0913
+    @pytest.mark.parametrize(
+        (
+            "campaign_1_start_date",
+            "campaign_2_start_date",
+            "postcode_for_comparator",
+            "cohort_for_comparator",
+            "expected_campaign_id",
+        ),
+        [
+            (
+                ("RSV_campaign_id_1", today()),
+                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                "SW19",  # postcode for resulting in not-actionable (used by the suppression rule)
+                "cohort2",
+                "RSV_campaign_id_1",
+            ),
+            (
+                ("RSV_campaign_id_1", today() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today()),
+                "SW19",  # postcode for resulting in not-actionable
+                "cohort2",
+                "RSV_campaign_id_2",
+            ),
+            (
+                ("RSV_campaign_id_1", today()),
+                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                "M4",  # postcode for resulting in actionable
+                "cohort2",
+                "RSV_campaign_id_1",
+            ),
+            (
+                ("RSV_campaign_id_1", today() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today()),
+                "M4",  # postcode for resulting in actionable
+                "cohort2",
+                "RSV_campaign_id_2",
+            ),
+            (
+                ("RSV_campaign_id_1", today()),
+                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                "M4",  # cohort for resulting in not-eligible
+                "cohort1",
+                "RSV_campaign_id_1",
+            ),
+            (
+                ("RSV_campaign_id_1", today() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today()),
+                "M4",
+                "cohort1",  # cohort for resulting in not-eligible (used by the filter rule)
+                "RSV_campaign_id_2",
+            ),
+        ],
+    )
+    def test_if_cc_with_latest_active_iteration_is_chosen_if_exists_multiple_campaign_with_diff_iteration_date(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
         s3_client: BaseClient,
         consumer_mapping_bucket: BucketName,
         rules_bucket: BucketName,
+        audit_bucket: BucketName,
         secretsmanager_client: BaseClient,  # noqa: ARG002
+        campaign_1_start_date: tuple[str, date],
+        campaign_2_start_date: tuple[str, date],
+        postcode_for_comparator: str,
+        cohort_for_comparator: str,
+        expected_campaign_id: NHSNumber,
     ):
         # Given
         consumer_id = "consumer-n3bs-jo4hn-ce4na"
@@ -1278,8 +1357,8 @@ class TestEligibilityResponseWithVariousInputs:
             Body=json.dumps(
                 {
                     consumer_id: [
-                        {"CampaignConfigID": "RSV_campaign_id_not_actionable"},
-                        {"CampaignConfigID": "RSV_campaign_id_actionable"},
+                        {"CampaignConfigID": "RSV_campaign_id_1"},
+                        {"CampaignConfigID": "RSV_campaign_id_2"},
                     ],
                 }
             ),
@@ -1287,14 +1366,25 @@ class TestEligibilityResponseWithVariousInputs:
         )
 
         # Campaign configs
-        campaign_1 = rule.CampaignConfigFactory.build(
-            id="RSV_campaign_id_not_actionable",
+        campaign_1 = rule.RawCampaignConfigFactory.build(
+            id=campaign_1_start_date[0],
             target="RSV",
+            start_date=campaign_1_start_date[1],
             type="V",
             iterations=[
                 rule.IterationFactory.build(
+                    iteration_date=campaign_1_start_date[1],
                     iteration_rules=[
-                        rule.PostcodeSuppressionRuleFactory.build(name="Exclude SW19", description=""),
+                        rule.IterationRuleFactory.build(
+                            type=RuleType.filter,
+                            name="Exclude if cohort matches",
+                            attribute_level=RuleAttributeLevel.COHORT,
+                            comparator=RuleComparator(cohort_for_comparator),
+                            operator=RuleOperator.member_of,
+                        ),
+                        rule.PostcodeSuppressionRuleFactory.build(
+                            name="Exclude M4", comparator=RuleComparator(postcode_for_comparator)
+                        ),
                     ],
                     iteration_cohorts=[
                         rule.IterationCohortFactory.build(
@@ -1308,14 +1398,18 @@ class TestEligibilityResponseWithVariousInputs:
             ],
         )
 
-        campaign_2 = rule.CampaignConfigFactory.build(
-            id="RSV_campaign_id_actionable",
+        campaign_2 = rule.RawCampaignConfigFactory.build(
+            id=campaign_2_start_date[0],
             target="RSV",
             type="V",
+            start_date=campaign_2_start_date[1],
             iterations=[
                 rule.IterationFactory.build(
+                    iteration_date=campaign_2_start_date[1],
                     iteration_rules=[
-                        rule.PostcodeSuppressionRuleFactory.build(name="Exclude M4", comparator=RuleComparator("M4")),
+                        rule.PostcodeSuppressionRuleFactory.build(
+                            name="Exclude M4", comparator=RuleComparator(postcode_for_comparator)
+                        ),
                     ],
                     iteration_cohorts=[
                         rule.IterationCohortFactory.build(
@@ -1338,44 +1432,113 @@ class TestEligibilityResponseWithVariousInputs:
             )
 
         # When
-        response = client.get(f"/patient-check/{persisted_person_pc_sw19}?includeActions=Y", headers=headers)
+        client.get(f"/patient-check/{persisted_person_pc_sw19}", headers=headers)
+
+        objects = s3_client.list_objects_v2(Bucket=audit_bucket).get("Contents", [])
+        object_keys = [obj["Key"] for obj in objects]
+        latest_key = sorted(object_keys)[-1]
+        audit_data = json.loads(s3_client.get_object(Bucket=audit_bucket, Key=latest_key)["Body"].read())
 
         # Then
+        if expected_campaign_id is not None:
+            assert_that(len(audit_data["response"]["condition"]), equal_to(1))
+            assert_that(audit_data["response"]["condition"][0].get("campaignId"), equal_to(expected_campaign_id))
+        else:
+            assert_that(len(audit_data["response"]["condition"]), equal_to(0))
+
+    def test_if_multiple_active_iterations_with_same_iteration_datetime_for_the_same_target_throws_internal_error(  # noqa: PLR0913
+        self,
+        client: FlaskClient,
+        persisted_person_pc_sw19: NHSNumber,
+        s3_client: BaseClient,
+        consumer_mapping_bucket: BucketName,
+        rules_bucket: BucketName,
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+        caplog,
+    ):
+        # Given
+        consumer_id = "consumer-n3bs-jo4hn-ce4na"
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
+
+        # Consumer Mapping Data
+        s3_client.put_object(
+            Bucket=consumer_mapping_bucket,
+            Key="consumer_mapping_config.json",
+            Body=json.dumps(
+                {
+                    consumer_id: [
+                        {"CampaignConfigID": "RSV_campaign_id_1"},
+                        {"CampaignConfigID": "RSV_campaign_id_2"},
+                    ],
+                }
+            ),
+            ContentType="application/json",
+        )
+        previous_day = yesterday()
+        # Campaign configs
+        campaign_1 = rule.RawCampaignConfigFactory.build(
+            id="RSV_campaign_id_1",
+            target="RSV",
+            start_date=previous_day,
+            type="V",
+            iterations=[rule.IterationFactory.build(iteration_date=previous_day)],
+        )
+
+        campaign_2 = rule.RawCampaignConfigFactory.build(
+            id="RSV_campaign_id_2",
+            target="RSV",
+            start_date=previous_day,
+            type="V",
+            iterations=[rule.IterationFactory.build(iteration_date=previous_day)],
+        )
+
+        for campaign in [campaign_1, campaign_2]:
+            s3_client.put_object(
+                Bucket=rules_bucket,
+                Key=f"{campaign.id}.json",
+                Body=json.dumps({"CampaignConfig": campaign.model_dump(by_alias=True)}),
+                ContentType="application/json",
+            )
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}", headers=headers)
+
         assert_that(
             response,
             is_response()
-            .with_status_code(HTTPStatus.OK)
+            .with_status_code(HTTPStatus.INTERNAL_SERVER_ERROR)
+            .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
             .and_text(
                 is_json_that(
-                    has_entry(
-                        "processedSuggestions",
-                        equal_to(
-                            [
-                                {
-                                    "condition": "RSV",
-                                    "status": "Actionable",
-                                    "eligibilityCohorts": [
+                    has_entries(
+                        resourceType="OperationOutcome",
+                        issue=contains_exactly(
+                            has_entries(
+                                severity="error",
+                                code="processing",
+                                diagnostics="An unexpected error occurred.",
+                                details={
+                                    "coding": [
                                         {
-                                            "cohortCode": "cohort_group1",
-                                            "cohortStatus": "Actionable",
-                                            "cohortText": "positive_description",
+                                            "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "display": "An unexpected internal server error occurred.",
                                         }
-                                    ],
-                                    "actions": [
-                                        {
-                                            "actionCode": "action_code",
-                                            "actionType": "defaultcomms",
-                                            "description": "",
-                                            "urlLabel": "",
-                                            "urlLink": "",
-                                        }
-                                    ],
-                                    "suitabilityRules": [],
-                                    "statusText": "You should have the RSV vaccine",
-                                }
-                            ]
+                                    ]
+                                },
+                            )
                         ),
                     )
                 )
             ),
+        )
+
+        err_msg = (
+            "Ambiguous result: '2' active iterations "
+            "for target RSV "
+            f"found for date '{previous_day}' "
+            "across campaign(s) ['RSV_campaign_id_1', 'RSV_campaign_id_2']"
+        )
+        assert any(err_msg in message for message in caplog.messages), (
+            f"Expected log message not found. Logged messages: {caplog.messages}"
         )

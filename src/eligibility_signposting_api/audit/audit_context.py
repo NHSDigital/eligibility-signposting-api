@@ -19,10 +19,10 @@ from eligibility_signposting_api.audit.audit_models import (
 )
 from eligibility_signposting_api.audit.audit_service import AuditService
 from eligibility_signposting_api.model.eligibility_status import (
-    BestIterationResult,
     CohortGroupResult,
     ConditionName,
     IterationResult,
+    IterationResultSummary,
     MatchedActionDetail,
     Reason,
     RuleType,
@@ -63,13 +63,13 @@ class AuditContext:
     @staticmethod
     def append_audit_condition(
         condition_name: ConditionName,
-        best_iteration_result: BestIterationResult,
+        iteration_result_summary: IterationResultSummary,
         action_detail: MatchedActionDetail,
     ) -> None:
         audit_eligibility_cohorts, audit_eligibility_cohort_groups, audit_actions = [], [], []
-        best_active_iteration = best_iteration_result.active_iteration
-        best_candidate = best_iteration_result.iteration_result
-        best_cohort_results = best_iteration_result.cohort_results
+        best_active_iteration = iteration_result_summary.active_iteration
+        best_candidate = iteration_result_summary.iteration_result
+        best_cohort_results = iteration_result_summary.cohort_results
         filter_audit_rules, suitability_audit_rules = [], []
 
         if best_cohort_results:
@@ -94,8 +94,8 @@ class AuditContext:
         audit_actions = AuditContext.create_audit_actions(action_detail.actions)
 
         audit_condition = AuditCondition(
-            campaign_id=best_iteration_result.campaign_id,
-            campaign_version=best_iteration_result.campaign_version,
+            campaign_id=iteration_result_summary.campaign_id,
+            campaign_version=iteration_result_summary.campaign_version,
             iteration_id=best_active_iteration.id if best_active_iteration else None,
             iteration_version=best_active_iteration.version if best_active_iteration else None,
             condition_name=condition_name,

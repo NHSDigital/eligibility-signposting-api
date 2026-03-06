@@ -27,6 +27,7 @@ Terraform
 toolchain
 Trufflehog
 Uncomment
+Werkzeug
 Syncytial
 pyenv
 colima
