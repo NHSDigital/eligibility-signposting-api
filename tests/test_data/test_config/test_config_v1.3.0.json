@@ -14,7 +14,7 @@
     "Reviewer": [
       "person@test.com"
     ],
-    "StartDate": "20250101",
+    "StartDate": "20270101",
     "EndDate": "20270104",
     "ApprovalMinimum": 1,
     "ApprovalMaximum": 5000000,
@@ -200,7 +200,7 @@
         "Version": "1",
         "Name": "Test Config",
         "Type": "M",
-        "IterationDate": "20260104",
+        "IterationDate": "20270102",
         "IterationNumber": 2,
         "CommsType": "R",
         "ApprovalMinimum": 1,
