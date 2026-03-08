@@ -1,7 +1,7 @@
 import sys
+from datetime import UTC, datetime, timedelta
 from io import StringIO
 from unittest.mock import Mock, PropertyMock
-from datetime import UTC, datetime, timedelta
 
 from pydantic import BaseModel, ValidationError
 
@@ -107,6 +107,7 @@ def test_current_iteration_exists():
     # Arrange
     mock_iteration = Mock()
     mock_iteration.iteration_number = 7
+    mock_iteration.iteration_date = datetime.now(UTC).date() - timedelta(days=1)
 
     result = Mock()
     result.campaign_config = Mock()
@@ -123,5 +124,34 @@ def test_current_iteration_exists():
 
     sys.stdout = sys.__stdout__
 
-    assert "Current Iteration Number:" in captured.getvalue()
+    assert "Current active Iteration Number:" in captured.getvalue()
     assert "7" in captured.getvalue()
+
+
+def test_next_iteration_exists():
+    # Given
+    today = datetime.now(UTC).date()
+
+    # Setup
+    next_mock = Mock()
+    next_mock.iteration_number = 8
+    next_mock.iteration_date = today + timedelta(days=5)
+    next_mock.iteration_datetime = today + timedelta(days=5)
+
+    result = Mock()
+    result.campaign_config.end_date = today + timedelta(days=10)
+    result.campaign_config.iterations = [next_mock]
+    result.campaign_config.campaign_live = False  # To focus only on Next Iteration output
+
+    captured = StringIO()
+    sys.stdout = captured
+
+    # When
+    display_current_iteration(result)
+    sys.stdout = sys.__stdout__
+    output = captured.getvalue()
+
+    # Then
+    assert "Next active Iteration Number:" in output
+    assert "8" in output
+    assert str(today + timedelta(days=5)) in output

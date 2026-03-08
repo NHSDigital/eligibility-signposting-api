@@ -112,24 +112,22 @@ def display_current_iteration(result: RulesValidation) -> None:
         sorted_iterations = sorted(iterations, key=attrgetter("iteration_date"))
 
         try:
-            next_iteration = next(
-                (i for i in sorted_iterations if i.iteration_date > today), None
-            )
+            next_iteration = next((i for i in sorted_iterations if i.iteration_date > today), None)
 
             if next_iteration:
                 sys.stdout.write(
                     f"{YELLOW}Next active Iteration Number: {RESET}{GREEN}{next_iteration.iteration_number}{RESET}\n"
                 )
                 sys.stdout.write(
-                    f"{YELLOW}Next active Iteration's date&time: {RESET}{GREEN}{next_iteration.iteration_datetime}{RESET}\n"
+                    f"{YELLOW}Next active Iteration's date&time: "
+                    f"{RESET}{GREEN}{next_iteration.iteration_datetime}{RESET}\n"
                 )
         except StopIteration:
             sys.stdout.write(f"{YELLOW}No next active iteration could be determined{RESET}\n")
 
     # ---- Total Iterations ----
-    sys.stdout.write(
-        f"{YELLOW}Total iterations configured: {RESET}{GREEN}{no_of_iterations}{RESET}\n"
-    )
+    sys.stdout.write(f"{YELLOW}Total iterations configured: {RESET}{GREEN}{no_of_iterations}{RESET}\n")
+
 
 if __name__ == "__main__":  # pragma: no cover
     main()
