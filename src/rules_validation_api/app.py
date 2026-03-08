@@ -87,8 +87,6 @@ def display_current_iteration(result: RulesValidation) -> None:
     # ---- Current Iteration ----
     if is_campaign_live:
         sys.stdout.write(f"{YELLOW}Campaign is {RESET}{GREEN}LIVE{RESET}\n")
-        current = config.current_iteration
-
         try:
             current = config.current_iteration
             if current:

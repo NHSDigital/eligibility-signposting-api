@@ -112,6 +112,7 @@ def test_current_iteration_exists():
     result.campaign_config = Mock()
 
     result.campaign_config.iterations = [mock_iteration]
+    result.campaign_config.end_date = datetime.now(UTC).date() + timedelta(days=1)
 
     type(result.campaign_config).current_iteration = PropertyMock(return_value=mock_iteration)
 
