@@ -1,6 +1,7 @@
 import logging
 from typing import Annotated, NewType
 
+from aws_xray_sdk.core import xray_recorder
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from wireup import Inject, service
@@ -16,6 +17,7 @@ class SecretRepo:
         super().__init__()
         self.secret_manager = secret_manager
 
+    @xray_recorder.capture("SecretRepo._get_secret_by_stage")  # pyright: ignore[reportCallIssue]
     def _get_secret_by_stage(self, secret_name: str, stage: str) -> dict[str, str]:
         """Internal helper to fetch a secret by version stage."""
         try:

@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Annotated
 
+from aws_xray_sdk.core import xray_recorder
 from botocore.client import BaseClient
 from wireup import Inject, service
 
@@ -21,6 +22,7 @@ class AuditService:  # pragma: no cover
         self.firehose = firehose
         self.audit_delivery_stream = audit_delivery_stream
 
+    @xray_recorder.capture("AuditService.audit")  # pyright: ignore[reportCallIssue]
     def audit(self, audit_record: dict) -> None:
         """
         Sends an audit record to the configured Firehose delivery stream.
