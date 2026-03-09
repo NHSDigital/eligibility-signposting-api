@@ -16,16 +16,16 @@ def campaign_evaluator():
 @pytest.mark.parametrize(
     ("campaign_target", "campaign_type", "conditions_filter", "category_filter", "expected_result"),
     [
-        ("RSV", "V", ["RSV"], "VACCINATIONS", [("RSV", "V")]),
-        ("RSV", "V", ["COVID"], "VACCINATIONS", []),
-        ("RSV", "S", ["RSV"], "ALL", [("RSV", "S")]),
-        ("RSV", "S", ["ALL"], "ALL", [("RSV", "S")]),
-        ("RSV", "S", ["RSV"], "VACCINATIONS", []),
-        ("RSV", "V", ["RSV"], "ALL", [("RSV", "V")]),
-        ("FLU", "V", ["COVID", "RSV"], "ALL", []),
-        ("FLU", "S", ["ALL"], "ALL", [("FLU", "S")]),
-        ("COVID", "V", ["UNKNOWN"], "VACCINATIONS", []),
-        ("FLU", "V", ["COVID", "FLU"], "VACCINATIONS", [("FLU", "V")]),
+        ("RSV", "V", ["RSV"], "VACCINATIONS", ("RSV", "V")),
+        ("RSV", "V", ["COVID"], "VACCINATIONS", None),
+        ("RSV", "S", ["RSV"], "ALL", ("RSV", "S")),
+        ("RSV", "S", ["ALL"], "ALL", ("RSV", "S")),
+        ("RSV", "S", ["RSV"], "VACCINATIONS", None),
+        ("RSV", "V", ["RSV"], "ALL", ("RSV", "V")),
+        ("FLU", "V", ["COVID", "RSV"], "ALL", None),
+        ("FLU", "S", ["ALL"], "ALL", ("FLU", "S")),
+        ("COVID", "V", ["UNKNOWN"], "VACCINATIONS", None),
+        ("FLU", "V", ["COVID", "FLU"], "VACCINATIONS", ("FLU", "V")),
     ],
 )
 def test_campaigns_grouped_by_condition_name_filters_correctly(  # noqa: PLR0913
@@ -33,8 +33,12 @@ def test_campaigns_grouped_by_condition_name_filters_correctly(  # noqa: PLR0913
 ):
     campaign = rule.CampaignConfigFactory.build(target=campaign_target, type=campaign_type)
 
-    result = campaign_evaluator.get_campaign_with_latest_active_iteration_per_target([campaign], conditions_filter, category_filter)
-    assert_that([(str(name), group[0].type) for name, group in result], is_(expected_result))
+    result = campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(
+        [campaign], conditions_filter, category_filter
+    )
+
+    actual = next(((str(name), camp.type) for name, camp in result if camp is not None), None)
+    assert actual == expected_result
 
 
 def test_campaigns_grouped_by_condition_name_with_no_campaigns(campaign_evaluator):
@@ -47,7 +51,9 @@ def test_campaigns_grouped_by_condition_name_with_no_active_campaigns(campaign_e
         target="RSV", type="V", start_date=datetime.date(2025, 4, 20), end_date=datetime.date(2025, 4, 21)
     )
 
-    result = campaign_evaluator.get_campaign_with_latest_active_iteration_per_target([campaign], ["RSV"], "VACCINATIONS")
+    result = campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(
+        [campaign], ["RSV"], "VACCINATIONS"
+    )
     assert_that(list(result), is_([]))
 
 
@@ -63,7 +69,9 @@ def test_campaigns_grouped_by_condition_name_with_various_categories(
     campaign_evaluator, category_filter, campaign_type, expected_count
 ):
     campaign = rule.CampaignConfigFactory.build(target="COVID", type=campaign_type)
-    result = list(campaign_evaluator.get_campaign_with_latest_active_iteration_per_target([campaign], ["COVID"], category_filter))
+    result = list(
+        campaign_evaluator.get_campaign_with_latest_active_iteration_per_target([campaign], ["COVID"], category_filter)
+    )
     assert_that(len(result), is_(expected_count))
     if expected_count > 0:
         assert_that(str(result[0][0]), is_("COVID"))
@@ -71,47 +79,71 @@ def test_campaigns_grouped_by_condition_name_with_various_categories(
 
 def test_campaigns_grouped_by_condition_name_with_empty_conditions_filter(campaign_evaluator):
     campaign = rule.CampaignConfigFactory.build(target="RSV", type="V")
-    result = campaign_evaluator.get_campaign_with_latest_active_iteration_per_target([campaign], [], "VACCINATIONS")
-    assert_that(list(result), is_([]))
+    result = list(
+        campaign_evaluator.get_campaign_with_latest_active_iteration_per_target([campaign], [], "VACCINATIONS")
+    )
+
+    assert_that(result, is_([]))
 
 
 def test_campaigns_grouped_by_condition_name_groups_multiple_campaigns_for_same_target(campaign_evaluator):
-    campaign1 = rule.CampaignConfigFactory.build(target="COVID", type="V", id="C1")
-    campaign2 = rule.CampaignConfigFactory.build(target="COVID", type="V", id="C2")
+    # providing the start_date here, because CampaignConfigFactory used it for iteration_date
+    campaign1 = rule.CampaignConfigFactory.build(
+        target="COVID",
+        type="V",
+        id="C1",
+        start_date=datetime.datetime.now(datetime.UTC).date() - datetime.timedelta(days=1),
+        iterations=[rule.IterationFactory.build()],
+    )
+    campaign2 = rule.CampaignConfigFactory.build(
+        target="COVID",
+        type="V",
+        id="C2",
+        start_date=datetime.datetime.now(datetime.UTC).date(),
+        iterations=[rule.IterationFactory.build()],
+    )
     campaign3 = rule.CampaignConfigFactory.build(target="FLU", type="V", id="F1")
     inactive_campaign = rule.CampaignConfigFactory.build(
         target="COVID", type="V", id="C3", start_date=datetime.date(2025, 4, 20), end_date=datetime.date(2025, 4, 21)
     )
 
     all_campaigns = [campaign1, campaign2, campaign3, inactive_campaign]
-    result = list(campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(all_campaigns, ["COVID", "FLU"], "VACCINATIONS"))
+    result = list(
+        campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(
+            all_campaigns, ["COVID", "FLU"], "VACCINATIONS"
+        )
+    )
 
     assert_that(len(result), is_(2))
 
-    result_dict = {str(name): campaigns for name, campaigns in result}
+    result_dict = {str(name): campaign for name, campaign in result}
+
     assert_that("COVID" in result_dict)
     assert_that("FLU" in result_dict)
 
-    assert_that(len(result_dict["COVID"]), is_(2))
-    assert_that({c.id for c in result_dict["COVID"]}, is_({CampaignID("C1"), CampaignID("C2")}))
-
-    assert_that(len(result_dict["FLU"]), is_(1))
-    assert_that(result_dict["FLU"][0].id, is_(CampaignID("F1")))
+    assert_that(result_dict["COVID"].id, is_(CampaignID("C2")))
+    assert_that(result_dict["FLU"].id, is_(CampaignID("F1")))
 
 
-def test_campaign_grouping_is_affected_by_order_for_mixed_types(campaign_evaluator):
+def test_campaign_grouping_is_not_affected_by_order_for_mixed_types(campaign_evaluator):
     campaign_v = rule.CampaignConfigFactory.build(target="RSV", type="V")
     campaign_s = rule.CampaignConfigFactory.build(target="RSV", type="S")
 
-    evaluator_s_first = campaign_evaluator
+    # Order: S then V
     result_s_first = list(
-        evaluator_s_first.get_campaign_with_latest_active_iteration_per_target([campaign_s, campaign_v], ["RSV"], "VACCINATIONS")
+        campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(
+            [campaign_s, campaign_v], ["RSV"], "VACCINATIONS"
+        )
     )
-    assert_that(result_s_first, is_([]))
+    # Even if S is first, it is filtered out by 'allowed_types'
+    assert_that(len(result_s_first), is_(1))
+    assert_that(result_s_first[0][1].type, is_("V"))
 
-    evaluator_v_first = campaign_evaluator
+    # Order: V then S
     result_v_first = list(
-        evaluator_v_first.get_campaign_with_latest_active_iteration_per_target([campaign_v, campaign_s], ["RSV"], "VACCINATIONS")
+        campaign_evaluator.get_campaign_with_latest_active_iteration_per_target(
+            [campaign_v, campaign_s], ["RSV"], "VACCINATIONS"
+        )
     )
     assert_that(len(result_v_first), is_(1))
-    assert_that(len(result_v_first[0][1]), is_(2))
+    assert_that(result_v_first[0][1].type, is_("V"))
