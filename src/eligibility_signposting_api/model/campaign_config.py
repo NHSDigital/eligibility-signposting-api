@@ -287,7 +287,7 @@ class Iteration(BaseModel):
 
     @field_validator("iteration_date", mode="before")
     @classmethod
-    def parse_dates(cls, v: str | date) -> date:  # pragma: no cover
+    def parse_dates(cls, v: str | date) -> date:
         if isinstance(v, date):
             return v
 
@@ -305,7 +305,7 @@ class Iteration(BaseModel):
 
     @field_validator("iteration_time", mode="before")
     @classmethod
-    def parse_times(cls, v: str | time) -> time | None:  # pragma: no cover
+    def parse_times(cls, v: str | time) -> time | None:
         if not v:
             return None
         if isinstance(v, time):
@@ -384,7 +384,7 @@ class CampaignConfig(BaseModel):
 
     @field_validator("start_date", "end_date", mode="before")
     @classmethod
-    def parse_dates(cls, v: str | date) -> date:  # pragma: no cover
+    def parse_dates(cls, v: str | date) -> date:
         if isinstance(v, date):
             return v
 
@@ -402,7 +402,7 @@ class CampaignConfig(BaseModel):
 
     @field_validator("iteration_time", mode="before")
     @classmethod
-    def parse_times(cls, v: str | time) -> time | None:  # pragma: no cover
+    def parse_times(cls, v: str | time) -> time | None:
         if not v:
             return None
         if isinstance(v, time):
