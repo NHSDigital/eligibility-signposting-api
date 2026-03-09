@@ -26,7 +26,7 @@ class CampaignRepo:
         self.s3_client = s3_client
         self.bucket_name = bucket_name
 
-    @xray_recorder.capture("CampaignRepo.get_campaign_configs") # pyright: ignore[reportCallIssue]
+    @xray_recorder.capture("CampaignRepo.get_campaign_configs")  # pyright: ignore[reportCallIssue]
     def get_campaign_configs(self) -> Generator[CampaignConfig]:
         with xray_recorder.in_subsegment("CampaignRepo.get_campaign_configs:list_objects"):
             campaign_objects = self.s3_client.list_objects(Bucket=self.bucket_name)

@@ -29,7 +29,7 @@ class ConsumerMappingRepo:
         self.s3_client = s3_client
         self.bucket_name = bucket_name
 
-    @xray_recorder.capture("ConsumerMappingRepo.get_permitted_campaign_ids") # pyright: ignore[reportCallIssue]
+    @xray_recorder.capture("ConsumerMappingRepo.get_permitted_campaign_ids")  # pyright: ignore[reportCallIssue]
     def get_permitted_campaign_ids(self, consumer_id: ConsumerId) -> list[CampaignID] | None:
         try:
             response = self.s3_client.get_object(Bucket=self.bucket_name, Key=CONSUMER_MAPPING_FILE_NAME)
