@@ -1,6 +1,7 @@
 import logging
 from typing import Annotated, Any, NewType
 
+from aws_xray_sdk.core import xray_recorder
 from boto3.dynamodb.conditions import Key
 from boto3.resources.base import ServiceResource
 from wireup import Inject, service

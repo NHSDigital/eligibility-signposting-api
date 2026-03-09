@@ -2,6 +2,7 @@ import json
 from collections.abc import Generator
 from typing import Annotated, NewType
 
+from aws_xray_sdk.core import xray_recorder
 from botocore.client import BaseClient
 from wireup import Inject, service
 

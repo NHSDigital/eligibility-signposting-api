@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Annotated, NewType
 
+from aws_xray_sdk.core import xray_recorder
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from wireup import Inject, service
