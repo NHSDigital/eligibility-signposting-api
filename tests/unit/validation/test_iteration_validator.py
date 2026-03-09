@@ -519,13 +519,13 @@ class TestBUCValidations:
         ("iteration_time_input", "default_time_iteration_input", "expected_date_time"),
         [
             # Case 1: Iteration time overrides default
-            ("14:30:00", "09:00:00", datetime(2025, 1, 2, 14, 30, 0)),  # noqa: DTZ001
+            ("14:30:00", "09:00:00", datetime(2025, 1, 2, 14, 30, 0, tzinfo=UTC)),
             # Case 2: Iteration time is missing, so it uses campaign config iteration_time
-            (None, "09:00:00", datetime(2025, 1, 2, 9, 0, 0)),  # noqa: DTZ001
+            (None, "09:00:00", datetime(2025, 1, 2, 9, 0, 0, tzinfo=UTC)),
             # Case 3: Both are the same
-            ("10:00:00", "10:00:00", datetime(2025, 1, 2, 10, 0, 0)),  # noqa: DTZ001
+            ("10:00:00", "10:00:00", datetime(2025, 1, 2, 10, 0, 0, tzinfo=UTC)),
             # Case 4: Both are None, falls back to default value (12 AM) in campaign config iteration_time
-            (None, None, datetime(2025, 1, 2, 0, 0, 0)),  # noqa: DTZ001
+            (None, None, datetime(2025, 1, 2, 0, 0, 0, tzinfo=UTC)),
         ],
     )
     def test_iteration_full_datetime_validation(

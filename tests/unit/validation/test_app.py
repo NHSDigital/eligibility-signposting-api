@@ -136,7 +136,11 @@ def test_next_iteration_exists():
     next_mock = Mock()
     next_mock.iteration_number = 8
     next_mock.iteration_date = today + timedelta(days=5)
-    next_mock.iteration_datetime = today + timedelta(days=5)
+    next_mock.iteration_datetime = datetime.combine(
+        next_mock.iteration_date,
+        datetime.min.time(),
+        tzinfo=UTC,
+    )
 
     result = Mock()
     result.campaign_config.end_date = today + timedelta(days=10)
