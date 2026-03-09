@@ -51,6 +51,38 @@ RuleCode = NewType("RuleCode", str)
 RuleText = NewType("RuleText", str)
 
 
+class DateUtil:
+    @staticmethod
+    def parse_date_yyyymmdd(v: str | date) -> date:
+        if isinstance(v, date):
+            return v
+        v_str = str(v)
+        if not re.fullmatch(r"\d{8}", v_str):
+            msg = f"Invalid format: {v_str}. Must be YYYYMMDD."
+            raise ValueError(msg)
+        try:
+            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
+        except ValueError as err:
+            msg = f"Invalid date value: {v_str}."
+            raise ValueError(msg) from err
+
+    @staticmethod
+    def parse_time_hhmmss(v: str | time | None) -> time | None:
+        if not v:
+            return None
+        if isinstance(v, time):
+            return v
+        v_str = str(v).strip()
+        if re.fullmatch(r"^\d{2}:\d{2}:\d{2}$", v_str):
+            try:
+                return datetime.strptime(v_str, "%H:%M:%S").time()  # noqa: DTZ007
+            except ValueError as err:
+                msg = f"Invalid time value: {v_str}."
+                raise ValueError(msg) from err
+        msg = f"Invalid format: {v_str}. Must be HH:MM:SS."
+        raise ValueError(msg)
+
+
 class RuleType(StrEnum):
     filter = "F"
     suppression = "S"
@@ -288,41 +320,12 @@ class Iteration(BaseModel):
     @field_validator("iteration_date", mode="before")
     @classmethod
     def parse_dates(cls, v: str | date) -> date:
-        if isinstance(v, date):
-            return v
-
-        v_str = str(v)
-
-        if not re.fullmatch(r"\d{8}", v_str):
-            msg = f"Invalid format: {v_str}. Must be YYYYMMDD with 8 digits."
-            raise ValueError(msg)
-
-        try:
-            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
-        except ValueError as err:
-            msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
-            raise ValueError(msg) from err
+        return DateUtil.parse_date_yyyymmdd(v)
 
     @field_validator("iteration_time", mode="before")
     @classmethod
     def parse_times(cls, v: str | time) -> time | None:
-        if not v:
-            return None
-        if isinstance(v, time):
-            return v
-
-        v_str = str(v).strip()
-
-        if re.fullmatch(r"^\d{2}:\d{2}:\d{2}$", v_str):
-            try:
-                return datetime.strptime(v_str, "%H:%M:%S").time()  # noqa: DTZ007
-            except ValueError as err:
-                msg = f"Invalid time value: {v_str}. Must be a valid time in HH:MM:SS."
-                raise ValueError(msg) from err
-
-        # If none matches, raise a format error
-        msg = f"Invalid format: {v_str}. Must be HH:MM:SS."
-        raise ValueError(msg)
+        return DateUtil.parse_time_hhmmss(v)
 
     @field_serializer("iteration_date", when_used="always")
     @staticmethod
@@ -385,41 +388,12 @@ class CampaignConfig(BaseModel):
     @field_validator("start_date", "end_date", mode="before")
     @classmethod
     def parse_dates(cls, v: str | date) -> date:
-        if isinstance(v, date):
-            return v
-
-        v_str = str(v)
-
-        if not re.fullmatch(r"\d{8}", v_str):
-            msg = f"Invalid format: {v_str}. Must be YYYYMMDD with 8 digits."
-            raise ValueError(msg)
-
-        try:
-            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
-        except ValueError as err:
-            msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
-            raise ValueError(msg) from err
+        return DateUtil.parse_date_yyyymmdd(v)
 
     @field_validator("iteration_time", mode="before")
     @classmethod
     def parse_times(cls, v: str | time) -> time | None:
-        if not v:
-            return None
-        if isinstance(v, time):
-            return v
-
-        v_str = str(v).strip()
-
-        if re.fullmatch(r"^\d{2}:\d{2}:\d{2}$", v_str):
-            try:
-                return datetime.strptime(v_str, "%H:%M:%S").time()  # noqa: DTZ007
-            except ValueError as err:
-                msg = f"Invalid time value: {v_str}. Must be a valid time in HH:MM:SS."
-                raise ValueError(msg) from err
-
-        # If none matches, raise a format error
-        msg = f"Invalid format: {v_str}. Must be HH:MM:SS."
-        raise ValueError(msg)
+        return DateUtil.parse_time_hhmmss(v)
 
     @field_serializer("start_date", "end_date", when_used="always")
     @staticmethod
