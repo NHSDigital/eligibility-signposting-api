@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Annotated, NewType
 
+from aws_xray_sdk.core import xray_recorder
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 from wireup import Inject, service
@@ -28,6 +29,7 @@ class ConsumerMappingRepo:
         self.s3_client = s3_client
         self.bucket_name = bucket_name
 
+    @xray_recorder.capture("ConsumerMappingRepo.get_permitted_campaign_ids")  # pyright: ignore[reportCallIssue]
     def get_permitted_campaign_ids(self, consumer_id: ConsumerId) -> list[CampaignID] | None:
         try:
             response = self.s3_client.get_object(Bucket=self.bucket_name, Key=CONSUMER_MAPPING_FILE_NAME)
