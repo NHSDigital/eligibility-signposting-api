@@ -55,7 +55,7 @@ class PersonRepo:
 
         return None
 
-    @xray_recorder.capture("PersonRepo.get_eligibility_data")
+    @xray_recorder.capture("PersonRepo.get_eligibility_data") # pyright: ignore[reportCallIssue]
     def get_eligibility_data(self, nhs_number: NHSNumber) -> Person:
         # Hash using AWSCURRENT secret and fetch items
         items = None
