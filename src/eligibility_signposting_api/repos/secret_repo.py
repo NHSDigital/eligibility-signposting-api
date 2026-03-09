@@ -16,6 +16,7 @@ class SecretRepo:
         super().__init__()
         self.secret_manager = secret_manager
 
+    @xray_recorder.capture("SecretRepo._get_secret_by_stage")
     def _get_secret_by_stage(self, secret_name: str, stage: str) -> dict[str, str]:
         """Internal helper to fetch a secret by version stage."""
         try:

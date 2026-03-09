@@ -54,6 +54,7 @@ class PersonRepo:
 
         return None
 
+    @xray_recorder.capture("PersonRepo.get_eligibility_data")
     def get_eligibility_data(self, nhs_number: NHSNumber) -> Person:
         # Hash using AWSCURRENT secret and fetch items
         items = None

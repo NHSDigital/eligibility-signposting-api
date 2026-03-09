@@ -25,9 +25,12 @@ class CampaignRepo:
         self.s3_client = s3_client
         self.bucket_name = bucket_name
 
+    @xray_recorder.capture("CampaignRepo.get_campaign_configs")
     def get_campaign_configs(self) -> Generator[CampaignConfig]:
-        campaign_objects = self.s3_client.list_objects(Bucket=self.bucket_name)
-        for campaign_object in campaign_objects["Contents"]:
-            response = self.s3_client.get_object(Bucket=self.bucket_name, Key=f"{campaign_object['Key']}")
-            body = response["Body"].read()
-            yield Rules.model_validate(json.loads(body)).campaign_config
+        with xray_recorder.in_subsegment("CampaignRepo.get_campaign_configs:list_objects"):
+            campaign_objects = self.s3_client.list_objects(Bucket=self.bucket_name)
+        with xray_recorder.in_subsegment("CampaignRepo.get_campaign_configs:get_objects"):
+            for campaign_object in campaign_objects["Contents"]:
+                response = self.s3_client.get_object(Bucket=self.bucket_name, Key=f"{campaign_object['Key']}")
+                body = response["Body"].read()
+                yield Rules.model_validate(json.loads(body)).campaign_config

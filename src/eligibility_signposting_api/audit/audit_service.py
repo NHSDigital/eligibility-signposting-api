@@ -21,6 +21,7 @@ class AuditService:  # pragma: no cover
         self.firehose = firehose
         self.audit_delivery_stream = audit_delivery_stream
 
+    @xray_recorder.capture("AuditService.audit")
     def audit(self, audit_record: dict) -> None:
         """
         Sends an audit record to the configured Firehose delivery stream.
