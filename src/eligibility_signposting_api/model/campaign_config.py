@@ -9,6 +9,7 @@ from enum import StrEnum
 from functools import cached_property
 from operator import attrgetter
 from typing import Literal, NewType
+from zoneinfo import ZoneInfo
 
 from pydantic import (
     BaseModel,
@@ -53,6 +54,16 @@ RuleText = NewType("RuleText", str)
 
 class DateUtil:
     @staticmethod
+    def convert_from_uk_to_utc(value: datetime) -> datetime:
+        uk = ZoneInfo("Europe/London")
+        utc = ZoneInfo("UTC")
+
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=uk)
+        return value.astimezone(utc)
+
+
+    @staticmethod
     def parse_date_yyyymmdd(v: str | date) -> date:
         if isinstance(v, date):
             return v
@@ -61,7 +72,7 @@ class DateUtil:
             msg = f"Invalid format: {v_str}. Must be YYYYMMDD."
             raise ValueError(msg)
         try:
-            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
+            return DateUtil.convert_from_uk_to_utc(datetime.strptime(v_str, "%Y%m%d")).date()  # noqa: DTZ007
         except ValueError as err:
             msg = f"Invalid date value: {v_str}."
             raise ValueError(msg) from err
@@ -75,7 +86,7 @@ class DateUtil:
         v_str = str(v).strip()
         if re.fullmatch(r"^\d{2}:\d{2}:\d{2}$", v_str):
             try:
-                return datetime.strptime(v_str, "%H:%M:%S").time()  # noqa: DTZ007
+                return DateUtil.convert_from_uk_to_utc(datetime.strptime(v_str, "%H:%M:%S")).time()  # noqa: DTZ007
             except ValueError as err:
                 msg = f"Invalid time value: {v_str}."
                 raise ValueError(msg) from err
