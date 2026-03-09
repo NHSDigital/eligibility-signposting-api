@@ -93,8 +93,10 @@ def display_current_iteration(result: RulesValidation) -> None:
                 sys.stdout.write(
                     f"{YELLOW}Current active Iteration Number: {RESET}{GREEN}{current.iteration_number}{RESET}\n"
                 )
+                tz = current.iteration_datetime.tzinfo
                 sys.stdout.write(
-                    f"{YELLOW}Current active Iteration's date&time: {RESET}{GREEN}{current.iteration_datetime}{RESET}\n"
+                    f"{YELLOW}Current active Iteration's date&time: "
+                    f"{RESET}{GREEN}{current.iteration_datetime} ({tz}){RESET}\n"
                 )
         except StopIteration:
             sys.stdout.write(f"{YELLOW}No active iteration could be determined{RESET}\n")
@@ -118,9 +120,10 @@ def display_current_iteration(result: RulesValidation) -> None:
                 sys.stdout.write(
                     f"{YELLOW}Next active Iteration Number: {RESET}{GREEN}{next_iteration.iteration_number}{RESET}\n"
                 )
+                tz = next_iteration.iteration_datetime.tzinfo
                 sys.stdout.write(
                     f"{YELLOW}Next active Iteration's date&time: "
-                    f"{RESET}{GREEN}{next_iteration.iteration_datetime}{RESET}\n"
+                    f"{RESET}{GREEN}{next_iteration.iteration_datetime} ({tz}){RESET}\n"
                 )
         except StopIteration:
             sys.stdout.write(f"{YELLOW}No next active iteration could be determined{RESET}\n")

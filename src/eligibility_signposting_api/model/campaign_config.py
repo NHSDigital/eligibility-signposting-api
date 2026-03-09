@@ -349,7 +349,7 @@ class Iteration(BaseModel):
             msg = f"No iteration_time and no parent linked for iteration {self.id}"
             raise ValueError(msg)
 
-        return datetime.combine(self.iteration_date, iteration_time)
+        return datetime.combine(self.iteration_date, iteration_time).replace(tzinfo=UTC)
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
