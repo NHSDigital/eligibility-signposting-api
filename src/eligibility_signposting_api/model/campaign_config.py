@@ -62,7 +62,6 @@ class DateUtil:
             value = value.replace(tzinfo=uk)
         return value.astimezone(utc)
 
-
     @staticmethod
     def parse_date_yyyymmdd(v: str | date) -> date:
         if isinstance(v, date):
@@ -72,7 +71,7 @@ class DateUtil:
             msg = f"Invalid format: {v_str}. Must be YYYYMMDD."
             raise ValueError(msg)
         try:
-            return DateUtil.convert_from_uk_to_utc(datetime.strptime(v_str, "%Y%m%d")).date()  # noqa: DTZ007
+            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
         except ValueError as err:
             msg = f"Invalid date value: {v_str}."
             raise ValueError(msg) from err
@@ -86,7 +85,7 @@ class DateUtil:
         v_str = str(v).strip()
         if re.fullmatch(r"^\d{2}:\d{2}:\d{2}$", v_str):
             try:
-                return DateUtil.convert_from_uk_to_utc(datetime.strptime(v_str, "%H:%M:%S")).time()  # noqa: DTZ007
+                return datetime.strptime(v_str, "%H:%M:%S").time()  # noqa: DTZ007
             except ValueError as err:
                 msg = f"Invalid time value: {v_str}."
                 raise ValueError(msg) from err
@@ -363,7 +362,7 @@ class Iteration(BaseModel):
             msg = f"No iteration_time and no parent linked for iteration {self.id}"
             raise ValueError(msg)
 
-        return datetime.combine(self.iteration_date, iteration_time).replace(tzinfo=UTC)
+        return DateUtil.convert_from_uk_to_utc(datetime.combine(self.iteration_date, iteration_time))
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)

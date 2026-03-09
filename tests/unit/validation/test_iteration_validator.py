@@ -516,30 +516,41 @@ class TestBUCValidations:
         assert "AttributeName must be set" in errors[1]["msg"]
 
     @pytest.mark.parametrize(
-        ("iteration_time_input", "default_time_iteration_input", "expected_date_time"),
+        ("iteration_time_input", "default_time_iteration_input", "iteration_date", "expected_date_time"),
         [
+            # GMT
             # Case 1: Iteration time overrides default
-            ("14:30:00", "09:00:00", datetime(2025, 1, 2, 14, 30, 0, tzinfo=UTC)),
+            ("14:30:00", "09:00:00", "20250102", datetime(2025, 1, 2, 14, 30, 0, tzinfo=UTC)),
             # Case 2: Iteration time is missing, so it uses campaign config iteration_time
-            (None, "09:00:00", datetime(2025, 1, 2, 9, 0, 0, tzinfo=UTC)),
+            (None, "09:00:00", "20250102", datetime(2025, 1, 2, 9, 0, 0, tzinfo=UTC)),
             # Case 3: Both are the same
-            ("10:00:00", "10:00:00", datetime(2025, 1, 2, 10, 0, 0, tzinfo=UTC)),
+            ("10:00:00", "10:00:00", "20250102", datetime(2025, 1, 2, 10, 0, 0, tzinfo=UTC)),
             # Case 4: Both are None, falls back to default value (12 AM) in campaign config iteration_time
-            (None, None, datetime(2025, 1, 2, 0, 0, 0, tzinfo=UTC)),
+            (None, None, "20250102", datetime(2025, 1, 2, 0, 0, 0, tzinfo=UTC)),
+            # BST
+            # Case 1: Iteration time overrides default
+            ("14:30:00", "09:00:00", "20250802", datetime(2025, 8, 2, 13, 30, 0, tzinfo=UTC)),
+            # Case 2: Iteration time is missing, so it uses campaign config iteration_time
+            (None, "09:00:00", "20250802", datetime(2025, 8, 2, 8, 0, 0, tzinfo=UTC)),
+            # Case 3: Both are the same
+            ("10:00:00", "10:00:00", "20250802", datetime(2025, 8, 2, 9, 0, 0, tzinfo=UTC)),
+            # Case 4: Both are None, falls back to default value (12 AM) in campaign config iteration_time
+            (None, None, "20250802", datetime(2025, 8, 1, 23, 0, 0, tzinfo=UTC)),
         ],
     )
-    def test_iteration_full_datetime_validation(
+    def test_iteration_full_datetime_validation(  # noqa : PLR0913
         self,
         valid_campaign_config_with_only_mandatory_fields,
         valid_iteration_with_only_mandatory_fields,
         iteration_time_input,
         default_time_iteration_input,
+        iteration_date,
         expected_date_time,
     ):
         # Given
         iteration_data = valid_iteration_with_only_mandatory_fields.copy()
         iteration_data["IterationTime"] = iteration_time_input
-        iteration_data["IterationDate"] = "20250102"  # between campaign start_date and end_date
+        iteration_data["IterationDate"] = iteration_date  # between campaign start_date and end_date
 
         data = valid_campaign_config_with_only_mandatory_fields.copy()
 

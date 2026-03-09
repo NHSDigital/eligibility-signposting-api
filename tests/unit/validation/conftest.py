@@ -12,7 +12,7 @@ def valid_campaign_config_with_only_mandatory_fields():
         "IterationFrequency": "M",
         "IterationType": "A",
         "StartDate": "20250101",
-        "EndDate": "20250331",
+        "EndDate": "20260331",
         "Iterations": [
             {
                 "ID": "ITER001",
