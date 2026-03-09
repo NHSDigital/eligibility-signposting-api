@@ -320,7 +320,7 @@ class Iteration(BaseModel):
                 msg = f"Invalid time value: {v_str}. Must be a valid time in HH:MM:SS."
                 raise ValueError(msg) from err
 
-        # If none matched, raise a format error
+        # If none matches, raise a format error
         msg = f"Invalid format: {v_str}. Must be HH:MM:SS."
         raise ValueError(msg)
 
@@ -417,7 +417,7 @@ class CampaignConfig(BaseModel):
                 msg = f"Invalid time value: {v_str}. Must be a valid time in HH:MM:SS."
                 raise ValueError(msg) from err
 
-        # If none matched, raise a format error
+        # If none matches, raise a format error
         msg = f"Invalid format: {v_str}. Must be HH:MM:SS."
         raise ValueError(msg)
 
