@@ -413,10 +413,9 @@ class CampaignConfig(BaseModel):
 
     @cached_property
     def current_iteration(self) -> Iteration:
-        today = datetime.now(tz=UTC).date()
-        today_midnight = datetime.combine(today, time.min, tzinfo=UTC)
+        now = datetime.now(tz=UTC)
         iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_datetime_utc"), reverse=True)
-        return next(i for i in iterations_by_date_descending if i.iteration_datetime_utc <= today_midnight)
+        return next(i for i in iterations_by_date_descending if i.iteration_datetime_utc <= now)
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)

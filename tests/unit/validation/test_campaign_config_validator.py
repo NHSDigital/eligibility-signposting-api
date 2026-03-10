@@ -380,3 +380,34 @@ class TestBUCValidations:
 
         model = CampaignConfigValidation(**data)
         assert model.campaign_live is False
+
+    @freeze_time("2026-03-29 00:59:59")  # 1 second before BST Midnight
+    def test_get_current_iteration_1sec_before_bst(self, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["StartDate"] = "20260301"
+        data["EndDate"] = "20260630"
+        iteration = data["Iterations"][0]
+        iteration["IterationDate"] = "20260329"
+        iteration["IterationTime"] = "01:00:00"
+        iteration = data["Iterations"][1]
+        iteration["IterationDate"] = "20260331"
+
+        model = CampaignConfigValidation(**data)
+
+        with pytest.raises(StopIteration):
+            assert model.current_iteration
+
+    @freeze_time("2026-03-29 01:00:00")  # Just after bst
+    def test_get_current_iteration_just_after_bst(self, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["StartDate"] = "20260301"
+        data["EndDate"] = "20260630"
+        iteration = data["Iterations"][0]
+        iteration["IterationDate"] = "20260329"
+        iteration["IterationTime"] = "01:00:00"
+        iteration = data["Iterations"][1]
+        iteration["IterationDate"] = "20260331"
+
+        model = CampaignConfigValidation(**data)
+
+        assert model.current_iteration
