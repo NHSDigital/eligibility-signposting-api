@@ -20,7 +20,7 @@ from pydantic import (
     model_validator,
 )
 
-from eligibility_signposting_api.common.date_util import DateUtil
+from eligibility_signposting_api.common.date_util import convert_from_uk_to_utc, parse_date_yyyymmdd, parse_time_hhmmss
 from eligibility_signposting_api.config.constants import ALLOWED_CONDITIONS, RULE_STOP_DEFAULT
 
 if typing.TYPE_CHECKING:  # pragma: no cover
@@ -292,12 +292,12 @@ class Iteration(BaseModel):
     @field_validator("iteration_date", mode="before")
     @classmethod
     def parse_dates(cls, v: str | date) -> date:
-        return DateUtil.parse_date_yyyymmdd(v)
+        return parse_date_yyyymmdd(v)
 
     @field_validator("iteration_time", mode="before")
     @classmethod
     def parse_times(cls, v: str | time) -> time | None:
-        return DateUtil.parse_time_hhmmss(v)
+        return parse_time_hhmmss(v)
 
     @field_serializer("iteration_date", when_used="always")
     @staticmethod
@@ -324,7 +324,7 @@ class Iteration(BaseModel):
             msg = f"No iteration_time and no parent linked for iteration {self.id}"
             raise ValueError(msg)
 
-        return DateUtil.convert_from_uk_to_utc(datetime.combine(self.iteration_date, iteration_time))
+        return convert_from_uk_to_utc(datetime.combine(self.iteration_date, iteration_time))
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
@@ -363,21 +363,21 @@ class CampaignConfig(BaseModel):
 
     @cached_property
     def start_date_utc(self) -> datetime:
-        return DateUtil.convert_from_uk_to_utc(datetime.combine(self.start_date, time.min))
+        return convert_from_uk_to_utc(datetime.combine(self.start_date, time.min))
 
     @cached_property
     def end_date_utc(self) -> datetime:
-        return DateUtil.convert_from_uk_to_utc(datetime.combine(self.end_date, time.min))
+        return convert_from_uk_to_utc(datetime.combine(self.end_date, time.min))
 
     @field_validator("start_date", "end_date", mode="before")
     @classmethod
     def parse_dates(cls, v: str | date) -> date:
-        return DateUtil.parse_date_yyyymmdd(v)
+        return parse_date_yyyymmdd(v)
 
     @field_validator("iteration_time", mode="before")
     @classmethod
     def parse_times(cls, v: str | time) -> time | None:
-        return DateUtil.parse_time_hhmmss(v)
+        return parse_time_hhmmss(v)
 
     @field_serializer("start_date", "end_date", when_used="always")
     @staticmethod
