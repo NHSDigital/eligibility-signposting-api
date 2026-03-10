@@ -415,11 +415,22 @@ class CampaignConfig(BaseModel):
 
     @model_validator(mode="after")
     def check_no_overlapping_iterations(self) -> typing.Self:
-        iterations_by_date = Counter([i.iteration_date for i in self.iterations])
-        if multiple_found := next(((d, c) for d, c in iterations_by_date.most_common() if c > 1), None):
-            iteration_date, count = multiple_found
-            message = f"{count} iterations with iteration date {iteration_date} in campaign {self.id}"
+        date_time_pairs = []
+        for i in self.iterations:
+            effective_time = i.iteration_time or self.iteration_time
+            date_time_pairs.append((i.iteration_date, effective_time))
+
+        counts = Counter(date_time_pairs)
+
+        duplicate = next(((dt, c) for dt, c in counts.items() if c > 1), None)
+
+        if duplicate:
+            (iteration_date, iteration_time), count = duplicate
+            message = (
+                f"{count} iterations with iteration date/time {iteration_date} {iteration_time} in campaign {self.id}"
+            )
             raise ValueError(message)
+
         return self
 
     @cached_property
@@ -429,9 +440,9 @@ class CampaignConfig(BaseModel):
 
     @cached_property
     def current_iteration(self) -> Iteration:
-        today = datetime.now(tz=UTC).date()
-        iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_date"), reverse=True)
-        return next(i for i in iterations_by_date_descending if i.iteration_date <= today)
+        now = datetime.now(tz=UTC)
+        iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_datetime"), reverse=True)
+        return next(i for i in iterations_by_date_descending if i.iteration_datetime <= now)
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
