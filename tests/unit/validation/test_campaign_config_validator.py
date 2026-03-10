@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pytest
+from freezegun import freeze_time
 from pydantic import ValidationError
 
 from rules_validation_api.validators.campaign_config_validator import CampaignConfigValidation
@@ -320,3 +321,62 @@ class TestBUCValidations:
         data["ApprovalMinimum"] = approval_min
         data["ApprovalMaximum"] = approval_max
         CampaignConfigValidation(**data)
+
+    @freeze_time("2026-06-01 00:05:00")  # BST
+    def test_campaign_live_during_bst_transition(self, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        # Align Campaign Dates
+        data["StartDate"] = "20260601"
+        data["EndDate"] = "20260630"
+
+        # Fix Iterations to be within June 2026
+        for i, iteration in enumerate(data["Iterations"]):
+            iteration["IterationDate"] = f"202606{10 + i}"
+
+        model = CampaignConfigValidation(**data)
+        assert model.campaign_live is True
+
+    @freeze_time("2026-01-01 00:05:00")  # GMT
+    def test_campaign_live_during_gmt(self, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["StartDate"] = "20260101"
+        data["EndDate"] = "20260131"
+
+        for i, iteration in enumerate(data["Iterations"]):
+            iteration["IterationDate"] = f"202601{10 + i}"
+
+        model = CampaignConfigValidation(**data)
+        assert model.campaign_live is True
+
+    def test_iteration_datetime_utc_conversion(self, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["IterationTime"] = "09:00:00"
+
+        # Test Summer (BST) - Ensure Campaign covers July
+        data["StartDate"] = "20260701"
+        data["EndDate"] = "20260731"
+        data["Iterations"] = [data["Iterations"][0]]  # Simplify to 1 iteration for this test
+        data["Iterations"][0]["IterationDate"] = "20260701"
+
+        model_summer = CampaignConfigValidation(**data)
+        assert model_summer.iterations[0].iteration_datetime_utc.hour == 8  # noqa : PLR2004
+
+        # Test Winter (GMT) - Ensure Campaign covers January
+        data["StartDate"] = "20260101"
+        data["EndDate"] = "20260131"
+        data["Iterations"][0]["IterationDate"] = "20260101"
+
+        model_winter = CampaignConfigValidation(**data)
+        assert model_winter.iterations[0].iteration_datetime_utc.hour == 9  # noqa : PLR2004
+
+    @freeze_time("2026-05-31 22:59:59")  # 1 second before BST Midnight
+    def test_campaign_not_live_yet_bst(self, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["StartDate"] = "20260601"
+        data["EndDate"] = "20260630"
+
+        for i, iteration in enumerate(data["Iterations"]):
+            iteration["IterationDate"] = f"202606{10 + i}"
+
+        model = CampaignConfigValidation(**data)
+        assert model.campaign_live is False

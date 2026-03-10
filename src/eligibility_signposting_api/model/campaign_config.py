@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 import typing
 from collections import Counter
 from datetime import UTC, date, datetime, time
@@ -9,7 +8,6 @@ from enum import StrEnum
 from functools import cached_property
 from operator import attrgetter
 from typing import Literal, NewType
-from zoneinfo import ZoneInfo
 
 from pydantic import (
     BaseModel,
@@ -22,6 +20,7 @@ from pydantic import (
     model_validator,
 )
 
+from eligibility_signposting_api.common.date_util import DateUtil
 from eligibility_signposting_api.config.constants import ALLOWED_CONDITIONS, RULE_STOP_DEFAULT
 
 if typing.TYPE_CHECKING:  # pragma: no cover
@@ -50,47 +49,6 @@ RuleStop = NewType("RuleStop", bool)
 CommsRouting = NewType("CommsRouting", str)
 RuleCode = NewType("RuleCode", str)
 RuleText = NewType("RuleText", str)
-
-
-class DateUtil:
-    @staticmethod
-    def convert_from_uk_to_utc(value: datetime) -> datetime:
-        uk = ZoneInfo("Europe/London")
-        utc = ZoneInfo("UTC")
-
-        if value.tzinfo is None:
-            value = value.replace(tzinfo=uk)
-        return value.astimezone(utc)
-
-    @staticmethod
-    def parse_date_yyyymmdd(v: str | date) -> date:
-        if isinstance(v, date):
-            return v
-        v_str = str(v)
-        if not re.fullmatch(r"\d{8}", v_str):
-            msg = f"Invalid format: {v_str}. Must be YYYYMMDD."
-            raise ValueError(msg)
-        try:
-            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
-        except ValueError as err:
-            msg = f"Invalid date value: {v_str}."
-            raise ValueError(msg) from err
-
-    @staticmethod
-    def parse_time_hhmmss(v: str | time | None) -> time | None:
-        if not v:
-            return None
-        if isinstance(v, time):
-            return v
-        v_str = str(v).strip()
-        if re.fullmatch(r"^\d{2}:\d{2}:\d{2}$", v_str):
-            try:
-                return datetime.strptime(v_str, "%H:%M:%S").time()  # noqa: DTZ007
-            except ValueError as err:
-                msg = f"Invalid time value: {v_str}."
-                raise ValueError(msg) from err
-        msg = f"Invalid format: {v_str}. Must be HH:MM:SS."
-        raise ValueError(msg)
 
 
 class RuleType(StrEnum):
@@ -304,8 +262,12 @@ class Iteration(BaseModel):
     id: IterationID = Field(..., alias="ID")
     version: IterationVersion = Field(..., alias="Version")
     name: IterationName = Field(..., alias="Name")
-    iteration_date: IterationDate = Field(..., alias="IterationDate")
-    iteration_time: IterationTime | None = Field(default=None, alias="IterationTime")
+    iteration_date: IterationDate = Field(
+        ..., alias="IterationDate", description="Iteration start date in Europe/London time Zone"
+    )
+    iteration_time: IterationTime | None = Field(
+        default=None, alias="IterationTime", description="Iteration start time in Europe/London time Zone"
+    )
     iteration_number: int | None = Field(None, alias="IterationNumber")
     approval_minimum: int | None = Field(None, alias="ApprovalMinimum")
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
@@ -353,7 +315,7 @@ class Iteration(BaseModel):
         self._parent = parent
 
     @cached_property
-    def iteration_datetime(self) -> datetime:
+    def iteration_datetime_utc(self) -> datetime:
         if self.iteration_time:
             iteration_time = self.iteration_time
         elif self._parent:
@@ -379,10 +341,14 @@ class CampaignConfig(BaseModel):
     reviewer: list[str] | None = Field(None, alias="Reviewer")
     iteration_frequency: Literal["X", "D", "W", "M", "Q", "A"] = Field(..., alias="IterationFrequency")
     iteration_type: Literal["A", "M", "S", "O"] = Field(..., alias="IterationType")
-    iteration_time: IterationTime = Field(default=IterationTime(time(0, 0, 0)), alias="IterationTime")
+    iteration_time: IterationTime = Field(
+        default=IterationTime(time(0, 0, 0)),
+        alias="IterationTime",
+        description="Default Iteration start time in Europe/London time Zone",
+    )
     default_comms_routing: str | None = Field(None, alias="DefaultCommsRouting")
-    start_date: StartDate = Field(..., alias="StartDate")
-    end_date: EndDate = Field(..., alias="EndDate")
+    start_date: StartDate = Field(..., alias="StartDate", description="Campaign start date in Europe/London time Zone")
+    end_date: EndDate = Field(..., alias="EndDate", description="Campaign end date in Europe/London time Zone")
     approval_minimum: int | None = Field(None, alias="ApprovalMinimum")
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
     iterations: list[Iteration] = Field(..., min_length=1, alias="Iterations")
@@ -394,6 +360,14 @@ class CampaignConfig(BaseModel):
         # Ensure each rule knows its parent iteration
         for iteration in self.iterations:
             iteration.set_parent(self)
+
+    @cached_property
+    def start_date_utc(self) -> datetime:
+        return DateUtil.convert_from_uk_to_utc(datetime.combine(self.start_date, time.min))
+
+    @cached_property
+    def end_date_utc(self) -> datetime:
+        return DateUtil.convert_from_uk_to_utc(datetime.combine(self.end_date, time.min))
 
     @field_validator("start_date", "end_date", mode="before")
     @classmethod
@@ -434,13 +408,15 @@ class CampaignConfig(BaseModel):
     @cached_property
     def campaign_live(self) -> bool:
         today = datetime.now(tz=UTC).date()
-        return self.start_date <= today <= self.end_date
+        today_midnight = datetime.combine(today, time.min, tzinfo=UTC)
+        return self.start_date_utc <= today_midnight <= self.end_date_utc
 
     @cached_property
     def current_iteration(self) -> Iteration:
         today = datetime.now(tz=UTC).date()
+        today_midnight = datetime.combine(today, time.min, tzinfo=UTC)
         iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_date"), reverse=True)
-        return next(i for i in iterations_by_date_descending if i.iteration_date <= today)
+        return next(i for i in iterations_by_date_descending if i.iteration_datetime_utc <= today_midnight)
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
