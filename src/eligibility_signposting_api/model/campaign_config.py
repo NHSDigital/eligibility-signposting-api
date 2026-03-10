@@ -415,7 +415,7 @@ class CampaignConfig(BaseModel):
     def current_iteration(self) -> Iteration:
         today = datetime.now(tz=UTC).date()
         today_midnight = datetime.combine(today, time.min, tzinfo=UTC)
-        iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_date"), reverse=True)
+        iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_datetime_utc"), reverse=True)
         return next(i for i in iterations_by_date_descending if i.iteration_datetime_utc <= today_midnight)
 
     def __str__(self) -> str:
