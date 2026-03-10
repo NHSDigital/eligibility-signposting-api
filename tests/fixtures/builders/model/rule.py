@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from operator import attrgetter
 from random import randint
 
@@ -16,6 +16,7 @@ from eligibility_signposting_api.model.campaign_config import (
     Iteration,
     IterationCohort,
     IterationRule,
+    IterationTime,
     RuleAttributeLevel,
     RuleAttributeName,
     RuleComparator,
@@ -89,6 +90,7 @@ class IterationFactory(ModelFactory[Iteration]):
     default_comms_routing = "defaultcomms"
     actions_mapper = Use(ActionsMapperFactory.build)
     rules_mapper = None
+    iteration_time = None
 
 
 class RawCampaignConfigFactory(ModelFactory[CampaignConfig]):
@@ -96,6 +98,7 @@ class RawCampaignConfigFactory(ModelFactory[CampaignConfig]):
     id = "42-hi5tch-hi5kers-gu5ide-t2o-t3he-gal6axy"
     start_date = Use(past_date)
     end_date = Use(future_date)
+    iteration_time = IterationTime(time(0, 0, 0))
 
 
 class CampaignConfigFactory(RawCampaignConfigFactory):

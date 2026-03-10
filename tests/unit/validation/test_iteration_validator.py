@@ -5,6 +5,7 @@ from typing import ClassVar
 import pytest
 from pydantic import ValidationError
 
+from rules_validation_api.validators.campaign_config_validator import CampaignConfigValidation
 from rules_validation_api.validators.iteration_validator import IterationValidation
 
 
@@ -180,6 +181,15 @@ class TestOptionalFieldsSchemaValidations:
         }
         model = IterationValidation(**data)
         assert model.approval_maximum == approval_maximum
+
+    @pytest.mark.parametrize("iteration_time", ["14:00:00", "09:30:00", "18:45:00"])
+    def test_iteration_time_field(self, iteration_time, valid_campaign_config_with_only_mandatory_fields):
+        data = {
+            **valid_campaign_config_with_only_mandatory_fields["Iterations"][0],
+            "IterationTime": iteration_time,
+        }
+        model = IterationValidation(**data)
+        assert model.iteration_time == datetime.strptime(iteration_time, "%H:%M:%S").time()  # noqa: DTZ007
 
 
 class TestBUCValidations:
@@ -504,3 +514,47 @@ class TestBUCValidations:
         # Assert messages contain the expected text
         assert "AttributeName must be set" in errors[0]["msg"]
         assert "AttributeName must be set" in errors[1]["msg"]
+
+    @pytest.mark.parametrize(
+        ("iteration_time_input", "default_time_iteration_input", "expected_date_time"),
+        [
+            # Case 1: Iteration time overrides default
+            ("14:30:00", "09:00:00", datetime(2025, 1, 2, 14, 30, 0, tzinfo=UTC)),
+            # Case 2: Iteration time is missing, so it uses campaign config iteration_time
+            (None, "09:00:00", datetime(2025, 1, 2, 9, 0, 0, tzinfo=UTC)),
+            # Case 3: Both are the same
+            ("10:00:00", "10:00:00", datetime(2025, 1, 2, 10, 0, 0, tzinfo=UTC)),
+            # Case 4: Both are None, falls back to default value (12 AM) in campaign config iteration_time
+            (None, None, datetime(2025, 1, 2, 0, 0, 0, tzinfo=UTC)),
+        ],
+    )
+    def test_iteration_full_datetime_validation(
+        self,
+        valid_campaign_config_with_only_mandatory_fields,
+        valid_iteration_with_only_mandatory_fields,
+        iteration_time_input,
+        default_time_iteration_input,
+        expected_date_time,
+    ):
+        # Given
+        iteration_data = valid_iteration_with_only_mandatory_fields.copy()
+        iteration_data["IterationTime"] = iteration_time_input
+        iteration_data["IterationDate"] = "20250102"  # between campaign start_date and end_date
+
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+
+        if default_time_iteration_input:
+            data["iteration_time"] = default_time_iteration_input
+
+        data["Iterations"] = [iteration_data]
+
+        # When
+        config = CampaignConfigValidation(**data)
+
+        # Then
+        result = config.iterations[0].iteration_datetime
+
+        assert result == expected_date_time, (
+            f"Failed! Input: {iteration_time_input}, Default: {default_time_iteration_input}. "
+            f"Expected {expected_date_time} but got {result}"
+        )

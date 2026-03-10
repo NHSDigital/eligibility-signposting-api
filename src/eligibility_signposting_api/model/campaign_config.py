@@ -4,7 +4,7 @@ import json
 import re
 import typing
 from collections import Counter
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time
 from enum import StrEnum
 from functools import cached_property
 from operator import attrgetter
@@ -33,6 +33,7 @@ IterationName = NewType("IterationName", str)
 IterationVersion = NewType("IterationVersion", int)
 IterationID = NewType("IterationID", str)
 IterationDate = NewType("IterationDate", date)
+IterationTime = NewType("IterationTime", time)
 RuleName = NewType("RuleName", str)
 RuleDescription = NewType("RuleDescription", str)
 RulePriority = NewType("RulePriority", int)
@@ -48,6 +49,38 @@ RuleStop = NewType("RuleStop", bool)
 CommsRouting = NewType("CommsRouting", str)
 RuleCode = NewType("RuleCode", str)
 RuleText = NewType("RuleText", str)
+
+
+class DateUtil:
+    @staticmethod
+    def parse_date_yyyymmdd(v: str | date) -> date:
+        if isinstance(v, date):
+            return v
+        v_str = str(v)
+        if not re.fullmatch(r"\d{8}", v_str):
+            msg = f"Invalid format: {v_str}. Must be YYYYMMDD."
+            raise ValueError(msg)
+        try:
+            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
+        except ValueError as err:
+            msg = f"Invalid date value: {v_str}."
+            raise ValueError(msg) from err
+
+    @staticmethod
+    def parse_time_hhmmss(v: str | time | None) -> time | None:
+        if not v:
+            return None
+        if isinstance(v, time):
+            return v
+        v_str = str(v).strip()
+        if re.fullmatch(r"^\d{2}:\d{2}:\d{2}$", v_str):
+            try:
+                return datetime.strptime(v_str, "%H:%M:%S").time()  # noqa: DTZ007
+            except ValueError as err:
+                msg = f"Invalid time value: {v_str}."
+                raise ValueError(msg) from err
+        msg = f"Invalid format: {v_str}. Must be HH:MM:SS."
+        raise ValueError(msg)
 
 
 class RuleType(StrEnum):
@@ -262,6 +295,7 @@ class Iteration(BaseModel):
     version: IterationVersion = Field(..., alias="Version")
     name: IterationName = Field(..., alias="Name")
     iteration_date: IterationDate = Field(..., alias="IterationDate")
+    iteration_time: IterationTime | None = Field(default=None, alias="IterationTime")
     iteration_number: int | None = Field(None, alias="IterationNumber")
     approval_minimum: int | None = Field(None, alias="ApprovalMinimum")
     approval_maximum: int | None = Field(None, alias="ApprovalMaximum")
@@ -277,34 +311,48 @@ class Iteration(BaseModel):
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
-    def __init__(self, **data: dict[str, typing.Any]) -> None:
-        super().__init__(**data)
-        # Ensure each rule knows its parent iteration
-        for rule in self.iteration_rules:
-            rule.set_parent(self)
+    @model_validator(mode="after")
+    def _link_parent_to_iteration_rules(self) -> typing.Self:
+        for iteration in self.iteration_rules:
+            iteration.set_parent(self)
+        return self
 
     @field_validator("iteration_date", mode="before")
     @classmethod
     def parse_dates(cls, v: str | date) -> date:
-        if isinstance(v, date):
-            return v
+        return DateUtil.parse_date_yyyymmdd(v)
 
-        v_str = str(v)
-
-        if not re.fullmatch(r"\d{8}", v_str):
-            msg = f"Invalid format: {v_str}. Must be YYYYMMDD with 8 digits."
-            raise ValueError(msg)
-
-        try:
-            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
-        except ValueError as err:
-            msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
-            raise ValueError(msg) from err
+    @field_validator("iteration_time", mode="before")
+    @classmethod
+    def parse_times(cls, v: str | time) -> time | None:
+        return DateUtil.parse_time_hhmmss(v)
 
     @field_serializer("iteration_date", when_used="always")
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
+
+    @field_serializer("iteration_time", when_used="always")
+    @staticmethod
+    def serialize_time(v: time, _info: SerializationInfo) -> str | None:
+        return v.strftime("%H:%M:%S") if v else None
+
+    _parent: CampaignConfig | None = PrivateAttr(default=None)
+
+    def set_parent(self, parent: CampaignConfig) -> None:
+        self._parent = parent
+
+    @cached_property
+    def iteration_datetime(self) -> datetime:
+        if self.iteration_time:
+            iteration_time = self.iteration_time
+        elif self._parent:
+            iteration_time = self._parent.iteration_time
+        else:
+            msg = f"No iteration_time and no parent linked for iteration {self.id}"
+            raise ValueError(msg)
+
+        return datetime.combine(self.iteration_date, iteration_time).replace(tzinfo=UTC)
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
@@ -321,7 +369,7 @@ class CampaignConfig(BaseModel):
     reviewer: list[str] | None = Field(None, alias="Reviewer")
     iteration_frequency: Literal["X", "D", "W", "M", "Q", "A"] = Field(..., alias="IterationFrequency")
     iteration_type: Literal["A", "M", "S", "O"] = Field(..., alias="IterationType")
-    iteration_time: str | None = Field(None, alias="IterationTime")
+    iteration_time: IterationTime = Field(default=IterationTime(time(0, 0, 0)), alias="IterationTime")
     default_comms_routing: str | None = Field(None, alias="DefaultCommsRouting")
     start_date: StartDate = Field(..., alias="StartDate")
     end_date: EndDate = Field(..., alias="EndDate")
@@ -331,28 +379,32 @@ class CampaignConfig(BaseModel):
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
+    @model_validator(mode="after")
+    def _link_parent_to_iterations(self) -> typing.Self:
+        for iteration in self.iterations:
+            iteration.set_parent(self)
+
+        return self
+
     @field_validator("start_date", "end_date", mode="before")
     @classmethod
     def parse_dates(cls, v: str | date) -> date:
-        if isinstance(v, date):
-            return v
+        return DateUtil.parse_date_yyyymmdd(v)
 
-        v_str = str(v)
-
-        if not re.fullmatch(r"\d{8}", v_str):
-            msg = f"Invalid format: {v_str}. Must be YYYYMMDD with 8 digits."
-            raise ValueError(msg)
-
-        try:
-            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
-        except ValueError as err:
-            msg = f"Invalid date value: {v_str}. Must be a valid calendar date in YYYYMMDD format."
-            raise ValueError(msg) from err
+    @field_validator("iteration_time", mode="before")
+    @classmethod
+    def parse_times(cls, v: str | time) -> time | None:
+        return DateUtil.parse_time_hhmmss(v)
 
     @field_serializer("start_date", "end_date", when_used="always")
     @staticmethod
     def serialize_dates(v: date, _info: SerializationInfo) -> str:
         return v.strftime("%Y%m%d")
+
+    @field_serializer("iteration_time", when_used="always")
+    @staticmethod
+    def serialize_time(v: time, _info: SerializationInfo) -> str | None:
+        return v.strftime("%H:%M:%S") if v else None
 
     @model_validator(mode="after")
     def check_start_and_end_dates_sensible(self) -> typing.Self:

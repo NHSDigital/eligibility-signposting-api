@@ -3,6 +3,8 @@ import json
 import logging
 import sys
 from collections import defaultdict
+from datetime import UTC, datetime
+from operator import attrgetter
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -74,18 +76,60 @@ def main() -> None:  # pragma: no cover
 
 
 def display_current_iteration(result: RulesValidation) -> None:
-    no_of_iterations = 0
-    try:
-        no_of_iterations = len(result.campaign_config.iterations)
-        current = result.campaign_config.current_iteration
-    except StopIteration:
-        current = None
-    if current is None:
-        sys.stdout.write(f"{YELLOW}No active iteration could be determined{RESET}\n")
-        sys.stdout.write(f"{YELLOW}Total iterations configured: {RESET}{GREEN}{no_of_iterations}{RESET}\n")
+    config = result.campaign_config
+    iterations = config.iterations
+    is_campaign_live = config.campaign_live
+    today = datetime.now(tz=UTC).date()
+
+    no_of_iterations = len(iterations)
+    is_campaign_expired = config.end_date < today
+
+    # ---- Current Iteration ----
+    if is_campaign_live:
+        sys.stdout.write(f"{YELLOW}Campaign is {RESET}{GREEN}LIVE{RESET}\n")
+        try:
+            current = config.current_iteration
+            if current:
+                sys.stdout.write(
+                    f"{YELLOW}Current active Iteration Number: {RESET}{GREEN}{current.iteration_number}{RESET}\n"
+                )
+                tz = current.iteration_datetime.tzinfo
+                sys.stdout.write(
+                    f"{YELLOW}Current active Iteration's date&time: "
+                    f"{RESET}{GREEN}{current.iteration_datetime} ({tz}){RESET}\n"
+                )
+        except StopIteration:
+            sys.stdout.write(f"{YELLOW}No active iteration could be determined{RESET}\n")
+
     else:
-        sys.stdout.write(f"{YELLOW}Current Iteration Number: {RESET}{GREEN}{current.iteration_number}{RESET}\n")
-        sys.stdout.write(f"{YELLOW}Total iterations configured: {RESET}{GREEN}{no_of_iterations}{RESET}\n")
+        sys.stdout.write(f"{YELLOW}Campaign is {RESET}{GREEN}NOT LIVE{RESET} ")
+
+        if is_campaign_expired:
+            sys.stdout.write(f"{YELLOW}[EXPIRED on {config.end_date}]{RESET}\n")
+        else:
+            sys.stdout.write(f"{YELLOW}[To be STARTED on {RESET}{GREEN}{config.start_date}{RESET}{YELLOW}]{RESET}\n")
+
+    # ---- Next Iteration ----
+    if not is_campaign_expired:
+        sorted_iterations = sorted(iterations, key=attrgetter("iteration_date"))
+
+        try:
+            next_iteration = next((i for i in sorted_iterations if i.iteration_date > today), None)
+
+            if next_iteration:
+                sys.stdout.write(
+                    f"{YELLOW}Next active Iteration Number: {RESET}{GREEN}{next_iteration.iteration_number}{RESET}\n"
+                )
+                tz = next_iteration.iteration_datetime.tzinfo
+                sys.stdout.write(
+                    f"{YELLOW}Next active Iteration's date&time: "
+                    f"{RESET}{GREEN}{next_iteration.iteration_datetime} ({tz}){RESET}\n"
+                )
+        except StopIteration:
+            sys.stdout.write(f"{YELLOW}No next active iteration could be determined{RESET}\n")
+
+    # ---- Total Iterations ----
+    sys.stdout.write(f"{YELLOW}Total iterations configured: {RESET}{GREEN}{no_of_iterations}{RESET}\n")
 
 
 if __name__ == "__main__":  # pragma: no cover

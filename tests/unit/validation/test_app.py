@@ -1,6 +1,7 @@
 import sys
+from datetime import UTC, datetime, timedelta
 from io import StringIO
-from unittest.mock import Mock, PropertyMock
+from unittest.mock import Mock, PropertyMock, patch
 
 from pydantic import BaseModel, ValidationError
 
@@ -84,6 +85,8 @@ def test_no_current_iteration():
     # iterations must be a list, not a Mock
     result.campaign_config.iterations = []
 
+    result.campaign_config.end_date = datetime.now(UTC).date() + timedelta(days=1)
+
     # current_iteration should raise StopIteration
     type(result.campaign_config).current_iteration = PropertyMock(side_effect=StopIteration)
 
@@ -104,11 +107,13 @@ def test_current_iteration_exists():
     # Arrange
     mock_iteration = Mock()
     mock_iteration.iteration_number = 7
+    mock_iteration.iteration_date = datetime.now(UTC).date() - timedelta(days=1)
 
     result = Mock()
     result.campaign_config = Mock()
 
     result.campaign_config.iterations = [mock_iteration]
+    result.campaign_config.end_date = datetime.now(UTC).date() + timedelta(days=1)
 
     type(result.campaign_config).current_iteration = PropertyMock(return_value=mock_iteration)
 
@@ -119,5 +124,122 @@ def test_current_iteration_exists():
 
     sys.stdout = sys.__stdout__
 
-    assert "Current Iteration Number:" in captured.getvalue()
+    assert "Current active Iteration Number:" in captured.getvalue()
     assert "7" in captured.getvalue()
+
+
+def test_next_iteration_exists():
+    # Given
+    today = datetime.now(UTC).date()
+
+    # Setup
+    next_mock = Mock()
+    next_mock.iteration_number = 8
+    next_mock.iteration_date = today + timedelta(days=5)
+    next_mock.iteration_datetime = datetime.combine(
+        next_mock.iteration_date,
+        datetime.min.time(),
+        tzinfo=UTC,
+    )
+
+    result = Mock()
+    result.campaign_config.end_date = today + timedelta(days=10)
+    result.campaign_config.iterations = [next_mock]
+    result.campaign_config.campaign_live = False  # To focus only on Next Iteration output
+
+    captured = StringIO()
+    sys.stdout = captured
+
+    # When
+    display_current_iteration(result)
+    sys.stdout = sys.__stdout__
+    output = captured.getvalue()
+
+    # Then
+    assert "Next active Iteration Number:" in output
+    assert "8" in output
+    assert str(today + timedelta(days=5)) in output
+
+
+def test_campaign_expired_and_no_next_iteration():
+    """Covers: is_campaign_expired = True, next iteration logic skipped."""
+    today = datetime.now(UTC).date()
+
+    result = Mock()
+    config = result.campaign_config
+    config.campaign_live = False
+    config.end_date = today - timedelta(days=1)  # Expired
+    config.iterations = []
+
+    captured = StringIO()
+    with patch("sys.stdout", new=captured):
+        display_current_iteration(result)
+
+    output = captured.getvalue()
+    assert "NOT LIVE" in output
+    assert "EXPIRED on" in output
+    assert "Next active Iteration Number" not in output
+
+
+def test_campaign_to_be_started():
+    """Covers: is_campaign_expired = False, campaign_live = False."""
+    today = datetime.now(UTC).date()
+
+    result = Mock()
+    config = result.campaign_config
+    config.campaign_live = False
+    config.end_date = today + timedelta(days=10)
+    config.start_date = today + timedelta(days=2)
+    config.iterations = []
+
+    captured = StringIO()
+    with patch("sys.stdout", new=captured):
+        display_current_iteration(result)
+
+    output = captured.getvalue()
+    assert "NOT LIVE" in output
+    assert "To be STARTED on" in output
+
+
+def test_next_iteration_stop_iteration_exception():
+    """
+    Covers the 'except StopIteration' block in the Next Iteration section.
+    This triggers if the generator inside next() raises StopIteration explicitly.
+    """
+    today = datetime.now(UTC).date()
+
+    result = Mock()
+    config = result.campaign_config
+    config.campaign_live = False
+    config.end_date = today + timedelta(days=10)
+    config.iterations = [Mock(iteration_date=today + timedelta(days=5))]
+
+    captured = StringIO()
+    with patch("sys.stdout", new=captured), patch("rules_validation_api.app.next", side_effect=StopIteration):
+        display_current_iteration(result)
+
+    output = captured.getvalue()
+    assert "No next active iteration could be determined" in output
+
+
+def test_next_iteration_is_none():
+    today = datetime.now(UTC).date()
+
+    result = Mock()
+    config = result.campaign_config
+    config.campaign_live = False
+    config.end_date = today + timedelta(days=10)
+
+    past_iteration = Mock()
+    past_iteration.iteration_date = today - timedelta(days=5)
+    config.iterations = [past_iteration]
+
+    captured = StringIO()
+    with patch("sys.stdout", new=captured):
+        display_current_iteration(result)
+
+    output = captured.getvalue()
+
+    assert "Next active Iteration Number" not in output
+    assert "Total iterations configured:" in output
+    assert "1" in output
