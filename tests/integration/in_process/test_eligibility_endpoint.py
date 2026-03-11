@@ -1710,13 +1710,14 @@ class TestEligibilityResponseWithVariousInputs:
 
         campaign_1_json = campaign_1.model_dump(by_alias=True)
 
-        iteration_date_1 = current_datetime.strftime("%Y%m%d")
-        iteration_time_1 = current_datetime.strftime("%H:%M:%S")
-        iteration_time_1_after_30m = (current_datetime + timedelta(minutes=30)).strftime("%H:%M:%S")
-        campaign_1_json["Iterations"][0]["IterationDate"] = iteration_date_1
-        campaign_1_json["Iterations"][0]["IterationTime"] = iteration_time_1_after_30m
-        campaign_1_json["Iterations"][1]["IterationDate"] = iteration_date_1
-        campaign_1_json["Iterations"][1]["IterationTime"] = iteration_time_1
+        iteration_date_a = current_datetime.strftime("%Y%m%d")
+        iteration_date_b = current_datetime.strftime("%Y%m%d")
+        iteration_time_a = current_datetime.strftime("%H:%M:%S")
+        iteration_time_b_after_30m = (current_datetime + timedelta(minutes=30)).strftime("%H:%M:%S")
+        campaign_1_json["Iterations"][0]["IterationDate"] = iteration_date_b
+        campaign_1_json["Iterations"][0]["IterationTime"] = iteration_time_b_after_30m
+        campaign_1_json["Iterations"][1]["IterationDate"] = iteration_date_a
+        campaign_1_json["Iterations"][1]["IterationTime"] = iteration_time_a
 
         ## Campaign config 2
         campaign_2 = rule.RawCampaignConfigFactory.build(
@@ -1736,14 +1737,14 @@ class TestEligibilityResponseWithVariousInputs:
         )
 
         campaign_2_json = campaign_2.model_dump(by_alias=True)
-        iteration_date_2 = current_datetime.strftime("%Y%m%d")
-        iteration_time_2_after_20m = (current_datetime + timedelta(minutes=20)).strftime("%H:%M:%S")
-        iteration_date_2a = next_day_datetime.strftime("%Y%m%d")
-        iteration_time_2a = next_day_datetime.strftime("%H:%M:%S")
-        campaign_2_json["Iterations"][0]["IterationDate"] = iteration_date_2
-        campaign_2_json["Iterations"][0]["IterationTime"] = iteration_time_2_after_20m
-        campaign_2_json["Iterations"][1]["IterationDate"] = iteration_date_2a
-        campaign_2_json["Iterations"][1]["IterationTime"] = iteration_time_2a
+        iteration_date_c = current_datetime.strftime("%Y%m%d")
+        iteration_time_c_after_20m = (current_datetime + timedelta(minutes=20)).strftime("%H:%M:%S")
+        iteration_date_d = next_day_datetime.strftime("%Y%m%d")
+        iteration_time_d = next_day_datetime.strftime("%H:%M:%S")
+        campaign_2_json["Iterations"][0]["IterationDate"] = iteration_date_c
+        campaign_2_json["Iterations"][0]["IterationTime"] = iteration_time_c_after_20m
+        campaign_2_json["Iterations"][1]["IterationDate"] = iteration_date_d
+        campaign_2_json["Iterations"][1]["IterationTime"] = iteration_time_d
 
         # Upload to Campaign config bucket
         for campaign in [campaign_1_json, campaign_2_json]:
