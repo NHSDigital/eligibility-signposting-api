@@ -51,6 +51,38 @@ RuleCode = NewType("RuleCode", str)
 RuleText = NewType("RuleText", str)
 
 
+class DateUtil:
+    @staticmethod
+    def parse_date_yyyymmdd(v: str | date) -> date:
+        if isinstance(v, date):
+            return v
+        v_str = str(v)
+        if not re.fullmatch(r"\d{8}", v_str):
+            msg = f"Invalid format: {v_str}. Must be YYYYMMDD."
+            raise ValueError(msg)
+        try:
+            return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
+        except ValueError as err:
+            msg = f"Invalid date value: {v_str}."
+            raise ValueError(msg) from err
+
+    @staticmethod
+    def parse_time_hhmmss(v: str | time | None) -> time | None:
+        if not v:
+            return None
+        if isinstance(v, time):
+            return v
+        v_str = str(v).strip()
+        if re.fullmatch(r"^\d{2}:\d{2}:\d{2}$", v_str):
+            try:
+                return datetime.strptime(v_str, "%H:%M:%S").time()  # noqa: DTZ007
+            except ValueError as err:
+                msg = f"Invalid time value: {v_str}."
+                raise ValueError(msg) from err
+        msg = f"Invalid format: {v_str}. Must be HH:MM:SS."
+        raise ValueError(msg)
+
+
 class RuleType(StrEnum):
     filter = "F"
     suppression = "S"
@@ -283,11 +315,11 @@ class Iteration(BaseModel):
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
-    def __init__(self, **data: dict[str, typing.Any]) -> None:
-        super().__init__(**data)
-        # Ensure each rule knows its parent iteration
-        for rule in self.iteration_rules:
-            rule.set_parent(self)
+    @model_validator(mode="after")
+    def _link_parent_to_iteration_rules(self) -> typing.Self:
+        for iteration in self.iteration_rules:
+            iteration.set_parent(self)
+        return self
 
     @field_validator("iteration_date", mode="before")
     @classmethod
@@ -398,11 +430,22 @@ class CampaignConfig(BaseModel):
 
     @model_validator(mode="after")
     def check_no_overlapping_iterations(self) -> typing.Self:
-        iterations_by_date = Counter([i.iteration_date for i in self.iterations])
-        if multiple_found := next(((d, c) for d, c in iterations_by_date.most_common() if c > 1), None):
-            iteration_date, count = multiple_found
-            message = f"{count} iterations with iteration date {iteration_date} in campaign {self.id}"
+        date_time_pairs = []
+        for i in self.iterations:
+            effective_time = i.iteration_time or self.iteration_time
+            date_time_pairs.append((i.iteration_date, effective_time))
+
+        counts = Counter(date_time_pairs)
+
+        duplicate = next(((dt, c) for dt, c in counts.items() if c > 1), None)
+
+        if duplicate:
+            (iteration_date, iteration_time), count = duplicate
+            message = (
+                f"{count} iterations with iteration date/time {iteration_date} {iteration_time} in campaign {self.id}"
+            )
             raise ValueError(message)
+
         return self
 
     @cached_property

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 from freezegun import freeze_time
@@ -411,3 +411,23 @@ class TestBUCValidations:
         model = CampaignConfigValidation(**data)
 
         assert model.current_iteration
+        
+    @freeze_time("2026-03-25 01:00:00") # using GMT for simplicity
+    def test_get_current_iteration_by_iteration_date_time(self, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["StartDate"] = "20260301"
+        data["EndDate"] = "20260630"
+        iteration_1 = data["Iterations"][0]
+        iteration_1["IterationDate"] = "20260325"
+        iteration_1["IterationTime"] = "01:00:00"
+        iteration_2 = data["Iterations"][1]
+        iteration_2["IterationDate"] = "20260325"
+        iteration_2["IterationTime"] = "01:00:02"
+
+        model = CampaignConfigValidation(**data)
+
+        expected = datetime.strptime(
+            iteration_2["IterationDate"] + iteration_2["IterationTime"], "%Y%m%d%H:%M:%S"
+        ).replace(tzinfo=UTC)
+
+        assert model.current_iteration.iteration_datetime == expected
