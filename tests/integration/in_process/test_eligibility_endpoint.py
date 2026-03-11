@@ -1688,7 +1688,6 @@ class TestEligibilityResponseWithVariousInputs:
         headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
         start_date = datetime(2025, 8, 6, tzinfo=ZoneInfo("Europe/London")).date()
         current_datetime = datetime(2025, 8, 8, tzinfo=ZoneInfo("Europe/London"))
-        previous_day_datetime = current_datetime - timedelta(days=1)
         next_day_datetime = current_datetime + timedelta(days=1)
 
         ## Campaign config 1
