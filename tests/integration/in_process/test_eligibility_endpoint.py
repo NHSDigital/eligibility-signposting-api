@@ -1,6 +1,7 @@
 import json
 from datetime import UTC, date, datetime, timedelta
 from http import HTTPStatus
+from zoneinfo import ZoneInfo
 
 import pytest
 from botocore.client import BaseClient
@@ -1541,3 +1542,92 @@ class TestEligibilityResponseWithVariousInputs:
         assert any(err_msg in message for message in caplog.messages), (
             f"Expected log message not found. Logged messages: {caplog.messages}"
         )
+
+
+    def test_time_zone(  # noqa: PLR0913
+        self,
+        client: FlaskClient,
+        persisted_person_pc_sw19: NHSNumber,
+        s3_client: BaseClient,
+        consumer_mapping_bucket: BucketName,
+        rules_bucket: BucketName,
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+        caplog,
+    ):
+        # Given
+        consumer_id = "consumer-n3bs-jo4hn-ce4na"
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
+        now_london = datetime.now(ZoneInfo("Europe/London"))
+        previous_day = yesterday()
+
+
+        # Campaign configs
+        ## Campaign config 1
+        campaign_1 = rule.RawCampaignConfigFactory.build(
+            id="RSV_campaign_id_1",
+            target="RSV",
+            start_date=previous_day,
+            type="V",
+            iterations=[
+                rule.IterationFactory.build(iteration_date=previous_day),
+                rule.IterationFactory.build(iteration_date=tomorrow())
+            ],
+        )
+
+        campaign_1_json = campaign_1.model_dump(by_alias=True)
+
+        iteration_date_1 = now_london.strftime("%Y%m%d")
+        iteration_time_1 = now_london.strftime("%H:%M:%S")
+        iteration_time_1_after_20m = (now_london + timedelta(minutes=20)).strftime("%H:%M:%S")
+        campaign_1_json["Iterations"][0]["IterationDate"] = iteration_date_1
+        campaign_1_json["Iterations"][0]["IterationTime"] = iteration_time_1
+        campaign_1_json["Iterations"][1]["IterationDate"] = iteration_date_1
+        campaign_1_json["Iterations"][1]["IterationTime"] = iteration_time_1_after_20m
+
+        ## Campaign config 2
+        campaign_2 = rule.RawCampaignConfigFactory.build(
+            id="RSV_campaign_id_2",
+            target="RSV",
+            start_date=previous_day,
+            type="V",
+            iterations=[rule.IterationFactory.build(iteration_date=previous_day),
+                        rule.IterationFactory.build(iteration_date=tomorrow())],
+        )
+
+        campaign_2_json = campaign_2.model_dump(by_alias=True)
+        iteration_date_2 = now_london.strftime("%Y%m%d")
+        iteration_time_2 = now_london.strftime("%H:%M:%S")
+        iteration_time_2_after_20m = (now_london + timedelta(minutes=20)).strftime("%H:%M:%S")
+        campaign_2_json["Iterations"][0]["IterationDate"] = iteration_date_2
+        campaign_2_json["Iterations"][0]["IterationTime"] = iteration_time_2
+        campaign_2_json["Iterations"][1]["IterationDate"] = iteration_date_2
+        campaign_2_json["Iterations"][1]["IterationTime"] = iteration_time_2_after_20m
+
+
+        # Upload to Campaign config bucket
+        for campaign in [campaign_1_json, campaign_2_json]:
+            campaign_id = campaign["ID"]
+            s3_client.put_object(
+                Bucket=rules_bucket,
+                Key=f"{campaign_id}.json",
+                Body=json.dumps({"CampaignConfig": campaign}),
+                ContentType="application/json",
+            )
+
+        # Upload Consumer Mapping Data
+        s3_client.put_object(
+            Bucket=consumer_mapping_bucket,
+            Key="consumer_mapping_config.json",
+            Body=json.dumps(
+                {
+                    consumer_id: [
+                        {"CampaignConfigID": "RSV_campaign_id_1"},
+                        {"CampaignConfigID": "RSV_campaign_id_2"},
+                    ],
+                }
+            ),
+            ContentType="application/json",
+        )
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}", headers=headers)
