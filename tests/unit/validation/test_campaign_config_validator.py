@@ -411,8 +411,8 @@ class TestBUCValidations:
         model = CampaignConfigValidation(**data)
 
         assert model.current_iteration
-        
-    @freeze_time("2026-03-25 01:00:00") # using GMT for simplicity
+
+    @freeze_time("2026-03-25 01:00:03")  # using GMT for simplicity
     def test_get_current_iteration_by_iteration_date_time(self, valid_campaign_config_with_only_mandatory_fields):
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = "20260301"
@@ -430,4 +430,4 @@ class TestBUCValidations:
             iteration_2["IterationDate"] + iteration_2["IterationTime"], "%Y%m%d%H:%M:%S"
         ).replace(tzinfo=UTC)
 
-        assert model.current_iteration.iteration_datetime == expected
+        assert model.current_iteration.iteration_datetime_utc == expected
