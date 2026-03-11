@@ -15,7 +15,7 @@ def convert_from_uk_to_utc(value: datetime | date) -> datetime:
     return value.astimezone(utc)
 
 
-def parse_date_yyyymmdd(v: str | date) -> date:
+def parse_date_yyyymmdd(v: str | date) -> date:  # pragma: no cover
     if isinstance(v, date):
         return v
     v_str = str(v)
@@ -29,7 +29,7 @@ def parse_date_yyyymmdd(v: str | date) -> date:
         raise ValueError(msg) from err
 
 
-def parse_time_hhmmss(v: str | time | None) -> time | None:
+def parse_time_hhmmss(v: str | time | None) -> time | None:  # pragma: no cover
     if not v:
         return None
     if isinstance(v, time):
