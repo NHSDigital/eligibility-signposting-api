@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 from freezegun import freeze_time
@@ -210,6 +211,8 @@ class TestBUCValidations:
         data["EndDate"] = end_date
         data["Iterations"][0]["IterationDate"] = "20250202"
         data["Iterations"][1]["IterationDate"] = "20250203"
+        data["Iterations"][2]["IterationDate"] = "20250204"
+        data["Iterations"][3]["IterationDate"] = "20250205"
         CampaignConfigValidation(**data)
 
     # StartDate and EndDates
@@ -226,6 +229,8 @@ class TestBUCValidations:
         data["StartDate"] = start_date
         data["EndDate"] = end_date
         data["Iterations"][0]["IterationDate"] = "20250202"
+        data["Iterations"].pop(1)
+        data["Iterations"].pop(1)
         data["Iterations"].pop(1)
         CampaignConfigValidation(**data)
 
@@ -391,7 +396,8 @@ class TestBUCValidations:
         iteration["IterationTime"] = "01:00:00"
         iteration = data["Iterations"][1]
         iteration["IterationDate"] = "20260331"
-
+        data["Iterations"].pop(2)
+        data["Iterations"].pop(2)
         model = CampaignConfigValidation(**data)
 
         with pytest.raises(StopIteration):
@@ -407,12 +413,13 @@ class TestBUCValidations:
         iteration["IterationTime"] = "01:00:00"
         iteration = data["Iterations"][1]
         iteration["IterationDate"] = "20260331"
-
+        data["Iterations"].pop(2)
+        data["Iterations"].pop(2)
         model = CampaignConfigValidation(**data)
 
         assert model.current_iteration
 
-    @freeze_time("2026-03-25 01:00:03")  # using GMT for simplicity
+    @freeze_time("2026-03-25 01:00:01")  # using GMT for simplicity
     def test_get_current_iteration_by_iteration_date_time(self, valid_campaign_config_with_only_mandatory_fields):
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["StartDate"] = "20260301"
@@ -423,11 +430,46 @@ class TestBUCValidations:
         iteration_2 = data["Iterations"][1]
         iteration_2["IterationDate"] = "20260325"
         iteration_2["IterationTime"] = "01:00:02"
+        iteration_3 = data["Iterations"][2]
+        iteration_3["IterationDate"] = "20260325"
+        iteration_3["IterationTime"] = "01:00:01"
+        iteration_4 = data["Iterations"][3]
+        iteration_4["IterationDate"] = "20260325"
+        iteration_4["IterationTime"] = "01:00:03"
 
         model = CampaignConfigValidation(**data)
 
         expected = datetime.strptime(
-            iteration_2["IterationDate"] + iteration_2["IterationTime"], "%Y%m%d%H:%M:%S"
+            iteration_3["IterationDate"] + iteration_3["IterationTime"], "%Y%m%d%H:%M:%S"
         ).replace(tzinfo=UTC)
+
+        assert model.current_iteration.iteration_datetime_utc == expected
+
+    @freeze_time("2026-03-30 01:00:01+01:00")
+    def test_get_current_iteration_by_iteration_date_time_bst(self, valid_campaign_config_with_only_mandatory_fields):
+        data = valid_campaign_config_with_only_mandatory_fields.copy()
+        data["StartDate"] = "20260301"
+        data["EndDate"] = "20260630"
+        iteration_1 = data["Iterations"][0]
+        iteration_1["IterationDate"] = "20260330"
+        iteration_1["IterationTime"] = "01:00:00"
+        iteration_2 = data["Iterations"][1]
+        iteration_2["IterationDate"] = "20260330"
+        iteration_2["IterationTime"] = "01:00:02"
+        iteration_3 = data["Iterations"][2]
+        iteration_3["IterationDate"] = "20260330"
+        iteration_3["IterationTime"] = "01:00:01"
+        iteration_4 = data["Iterations"][3]
+        iteration_4["IterationDate"] = "20260330"
+        iteration_4["IterationTime"] = "01:00:03"
+
+        model = CampaignConfigValidation(**data)
+
+        uk = ZoneInfo("Europe/London")
+        expected = (
+            datetime.strptime(iteration_3["IterationDate"] + iteration_3["IterationTime"], "%Y%m%d%H:%M:%S")
+            .replace(tzinfo=uk)
+            .astimezone(UTC)
+        )
 
         assert model.current_iteration.iteration_datetime_utc == expected
