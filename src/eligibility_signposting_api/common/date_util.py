@@ -1,6 +1,28 @@
 import re
+from collections.abc import Callable
 from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
+
+
+def _parse_with_format[T](
+    value: str,
+    regex: str,
+    fmt: str,
+    error_info: tuple[str, str],
+    transform: Callable[[datetime], T],
+) -> T:
+    """Shared logic for regex validation and datetime parsing."""
+    label, expected_format = error_info
+
+    if not re.fullmatch(regex, value):
+        msg = f"Invalid format: {value}. Must be {expected_format}."
+        raise ValueError(msg)
+    try:
+        dt = datetime.strptime(value, fmt)  # noqa: DTZ007
+        return transform(dt)
+    except ValueError as err:
+        msg = f"Invalid {label} value: {value}."
+        raise ValueError(msg) from err
 
 
 def convert_from_uk_to_utc(value: datetime | date) -> datetime:
@@ -15,31 +37,19 @@ def convert_from_uk_to_utc(value: datetime | date) -> datetime:
     return value.astimezone(utc)
 
 
-def parse_date_yyyymmdd(v: str | date) -> date:  # pragma: no cover
+def parse_date_yyyymmdd(v: str | date) -> date:
     if isinstance(v, date):
         return v
-    v_str = str(v)
-    if not re.fullmatch(r"\d{8}", v_str):
-        msg = f"Invalid format: {v_str}. Must be YYYYMMDD."
-        raise ValueError(msg)
-    try:
-        return datetime.strptime(v_str, "%Y%m%d").date()  # noqa: DTZ007
-    except ValueError as err:
-        msg = f"Invalid date value: {v_str}."
-        raise ValueError(msg) from err
+    # Pass the last two strings as a single tuple inside parentheses
+    return _parse_with_format(str(v), r"\d{8}", "%Y%m%d", ("date", "YYYYMMDD"), lambda dt: dt.date())
 
 
-def parse_time_hhmmss(v: str | time | None) -> time | None:  # pragma: no cover
-    if not v:
+def parse_time_hhmmss(v: str | time | None) -> time | None:
+    if v is None:
         return None
     if isinstance(v, time):
         return v
-    v_str = str(v).strip()
-    if re.fullmatch(r"^\d{2}:\d{2}:\d{2}$", v_str):
-        try:
-            return datetime.strptime(v_str, "%H:%M:%S").time()  # noqa: DTZ007
-        except ValueError as err:
-            msg = f"Invalid time value: {v_str}."
-            raise ValueError(msg) from err
-    msg = f"Invalid format: {v_str}. Must be HH:MM:SS."
-    raise ValueError(msg)
+    # Pass the last two strings as a single tuple inside parentheses
+    return _parse_with_format(
+        str(v).strip(), r"^\d{2}:\d{2}:\d{2}$", "%H:%M:%S", ("time", "HH:MM:SS"), lambda dt: dt.time()
+    )
