@@ -366,6 +366,26 @@ data "aws_iam_policy_document" "iam_bootstrap_permissions_boundary" {
     ]
   }
 
+  # Specific management for Tableau Athena Service Account
+  statement {
+    sid    = "AllowTableauServiceAccountManagement"
+    effect = "Allow"
+    actions = [
+      "iam:CreateAccessKey",
+      "iam:DeleteAccessKey",
+      "iam:UpdateAccessKey",
+      "iam:PutUserPolicy",
+      "iam:DeleteUserPolicy",
+      "iam:GetUserPolicy",
+      "iam:TagUser",
+      "iam:UntagUser",
+      "iam:GetUser"
+    ]
+    resources = [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/tableau-athena-service-account"
+    ]
+  }
+
   # Allow read-only IAM access for Terraform plan/state discovery
   statement {
     sid    = "AllowIamReadAccess"
