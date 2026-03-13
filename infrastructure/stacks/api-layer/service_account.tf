@@ -47,8 +47,8 @@ resource "aws_iam_user_policy" "tableau_athena_policy" {
         ]
         Resource = [
           "arn:aws:glue:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:catalog",
-          "arn:aws:glue:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:database/elid_db",
-          "arn:aws:glue:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/elid_db/cohort_metrics"
+          "arn:aws:glue:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:database/elid_dq",
+          "arn:aws:glue:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/elid_dq/cohort_metrics"
         ]
       },
       {

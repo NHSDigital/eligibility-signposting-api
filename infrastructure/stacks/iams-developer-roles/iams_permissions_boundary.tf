@@ -221,6 +221,23 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "states:CreateStateMachine",
       "states:TagResource",
       "states:UpdateStateMachine",
+
+      # Athena
+      "athena:CreateWorkGroup",
+      "athena:UpdateWorkGroup",
+      "athena:GetQueryExecution",
+      "athena:GetQueryResults",
+      "athena:StartQueryExecution",
+      "athena:GetWorkGroup",
+      "athena:StopQueryExecution",
+      "athena:GetDataCatalog",
+
+      # Glue
+      "glue:CreateDatabase",
+      "glue:GetDatabase",
+      "glue:GetTable",
+      "glue:GetTables",
+      "glue:GetDatabases"
     ]
 
     resources = ["*"]
