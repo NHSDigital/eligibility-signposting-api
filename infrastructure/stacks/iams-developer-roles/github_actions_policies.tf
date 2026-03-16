@@ -235,6 +235,10 @@ resource "aws_iam_policy" "s3_management" {
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics-access-logs",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-athena-stage",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-athena-stage/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-athena-stage-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-athena-stage-access-logs/*",
         ]
       }
     ]
@@ -743,6 +747,65 @@ resource "aws_iam_policy" "cloudwatch_management" {
   tags = merge(local.tags, { Name = "cloudwatch-management" })
 }
 
+# Athena/Glue Infrastructure Management Policy for GitHub Actions
+resource "aws_iam_policy" "athena_glue_management" {
+  name        = "athena-glue-management"
+  description = "Allows GitHub Actions to create and manage Athena/Glue resources"
+  path        = "/service-policies/"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        # 1. Permission to manage the Glue Metadata (The "Athena Database/Table")
+        Effect = "Allow",
+        Action = [
+          "glue:CreateDatabase",
+          "glue:DeleteDatabase",
+          "glue:GetDatabase",
+          "glue:UpdateDatabase",
+          "glue:CreateTable",
+          "glue:DeleteTable",
+          "glue:UpdateTable",
+          "glue:GetTable",
+          "glue:GetTables",
+          "glue:BatchCreatePartition",
+          "glue:CreatePartition",
+          "glue:DeletePartition",
+          "glue:GetPartitions"
+        ],
+        Resource = [
+          "arn:aws:glue:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:catalog",
+          "arn:aws:glue:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:database/elid_dq",
+          "arn:aws:glue:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/elid_dq/*"
+        ]
+      },
+      {
+        # 2. Permission to manage Athena Workgroups or Named Queries
+        Effect = "Allow",
+        Action = [
+          "athena:CreateWorkGroup",
+          "athena:DeleteWorkGroup",
+          "athena:UpdateWorkGroup",
+          "athena:GetWorkGroup",
+          "athena:CreateNamedQuery",
+          "athena:DeleteNamedQuery",
+          "athena:GetNamedQuery",
+          "athena:ListDataCatalogs",
+          "athena:CreateDataCatalog",
+          "athena:DeleteDataCatalog"
+        ],
+        Resource = [
+          "arn:aws:athena:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:workgroup/*",
+          "arn:aws:athena:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:datacatalog/*"
+        ]
+      }
+    ]
+  })
+
+  tags = merge(local.tags, { Name = "athena-glue-management" })
+}
+
 # Attach the policies to the role
 resource "aws_iam_role_policy_attachment" "terraform_state" {
   role       = aws_iam_role.github_actions.name
@@ -787,4 +850,9 @@ resource "aws_iam_role_policy_attachment" "firehose_readonly_attach" {
 resource "aws_iam_role_policy_attachment" "cloudwatch_management" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.cloudwatch_management.arn
+}
+
+resource "aws_iam_role_policy_attachment" "athena_glue_management" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.athena_glue_management.arn
 }
