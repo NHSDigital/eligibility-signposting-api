@@ -1,28 +1,48 @@
-resource "aws_iam_user" "tableau_service" {
-  name = "tableau-athena-service-account"
+resource "aws_iam_openid_connect_provider" "tableau_idp" {
+  url             = "https://your-idp-domain.com"
+  client_id_list  = ["your-client-id"]
+  thumbprint_list = ["a01152157448772d219323f136284e963b53b843"]
 }
 
-resource "time_rotating" "athena_key_rotation" {
-  rotation_days = 90
-}
+data "aws_iam_policy_document" "tableau_trust_policy" {
+  statement {
+    sid     = "AllowAthenaJwtPlugin"
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
 
-resource "aws_iam_access_key" "tableau_key" {
-  user = aws_iam_user.tableau_service.name
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.tableau_idp.arn]
+    }
 
-  lifecycle {
-    replace_triggered_by = [time_rotating.athena_key_rotation]
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(aws_iam_openid_connect_provider.tableau_idp.url, "https://", "")}:aud"
+      values   = ["your-client-id"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "sts:RoleSessionName"
+      values   = ["AthenaJWT"]
+    }
   }
 }
 
-resource "aws_iam_user_policy" "tableau_athena_policy" {
+resource "aws_iam_role" "tableau_athena_role" {
+  name                 = "tableau-athena-federated-role"
+  assume_role_policy   = data.aws_iam_policy_document.tableau_trust_policy.json
+}
+
+resource "aws_iam_role_policy" "tableau_athena_policy" {
   name = "TableauAthenaAccess"
-  user = aws_iam_user.tableau_service.name
+  role = aws_iam_role.tableau_athena_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        # Athena Query Actions
+        sid    = "AthenaQueryActions"
         Effect = "Allow"
         Action = [
           "athena:GetQueryExecution",
@@ -37,7 +57,7 @@ resource "aws_iam_user_policy" "tableau_athena_policy" {
         ]
       },
       {
-        # Metadata Discovery
+        sid    = "GlueMetadataDiscovery"
         Effect = "Allow"
         Action = [
           "glue:GetDatabase",
@@ -52,7 +72,7 @@ resource "aws_iam_user_policy" "tableau_athena_policy" {
         ]
       },
       {
-        # 3. Data Access (Your specific S3 bucket)
+        sid    = "DataBucketAccess"
         Effect = "Allow"
         Action = [
           "s3:GetBucketLocation",
@@ -65,7 +85,7 @@ resource "aws_iam_user_policy" "tableau_athena_policy" {
         ]
       },
       {
-        # Athena Results - Staging Directory
+        sid    = "AthenaResultsStaging"
         Effect = "Allow"
         Action = [
           "s3:GetBucketLocation",
