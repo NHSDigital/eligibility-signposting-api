@@ -611,25 +611,6 @@ resource "aws_iam_policy" "iam_management" {
           "arn:aws:iam::*:role/secret_rotation_lambda_role",
           "arn:aws:iam::*:role/secret_rotation_workflow_role"
         ]
-      },
-      # Scoped User management for Tableau
-      {
-        Effect = "Allow",
-        Action = [
-          "iam:CreateUser",
-          "iam:DeleteUser",
-          "iam:UpdateUser",
-          "iam:TagUser",
-          "iam:CreateAccessKey",
-          "iam:DeleteAccessKey",
-          "iam:UpdateAccessKey",
-          "iam:PutUserPolicy",
-          "iam:DeleteUserPolicy",
-          "iam:GetUser"
-        ],
-        Resource = [
-          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/tableau-athena-service-account"
-        ]
       }
     ]
   })

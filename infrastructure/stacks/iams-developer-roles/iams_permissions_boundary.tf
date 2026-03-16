@@ -297,27 +297,6 @@ data "aws_iam_policy_document" "permissions_boundary" {
     actions   = ["iam:*"]
     resources = ["arn:aws:iam::*:role/${upper(var.project_name)}-*"]
   }
-
-  # Specific management for Tableau Athena Service Account
-  statement {
-    sid    = "AllowTableauServiceAccountManagement"
-    effect = "Allow"
-    actions = [
-      "iam:CreateAccessKey",
-      "iam:DeleteAccessKey",
-      "iam:UpdateAccessKey",
-      "iam:PutUserPolicy",
-      "iam:DeleteUserPolicy",
-      "iam:GetUserPolicy",
-      "iam:TagUser",
-      "iam:UntagUser",
-      "iam:GetUser"
-    ]
-    resources = [
-      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/tableau-athena-service-account"
-    ]
-  }
-
 }
 
 # Permissions Boundary policy
