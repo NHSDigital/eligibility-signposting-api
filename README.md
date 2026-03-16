@@ -40,6 +40,8 @@ cd eligibility-signposting-api
 make dependencies install-python
 ```
 
+> **New to the project?** See the [Windows Onboarding Guide](./docs/windows-onboarding.md) for a complete step-by-step walkthrough (Windows + WSL2), including every command to run and verification checks. You can also run `make onboarding-check` to verify your setup.
+
 ### Prerequisites
 
 The following software packages, or their equivalents, are expected to be installed and configured:
