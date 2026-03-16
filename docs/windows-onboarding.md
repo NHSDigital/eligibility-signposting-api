@@ -359,6 +359,7 @@ make install
 ```
 
 This will:
+
 1. Install all asdf plugins and versions from `.tool-versions`.
 2. Run `poetry install` to create a `.venv/` virtual environment and install all Python packages.
 3. Set up the Git pre-commit hook.
@@ -407,6 +408,7 @@ make precommit
 ### Verify
 
 All commands should exit with code 0. If unit tests fail at this point, check:
+
 - Your Python version is exactly 3.13.5 (`python --version`).
 - `poetry install` completed without errors.
 - You are in the repository root directory.
@@ -441,6 +443,7 @@ make test-integration
 ```
 
 This will:
+
 1. Start the Docker Compose stack defined in `tests/docker-compose.mock_aws.yml`.
 2. Run pytest against `tests/integration/`.
 3. Tear down the containers.
