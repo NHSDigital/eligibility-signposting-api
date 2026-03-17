@@ -114,6 +114,12 @@ locals {
       filter         = "{($.eventSource=lambda.amazonaws.com) && (($.eventName=CreateFunction20150331) || ($.eventName=DeleteFunction20150331) || ($.eventName=UpdateFunctionCode20150331) || ($.eventName=UpdateFunctionConfiguration20150331))}"
       log_group_name = "NHSDAudit_trail_log_group"
     },
+    {
+      name           = "DynamoDBTableReadOutsideLambdaRole"
+      namespace      = "security"
+      filter         = "{($.eventSource=dynamodb.amazonaws.com) && (($.eventName=GetItem) || ($.eventName=Query) || ($.eventName=Scan)) && ($.requestParameters.tableName=\"${module.eligibility_status_table.table_name}\") && (($.userIdentity.sessionContext.sessionIssuer.arn !=\"${aws_iam_role.eligibility_lambda_role.arn}\")}"
+      log_group_name = "NHSDAudit_trail_log_group"
+    },
   ]
 }
 
