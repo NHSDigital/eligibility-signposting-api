@@ -44,6 +44,7 @@ def firehose_client_factory(
     endpoint_url = str(firehose_endpoint) if firehose_endpoint is not None else None
     return session.client("firehose", endpoint_url=endpoint_url)
 
+
 @service(qualifier="kinesis")
 def kinesis_client_factory(
     session: Session,

@@ -570,7 +570,7 @@ def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
 
 
 @pytest.fixture(autouse=True)
-def kinesis_delivery_stream(kinesis_client: BaseClient) -> Generator[str]:
+def kinesis_stream(kinesis_client: BaseClient) -> dict[str, Any]:
     stream_name = "test-kinesis-audit-stream"
     try:
         return kinesis_client.create_stream(StreamName=stream_name, ShardCount=1)
@@ -580,8 +580,7 @@ def kinesis_delivery_stream(kinesis_client: BaseClient) -> Generator[str]:
 
 @pytest.fixture(autouse=True)
 def firehose_delivery_stream(firehose_client: BaseClient,
-                             audit_bucket: BucketName,
-                             kinesis_delivery_stream: str) -> dict[str, Any]:
+                             audit_bucket: BucketName) -> dict[str, Any]:
     stream_name = "test_firehose_audit_stream_to_s3"
 
     try:
