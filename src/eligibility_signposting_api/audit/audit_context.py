@@ -140,7 +140,7 @@ class AuditContext:
         g.audit_log.response.last_updated = last_updated
 
     @staticmethod
-    def write_to_firehose(service: AuditService) -> None:
+    def write_audit_record(service: AuditService) -> None:
         service.audit(g.audit_log.model_dump(by_alias=True))
 
     @staticmethod
