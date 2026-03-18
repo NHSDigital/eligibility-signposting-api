@@ -12,6 +12,9 @@ resource "aws_kms_alias" "kinesis_data_stream_kms_key" {
 
 
 data "aws_iam_policy_document" "kinesis_stream_kms_key_policy" {
+  #checkov:skip=CKV_AWS_111 Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_109 Root user needs full KMS key management
+  #checkov:skip=CKV_AWS_356 Root user needs full KMS key management
   statement {
     sid    = "EnableRootPermissions"
     effect = "Allow"
