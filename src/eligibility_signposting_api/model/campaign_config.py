@@ -8,7 +8,6 @@ from enum import StrEnum
 from functools import cached_property
 from operator import attrgetter
 from typing import Literal, NewType
-from zoneinfo import ZoneInfo
 
 from pydantic import (
     BaseModel,
@@ -21,13 +20,18 @@ from pydantic import (
     model_validator,
 )
 
-from eligibility_signposting_api.common.date_util import parse_date_yyyymmdd, parse_time_hhmmss
+from eligibility_signposting_api.common.date_util import (
+    UK_TIMEZONE,
+    datetime_with_uk_timezone,
+    now_uk,
+    parse_date_yyyymmdd,
+    parse_time_hhmmss,
+)
 from eligibility_signposting_api.config.constants import ALLOWED_CONDITIONS, RULE_STOP_DEFAULT
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from pydantic import SerializationInfo
 
-UK_TIMEZONE = ZoneInfo("Europe/London")
 
 CampaignName = NewType("CampaignName", str)
 CampaignVersion = NewType("CampaignVersion", int)
@@ -301,11 +305,7 @@ class Iteration(BaseModel):
     @field_validator("iteration_time", mode="before")
     @classmethod
     def parse_times_as_uk_local(cls, v: str | time) -> time | None:
-        if v:
-            parsed_time = parse_time_hhmmss(v)
-            if parsed_time:
-                return datetime.combine(date.min, parsed_time).replace(tzinfo=UK_TIMEZONE).time()
-        return None
+        return parse_time_hhmmss(v)
 
     @field_serializer("iteration_date", when_used="always")
     @staticmethod
@@ -332,7 +332,7 @@ class Iteration(BaseModel):
             msg = f"No iteration_time and no parent linked for iteration {self.id}"
             raise ValueError(msg)
 
-        return datetime.combine(self.iteration_date, iteration_time).replace(tzinfo=UK_TIMEZONE)
+        return datetime_with_uk_timezone(datetime.combine(self.iteration_date, iteration_time))
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)
@@ -378,10 +378,7 @@ class CampaignConfig(BaseModel):
     @field_validator("iteration_time", mode="before")
     @classmethod
     def parse_times_as_uk_local(cls, v: str | time) -> time | None:
-        parsed_time = parse_time_hhmmss(v)
-        if parsed_time:
-            return datetime.combine(date.min, parsed_time).replace(tzinfo=UK_TIMEZONE).time()
-        return None
+        return parse_time_hhmmss(v)
 
     @field_serializer("start_date", "end_date", when_used="always")
     @staticmethod
@@ -422,14 +419,12 @@ class CampaignConfig(BaseModel):
 
     @cached_property
     def campaign_live(self) -> bool:
-        today_uk = datetime.now(tz=UK_TIMEZONE).date()
-        return self.start_date <= today_uk <= self.end_date
+        return self.start_date <= now_uk().date() <= self.end_date
 
     @cached_property
     def current_iteration(self) -> Iteration:
-        now_uk = datetime.now(tz=UK_TIMEZONE)
         iterations_by_date_descending = sorted(self.iterations, key=attrgetter("iteration_datetime"), reverse=True)
-        return next(i for i in iterations_by_date_descending if i.iteration_datetime <= now_uk)
+        return next(i for i in iterations_by_date_descending if i.iteration_datetime <= now_uk())
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(by_alias=True), indent=2)

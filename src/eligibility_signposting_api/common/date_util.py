@@ -3,6 +3,20 @@ from collections.abc import Callable
 from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
 
+UK_TIMEZONE = ZoneInfo("Europe/London")
+
+
+def now_uk() -> datetime:
+    return datetime.now(tz=UK_TIMEZONE)
+
+
+def date_with_uk_timezone(parsed_date: date) -> date:
+    return datetime.combine(parsed_date, time.min).replace(tzinfo=UK_TIMEZONE).date()
+
+
+def datetime_with_uk_timezone(parsed_date_time: datetime) -> datetime:
+    return parsed_date_time.replace(tzinfo=UK_TIMEZONE)
+
 
 def _parse_with_format[T](
     value: str,
@@ -23,22 +37,6 @@ def _parse_with_format[T](
     except ValueError as err:
         msg = f"Invalid {label} value: {value}."
         raise ValueError(msg) from err
-
-
-def convert_from_uk_to_utc(value: datetime | date) -> datetime:
-    """
-    Convert a UK-local date/datetime to UTC.
-    Naive date_times are assumed to be UK time.
-    """
-    if isinstance(value, date) and not isinstance(value, datetime):
-        value = datetime.combine(value, time.min)
-
-    uk = ZoneInfo("Europe/London")
-    utc = ZoneInfo("UTC")
-
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=uk)
-    return value.astimezone(utc)
 
 
 def parse_date_yyyymmdd(v: str | date) -> date:
