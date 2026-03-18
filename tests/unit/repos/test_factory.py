@@ -9,7 +9,8 @@ from yarl import URL
 from eligibility_signposting_api.repos.factory import (
     dynamodb_resource_factory,
     firehose_client_factory,
-    s3_service_factory, kinesis_client_factory,
+    s3_service_factory,
+    kinesis_client_factory,
 )
 
 
