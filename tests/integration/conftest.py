@@ -570,13 +570,27 @@ def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
 
 
 @pytest.fixture(autouse=True)
-def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketName) -> dict[str, Any]:
+def kinesis_delivery_stream(kinesis_client: BaseClient) -> Generator[str]:
+    stream_name = "test-kinesis-audit-stream"
+    try:
+        return kinesis_client.create_stream(StreamName=stream_name, ShardCount=1)
+    except kinesis_client.exceptions.ResourceInUseException:
+        return kinesis_client.describe_stream(StreamName=stream_name)
+
+@pytest.fixture(autouse=True)
+def firehose_delivery_stream(firehose_client: BaseClient,
+                             audit_bucket: BucketName,
+                             kinesis_delivery_stream: str) -> dict[str, Any]:
     stream_name = "test_firehose_audit_stream_to_s3"
 
     try:
         return firehose_client.create_delivery_stream(
             DeliveryStreamName=stream_name,
-            DeliveryStreamType="DirectPut",
+            DeliveryStreamType="KinesisStreamAsSource",
+            KinesisStreamSourceConfiguration={
+                "KinesisStreamARN": f"arn:aws:kinesis:eu-west-2:123456789012:stream/{kinesis_delivery_stream}",
+                "RoleARN": "arn:aws:iam::123456789012:role/firehose_delivery_role",
+            },
             ExtendedS3DestinationConfiguration={
                 "BucketARN": f"arn:aws:s3:::{audit_bucket}",
                 "RoleARN": "arn:aws:iam::123456789012:role/firehose_delivery_role",
@@ -587,14 +601,6 @@ def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketNa
         )
     except firehose_client.exceptions.ResourceInUseException:
         return firehose_client.describe_delivery_stream(DeliveryStreamName=stream_name)
-
-@pytest.fixture
-def kinesis_delivery_stream(kinesis_client: BaseClient) -> Generator[str]:
-    stream_name = "test-kinesis-audit-stream"
-    try:
-        return kinesis_client.create_stream(StreamName=stream_name, ShardCount=1)
-    except kinesis_client.exceptions.ResourceInUseException:
-        return kinesis_client.describe_stream(StreamName=stream_name)
 
 
 @pytest.fixture
