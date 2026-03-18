@@ -123,6 +123,7 @@ The script prompts for:
 
 PAT note: the token must have repository read/write permissions for this repo (for example classic `repo` scope, or equivalent fine-grained repository permissions).
 Auth mode note: `create` uses non-interactive HTTPS auth headers for git operations, not terminal username/password prompts.
+Base branch note: `create` checks out `git.default_base_branch` from `devenv/config/devenv.bootstrap.yaml`. That branch must exist on `origin` (or already exist locally in the WSL repo). If you point it at a feature branch, push that branch first.
 
 In `check` mode, the bootstrap verifies the WSL user exists and validates credentials before continuing. It stops early if the user does not exist/cannot login or password validation fails.
 

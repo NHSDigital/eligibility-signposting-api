@@ -122,6 +122,29 @@ repo_exists() {
   git -C "$path" rev-parse --is-inside-work-tree >/dev/null 2>&1
 }
 
+resolve_base_ref() {
+  local repo_path="$1"
+  local base_branch="$2"
+
+  if git -C "$repo_path" show-ref --verify --quiet "refs/remotes/origin/$base_branch"; then
+    printf 'origin/%s\n' "$base_branch"
+    return 0
+  fi
+
+  if git -C "$repo_path" show-ref --verify --quiet "refs/heads/$base_branch"; then
+    printf '%s\n' "$base_branch"
+    return 0
+  fi
+
+  if git_auth -C "$repo_path" ls-remote --exit-code --heads origin "$base_branch" >/dev/null 2>&1; then
+    git_auth -C "$repo_path" fetch origin "$base_branch:refs/remotes/origin/$base_branch"
+    printf 'origin/%s\n' "$base_branch"
+    return 0
+  fi
+
+  return 1
+}
+
 AUTH_CLONE_URL=""
 GIT_AUTH_CONFIG_KEY=""
 GIT_AUTH_HEADER=""
@@ -253,12 +276,21 @@ if ! repo_exists "$WSL_REPO_PATH"; then
     echo "Path exists but is not a git repo: $WSL_REPO_PATH" >&2
     exit 1
   fi
-  git_auth clone --branch "$BASE_BRANCH" --single-branch "${AUTH_CLONE_URL:-$CLONE_URL}" "$WSL_REPO_PATH"
+  git_auth clone "${AUTH_CLONE_URL:-$CLONE_URL}" "$WSL_REPO_PATH"
   git_auth -C "$WSL_REPO_PATH" remote set-url origin "$CLONE_URL"
 fi
 
 git_auth -C "$WSL_REPO_PATH" fetch origin --prune
-git_auth -C "$WSL_REPO_PATH" checkout -B "$BASE_BRANCH" "origin/$BASE_BRANCH"
+base_ref="$(resolve_base_ref "$WSL_REPO_PATH" "$BASE_BRANCH" || true)"
+if [[ -z "$base_ref" ]]; then
+  echo "Base branch '$BASE_BRANCH' is unavailable in '$WSL_REPO_PATH'." >&2
+  echo "Expected either origin/$BASE_BRANCH on remote, or a local branch named $BASE_BRANCH in the WSL repo." >&2
+  echo "If this branch only exists on your Windows clone, push it first and rerun:" >&2
+  echo "  git push -u origin $BASE_BRANCH" >&2
+  exit 1
+fi
+
+git_auth -C "$WSL_REPO_PATH" checkout -B "$BASE_BRANCH" "$base_ref"
 
 git_user="$(git -C "$WSL_REPO_PATH" config --get user.name 2>/dev/null || true)"
 [[ -n "$git_user" ]] || git_user="$(whoami)"
@@ -279,7 +311,7 @@ if [[ "$init_branch" == *"{"* || "$init_branch" == *"}"* ]]; then
   exit 1
 fi
 
-git_auth -C "$WSL_REPO_PATH" checkout -B "$init_branch" "origin/$BASE_BRANCH"
+git_auth -C "$WSL_REPO_PATH" checkout -B "$init_branch" "$BASE_BRANCH"
 if [[ "$PUSH_INIT" == "true" ]]; then
   git_auth -C "$WSL_REPO_PATH" push -u origin "$init_branch"
 fi
