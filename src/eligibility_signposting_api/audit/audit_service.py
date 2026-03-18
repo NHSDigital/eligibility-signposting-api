@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 from typing import Annotated
@@ -22,6 +23,12 @@ class AuditService:  # pragma: no cover
         self.kinesis = kinesis
         self.audit_stream = audit_stream
 
+    @staticmethod
+    def get_partition_key(response_id: str) -> str:
+        h = int(hashlib.sha256(response_id.encode()).hexdigest(), 16)
+        bucket = h % 32
+        return f"audit-{bucket:02d}"
+
     @xray_recorder.capture("AuditService.audit")  # pyright: ignore[reportCallIssue]
     def audit(self, audit_record: dict) -> None:
         """
@@ -31,10 +38,12 @@ class AuditService:  # pragma: no cover
             audit_record (dict): The audit data to send.
         """
         data = json.dumps(audit_record, default=str)
+        response_id = audit_record.get("response", {}).get("responseId")
+        partition_key = self.get_partition_key(str(response_id))
         response = self.kinesis.put_record(
             StreamName=self.audit_stream,
             Data=(data + "\n").encode("utf-8"),
-            PartitionKey="audit",
+            PartitionKey=partition_key,
         )
         logger.info("Successfully sent to kinesis", extra={
             "stream_name": self.audit_stream,
