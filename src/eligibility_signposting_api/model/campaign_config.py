@@ -366,11 +366,12 @@ class CampaignConfig(BaseModel):
 
     model_config = {"populate_by_name": True, "arbitrary_types_allowed": True, "extra": "ignore"}
 
-    def __init__(self, **data: dict[str, typing.Any]) -> None:
-        super().__init__(**data)
-        # Ensure each rule knows its parent iteration
+    @model_validator(mode="after")
+    def _link_parent_to_iterations(self) -> typing.Self:
         for iteration in self.iterations:
             iteration.set_parent(self)
+
+        return self
 
     @field_validator("start_date", "end_date", mode="before")
     @classmethod
