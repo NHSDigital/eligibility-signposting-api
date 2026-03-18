@@ -619,7 +619,8 @@ def bridge_latest_kinesis_record_to_firehose(
     shards = stream_description["StreamDescription"]["Shards"]
 
     if not shards:
-        raise AssertionError(f"No shards found for Kinesis stream: {kinesis_stream_name}")
+        msg = f"No shards in {kinesis_stream_name}"
+        raise AssertionError(msg)
 
     shard_id = shards[0]["ShardId"]
 
@@ -634,7 +635,8 @@ def bridge_latest_kinesis_record_to_firehose(
     records = records_response.get("Records", [])
 
     if not records:
-        raise AssertionError(f"No records found in Kinesis stream: {kinesis_stream_name}")
+        msg = f"No records in {kinesis_stream_name}"
+        raise AssertionError(msg)
 
     latest_record = records[-1]
     latest_data = latest_record["Data"]
