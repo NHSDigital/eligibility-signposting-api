@@ -2,52 +2,7 @@
 param()
 
 $ErrorActionPreference = "Stop"
-
-function Import-SimpleEnv {
-    param([string]$Path)
-
-    $map = @{}
-    foreach ($rawLine in Get-Content -Path $Path) {
-        $line = $rawLine.Trim()
-        if ([string]::IsNullOrWhiteSpace($line)) { continue }
-        if ($line.StartsWith("#")) { continue }
-
-        $idx = $line.IndexOf("=")
-        if ($idx -lt 1) { continue }
-
-        $key = $line.Substring(0, $idx).Trim()
-        $value = $line.Substring($idx + 1).Trim()
-        $map[$key] = $value
-    }
-
-    return $map
-}
-
-function Get-ToolVersion {
-    param(
-        [string]$RepoRoot,
-        [string]$Tool,
-        [string]$Fallback
-    )
-
-    $toolVersionsPath = Join-Path $RepoRoot ".tool-versions"
-    if (-not (Test-Path $toolVersionsPath)) {
-        return $Fallback
-    }
-
-    foreach ($line in Get-Content $toolVersionsPath) {
-        $trimmed = $line.Trim()
-        if ([string]::IsNullOrWhiteSpace($trimmed)) { continue }
-        if ($trimmed.StartsWith("#")) { continue }
-
-        $parts = $trimmed -split "\s+"
-        if ($parts.Count -ge 2 -and $parts[0] -eq $Tool) {
-            return $parts[1]
-        }
-    }
-
-    return $Fallback
-}
+Set-StrictMode -Version Latest
 
 function Read-ChoiceValue {
     param(
@@ -55,17 +10,10 @@ function Read-ChoiceValue {
         [string]$Default,
         [string[]]$Allowed
     )
-
     while ($true) {
         $value = Read-Host "$Prompt [$Default]"
-        if ([string]::IsNullOrWhiteSpace($value)) {
-            $value = $Default
-        }
-
-        if ($Allowed -contains $value) {
-            return $value
-        }
-
+        if ([string]::IsNullOrWhiteSpace($value)) { $value = $Default }
+        if ($Allowed -contains $value) { return $value }
         Write-Host "Allowed values: $($Allowed -join ', ')" -ForegroundColor Yellow
     }
 }
@@ -75,52 +23,74 @@ function Read-YesNo {
         [string]$Prompt,
         [bool]$Default = $false
     )
-
-    $defaultText = if ($Default) { "Y/n" } else { "y/N" }
-    $value = Read-Host "$Prompt [$defaultText]"
-
-    if ([string]::IsNullOrWhiteSpace($value)) {
-        return $Default
-    }
-
+    $hint = if ($Default) { "Y/n" } else { "y/N" }
+    $value = Read-Host "$Prompt [$hint]"
+    if ([string]::IsNullOrWhiteSpace($value)) { return $Default }
     return @("y", "yes") -contains $value.Trim().ToLowerInvariant()
 }
 
 function Read-OptionalValue {
-    param(
-        [string]$Prompt,
-        [string]$Default
-    )
-
+    param([string]$Prompt, [string]$Default)
     $value = Read-Host "$Prompt [$Default]"
-    if ([string]::IsNullOrWhiteSpace($value)) {
-        return $Default
-    }
-
+    if ([string]::IsNullOrWhiteSpace($value)) { return $Default }
     return $value.Trim()
 }
 
-function Read-SecretPlainText {
-    param([string]$Prompt)
-
-    $secure = Read-Host $Prompt -AsSecureString
-    return ConvertTo-PlainText -SecureString $secure
+function ConvertTo-BashSingleQuoted {
+    param([string]$Value)
+    return "'" + $Value.Replace("'", "'""'""'") + "'"
 }
 
-function Read-SecretWithConfirmation {
+function ConvertTo-PlainText {
+    param([Security.SecureString]$SecureString)
+    $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString)
+    try { return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr) }
+    finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }
+}
+
+function Read-SecretValue {
     param([string]$Prompt)
+    $secret = Read-Host $Prompt -AsSecureString
+    $value = ConvertTo-PlainText -SecureString $secret
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        throw "Password cannot be empty."
+    }
+    return $value
+}
 
-    $first = Read-Host $Prompt -AsSecureString
-    $second = Read-Host "Confirm password" -AsSecureString
+function Test-WSLUserLogin {
+    param(
+        [string]$Distro,
+        [string]$User
+    )
 
-    $plain1 = ConvertTo-PlainText -SecureString $first
-    $plain2 = ConvertTo-PlainText -SecureString $second
+    $null = & wsl.exe -d $Distro -u $User -- bash -lc "id -u >/dev/null"
+    return ($LASTEXITCODE -eq 0)
+}
 
-    if ($plain1 -ne $plain2) {
-        throw "Passwords do not match."
+function Read-ValidatedSudoPassword {
+    param(
+        [string]$Distro,
+        [string]$User,
+        [int]$MaxAttempts = 3
+    )
+
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        $candidate = Read-SecretValue -Prompt "Enter sudo password for WSL user '$User'"
+        $candidateB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($candidate))
+
+        $validateScript = "set -euo pipefail; printf '%s' '$candidateB64' | base64 -d | sudo -S -p '' -k true >/dev/null"
+        $null = & wsl.exe -d $Distro -u $User -- bash -lc $validateScript
+        if ($LASTEXITCODE -eq 0) {
+            return $candidate
+        }
+
+        if ($attempt -lt $MaxAttempts) {
+            Write-Host "Invalid sudo password. Please try again." -ForegroundColor Yellow
+        }
     }
 
-    return $plain1
+    throw "Failed to validate sudo credentials after $MaxAttempts attempts."
 }
 
 function Test-IsAdministrator {
@@ -129,450 +99,227 @@ function Test-IsAdministrator {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-function ConvertTo-PlainText {
-    param([Security.SecureString]$SecureString)
-
-    $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureString)
-    try {
-        return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
-    }
-    finally {
-        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
-    }
-}
-
-function ConvertTo-BashSingleQuoted {
-    param([string]$Value)
-    return "'" + $Value.Replace("'", "'""'""'") + "'"
-}
-
-function Get-SanitizedLinuxUser {
-    param([string]$Candidate)
-
-    $value = $Candidate.ToLowerInvariant() -replace "[^a-z0-9_-]", ""
-    if ([string]::IsNullOrWhiteSpace($value)) {
-        return "developer"
-    }
-
-    return $value
-}
-
 function Invoke-WSLScript {
     param(
-        [string]$Distro,
-        [string]$User,
-        [string]$ScriptText
+        [Parameter(Mandatory = $true)][string]$Distro,
+        [Parameter(Mandatory = $false)][string]$User,
+        [Parameter(Mandatory = $true)][string]$ScriptText
     )
 
     $encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($ScriptText))
-    $args = @("-d", $Distro)
+    $wslArgs = @("-d", $Distro)
+    if (-not [string]::IsNullOrWhiteSpace($User)) { $wslArgs += @("-u", $User) }
+    $wslArgs += @("--", "bash", "-lc", "printf '%s' '$encoded' | base64 -d | bash")
 
-    if (-not [string]::IsNullOrWhiteSpace($User)) {
-        $args += @("-u", $User)
-    }
-
-    $args += @("--", "bash", "-lc", "printf '%s' '$encoded' | base64 -d | bash")
-    $output = & wsl.exe @args
-    if ($LASTEXITCODE -ne 0) {
-        throw "WSL command failed."
-    }
-
+    $output = & wsl.exe @wslArgs
+    if ($LASTEXITCODE -ne 0) { throw "WSL command failed." }
     return $output
 }
 
-function Test-WSLAvailable {
-    $wsl = Get-Command wsl.exe -ErrorAction SilentlyContinue
-    if ($null -eq $wsl) {
-        return $false
+function Get-GitOriginUrl {
+    param([string]$RemoteName)
+
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        throw "git is not installed or not on PATH."
     }
 
-    & wsl.exe --status *> $null
-    return $LASTEXITCODE -eq 0
-}
-
-function Get-InstalledDistros {
-    $lines = & wsl.exe -l -q 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        return @()
+    $repoPath = if (-not [string]::IsNullOrWhiteSpace($env:DEVENV_REPO_ROOT) -and (Test-Path $env:DEVENV_REPO_ROOT)) {
+        $env:DEVENV_REPO_ROOT
+    }
+    else {
+        (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
     }
 
-    return @($lines | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    $origin = (& git -C $repoPath remote get-url $RemoteName 2>$null | Select-Object -First 1)
+    if ([string]::IsNullOrWhiteSpace($origin)) {
+        throw "Missing git remote '$RemoteName' at $repoPath"
+    }
+
+    return $origin.Trim()
 }
 
 function Ensure-WSLAndDistro {
     param(
         [string]$Distro,
-        [string]$Mode
+        [string]$Mode,
+        [string]$RerunCommand
     )
 
-    if (-not (Test-WSLAvailable)) {
-        if ($Mode -eq "check") {
-            throw "WSL is not available."
-        }
+    if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
+        if ($Mode -eq "check") { throw "WSL is not available." }
+        if (-not (Read-YesNo -Prompt "WSL is missing. Install now?" -Default $true)) { throw "Cancelled." }
+        if (-not (Test-IsAdministrator)) { throw "Run PowerShell as Administrator to install WSL." }
 
-        if (-not (Test-IsAdministrator)) {
-            throw "WSL is not available. Re-run PowerShell as Administrator."
-        }
-
-        Write-Host "Installing WSL and $Distro..." -ForegroundColor Cyan
         & wsl.exe --install -d $Distro
-        if ($LASTEXITCODE -ne 0) {
-            throw "WSL install failed."
-        }
-
-        Write-Host "WSL install initiated. Reboot if prompted, then re-run .\devenv\run.ps1" -ForegroundColor Yellow
+        if ($LASTEXITCODE -ne 0) { throw "WSL install failed." }
+        Write-Host "WSL install started. Reboot if prompted, then rerun: $RerunCommand" -ForegroundColor Yellow
         exit 0
     }
 
-    $distros = Get-InstalledDistros
-    if ($distros -notcontains $Distro) {
-        if ($Mode -eq "check") {
-            throw "$Distro is not installed."
-        }
+    & wsl.exe --status *> $null
+    if ($LASTEXITCODE -ne 0) {
+        if ($Mode -eq "check") { throw "WSL is not available." }
+        if (-not (Read-YesNo -Prompt "WSL not configured. Install now?" -Default $true)) { throw "Cancelled." }
+        if (-not (Test-IsAdministrator)) { throw "Run PowerShell as Administrator to install WSL." }
 
-        if (-not (Test-IsAdministrator)) {
-            throw "$Distro is missing. Re-run PowerShell as Administrator."
-        }
-
-        Write-Host "Installing distro $Distro..." -ForegroundColor Cyan
         & wsl.exe --install -d $Distro
-        if ($LASTEXITCODE -ne 0) {
-            throw "Distro install failed."
-        }
+        if ($LASTEXITCODE -ne 0) { throw "WSL install failed." }
+        Write-Host "WSL install started. Reboot if prompted, then rerun: $RerunCommand" -ForegroundColor Yellow
+        exit 0
+    }
 
-        Write-Host "Distro install initiated. Re-run .\devenv\run.ps1 after setup completes." -ForegroundColor Yellow
+    $distros = & wsl.exe -l -q 2>$null
+    if ($LASTEXITCODE -ne 0) { throw "Unable to list WSL distros." }
+
+    $installed = @($distros | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    if ($installed -notcontains $Distro) {
+        if ($Mode -eq "check") { throw "Required distro not installed: $Distro" }
+        if (-not (Read-YesNo -Prompt "Distro '$Distro' is missing. Install now?" -Default $true)) { throw "Cancelled." }
+        if (-not (Test-IsAdministrator)) { throw "Run PowerShell as Administrator to install '$Distro'." }
+
+        & wsl.exe --install -d $Distro
+        if ($LASTEXITCODE -ne 0) { throw "Distro install failed." }
+        Write-Host "Distro install started. Complete first-run setup, then rerun: $RerunCommand" -ForegroundColor Yellow
         exit 0
     }
 }
 
-function Get-CurrentWSLUser {
+function Get-WSLWhoAmI {
     param([string]$Distro)
-
-    try {
-        $whoami = (& wsl.exe -d $Distro -- bash -lc "whoami" 2>$null | Select-Object -First 1).Trim()
-        if ([string]::IsNullOrWhiteSpace($whoami)) {
-            return $null
-        }
-
-        return $whoami
-    }
-    catch {
-        return $null
-    }
+    $who = (& wsl.exe -d $Distro -- bash -lc "whoami" 2>$null | Select-Object -First 1)
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($who)) { return "" }
+    return $who.Trim()
 }
 
-function Ensure-WSLUser {
+function Convert-WindowsPathToWslPath {
     param(
         [string]$Distro,
-        [string]$PreferredUser,
-        [string]$Mode
+        [string]$WindowsPath
     )
 
-    $currentUser = Get-CurrentWSLUser -Distro $Distro
-    if (-not [string]::IsNullOrWhiteSpace($currentUser) -and $currentUser -ne "root") {
-        $linuxUser = Read-OptionalValue -Prompt "WSL Linux username" -Default $currentUser
-        $checkUserScript = "id -u $(ConvertTo-BashSingleQuoted $linuxUser) >/dev/null 2>&1"
-        Invoke-WSLScript -Distro $Distro -User "root" -ScriptText $checkUserScript | Out-Null
-
-        $password = Read-SecretPlainText -Prompt "Enter sudo password for WSL user '$linuxUser'"
-        return @{
-            User = $linuxUser
-            PasswordB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($password))
-        }
+    $normalizedPath = $WindowsPath -replace "\\", "/"
+    $mapped = (& wsl.exe -d $Distro -- wslpath -a "$normalizedPath" 2>$null | Select-Object -First 1)
+    if ([string]::IsNullOrWhiteSpace($mapped)) {
+        throw "Failed to map Windows path to WSL path: $WindowsPath"
     }
-
-    if ($Mode -eq "check") {
-        throw "No non-root default WSL user is configured."
-    }
-
-    $linuxUser = Get-SanitizedLinuxUser -Candidate $PreferredUser
-    Write-Host "Creating WSL sudo user: $linuxUser" -ForegroundColor Cyan
-
-    $password = Read-SecretWithConfirmation -Prompt "Enter password for WSL user '$linuxUser'"
-    $passwordB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($password))
-
-    $template = @'
-set -euo pipefail
-
-LINUX_USER=__LINUX_USER__
-PASSWORD_B64=__PASSWORD_B64__
-
-if ! id -u "$LINUX_USER" >/dev/null 2>&1; then
-  useradd -m -s /bin/bash "$LINUX_USER"
-fi
-
-usermod -aG sudo "$LINUX_USER"
-
-PASSWORD="$(printf '%s' "$PASSWORD_B64" | base64 -d)"
-printf '%s:%s\n' "$LINUX_USER" "$PASSWORD" | chpasswd
-
-python3 - <<'PY'
-from pathlib import Path
-
-linux_user = "__LINUX_USER_VALUE__"
-path = Path("/etc/wsl.conf")
-content = path.read_text() if path.exists() else ""
-lines = content.splitlines()
-
-out = []
-in_user = False
-default_written = False
-
-for line in lines:
-    stripped = line.strip()
-    if stripped == "[user]":
-        in_user = True
-        out.append(line)
-        continue
-    if in_user and stripped.startswith("default="):
-        out.append(f"default={linux_user}")
-        default_written = True
-        in_user = False
-        continue
-    if stripped.startswith("[") and stripped.endswith("]") and in_user and not default_written:
-        out.append(f"default={linux_user}")
-        default_written = True
-        in_user = False
-    out.append(line)
-
-if not default_written:
-    if out and out[-1].strip():
-        out.append("")
-    out.append("[user]")
-    out.append(f"default={linux_user}")
-
-path.write_text("\n".join(out).rstrip() + "\n")
-PY
-'@
-
-    $script = $template.
-        Replace("__LINUX_USER__", (ConvertTo-BashSingleQuoted $linuxUser)).
-        Replace("__PASSWORD_B64__", (ConvertTo-BashSingleQuoted $passwordB64)).
-        Replace("__LINUX_USER_VALUE__", $linuxUser)
-
-    Invoke-WSLScript -Distro $Distro -User "root" -ScriptText $script | Out-Null
-
-    & wsl.exe --terminate $Distro *> $null
-    Start-Sleep -Seconds 2
-
-    return @{
-        User = $linuxUser
-        PasswordB64 = $passwordB64
-    }
+    return $mapped.Trim()
 }
 
-function Get-RepoOriginUrl {
-    param([string]$RepoRoot)
-
-    $url = (& git -C $RepoRoot remote get-url origin 2>$null | Select-Object -First 1)
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($url)) {
-        throw "Unable to read git remote origin from the current repo."
-    }
-
-    return $url.Trim()
-}
-
+# Paths + config
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
 $DevenvRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
-$DefaultsPath = Join-Path $DevenvRoot "config\defaults.env"
-$defaults = Import-SimpleEnv -Path $DefaultsPath
+$ConfigPath = if ($env:DEVENV_CONFIG_PATH) { $env:DEVENV_CONFIG_PATH } else { Join-Path $DevenvRoot "config\devenv.bootstrap.yaml" }
 
-$repoOriginUrl = Get-RepoOriginUrl -RepoRoot $RepoRoot
-$repoName = [IO.Path]::GetFileNameWithoutExtension($repoOriginUrl.Split("/")[-1])
-$defaultLinuxUser = if ([string]::IsNullOrWhiteSpace($defaults["WSL_LINUX_USER"])) {
-    Get-SanitizedLinuxUser -Candidate $env:USERNAME
-} else {
-    Get-SanitizedLinuxUser -Candidate $defaults["WSL_LINUX_USER"]
+if (-not (Test-Path $ConfigPath)) {
+    throw "Config file not found: $ConfigPath"
+}
+
+if ([string]::IsNullOrWhiteSpace($env:DEVENV_CONFIG_JSON)) {
+    throw "DEVENV_CONFIG_JSON is missing. Run bootstrap via devenv/run.py so YAML is parsed by Python first."
+}
+
+$config = $env:DEVENV_CONFIG_JSON | ConvertFrom-Json
+$platformKey = if ($env:DEVENV_PLATFORM) { $env:DEVENV_PLATFORM } else { "windows-wsl" }
+$platform = $config.platforms.$platformKey
+if ($null -eq $platform -or -not $platform.enabled) {
+    throw "Platform '$platformKey' is not enabled in config."
 }
 
 $mode = Read-ChoiceValue -Prompt "Select mode: check or create" -Default "check" -Allowed @("check", "create")
 
-$distro = $defaults["WSL_DISTRO"]
-$wslRepoRoot = $defaults["WSL_REPO_ROOT"]
-$dockerStrategy = $defaults["DOCKER_STRATEGY"]
+$remoteName = [string]$config.git.remote_name
+$actualOriginUrl = Get-GitOriginUrl -RemoteName $remoteName
+$expectedOriginUrl = [string]$config.git.clone_url
 
-$pythonVersion = Get-ToolVersion -RepoRoot $RepoRoot -Tool "python" -Fallback $defaults["PYTHON_VERSION"]
-$poetryVersion = Get-ToolVersion -RepoRoot $RepoRoot -Tool "poetry" -Fallback $defaults["POETRY_VERSION"]
-$nodeVersion = Get-ToolVersion -RepoRoot $RepoRoot -Tool "nodejs" -Fallback $defaults["NODE_VERSION"]
-$terraformVersion = Get-ToolVersion -RepoRoot $RepoRoot -Tool "terraform" -Fallback $defaults["TERRAFORM_VERSION"]
-$preCommitVersion = Get-ToolVersion -RepoRoot $RepoRoot -Tool "pre-commit" -Fallback $defaults["PRECOMMIT_VERSION"]
-$valeVersion = Get-ToolVersion -RepoRoot $RepoRoot -Tool "vale" -Fallback $defaults["VALE_VERSION"]
-$actVersion = Get-ToolVersion -RepoRoot $RepoRoot -Tool "act" -Fallback $defaults["ACT_VERSION"]
-
-$runProjectSetup = $defaults["RUN_PROJECT_SETUP"]
-$runValidation = $defaults["RUN_VALIDATION"]
-$runUnitTests = $defaults["RUN_UNIT_TESTS"]
-$runBuild = $defaults["RUN_BUILD"]
-$runIntegrationTests = $defaults["RUN_INTEGRATION_TESTS"]
-
-if (Read-YesNo -Prompt "Override defaults?" -Default $false) {
-    $distro = Read-OptionalValue -Prompt "WSL distro" -Default $distro
-    $wslRepoRoot = Read-OptionalValue -Prompt "WSL repo root" -Default $wslRepoRoot
-    $dockerStrategy = Read-ChoiceValue -Prompt "Docker strategy" -Default $dockerStrategy -Allowed @("engine", "desktop", "skip")
-
-    $pythonVersion = Read-OptionalValue -Prompt "Python version" -Default $pythonVersion
-    $poetryVersion = Read-OptionalValue -Prompt "Poetry version" -Default $poetryVersion
-    $nodeVersion = Read-OptionalValue -Prompt "Node.js version" -Default $nodeVersion
-    $terraformVersion = Read-OptionalValue -Prompt "Terraform version" -Default $terraformVersion
-    $preCommitVersion = Read-OptionalValue -Prompt "pre-commit version" -Default $preCommitVersion
-    $valeVersion = Read-OptionalValue -Prompt "Vale version" -Default $valeVersion
-    $actVersion = Read-OptionalValue -Prompt "act version" -Default $actVersion
-
-    $runProjectSetup = Read-ChoiceValue -Prompt "Run project setup" -Default $runProjectSetup -Allowed @("true", "false")
-    $runValidation = Read-ChoiceValue -Prompt "Run validation" -Default $runValidation -Allowed @("true", "false")
-    $runUnitTests = Read-ChoiceValue -Prompt "Run unit tests" -Default $runUnitTests -Allowed @("true", "false")
-    $runBuild = Read-ChoiceValue -Prompt "Run build" -Default $runBuild -Allowed @("true", "false")
-    $runIntegrationTests = Read-ChoiceValue -Prompt "Run integration tests" -Default $runIntegrationTests -Allowed @("true", "false")
+if (-not [string]::IsNullOrWhiteSpace($expectedOriginUrl) -and $actualOriginUrl -ne $expectedOriginUrl) {
+    throw "Origin URL mismatch. YAML clone_url='$expectedOriginUrl', current='$actualOriginUrl'."
 }
 
-$plan = @"
-Planned actions
----------------
-Mode:                $mode
-Windows repo:        $RepoRoot
-Repo origin:         $repoOriginUrl
-WSL distro:          $distro
-WSL repo root:       $wslRepoRoot
-Preferred WSL user:  $defaultLinuxUser
-Docker strategy:     $dockerStrategy
+$distro = [string]$platform.wsl.distro
+$wslRepoRoot = [string]$platform.wsl.repo_root
+$wslRepoName = [string]$platform.wsl.repo_name
+$wslBootstrapRel = [string]$platform.wsl.bootstrap_script
+$defaultLinuxUser = [string]$platform.wsl.linux_user.default
 
-Versions
---------
-asdf:                $($defaults["ASDF_VERSION"])
-python:              $pythonVersion
-poetry:              $poetryVersion
-nodejs:              $nodeVersion
-terraform:           $terraformVersion
-pre-commit:          $preCommitVersion
-vale:                $valeVersion
-act:                 $actVersion
+$rerunCommand = "python `"$DevenvRoot\run.py`" --platform windows-wsl"
+Ensure-WSLAndDistro -Distro $distro -Mode $mode -RerunCommand $rerunCommand
 
-Behaviour
----------
-run project setup:   $runProjectSetup
-run validation:      $runValidation
-run unit tests:      $runUnitTests
-run build:           $runBuild
-run integration:     $runIntegrationTests
-"@
+$wslWhoAmI = Get-WSLWhoAmI -Distro $distro
+$wslRunUser = Read-OptionalValue -Prompt "WSL username" -Default ($(if ([string]::IsNullOrWhiteSpace($wslWhoAmI)) { $defaultLinuxUser } else { $wslWhoAmI }))
+$userCanLogin = Test-WSLUserLogin -Distro $distro -User $wslRunUser
+if (-not $userCanLogin) {
+    throw "WSL user '$wslRunUser' does not exist or cannot login in distro '$distro'."
+}
+$wslRepoRootResolved = ([string]$wslRepoRoot).Replace("{user}", $wslRunUser)
+$wslPassword = Read-ValidatedSudoPassword -Distro $distro -User $wslRunUser -MaxAttempts 3
+$wslPasswordB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($wslPassword))
+
+$gitPatB64 = ""
+$gitUsername = "x-access-token"
+$cloneUrl = [string]$config.git.clone_url
+if ($mode -eq "create" -and $cloneUrl.StartsWith("https://")) {
+    $gitUsername = Read-OptionalValue -Prompt "Enter GitHub username for PAT auth" -Default $env:USERNAME
+    $gitPat = Read-SecretValue -Prompt "Enter GitHub Personal Access Token (PAT) for HTTPS git operations"
+    $gitPatB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($gitPat))
+}
+
+$repoRootWsl = Convert-WindowsPathToWslPath -Distro $distro -WindowsPath $RepoRoot
+$configWsl = Convert-WindowsPathToWslPath -Distro $distro -WindowsPath $ConfigPath
+$bootstrapAbsWsl = "$repoRootWsl/$wslBootstrapRel"
 
 Write-Host ""
-Write-Host $plan -ForegroundColor Cyan
+Write-Host "Mode:        $mode"
+Write-Host "Origin URL:  $actualOriginUrl"
+Write-Host "WSL distro:  $distro"
+Write-Host "WSL user:    $wslRunUser"
+Write-Host "Bootstrap:   $bootstrapAbsWsl"
+Write-Host ""
 
-if (-not (Read-YesNo -Prompt "Continue?" -Default $false)) {
-    Write-Host "Cancelled."
-    exit 0
-}
-
-Ensure-WSLAndDistro -Distro $distro -Mode $mode
-$wslAuth = Ensure-WSLUser -Distro $distro -PreferredUser $defaultLinuxUser -Mode $mode
-
-$wslRepoPath = "$wslRepoRoot/$repoName"
-
-$repoOriginUrlQ = ConvertTo-BashSingleQuoted $repoOriginUrl
-$wslRepoRootQ = ConvertTo-BashSingleQuoted $wslRepoRoot
-$wslRepoPathQ = ConvertTo-BashSingleQuoted $wslRepoPath
-$linuxUserQ = ConvertTo-BashSingleQuoted $wslAuth.User
-
-if ($mode -eq "create") {
-    $prepareTemplate = @'
-set -euo pipefail
-
-WSL_REPO_ROOT=__WSL_REPO_ROOT__
-LINUX_USER=__LINUX_USER__
-
-mkdir -p "$WSL_REPO_ROOT"
-chown "$LINUX_USER:$LINUX_USER" "$WSL_REPO_ROOT"
-
-if ! command -v git >/dev/null 2>&1; then
-  apt update
-  apt install -y git ca-certificates
-fi
-'@
-
-    $prepareScript = $prepareTemplate.
-        Replace("__WSL_REPO_ROOT__", $wslRepoRootQ).
-        Replace("__LINUX_USER__", $linuxUserQ)
-
-    Invoke-WSLScript -Distro $distro -User "root" -ScriptText $prepareScript | Out-Null
-
-    $cloneTemplate = @'
-set -euo pipefail
-
-REPO_URL=__REPO_URL__
-WSL_REPO_PATH=__WSL_REPO_PATH__
-
-if [ -d "$WSL_REPO_PATH/.git" ]; then
-  git -C "$WSL_REPO_PATH" pull --ff-only
-else
-  if [ -e "$WSL_REPO_PATH" ]; then
-    echo "Target path exists but is not a git repo: $WSL_REPO_PATH" >&2
-    exit 1
-  fi
-  git clone "$REPO_URL" "$WSL_REPO_PATH"
-fi
-'@
-
-    $cloneScript = $cloneTemplate.
-        Replace("__REPO_URL__", $repoOriginUrlQ).
-        Replace("__WSL_REPO_PATH__", $wslRepoPathQ)
-
-    Invoke-WSLScript -Distro $distro -User $wslAuth.User -ScriptText $cloneScript | Out-Null
-}
-else {
-    $checkTemplate = @'
-set -euo pipefail
-WSL_REPO_PATH=__WSL_REPO_PATH__
-[ -d "$WSL_REPO_PATH/.git" ]
-'@
-
-    $checkCloneScript = $checkTemplate.Replace("__WSL_REPO_PATH__", $wslRepoPathQ)
-    Invoke-WSLScript -Distro $distro -User $wslAuth.User -ScriptText $checkCloneScript | Out-Null
-}
-
-$bootstrapTemplate = @'
+$delegate = @'
 set -euo pipefail
 
 export DEVENV_MODE=__MODE__
-export DEVENV_PYTHON_VERSION=__PYTHON_VERSION__
-export DEVENV_POETRY_VERSION=__POETRY_VERSION__
-export DEVENV_NODE_VERSION=__NODE_VERSION__
-export DEVENV_TERRAFORM_VERSION=__TERRAFORM_VERSION__
-export DEVENV_PRECOMMIT_VERSION=__PRECOMMIT_VERSION__
-export DEVENV_VALE_VERSION=__VALE_VERSION__
-export DEVENV_ACT_VERSION=__ACT_VERSION__
-export DEVENV_DOCKER_STRATEGY=__DOCKER_STRATEGY__
-export DEVENV_RUN_PROJECT_SETUP=__RUN_PROJECT_SETUP__
-export DEVENV_RUN_VALIDATION=__RUN_VALIDATION__
-export DEVENV_RUN_UNIT_TESTS=__RUN_UNIT_TESTS__
-export DEVENV_RUN_BUILD=__RUN_BUILD__
-export DEVENV_RUN_INTEGRATION_TESTS=__RUN_INTEGRATION_TESTS__
+export DEVENV_CONFIG_PATH=__CONFIG_PATH__
+export DEVENV_WINDOWS_ORIGIN_URL=__WINDOWS_ORIGIN_URL__
+export DEVENV_WSL_REPO_ROOT=__WSL_REPO_ROOT__
+export DEVENV_WSL_REPO_NAME=__WSL_REPO_NAME__
+export DEVENV_WSL_CLONE_URL=__WSL_CLONE_URL__
+export DEVENV_WSL_BASE_BRANCH=__WSL_BASE_BRANCH__
+export DEVENV_INIT_BRANCH_PATTERN=__INIT_BRANCH_PATTERN__
+export DEVENV_INIT_BRANCH_TIMESTAMP_FORMAT=__INIT_BRANCH_TIMESTAMP_FORMAT__
+export DEVENV_INIT_BRANCH_PUSH_ON_CREATE=__INIT_BRANCH_PUSH__
+export DEVENV_INIT_BRANCH_FAIL_IF_EXISTS=__INIT_BRANCH_FAIL__
+export DEVENV_WSL_USERNAME=__WSL_USERNAME__
 export DEVENV_SUDO_PASSWORD_B64=__SUDO_PASSWORD_B64__
+export DEVENV_GIT_USERNAME=__GIT_USERNAME__
+export DEVENV_GIT_PAT_B64=__GIT_PAT_B64__
 
-cd __WSL_REPO_PATH__
-chmod +x devenv/platforms/wsl-ubuntu/bootstrap.sh
-bash devenv/platforms/wsl-ubuntu/bootstrap.sh
+if [ ! -f __BOOTSTRAP_PATH__ ]; then
+  echo "WSL bootstrap script not found: __BOOTSTRAP_PATH__" >&2
+  exit 1
+fi
+
+chmod +x __BOOTSTRAP_PATH__
+bash __BOOTSTRAP_PATH__
 '@
 
-$bootstrapScript = $bootstrapTemplate.
+$delegate = $delegate.
     Replace("__MODE__", (ConvertTo-BashSingleQuoted $mode)).
-    Replace("__PYTHON_VERSION__", (ConvertTo-BashSingleQuoted $pythonVersion)).
-    Replace("__POETRY_VERSION__", (ConvertTo-BashSingleQuoted $poetryVersion)).
-    Replace("__NODE_VERSION__", (ConvertTo-BashSingleQuoted $nodeVersion)).
-    Replace("__TERRAFORM_VERSION__", (ConvertTo-BashSingleQuoted $terraformVersion)).
-    Replace("__PRECOMMIT_VERSION__", (ConvertTo-BashSingleQuoted $preCommitVersion)).
-    Replace("__VALE_VERSION__", (ConvertTo-BashSingleQuoted $valeVersion)).
-    Replace("__ACT_VERSION__", (ConvertTo-BashSingleQuoted $actVersion)).
-    Replace("__DOCKER_STRATEGY__", (ConvertTo-BashSingleQuoted $dockerStrategy)).
-    Replace("__RUN_PROJECT_SETUP__", (ConvertTo-BashSingleQuoted $runProjectSetup)).
-    Replace("__RUN_VALIDATION__", (ConvertTo-BashSingleQuoted $runValidation)).
-    Replace("__RUN_UNIT_TESTS__", (ConvertTo-BashSingleQuoted $runUnitTests)).
-    Replace("__RUN_BUILD__", (ConvertTo-BashSingleQuoted $runBuild)).
-    Replace("__RUN_INTEGRATION_TESTS__", (ConvertTo-BashSingleQuoted $runIntegrationTests)).
-    Replace("__SUDO_PASSWORD_B64__", (ConvertTo-BashSingleQuoted $wslAuth.PasswordB64)).
-    Replace("__WSL_REPO_PATH__", $wslRepoPathQ)
+    Replace("__CONFIG_PATH__", (ConvertTo-BashSingleQuoted $configWsl)).
+    Replace("__WINDOWS_ORIGIN_URL__", (ConvertTo-BashSingleQuoted $actualOriginUrl)).
+    Replace("__WSL_REPO_ROOT__", (ConvertTo-BashSingleQuoted $wslRepoRootResolved)).
+    Replace("__WSL_REPO_NAME__", (ConvertTo-BashSingleQuoted $wslRepoName)).
+    Replace("__WSL_CLONE_URL__", (ConvertTo-BashSingleQuoted ([string]$config.git.clone_url))).
+    Replace("__WSL_BASE_BRANCH__", (ConvertTo-BashSingleQuoted ([string]$config.git.default_base_branch))).
+    Replace("__INIT_BRANCH_PATTERN__", (ConvertTo-BashSingleQuoted ([string]$config.git.init_branch.pattern))).
+    Replace("__INIT_BRANCH_TIMESTAMP_FORMAT__", (ConvertTo-BashSingleQuoted ([string]$config.git.init_branch.timestamp_format))).
+    Replace("__INIT_BRANCH_PUSH__", (ConvertTo-BashSingleQuoted (([bool]$config.git.init_branch.push_on_create).ToString().ToLowerInvariant()))).
+    Replace("__INIT_BRANCH_FAIL__", (ConvertTo-BashSingleQuoted (([bool]$config.git.init_branch.fail_if_exists_on_remote).ToString().ToLowerInvariant()))).
+    Replace("__WSL_USERNAME__", (ConvertTo-BashSingleQuoted $wslRunUser)).
+    Replace("__SUDO_PASSWORD_B64__", (ConvertTo-BashSingleQuoted $wslPasswordB64)).
+    Replace("__GIT_USERNAME__", (ConvertTo-BashSingleQuoted $gitUsername)).
+    Replace("__GIT_PAT_B64__", (ConvertTo-BashSingleQuoted $gitPatB64)).
+    Replace("__BOOTSTRAP_PATH__", (ConvertTo-BashSingleQuoted $bootstrapAbsWsl))
 
-Invoke-WSLScript -Distro $distro -User $wslAuth.User -ScriptText $bootstrapScript
-Write-Host ""
-Write-Host "Done. WSL repo: $wslRepoPath" -ForegroundColor Green
-Write-Host "Reports: $wslRepoPath/devenv/reports" -ForegroundColor Green
+Invoke-WSLScript -Distro $distro -User $wslRunUser -ScriptText $delegate | Out-Host
+Write-Host "`n$($mode.Substring(0,1).ToUpper() + $mode.Substring(1)) complete." -ForegroundColor Green

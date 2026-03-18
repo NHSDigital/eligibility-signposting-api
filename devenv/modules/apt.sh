@@ -38,6 +38,12 @@ ensure_core_apt_packages() {
   local missing=()
   local package
 
+  if [[ "$MODE" == "create" ]]; then
+    sudo_run apt update
+    sudo_run apt upgrade -y
+    report_ok "Refreshed apt package indexes and applied upgrades"
+  fi
+
   for package in "${APT_PACKAGES[@]}"; do
     if ! dpkg -s "$package" >/dev/null 2>&1; then
       missing+=("$package")
@@ -54,8 +60,6 @@ ensure_core_apt_packages() {
     return
   fi
 
-  sudo_run apt update
-  sudo_run apt upgrade -y
   sudo_run apt install -y "${missing[@]}"
   report_ok "Installed core apt packages"
 }

@@ -8,6 +8,8 @@ A step-by-step guide to get the Eligibility Signposting API project running on a
 
 - [Onboarding Guide — Windows + WSL2](#onboarding-guide--windows--wsl2)
   - [Table of Contents](#table-of-contents)
+  - [Prerequisites (Before WSL + Onboarding)](#prerequisites-before-wsl--onboarding)
+  - [0. Optional: Automated bootstrap from Windows (`devenv`)](#0-optional-automated-bootstrap-from-windows-devenv)
   - [1. Install WSL2](#1-install-wsl2)
     - [Verify](#verify)
   - [2. Initial WSL2 Setup](#2-initial-wsl2-setup)
@@ -58,6 +60,84 @@ A step-by-step guide to get the Eligibility Signposting API project running on a
     - [Conflicting localstack images](#conflicting-localstack-images)
     - [`pre-commit` hook failures](#pre-commit-hook-failures)
   - [Quick Start Checklist](#quick-start-checklist)
+
+---
+
+## Prerequisites (Before WSL + Onboarding)
+
+Before you start WSL setup or project onboarding, make sure you already have:
+
+- Python installed on Windows and available on PATH (`python --version`).
+- PowerShell available on Windows (PowerShell 7+ recommended).
+- GitHub access to this repository with authentication configured for clone/push (SSH key, PAT, or GitHub CLI).
+
+Quick check from a PowerShell terminal:
+
+```powershell
+python --version
+pwsh --version
+git remote -v
+```
+
+If `pwsh` is not installed, use Windows PowerShell (`powershell.exe`) and continue.
+
+---
+
+## 0. Optional: Automated bootstrap from Windows (`devenv`)
+
+If you want to bootstrap a full WSL developer environment from a Windows PowerShell session, use the `devenv` runner.
+
+Open **PowerShell 7+** at the repository root and run:
+
+```powershell
+python .\devenv\run.py
+```
+
+Compatibility shim:
+
+```powershell
+.\devenv\run.ps1
+```
+
+Platform override examples (for future non-Windows bootstrap paths):
+
+```powershell
+python .\devenv\run.py --platform windows-wsl
+python .\devenv\run.py --platform macos
+python .\devenv\run.py --platform linux-native
+```
+
+For macOS/Linux shells, use the wrapper:
+
+```bash
+bash ./devenv/run.sh --platform macos
+bash ./devenv/run.sh --platform linux-native
+```
+
+The script prompts for:
+
+- Mode: `check` (validate only) or `create` (apply changes)
+- WSL username
+- WSL password (single entry, no confirm prompt; validated immediately with up to 3 retries)
+- GitHub username + Personal Access Token (PAT) in `create` mode when using HTTPS git remotes (used for clone/fetch/push without interactive username/password prompts)
+
+PAT note: the token must have repository read/write permissions for this repo (for example classic `repo` scope, or equivalent fine-grained repository permissions).
+Auth mode note: `create` uses non-interactive HTTPS auth headers for git operations, not terminal username/password prompts.
+
+In `check` mode, the bootstrap verifies the WSL user exists and validates credentials before continuing. It stops early if the user does not exist/cannot login or password validation fails.
+
+What it does in `create` mode:
+
+1. Verifies WSL and the `Ubuntu-24.04` distro are present.
+2. Creates a WSL workspace at `/home/{user}/workspace`.
+3. Clones the repo if missing, checks out `main`, creates an init branch, and optionally pushes it.
+4. Runs the onboarding setup and validation steps (`make config`, `make install`, `make onboarding-check`, plus optional tests).
+
+`create` uses a check-then-remediate pattern: if a prerequisite is missing or stale, it installs/updates it and continues (for example distro install, apt refresh + missing packages, git for first clone, Docker install/remediation, asdf tools, and project dependency setup).
+
+During `create`, you will also see a live step summary banner (`[1/6]` to `[6/6]`) so you can track remediation progress in real time.
+
+Use this when you want one guided entry point from Windows. Use the manual sections below when you want full control of each step.
 
 ---
 
@@ -510,7 +590,7 @@ Install these from the VS Code Extensions panel:
 
 1. Open the Command Palette (`Ctrl+Shift+P`).
 2. Type **Python: Select Interpreter**.
-3. Choose the `.venv` interpreter at `./venv/bin/python`.
+3. Choose the `.venv` interpreter at `./.venv/bin/python`.
 
 ### Verify
 

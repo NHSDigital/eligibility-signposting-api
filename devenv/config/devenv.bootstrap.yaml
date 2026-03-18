@@ -1,0 +1,87 @@
+schema_version: 1
+
+workspace:
+  name: eligibility-signposting-api
+  repo_root_from_windows_bootstrap: "..\\..\\.."
+
+git:
+  remote_name: origin
+  default_base_branch: feature/ajb-enhanceonboarding
+  clone_url: "https://github.com/NHSDigital/eligibility-signposting-api.git" # override for forks
+  validate:
+    repo_root_cmd: 'git -C "{repoRoot}" rev-parse --show-toplevel'
+    origin_url_cmd: 'git -C "{repoRoot}" remote get-url {remoteName}'
+    origin_head_cmd: 'git -C "{repoRoot}" symbolic-ref refs/remotes/{remoteName}/HEAD'
+  init_branch:
+    enabled: true
+    pattern: "init/{user}/init_branch_{timestamp}"
+    timestamp_format: "yyyyMMddHHmm"
+    user_source: "git config user.name"
+    sanitize_regex: "[^a-z0-9._-]+"
+    lowercase: true
+    push_on_create: true
+    fail_if_exists_on_remote: true
+
+bootstrap:
+  modes:
+    check:
+      mutate: false
+      require_git_repo: true
+      require_origin: true
+      require_wsl: true
+      require_distro: true
+      windows_required_paths:
+        - "devenv/run.py"
+        - "devenv/run.ps1"
+        - "devenv/run.sh"
+        - "devenv/platforms/windows/bootstrap.ps1"
+        - "devenv/platforms/wsl-ubuntu/bootstrap.sh"
+      report:
+        - windows_repo_root
+        - windows_origin_url
+        - windows_current_branch
+        - wsl_distro
+        - wsl_current_user
+        - wsl_repo_present
+        - wsl_repo_branch
+        - wsl_repo_commit
+        - wsl_working_tree_state
+
+    create:
+      mutate: true
+      require_git_repo: true
+      require_origin: true
+      require_wsl: true
+      require_distro: true
+      ensure_non_root_wsl_user: true
+      actions:
+        - ensure_wsl_repo_root_exists
+        - clone_if_missing_from_clone_url
+        - fetch_origin
+        - checkout_local_base_from_origin_main
+        - create_init_branch_from_origin_main
+        - push_init_branch
+
+platforms:
+  windows-wsl:
+    enabled: true
+    shell: powershell
+    wsl:
+      distro: Ubuntu-24.04
+      shell: bash
+      repo_root: /home/{user}/workspace
+      repo_name: eligibility-signposting-api
+      bootstrap_script: devenv/platforms/wsl-ubuntu/bootstrap.sh
+      linux_user:
+        require_non_root: true
+        default: dev
+
+  macos:
+    enabled: false
+    shell: zsh
+    notes: "Reserved for future parity implementation."
+
+  linux-native:
+    enabled: false
+    shell: bash
+    notes: "Reserved for future parity implementation."
