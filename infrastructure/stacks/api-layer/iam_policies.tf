@@ -296,7 +296,7 @@ data "aws_iam_policy_document" "kinesis_source_kms_read_access" {
 }
 
 # Attach kinesis read policy to firehose role
-resource "aws_iam_role_policy" "kinesis_firehose_s3_write_policy" {
+resource "aws_iam_role_policy" "kinesis_firehose_read_policy" {
   name   = "KinesisSourceReadAccess"
   role   = aws_iam_role.eligibility_audit_firehose_role.id
   policy = data.aws_iam_policy_document.kinesis_source_access.json
