@@ -198,9 +198,25 @@ require_non_root_if_configured() {
 
 load_config_from_yaml
 
-WSL_REPO_ROOT="${DEVENV_WSL_REPO_ROOT:-/home/${DEVENV_WSL_USERNAME:-$(whoami)}/workspace}"
-WSL_REPO_NAME="${DEVENV_WSL_REPO_NAME:-eligibility-signposting-api}"
-WSL_REPO_PATH="${DEVENV_WSL_REPO_PATH:-$WSL_REPO_ROOT/$WSL_REPO_NAME}"
+WSL_USERNAME_EFFECTIVE="${DEVENV_WSL_USERNAME:-}"
+if [[ -z "$WSL_USERNAME_EFFECTIVE" ]]; then
+  WSL_USERNAME_EFFECTIVE="$(whoami)"
+fi
+
+WSL_REPO_ROOT="${DEVENV_WSL_REPO_ROOT:-}"
+if [[ -z "$WSL_REPO_ROOT" ]]; then
+  WSL_REPO_ROOT="/home/$WSL_USERNAME_EFFECTIVE/workspace"
+fi
+
+WSL_REPO_NAME="${DEVENV_WSL_REPO_NAME:-}"
+if [[ -z "$WSL_REPO_NAME" ]]; then
+  WSL_REPO_NAME="eligibility-signposting-api"
+fi
+
+WSL_REPO_PATH="${DEVENV_WSL_REPO_PATH:-}"
+if [[ -z "$WSL_REPO_PATH" ]]; then
+  WSL_REPO_PATH="$WSL_REPO_ROOT/$WSL_REPO_NAME"
+fi
 
 CLONE_URL="${DEVENV_WSL_CLONE_URL:-https://github.com/NHSDigital/eligibility-signposting-api.git}"
 BASE_BRANCH="${DEVENV_WSL_BASE_BRANCH:-main}"
@@ -344,22 +360,92 @@ source "$MODULES_DIR/asdf.sh"
 # shellcheck source=/dev/null
 source "$MODULES_DIR/project.sh"
 
-DOCKER_STRATEGY="${DEVENV_DOCKER_STRATEGY:-${DOCKER_STRATEGY:-engine}}"
+legacy_docker_strategy="${DOCKER_STRATEGY:-}"
+DOCKER_STRATEGY="${DEVENV_DOCKER_STRATEGY:-$legacy_docker_strategy}"
+if [[ -z "$DOCKER_STRATEGY" ]]; then
+  DOCKER_STRATEGY="engine"
+fi
 
 ASDF_VERSION="${ASDF_VERSION:-v0.16.7}"
-PYTHON_VERSION="${DEVENV_PYTHON_VERSION:-$(version_from_tool_versions python "${PYTHON_VERSION:-3.13.5}")}"
-POETRY_VERSION="${DEVENV_POETRY_VERSION:-$(version_from_tool_versions poetry "${POETRY_VERSION:-2.1.4}")}"
-NODE_VERSION="${DEVENV_NODE_VERSION:-$(version_from_tool_versions nodejs "${NODE_VERSION:-22.18.0}")}"
-TERRAFORM_VERSION="${DEVENV_TERRAFORM_VERSION:-$(version_from_tool_versions terraform "${TERRAFORM_VERSION:-1.12.1}")}"
-PRECOMMIT_VERSION="${DEVENV_PRECOMMIT_VERSION:-$(version_from_tool_versions pre-commit "${PRECOMMIT_VERSION:-4.2.0}")}"
-VALE_VERSION="${DEVENV_VALE_VERSION:-$(version_from_tool_versions vale "${VALE_VERSION:-3.11.2}")}"
-ACT_VERSION="${DEVENV_ACT_VERSION:-$(version_from_tool_versions act "${ACT_VERSION:-0.2.77}")}"
 
-RUN_PROJECT_SETUP="${DEVENV_RUN_PROJECT_SETUP:-${RUN_PROJECT_SETUP:-true}}"
-RUN_VALIDATION="${DEVENV_RUN_VALIDATION:-${RUN_VALIDATION:-true}}"
-RUN_UNIT_TESTS="${DEVENV_RUN_UNIT_TESTS:-${RUN_UNIT_TESTS:-true}}"
-RUN_BUILD="${DEVENV_RUN_BUILD:-${RUN_BUILD:-false}}"
-RUN_INTEGRATION_TESTS="${DEVENV_RUN_INTEGRATION_TESTS:-${RUN_INTEGRATION_TESTS:-false}}"
+python_seed_version="${PYTHON_VERSION:-3.13.5}"
+if [[ -n "${DEVENV_PYTHON_VERSION:-}" ]]; then
+  PYTHON_VERSION="$DEVENV_PYTHON_VERSION"
+else
+  PYTHON_VERSION="$(version_from_tool_versions python "$python_seed_version")"
+fi
+
+poetry_seed_version="${POETRY_VERSION:-2.1.4}"
+if [[ -n "${DEVENV_POETRY_VERSION:-}" ]]; then
+  POETRY_VERSION="$DEVENV_POETRY_VERSION"
+else
+  POETRY_VERSION="$(version_from_tool_versions poetry "$poetry_seed_version")"
+fi
+
+node_seed_version="${NODE_VERSION:-22.18.0}"
+if [[ -n "${DEVENV_NODE_VERSION:-}" ]]; then
+  NODE_VERSION="$DEVENV_NODE_VERSION"
+else
+  NODE_VERSION="$(version_from_tool_versions nodejs "$node_seed_version")"
+fi
+
+terraform_seed_version="${TERRAFORM_VERSION:-1.12.1}"
+if [[ -n "${DEVENV_TERRAFORM_VERSION:-}" ]]; then
+  TERRAFORM_VERSION="$DEVENV_TERRAFORM_VERSION"
+else
+  TERRAFORM_VERSION="$(version_from_tool_versions terraform "$terraform_seed_version")"
+fi
+
+precommit_seed_version="${PRECOMMIT_VERSION:-4.2.0}"
+if [[ -n "${DEVENV_PRECOMMIT_VERSION:-}" ]]; then
+  PRECOMMIT_VERSION="$DEVENV_PRECOMMIT_VERSION"
+else
+  PRECOMMIT_VERSION="$(version_from_tool_versions pre-commit "$precommit_seed_version")"
+fi
+
+vale_seed_version="${VALE_VERSION:-3.11.2}"
+if [[ -n "${DEVENV_VALE_VERSION:-}" ]]; then
+  VALE_VERSION="$DEVENV_VALE_VERSION"
+else
+  VALE_VERSION="$(version_from_tool_versions vale "$vale_seed_version")"
+fi
+
+act_seed_version="${ACT_VERSION:-0.2.77}"
+if [[ -n "${DEVENV_ACT_VERSION:-}" ]]; then
+  ACT_VERSION="$DEVENV_ACT_VERSION"
+else
+  ACT_VERSION="$(version_from_tool_versions act "$act_seed_version")"
+fi
+
+legacy_run_project_setup="${RUN_PROJECT_SETUP:-}"
+RUN_PROJECT_SETUP="${DEVENV_RUN_PROJECT_SETUP:-$legacy_run_project_setup}"
+if [[ -z "$RUN_PROJECT_SETUP" ]]; then
+  RUN_PROJECT_SETUP="true"
+fi
+
+legacy_run_validation="${RUN_VALIDATION:-}"
+RUN_VALIDATION="${DEVENV_RUN_VALIDATION:-$legacy_run_validation}"
+if [[ -z "$RUN_VALIDATION" ]]; then
+  RUN_VALIDATION="true"
+fi
+
+legacy_run_unit_tests="${RUN_UNIT_TESTS:-}"
+RUN_UNIT_TESTS="${DEVENV_RUN_UNIT_TESTS:-$legacy_run_unit_tests}"
+if [[ -z "$RUN_UNIT_TESTS" ]]; then
+  RUN_UNIT_TESTS="true"
+fi
+
+legacy_run_build="${RUN_BUILD:-}"
+RUN_BUILD="${DEVENV_RUN_BUILD:-$legacy_run_build}"
+if [[ -z "$RUN_BUILD" ]]; then
+  RUN_BUILD="false"
+fi
+
+legacy_run_integration_tests="${RUN_INTEGRATION_TESTS:-}"
+RUN_INTEGRATION_TESTS="${DEVENV_RUN_INTEGRATION_TESTS:-$legacy_run_integration_tests}"
+if [[ -z "$RUN_INTEGRATION_TESTS" ]]; then
+  RUN_INTEGRATION_TESTS="false"
+fi
 
 REPORT_DIR="$REPO_ROOT/devenv/reports"
 mkdir -p "$REPORT_DIR"

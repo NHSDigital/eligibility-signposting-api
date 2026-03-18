@@ -131,7 +131,7 @@ What it does in `create` mode:
 
 1. Verifies WSL and the `Ubuntu-24.04` distro are present.
 2. Creates a WSL workspace at `/home/{user}/workspace`.
-3. Clones the repo if missing, checks out `main`, creates an init branch, and optionally pushes it.
+3. Clones the repo if missing, checks out the configured base branch (`git.default_base_branch`), creates an init branch, and optionally pushes it.
 4. Runs the onboarding setup and validation steps (`make config`, `make install`, `make onboarding-check`, plus optional tests).
 
 `create` uses a check-then-remediate pattern: if a prerequisite is missing or stale, it installs/updates it and continues (for example distro install, apt refresh + missing packages, git for first clone, Docker install/remediation, asdf tools, and project dependency setup).

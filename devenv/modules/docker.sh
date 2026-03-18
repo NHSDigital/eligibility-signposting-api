@@ -74,34 +74,34 @@ ensure_docker_engine() {
         report_warn "docker run hello-world failed"
       fi
     else
-    return
-
-    if [[ "$MODE" != "create" ]]; then
-      report_warn "Docker installed but daemon is not reachable"
-      return
-    fi
-
-    report_warn "Docker daemon not reachable; attempting remediation"
-    ensure_systemd_in_wsl_conf
-    sudo_run usermod -aG docker "$USER"
-
-    if _docker_systemd_active; then
-      sudo_run systemctl enable --now docker || true
-    else
-      report_warn "systemd is not active in this WSL session; Docker daemon may need a WSL restart"
-    fi
-
-    if docker info >/dev/null 2>&1; then
-      report_ok "Docker daemon reachable after remediation"
-      if docker run --rm hello-world >/dev/null 2>&1; then
-        report_ok "docker run hello-world succeeded"
-      else
-        report_warn "docker run hello-world failed"
+      if [[ "$MODE" != "create" ]]; then
+        report_warn "Docker installed but daemon is not reachable"
+        return
       fi
-    else
-      report_warn "Docker daemon is still not reachable; run 'wsl --shutdown' and rerun create"
+
+      report_warn "Docker daemon not reachable; attempting remediation"
+      ensure_systemd_in_wsl_conf
+      sudo_run usermod -aG docker "$USER"
+
+      if _docker_systemd_active; then
+        sudo_run systemctl enable --now docker || true
+      else
+        report_warn "systemd is not active in this WSL session; Docker daemon may need a WSL restart"
+      fi
+
+      if docker info >/dev/null 2>&1; then
+        report_ok "Docker daemon reachable after remediation"
+        if docker run --rm hello-world >/dev/null 2>&1; then
+          report_ok "docker run hello-world succeeded"
+        else
+          report_warn "docker run hello-world failed"
+        fi
+      else
+        report_warn "Docker daemon is still not reachable; run 'wsl --shutdown' and rerun create"
+      fi
     fi
     return
+  fi
 
   if [[ "$DOCKER_STRATEGY" == "desktop" ]]; then
     report_warn "Docker Desktop selected; install and enable WSL integration manually if Docker is unavailable"
