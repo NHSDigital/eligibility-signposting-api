@@ -158,6 +158,9 @@ def s3_client(boto3_session: Session, moto_server: URL) -> BaseClient:
 def firehose_client(boto3_session: Session, moto_server: URL) -> BaseClient:
     return boto3_session.client("firehose", endpoint_url=str(moto_server))
 
+@pytest.fixture(scope="session")
+def kinesis_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("kinesis", endpoint_url=str(moto_server))
 
 @pytest.fixture(scope="session")
 def secretsmanager_client(boto3_session: Session, moto_server: URL) -> BaseClient:
@@ -568,7 +571,7 @@ def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
 
 @pytest.fixture(autouse=True)
 def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketName) -> dict[str, Any]:
-    stream_name = "test_kinesis_audit_stream_to_s3"
+    stream_name = "test_firehose_audit_stream_to_s3"
 
     try:
         return firehose_client.create_delivery_stream(
@@ -584,6 +587,14 @@ def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketNa
         )
     except firehose_client.exceptions.ResourceInUseException:
         return firehose_client.describe_delivery_stream(DeliveryStreamName=stream_name)
+
+@pytest.fixture
+def kinesis_delivery_stream(kinesis_client: BaseClient) -> Generator[str]:
+    stream_name = "test-kinesis-audit-stream"
+    try:
+        return kinesis_client.create_stream(StreamName=stream_name, ShardCount=1)
+    except kinesis_client.exceptions.ResourceInUseException:
+        return kinesis_client.describe_stream(StreamName=stream_name)
 
 
 @pytest.fixture

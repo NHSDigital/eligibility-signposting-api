@@ -16,7 +16,7 @@ class AuditService:  # pragma: no cover
     def __init__(
         self,
         firehose: Annotated[BaseClient, Inject(qualifier="firehose")],
-        audit_delivery_stream: Annotated[AwsKinesisFirehoseStreamName, Inject(param="kinesis_audit_stream_to_s3")],
+        audit_delivery_stream: Annotated[AwsKinesisFirehoseStreamName, Inject(param="firehose_audit_stream_to_s3")],
     ) -> None:
         super().__init__()
         self.firehose = firehose
