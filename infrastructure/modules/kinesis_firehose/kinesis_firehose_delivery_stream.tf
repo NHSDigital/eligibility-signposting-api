@@ -2,6 +2,11 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
   name        = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.project_name}-${var.environment}-${var.audit_firehose_delivery_stream_name}"
   destination = "extended_s3"
 
+  kinesis_source_configuration {
+    kinesis_stream_arn = kinesis_source_stream_arn
+    role_arn           = var.audit_firehose_role.arn
+  }
+
   extended_s3_configuration {
     role_arn   = var.audit_firehose_role.arn
     bucket_arn = var.s3_audit_bucket_arn
@@ -14,8 +19,8 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
 
     cloudwatch_logging_options {
       enabled         = true
-      log_group_name  = var.kinesis_cloud_watch_log_group_name
-      log_stream_name = var.kinesis_cloud_watch_log_stream
+      log_group_name  = var.firehose_cloud_watch_log_group_name
+      log_stream_name = var.firehose_cloud_watch_log_stream
     }
   }
 
@@ -27,6 +32,7 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
 
   depends_on = [
     aws_kms_key.firehose_cmk,
+    var.kinesis_source_stream_arn,
     var.audit_firehose_role
   ]
 
