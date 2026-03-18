@@ -1,5 +1,5 @@
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import ClassVar
 
 import pytest
@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from rules_validation_api.validators.campaign_config_validator import CampaignConfigValidation
 from rules_validation_api.validators.iteration_validator import IterationValidation
+from tests.unit.validation.conftest import UK_TIMEZONE
 
 
 class TestMandatoryFieldsSchemaValidations:
@@ -67,7 +68,7 @@ class TestMandatoryFieldsSchemaValidations:
     def test_valid_iteration_date(self, date_value, valid_campaign_config_with_only_mandatory_fields):
         data = {**valid_campaign_config_with_only_mandatory_fields["Iterations"][0], "IterationDate": date_value}
         model = IterationValidation(**data)
-        expected_date = datetime.strptime(str(date_value), "%Y%m%d").replace(tzinfo=UTC).date()
+        expected_date = datetime.strptime(str(date_value), "%Y%m%d").replace(tzinfo=UK_TIMEZONE).date()
         assert model.iteration_date == expected_date, f"Expected {expected_date}, got {model.iteration_date}"
 
     # Type
@@ -520,22 +521,22 @@ class TestBUCValidations:
         [
             # GMT
             # Case 1: Iteration time overrides default
-            ("14:30:00", "09:00:00", "20250102", datetime(2025, 1, 2, 14, 30, 0, tzinfo=UTC)),
+            ("14:30:00", "09:00:00", "20250102", datetime(2025, 1, 2, 14, 30, 0, tzinfo=UK_TIMEZONE)),
             # Case 2: Iteration time is missing, so it uses campaign config iteration_time
-            (None, "09:00:00", "20250102", datetime(2025, 1, 2, 9, 0, 0, tzinfo=UTC)),
+            (None, "09:00:00", "20250102", datetime(2025, 1, 2, 9, 0, 0, tzinfo=UK_TIMEZONE)),
             # Case 3: Both are the same
-            ("10:00:00", "10:00:00", "20250102", datetime(2025, 1, 2, 10, 0, 0, tzinfo=UTC)),
+            ("10:00:00", "10:00:00", "20250102", datetime(2025, 1, 2, 10, 0, 0, tzinfo=UK_TIMEZONE)),
             # Case 4: Both are None, falls back to default value (12 AM) in campaign config iteration_time
-            (None, None, "20250102", datetime(2025, 1, 2, 0, 0, 0, tzinfo=UTC)),
+            (None, None, "20250102", datetime(2025, 1, 2, 0, 0, 0, tzinfo=UK_TIMEZONE)),
             # BST
             # Case 1: Iteration time overrides default
-            ("14:30:00", "09:00:00", "20250802", datetime(2025, 8, 2, 13, 30, 0, tzinfo=UTC)),
+            ("14:30:00", "09:00:00", "20250802", datetime(2025, 8, 2, 14, 30, 0, tzinfo=UK_TIMEZONE)),
             # Case 2: Iteration time is missing, so it uses campaign config iteration_time
-            (None, "09:00:00", "20250802", datetime(2025, 8, 2, 8, 0, 0, tzinfo=UTC)),
+            (None, "09:00:00", "20250802", datetime(2025, 8, 2, 9, 0, 0, tzinfo=UK_TIMEZONE)),
             # Case 3: Both are the same
-            ("10:00:00", "10:00:00", "20250802", datetime(2025, 8, 2, 9, 0, 0, tzinfo=UTC)),
+            ("10:00:00", "10:00:00", "20250802", datetime(2025, 8, 2, 10, 0, 0, tzinfo=UK_TIMEZONE)),
             # Case 4: Both are None, falls back to default value (12 AM) in campaign config iteration_time
-            (None, None, "20250802", datetime(2025, 8, 1, 23, 0, 0, tzinfo=UTC)),
+            (None, None, "20250802", datetime(2025, 8, 2, 0, 0, 0, tzinfo=UK_TIMEZONE)),
         ],
     )
     def test_iteration_full_datetime_validation(  # noqa : PLR0913

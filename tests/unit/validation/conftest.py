@@ -1,4 +1,8 @@
+from zoneinfo import ZoneInfo
+
 import pytest
+
+UK_TIMEZONE = ZoneInfo("Europe/London")
 
 
 @pytest.fixture

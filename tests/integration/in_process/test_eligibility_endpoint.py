@@ -1,5 +1,5 @@
 import json
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from http import HTTPStatus
 from zoneinfo import ZoneInfo
 
@@ -34,17 +34,19 @@ from eligibility_signposting_api.repos.campaign_repo import BucketName
 from tests.fixtures.builders.model import rule
 from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
-
-def today() -> date:
-    return datetime.now(UTC).date()
+UK_TIMEZONE = ZoneInfo("Europe/London")
 
 
-def yesterday() -> date:
-    return datetime.now(UTC).date() - timedelta(days=1)
+def today_uk() -> date:
+    return datetime.now(UK_TIMEZONE).date()
 
 
-def tomorrow() -> date:
-    return datetime.now(UTC).date() + timedelta(days=1)
+def yesterday_uk() -> date:
+    return datetime.now(UK_TIMEZONE).date() - timedelta(days=1)
+
+
+def tomorrow_uk() -> date:
+    return datetime.now(UK_TIMEZONE).date() + timedelta(days=1)
 
 
 class TestBaseLine:
@@ -1213,13 +1215,13 @@ class TestEligibilityResponseWithVariousInputs:
             (
                 [
                     # Creates campaign configs by [target, campaign id, iteration status, iteration date]
-                    ("RSV", "RSV_campaign_id_1", "active", today()),
-                    ("RSV", "RSV_campaign_id_2", "active", today()),
-                    ("RSV", "RSV_campaign_id_3", "active", today()),
-                    ("RSV", "RSV_campaign_id_4", "active", yesterday()),
+                    ("RSV", "RSV_campaign_id_1", "active", today_uk()),
+                    ("RSV", "RSV_campaign_id_2", "active", today_uk()),
+                    ("RSV", "RSV_campaign_id_3", "active", today_uk()),
+                    ("RSV", "RSV_campaign_id_4", "active", yesterday_uk()),
                     # inactive iteration
-                    ("RSV", "inactive_RSV_campaign_id_5", "inactive", tomorrow()),
-                    ("RSV", "RSV_campaign_id_6", "active", today()),
+                    ("RSV", "inactive_RSV_campaign_id_5", "inactive", tomorrow_uk()),
+                    ("RSV", "RSV_campaign_id_6", "active", today_uk()),
                 ],
                 {
                     # Consumer mappings in S3
@@ -1290,43 +1292,43 @@ class TestEligibilityResponseWithVariousInputs:
         ),
         [
             (
-                ("RSV_campaign_id_1", today()),
-                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                ("RSV_campaign_id_1", today_uk()),
+                ("RSV_campaign_id_2", today_uk() - timedelta(days=1)),
                 "SW19",  # postcode for resulting in not-actionable (used by the suppression rule)
                 "cohort2",
                 "RSV_campaign_id_1",
             ),
             (
-                ("RSV_campaign_id_1", today() - timedelta(days=1)),
-                ("RSV_campaign_id_2", today()),
+                ("RSV_campaign_id_1", today_uk() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today_uk()),
                 "SW19",  # postcode for resulting in not-actionable
                 "cohort2",
                 "RSV_campaign_id_2",
             ),
             (
-                ("RSV_campaign_id_1", today()),
-                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                ("RSV_campaign_id_1", today_uk()),
+                ("RSV_campaign_id_2", today_uk() - timedelta(days=1)),
                 "M4",  # postcode for resulting in actionable
                 "cohort2",
                 "RSV_campaign_id_1",
             ),
             (
-                ("RSV_campaign_id_1", today() - timedelta(days=1)),
-                ("RSV_campaign_id_2", today()),
+                ("RSV_campaign_id_1", today_uk() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today_uk()),
                 "M4",  # postcode for resulting in actionable
                 "cohort2",
                 "RSV_campaign_id_2",
             ),
             (
-                ("RSV_campaign_id_1", today()),
-                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                ("RSV_campaign_id_1", today_uk()),
+                ("RSV_campaign_id_2", today_uk() - timedelta(days=1)),
                 "M4",  # cohort for resulting in not-eligible
                 "cohort1",
                 "RSV_campaign_id_1",
             ),
             (
-                ("RSV_campaign_id_1", today() - timedelta(days=1)),
-                ("RSV_campaign_id_2", today()),
+                ("RSV_campaign_id_1", today_uk() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today_uk()),
                 "M4",
                 "cohort1",  # cohort for resulting in not-eligible (used by the filter rule)
                 "RSV_campaign_id_2",
@@ -1476,7 +1478,7 @@ class TestEligibilityResponseWithVariousInputs:
             ),
             ContentType="application/json",
         )
-        previous_day = yesterday()
+        previous_day = yesterday_uk()
         # Campaign configs
         campaign_1 = rule.RawCampaignConfigFactory.build(
             id="RSV_campaign_id_1",
@@ -1534,10 +1536,11 @@ class TestEligibilityResponseWithVariousInputs:
                 )
             ),
         )
+        expected_date = datetime.combine(previous_day, time.min).replace(tzinfo=UK_TIMEZONE)
         err_msg = (
             "Ambiguous result: '2' active iterations "
             "for target RSV "
-            f"found for datetime '{previous_day} 00:00:00+00:00' "
+            f"found for datetime '{expected_date}' "
             "across campaign(s) ['RSV_campaign_id_1', 'RSV_campaign_id_2']"
         )
         assert any(err_msg in message for message in caplog.messages), (
@@ -1558,8 +1561,7 @@ class TestEligibilityResponseWithVariousInputs:
         consumer_id = "consumer-n3bs-jo4hn-ce4na"
         headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
         now_london = datetime.now(ZoneInfo("Europe/London"))
-        now_utc = now_london.astimezone(UTC)
-        previous_day = yesterday()
+        previous_day = yesterday_uk()
 
         ## Campaign config 1
         campaign_1 = rule.RawCampaignConfigFactory.build(
@@ -1569,7 +1571,7 @@ class TestEligibilityResponseWithVariousInputs:
             type="V",
             iterations=[
                 rule.IterationFactory.build(iteration_date=previous_day),
-                rule.IterationFactory.build(iteration_date=tomorrow()),
+                rule.IterationFactory.build(iteration_date=tomorrow_uk()),
             ],
         )
 
@@ -1591,7 +1593,7 @@ class TestEligibilityResponseWithVariousInputs:
             type="V",
             iterations=[
                 rule.IterationFactory.build(iteration_date=previous_day),
-                rule.IterationFactory.build(iteration_date=tomorrow()),
+                rule.IterationFactory.build(iteration_date=tomorrow_uk()),
             ],
         )
 
@@ -1662,10 +1664,13 @@ class TestEligibilityResponseWithVariousInputs:
                 )
             ),
         )
+        expected_dt = now_london.strftime("%Y-%m-%d %H:%M:%S%z")
+        expected_dt = expected_dt[:-2] + ":" + expected_dt[-2:]
+
         err_msg = (
             "Ambiguous result: '2' active iterations "
             "for target RSV "
-            f"found for datetime '{now_utc.strftime('%Y-%m-%d')} {iteration_time_1}+00:00' "
+            f"found for datetime '{expected_dt}' "
             "across campaign(s) ['RSV_campaign_id_1', 'RSV_campaign_id_2']"
         )
         assert any(err_msg in message for message in caplog.messages), (

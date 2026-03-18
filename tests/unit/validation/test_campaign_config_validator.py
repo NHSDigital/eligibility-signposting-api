@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -6,6 +6,7 @@ from freezegun import freeze_time
 from pydantic import ValidationError
 
 from rules_validation_api.validators.campaign_config_validator import CampaignConfigValidation
+from tests.unit.validation.conftest import UK_TIMEZONE
 
 
 class TestMandatoryFieldsSchemaValidations:
@@ -441,7 +442,7 @@ class TestBUCValidations:
 
         expected = datetime.strptime(
             iteration_3["IterationDate"] + iteration_3["IterationTime"], "%Y%m%d%H:%M:%S"
-        ).replace(tzinfo=UTC)
+        ).replace(tzinfo=UK_TIMEZONE)
 
         assert model.current_iteration.iteration_datetime == expected
 
@@ -469,7 +470,7 @@ class TestBUCValidations:
         expected = (
             datetime.strptime(iteration_3["IterationDate"] + iteration_3["IterationTime"], "%Y%m%d%H:%M:%S")
             .replace(tzinfo=uk)
-            .astimezone(UTC)
+            .astimezone(UK_TIMEZONE)
         )
 
         assert model.current_iteration.iteration_datetime == expected

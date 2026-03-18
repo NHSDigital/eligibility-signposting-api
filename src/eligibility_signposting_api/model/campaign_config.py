@@ -324,6 +324,9 @@ class Iteration(BaseModel):
 
     @cached_property
     def iteration_datetime(self) -> datetime:
+        """iteration_datetime is the datetime of the iteration,
+        including the iteration_time if set, otherwise the parent's iteration_time.
+        the return type is datetime in Europe/London time zone."""
         if self.iteration_time:
             iteration_time = self.iteration_time
         elif self._parent:
