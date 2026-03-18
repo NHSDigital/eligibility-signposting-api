@@ -46,10 +46,6 @@ class CampaignConfigValidation(CampaignConfig):
     @model_validator(mode="after")
     def validate_campaign_has_iteration_within_schedule(self) -> typing.Self:
         errors: list[str] = []
-        for iteration in self.iterations:
-            if iteration._parent is None:  # noqa : SLF001
-                iteration.set_parent(self)
-
         iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_datetime"))
 
         for idx, iteration in enumerate(iterations_by_date):
