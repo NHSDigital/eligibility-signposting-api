@@ -158,9 +158,11 @@ def s3_client(boto3_session: Session, moto_server: URL) -> BaseClient:
 def firehose_client(boto3_session: Session, moto_server: URL) -> BaseClient:
     return boto3_session.client("firehose", endpoint_url=str(moto_server))
 
+
 @pytest.fixture(scope="session")
 def kinesis_client(boto3_session: Session, moto_server: URL) -> BaseClient:
     return boto3_session.client("kinesis", endpoint_url=str(moto_server))
+
 
 @pytest.fixture(scope="session")
 def secretsmanager_client(boto3_session: Session, moto_server: URL) -> BaseClient:
@@ -579,8 +581,7 @@ def kinesis_stream(kinesis_client: BaseClient) -> dict[str, Any]:
 
 
 @pytest.fixture(autouse=True)
-def firehose_delivery_stream(firehose_client: BaseClient,
-                             audit_bucket: BucketName) -> dict[str, Any]:
+def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketName) -> dict[str, Any]:
     stream_name = "test_firehose_audit_stream_to_s3"
 
     try:
@@ -597,6 +598,7 @@ def firehose_delivery_stream(firehose_client: BaseClient,
         )
     except firehose_client.exceptions.ResourceInUseException:
         return firehose_client.describe_delivery_stream(DeliveryStreamName=stream_name)
+
 
 def bridge_latest_kinesis_record_to_firehose(
     kinesis_client: BaseClient,

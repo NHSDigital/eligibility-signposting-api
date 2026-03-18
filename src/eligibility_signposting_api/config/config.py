@@ -31,9 +31,7 @@ def config() -> dict[str, Any]:
     firehose_audit_stream_to_s3 = AwsKinesisFirehoseStreamName(
         os.getenv("FIREHOSE_AUDIT_STREAM_TO_S3", "test_firehose_audit_stream_to_s3")
     )
-    kinesis_audit_stream = AwsKinesisStreamName(
-        os.getenv("KINESIS_AUDIT_STREAM", "test-kinesis-audit-stream")
-    )
+    kinesis_audit_stream = AwsKinesisStreamName(os.getenv("KINESIS_AUDIT_STREAM", "test-kinesis-audit-stream"))
     log_level = LOG_LEVEL
 
     if os.getenv("ENV"):

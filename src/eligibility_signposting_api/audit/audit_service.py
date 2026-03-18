@@ -45,8 +45,11 @@ class AuditService:  # pragma: no cover
             Data=(data + "\n").encode("utf-8"),
             PartitionKey=partition_key,
         )
-        logger.info("Successfully sent to kinesis", extra={
-            "stream_name": self.audit_stream,
-            "kinesis_sequence_number": response.get("SequenceNumber"),
-            "kinesis_shard_id": response.get("ShardId"),
-        },)
+        logger.info(
+            "Successfully sent to kinesis",
+            extra={
+                "stream_name": self.audit_stream,
+                "kinesis_sequence_number": response.get("SequenceNumber"),
+                "kinesis_shard_id": response.get("ShardId"),
+            },
+        )
