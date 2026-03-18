@@ -26,6 +26,10 @@ def _parse_with_format[T](
 
 
 def convert_from_uk_to_utc(value: datetime | date) -> datetime:
+    """
+    Convert a UK-local date/datetime to UTC.
+    Naive date_times are assumed to be UK time.
+    """
     if isinstance(value, date) and not isinstance(value, datetime):
         value = datetime.combine(value, time.min)
 

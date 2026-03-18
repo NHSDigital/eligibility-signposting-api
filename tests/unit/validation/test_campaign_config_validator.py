@@ -353,7 +353,7 @@ class TestBUCValidations:
         model = CampaignConfigValidation(**data)
         assert model.campaign_live is True
 
-    def test_iteration_datetime_utc_conversion(self, valid_campaign_config_with_only_mandatory_fields):
+    def test_iteration_datetime_conversion(self, valid_campaign_config_with_only_mandatory_fields):
         data = valid_campaign_config_with_only_mandatory_fields.copy()
         data["IterationTime"] = "09:00:00"
 
@@ -364,7 +364,7 @@ class TestBUCValidations:
         data["Iterations"][0]["IterationDate"] = "20260701"
 
         model_summer = CampaignConfigValidation(**data)
-        assert model_summer.iterations[0].iteration_datetime_utc.hour == 8  # noqa : PLR2004
+        assert model_summer.iterations[0].iteration_datetime.hour == 9  # noqa : PLR2004
 
         # Test Winter (GMT) - Ensure Campaign covers January
         data["StartDate"] = "20260101"
@@ -372,7 +372,7 @@ class TestBUCValidations:
         data["Iterations"][0]["IterationDate"] = "20260101"
 
         model_winter = CampaignConfigValidation(**data)
-        assert model_winter.iterations[0].iteration_datetime_utc.hour == 9  # noqa : PLR2004
+        assert model_winter.iterations[0].iteration_datetime.hour == 9  # noqa : PLR2004
 
     @freeze_time("2026-05-31 22:59:59")  # 1 second before BST Midnight
     def test_campaign_not_live_yet_bst(self, valid_campaign_config_with_only_mandatory_fields):
@@ -443,7 +443,7 @@ class TestBUCValidations:
             iteration_3["IterationDate"] + iteration_3["IterationTime"], "%Y%m%d%H:%M:%S"
         ).replace(tzinfo=UTC)
 
-        assert model.current_iteration.iteration_datetime_utc == expected
+        assert model.current_iteration.iteration_datetime == expected
 
     @freeze_time("2026-03-30 01:00:01+01:00")
     def test_get_current_iteration_by_iteration_date_time_bst(self, valid_campaign_config_with_only_mandatory_fields):
@@ -472,4 +472,4 @@ class TestBUCValidations:
             .astimezone(UTC)
         )
 
-        assert model.current_iteration.iteration_datetime_utc == expected
+        assert model.current_iteration.iteration_datetime == expected

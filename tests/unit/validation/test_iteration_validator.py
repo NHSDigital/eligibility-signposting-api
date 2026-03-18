@@ -563,7 +563,7 @@ class TestBUCValidations:
         config = CampaignConfigValidation(**data)
 
         # Then
-        result = config.iterations[0].iteration_datetime_utc
+        result = config.iterations[0].iteration_datetime
 
         assert result == expected_date_time, (
             f"Failed! Input: {iteration_time_input}, Default: {default_time_iteration_input}. "

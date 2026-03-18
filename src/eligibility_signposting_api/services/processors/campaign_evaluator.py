@@ -31,7 +31,7 @@ class CampaignEvaluator:
 
         for cc in active_campaigns:
             try:
-                valid_items.append((cc.current_iteration.iteration_datetime_utc, cc))
+                valid_items.append((cc.current_iteration.iteration_datetime, cc))
             except StopIteration:
                 logger.info(
                     "Skipping campaign ID %s as no active iteration was found.",

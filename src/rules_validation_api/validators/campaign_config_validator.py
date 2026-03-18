@@ -50,15 +50,15 @@ class CampaignConfigValidation(CampaignConfig):
             if iteration._parent is None:  # noqa : SLF001
                 iteration.set_parent(self)
 
-        iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_datetime_utc"))
+        iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_datetime"))
 
         for idx, iteration in enumerate(iterations_by_date):
-            if iteration.iteration_datetime_utc < self.start_date_utc:
+            if iteration.iteration_datetime.date() < self.start_date:
                 errors.append(
                     f"CampaignConfig.Iterations.{idx}.IterationDate : "
                     f"Starts before campaign start date {self.start_date} [type=invalid]"
                 )
-            if iteration.iteration_datetime_utc > self.end_date_utc:
+            if iteration.iteration_datetime.date() > self.end_date:
                 errors.append(
                     f"CampaignConfig.Iterations.{idx}.IterationDate : "
                     f"Starts after campaign end date {self.end_date} [type=invalid]"
