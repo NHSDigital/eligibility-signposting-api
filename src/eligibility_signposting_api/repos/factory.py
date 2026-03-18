@@ -44,6 +44,14 @@ def firehose_client_factory(
     endpoint_url = str(firehose_endpoint) if firehose_endpoint is not None else None
     return session.client("firehose", endpoint_url=endpoint_url)
 
+@service(qualifier="kinesis")
+def kinesis_client_factory(
+    session: Session,
+    kinesis_endpoint: Annotated[URL, Inject(param="kinesis_endpoint")],
+) -> BaseClient:
+    endpoint_url = str(kinesis_endpoint) if kinesis_endpoint is not None else None
+    return session.client("kinesis", endpoint_url=endpoint_url)
+
 
 @service(qualifier="secretsmanager")
 def secretsmanager_client_factory(
