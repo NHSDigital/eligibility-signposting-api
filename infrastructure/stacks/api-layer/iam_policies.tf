@@ -256,7 +256,7 @@ resource "aws_iam_role_policy_attachment" "lambda_insights_policy" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy"
 }
 
-# Policy document for Kinesis Firehose to read from Kinesis Source stream
+# Policy document to read from Kinesis Source stream
 data "aws_iam_policy_document" "kinesis_source_access" {
   statement {
     sid    = "AllowReadFromKinesisSourceStream"
@@ -272,7 +272,25 @@ data "aws_iam_policy_document" "kinesis_source_access" {
     ]
 
     resources = [
-      aws_kinesis_stream.kinesis_source_stream,
+      aws_kinesis_stream.kinesis_source_stream.arn,
+    ]
+  }
+}
+
+# Policy document to use KMS key for reading from Kinesis Source stream
+data "aws_iam_policy_document" "kinesis_source_kms_read_access" {
+  statement {
+    sid    = "AllowUseOfKinesisSourceKeyForReads"
+    effect = "Allow"
+
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey",
+      "kms:DescribeKey"
+    ]
+
+    resources = [
+      aws_kms_key.kinesis_data_stream_kms_key.arn
     ]
   }
 }
@@ -282,6 +300,13 @@ resource "aws_iam_role_policy" "kinesis_firehose_s3_write_policy" {
   name   = "KinesisSourceReadAccess"
   role   = aws_iam_role.eligibility_audit_firehose_role.id
   policy = data.aws_iam_policy_document.kinesis_source_access.json
+}
+
+# Attach kinesis source stream KMS read policy to firehose role
+resource "aws_iam_role_policy" "firehose_kinesis_source_kms_policy" {
+  name   = "KinesisSourceKmsReadAccess"
+  role   = aws_iam_role.eligibility_audit_firehose_role.id
+  policy = data.aws_iam_policy_document.kinesis_source_kms_read_access.json
 }
 
 # Policy document for Lambda to write to Kinesis stream
@@ -296,16 +321,42 @@ data "aws_iam_policy_document" "kinesis_write_access" {
     ]
 
     resources = [
-      aws_kinesis_stream.kinesis_source_stream
+      aws_kinesis_stream.kinesis_source_stream.arn
     ]
   }
 }
+
+# Policy document to use the KMS key
+data "aws_iam_policy_document" "kinesis_kms_write_access" {
+  statement {
+    sid    = "AllowUseOfKinesisStreamKeyForWrites"
+    effect = "Allow"
+
+    actions = [
+      "kms:Encrypt",
+      "kms:GenerateDataKey",
+      "kms:DescribeKey"
+    ]
+
+    resources = [
+      aws_kms_key.kinesis_data_stream_kms_key.arn
+    ]
+  }
+}
+
 
 # Attach kinesis write policy to Lambda role
 resource "aws_iam_role_policy" "lambda_kinesis_write_policy" {
   name   = "KinesisWriteAccess"
   role   = aws_iam_role.eligibility_lambda_role.id
   policy = data.aws_iam_policy_document.kinesis_write_access.json
+}
+
+# Attach kinesis KMS access policy to Lambda role
+resource "aws_iam_role_policy" "lambda_kinesis_kms_policy" {
+  name   = "KinesisStreamKmsWriteAccess"
+  role   = aws_iam_role.eligibility_lambda_role.id
+  policy = data.aws_iam_policy_document.kinesis_kms_write_access.json
 }
 
 # Policy doc for S3 Audit bucket
