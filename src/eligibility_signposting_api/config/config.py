@@ -50,6 +50,7 @@ def config() -> dict[str, Any]:
             "firehose_endpoint": None,
             "firehose_audit_stream_to_s3": firehose_audit_stream_to_s3,
             "kinesis_audit_stream": kinesis_audit_stream,
+            "kinesis_endpoint": None,
             "enable_xray_patching": enable_xray_patching,
             "secretsmanager_endpoint": None,
             "hashing_secret_name": hashing_secret_name,
