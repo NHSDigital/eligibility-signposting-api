@@ -1,11 +1,12 @@
 import sys
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from io import StringIO
 from unittest.mock import Mock, PropertyMock, patch
 
 from pydantic import BaseModel, ValidationError
 
 from rules_validation_api.app import display_current_iteration, refine_error
+from tests.unit.validation.conftest import UK_TIMEZONE
 
 
 def _raise_validation_error(model_cls, **kwargs) -> ValidationError:
@@ -85,7 +86,7 @@ def test_no_current_iteration():
     # iterations must be a list, not a Mock
     result.campaign_config.iterations = []
 
-    result.campaign_config.end_date = datetime.now(UTC).date() + timedelta(days=1)
+    result.campaign_config.end_date = datetime.now(UK_TIMEZONE).date() + timedelta(days=1)
 
     # current_iteration should raise StopIteration
     type(result.campaign_config).current_iteration = PropertyMock(side_effect=StopIteration)
@@ -107,13 +108,13 @@ def test_current_iteration_exists():
     # Arrange
     mock_iteration = Mock()
     mock_iteration.iteration_number = 7
-    mock_iteration.iteration_date = datetime.now(UTC).date() - timedelta(days=1)
+    mock_iteration.iteration_date = datetime.now(UK_TIMEZONE).date() - timedelta(days=1)
 
     result = Mock()
     result.campaign_config = Mock()
 
     result.campaign_config.iterations = [mock_iteration]
-    result.campaign_config.end_date = datetime.now(UTC).date() + timedelta(days=1)
+    result.campaign_config.end_date = datetime.now(UK_TIMEZONE).date() + timedelta(days=1)
 
     type(result.campaign_config).current_iteration = PropertyMock(return_value=mock_iteration)
 
@@ -130,7 +131,7 @@ def test_current_iteration_exists():
 
 def test_next_iteration_exists():
     # Given
-    today = datetime.now(UTC).date()
+    today = datetime.now(UK_TIMEZONE).date()
 
     # Setup
     next_mock = Mock()
@@ -139,7 +140,7 @@ def test_next_iteration_exists():
     next_mock.iteration_datetime = datetime.combine(
         next_mock.iteration_date,
         datetime.min.time(),
-        tzinfo=UTC,
+        tzinfo=UK_TIMEZONE,
     )
 
     result = Mock()
@@ -163,7 +164,7 @@ def test_next_iteration_exists():
 
 def test_campaign_expired_and_no_next_iteration():
     """Covers: is_campaign_expired = True, next iteration logic skipped."""
-    today = datetime.now(UTC).date()
+    today = datetime.now(UK_TIMEZONE).date()
 
     result = Mock()
     config = result.campaign_config
@@ -183,7 +184,7 @@ def test_campaign_expired_and_no_next_iteration():
 
 def test_campaign_to_be_started():
     """Covers: is_campaign_expired = False, campaign_live = False."""
-    today = datetime.now(UTC).date()
+    today = datetime.now(UK_TIMEZONE).date()
 
     result = Mock()
     config = result.campaign_config
@@ -206,7 +207,7 @@ def test_next_iteration_stop_iteration_exception():
     Covers the 'except StopIteration' block in the Next Iteration section.
     This triggers if the generator inside next() raises StopIteration explicitly.
     """
-    today = datetime.now(UTC).date()
+    today = datetime.now(UK_TIMEZONE).date()
 
     result = Mock()
     config = result.campaign_config
@@ -223,7 +224,7 @@ def test_next_iteration_stop_iteration_exception():
 
 
 def test_next_iteration_is_none():
-    today = datetime.now(UTC).date()
+    today = datetime.now(UK_TIMEZONE).date()
 
     result = Mock()
     config = result.campaign_config

@@ -46,15 +46,15 @@ class CampaignConfigValidation(CampaignConfig):
     @model_validator(mode="after")
     def validate_campaign_has_iteration_within_schedule(self) -> typing.Self:
         errors: list[str] = []
-        iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_date"))
+        iterations_by_date = sorted(self.iterations, key=attrgetter("iteration_datetime"))
 
         for idx, iteration in enumerate(iterations_by_date):
-            if iteration.iteration_date < self.start_date:
+            if iteration.iteration_datetime.date() < self.start_date:
                 errors.append(
                     f"CampaignConfig.Iterations.{idx}.IterationDate : "
                     f"Starts before campaign start date {self.start_date} [type=invalid]"
                 )
-            if iteration.iteration_date > self.end_date:
+            if iteration.iteration_datetime.date() > self.end_date:
                 errors.append(
                     f"CampaignConfig.Iterations.{idx}.IterationDate : "
                     f"Starts after campaign end date {self.end_date} [type=invalid]"
