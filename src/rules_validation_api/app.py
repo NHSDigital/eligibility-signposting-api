@@ -3,9 +3,10 @@ import json
 import logging
 import sys
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import datetime
 from operator import attrgetter
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from pydantic import ValidationError
 
@@ -23,6 +24,8 @@ RESET = "\033[0m"
 YELLOW = "\033[93m"
 RED = "\033[91m"
 BLUE = "\033[34m"
+
+UK_TIMEZONE = ZoneInfo("Europe/London")
 
 
 def refine_error(e: ValidationError) -> str:
@@ -79,10 +82,10 @@ def display_current_iteration(result: RulesValidation) -> None:
     config = result.campaign_config
     iterations = config.iterations
     is_campaign_live = config.campaign_live
-    today = datetime.now(tz=UTC).date()
+    today_uk = datetime.now(tz=UK_TIMEZONE).date()
 
     no_of_iterations = len(iterations)
-    is_campaign_expired = config.end_date < today
+    is_campaign_expired = config.end_date < today_uk
 
     # ---- Current Iteration ----
     if is_campaign_live:
@@ -114,7 +117,7 @@ def display_current_iteration(result: RulesValidation) -> None:
         sorted_iterations = sorted(iterations, key=attrgetter("iteration_date"))
 
         try:
-            next_iteration = next((i for i in sorted_iterations if i.iteration_date > today), None)
+            next_iteration = next((i for i in sorted_iterations if i.iteration_date > today_uk), None)
 
             if next_iteration:
                 sys.stdout.write(
