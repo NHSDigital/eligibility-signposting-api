@@ -117,8 +117,8 @@ locals {
     {
       name           = "DynamoDBTableReadOutsideLambdaRole"
       namespace      = "security"
-      filter         = "{($.eventSource=dynamodb.amazonaws.com) && (($.eventName=GetItem) || ($.eventName=Query) || ($.eventName=Scan)) && ($.requestParameters.tableName=\"${module.eligibility_status_table.table_name}\") && (($.userIdentity.sessionContext.sessionIssuer.arn !=\"${aws_iam_role.eligibility_lambda_role.arn}\")}"
-      log_group_name = "NHSDAudit_trail_log_group"
+      filter         = "{($.eventSource=dynamodb.amazonaws.com) && (($.eventName=GetItem) || ($.eventName=Query) || ($.eventName=Scan)) && ($.requestParameters.tableName=\"${module.eligibility_status_table.table_name}\") && (($.userIdentity.sessionContext.sessionIssuer.arn != \"${aws_iam_role.eligibility_lambda_role.arn}\") || ($.userIdentity.sessionContext.sessionIssuer.arn NOT EXISTS))}"
+      log_group_name = "test-dynamodb-aws-cloudtrail-logs-448049830832-2e96053a"
     },
   ]
 }

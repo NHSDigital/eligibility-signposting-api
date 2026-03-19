@@ -181,7 +181,6 @@ locals {
       alarm_description   = "DynamoDB table read detected from non-Lambda execution role"
       actions_enabled     = true
     }
-
   }
 
   # API Gateway alarm configuration
