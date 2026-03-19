@@ -57,3 +57,12 @@ module "s3_dq_metrics_bucket" {
   stack_name   = local.stack_name
   workspace    = terraform.workspace
 }
+
+module "s3_elid_cloudwatch_bucket" {
+  source       = "../../modules/s3"
+  bucket_name  = "elid-cloudwatch-logs"
+  environment  = var.environment
+  project_name = var.project_name
+  stack_name   = local.stack_name
+  workspace    = terraform.workspace
+}
