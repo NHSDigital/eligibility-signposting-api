@@ -28,6 +28,8 @@ STATUS_MAPPING = {
     Status.not_eligible: eligibility_response.Status.not_eligible,
 }
 
+BYPASS_CAMPAIGN_CONFIG_CACHE_HEADER = "X-Bypass-Campaign-Config-Cache"
+
 logger = logging.getLogger(__name__)
 
 eligibility_blueprint = Blueprint("eligibility", __name__)
@@ -53,6 +55,7 @@ def check_eligibility(
 
     query_params = _get_or_default_query_params()
     consumer_id = _get_consumer_id_from_headers()
+    bypass_campaign_config_cache = _should_bypass_campaign_config_cache()
 
     try:
         eligibility_status = eligibility_service.get_eligibility_status(
@@ -61,6 +64,7 @@ def check_eligibility(
             query_params["conditions"],
             query_params["category"],
             consumer_id,
+            bypass_campaign_config_cache=bypass_campaign_config_cache,
         )
     except UnknownPersonError:
         return handle_unknown_person_error(nhs_number)
@@ -75,6 +79,11 @@ def _get_consumer_id_from_headers() -> ConsumerId:
     @validate_request_params() ensures the consumer ID is never null at this stage.
     """
     return ConsumerId(request.headers.get(CONSUMER_ID, ""))
+
+
+def _should_bypass_campaign_config_cache() -> bool:
+    value = request.headers.get(BYPASS_CAMPAIGN_CONFIG_CACHE_HEADER, "")
+    return value.lower() == "true"
 
 
 def _get_or_default_query_params() -> dict[str, Any]:

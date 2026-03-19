@@ -42,6 +42,7 @@ class EligibilityService:
         conditions: list[str],
         category: str,
         consumer_id: str,
+        bypass_campaign_config_cache: bool = False,
     ) -> eligibility_status.EligibilityStatus:
         """Calculate a person's eligibility for vaccination given an NHS number."""
         if nhs_number:
@@ -50,7 +51,11 @@ class EligibilityService:
             except NotFoundError as e:
                 raise UnknownPersonError from e
             else:
-                campaign_configs: list[CampaignConfig] = list(self.campaign_repo.get_campaign_configs())
+                campaign_configs: list[CampaignConfig] = list(
+                    self.campaign_repo.get_campaign_configs(
+                        bypass_cache=bypass_campaign_config_cache
+                    )
+                )
                 permitted_campaign_configs = self.__collect_permitted_campaign_configs(
                     campaign_configs, ConsumerId(consumer_id)
                 )

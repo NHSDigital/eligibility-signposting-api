@@ -726,3 +726,36 @@ def test_status_end_point(invoke_with_mock_apigw_request):
             )
         ),
     )
+
+def test_cache_bypass(  # noqa: PLR0913
+    lambda_client: BaseClient,  # noqa:ARG001
+    persisted_person: NHSNumber,
+    rsv_campaign_config: CampaignConfig,
+    consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
+    consumer_id: ConsumerId,
+    s3_client: BaseClient,
+    audit_bucket: BucketName,
+    invoke_with_mock_apigw_request,
+    lambda_logs: Callable[[], list[str]],
+    secretsmanager_client: BaseClient,  # noqa:ARG001
+):
+    # Given
+    invoke_path = f"/patient-check/{persisted_person}"
+    headers = {
+        "nhs-login-nhs-number": str(persisted_person),
+        "x_request_id": "x_request_id",
+        "x_correlation_id": "x_correlation_id",
+        "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
+        "nhsd-application-id": "nhsd-application-id",
+        "NHSE-Product-ID": consumer_id,
+    }
+    params = {"includeActions": "Y"}
+
+    # When
+    response = invoke_with_mock_apigw_request(path=invoke_path, headers=headers, params=params)
+
+    # Then
+    assert_that(
+        response,
+        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
+    )

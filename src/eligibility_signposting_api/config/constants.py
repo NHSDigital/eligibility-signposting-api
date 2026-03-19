@@ -6,3 +6,11 @@ NHS_NUMBER_HEADER = "nhs-login-nhs-number"
 CONSUMER_ID = "NHSE-Product-ID"
 ALLOWED_CONDITIONS = Literal["COVID", "FLU", "MMR", "RSV"]
 CONSUMER_MAPPING_FILE_NAME = "consumer_mapping_config.json"
+
+ttl = {
+    "local": 0,
+    "test": 300,
+    "dev": 300,
+    "preprod": 300,
+    "prod": 300,
+}
