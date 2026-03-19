@@ -727,35 +727,71 @@ def test_status_end_point(invoke_with_mock_apigw_request):
         ),
     )
 
-def test_cache_bypass(  # noqa: PLR0913
-    lambda_client: BaseClient,  # noqa:ARG001
-    persisted_person: NHSNumber,
-    rsv_campaign_config: CampaignConfig,
-    consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
-    consumer_id: ConsumerId,
-    s3_client: BaseClient,
-    audit_bucket: BucketName,
-    invoke_with_mock_apigw_request,
-    lambda_logs: Callable[[], list[str]],
-    secretsmanager_client: BaseClient,  # noqa:ARG001
-):
-    # Given
-    invoke_path = f"/patient-check/{persisted_person}"
-    headers = {
-        "nhs-login-nhs-number": str(persisted_person),
-        "x_request_id": "x_request_id",
-        "x_correlation_id": "x_correlation_id",
-        "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
-        "nhsd-application-id": "nhsd-application-id",
-        "NHSE-Product-ID": consumer_id,
-    }
-    params = {"includeActions": "Y"}
+# Runnable if we go to tests/docker-compose.mock_aws.yml and add ENVIRONMENT=dev
+# shows that in a non-local environment we can bypass cache
 
-    # When
-    response = invoke_with_mock_apigw_request(path=invoke_path, headers=headers, params=params)
-
-    # Then
-    assert_that(
-        response,
-        is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
-    )
+# def test_cache_bypass(  # noqa: PLR0913
+#     lambda_client: BaseClient,  # noqa:ARG001
+#     persisted_person: NHSNumber,
+#     rsv_campaign_config: CampaignConfig,
+#     consumer_to_active_rsv_campaign_mapping: ConsumerMapping,  # noqa: ARG001
+#     consumer_id: ConsumerId,
+#     s3_client: BaseClient,
+#     audit_bucket: BucketName,
+#     invoke_with_mock_apigw_request,
+#     lambda_logs: Callable[[], list[str]],
+#     secretsmanager_client: BaseClient,  # noqa:ARG001
+# ):
+#     # Given
+#     invoke_path = f"/patient-check/{persisted_person}"
+#     headers = {
+#         "nhs-login-nhs-number": str(persisted_person),
+#         "x_request_id": "x_request_id",
+#         "x_correlation_id": "x_correlation_id",
+#         "nhsd_end_user_organisation_ods": "nhsd_end_user_organisation_ods",
+#         "nhsd-application-id": "nhsd-application-id",
+#         "NHSE-Product-ID": consumer_id,
+#     }
+#     params = {"includeActions": "Y"}
+#
+#     objects = s3_client.list_objects_v2(Bucket="test-rules-bucket").get("Contents", [])
+#     assert_that(objects, is_not(equal_to([])))
+#     config_key = objects[0]["Key"]
+#     original = s3_client.get_object(Bucket="test-rules-bucket", Key=config_key)
+#     original_payload = json.loads(original["Body"].read())
+#     print(original_payload)
+#
+#     # When
+#     response = invoke_with_mock_apigw_request(path=invoke_path, headers=headers, params=params)
+#
+#     # Then
+#     assert_that(
+#         response,
+#         is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
+#     )
+#
+#     original_payload["CampaignConfig"]["Target"] = "RSV_CHANGED_FOR_BYPASS_TEST"
+#     s3_client.put_object(
+#         Bucket="test-rules-bucket",
+#         Key=config_key,
+#         Body=json.dumps(original_payload),
+#         ContentType="application/json",
+#     )
+#
+#     # Second request without bypass header should still use cached config
+#     response_2 = invoke_with_mock_apigw_request(invoke_path, headers)
+#     assert_that(
+#         response_2,
+#         is_response().with_status_code(HTTPStatus.OK).and_body(is_json_that(has_key("processedSuggestions"))),
+#     )
+#
+#     # Third request with bypass header should re-read S3 and reflect the change
+#     bypass_headers = {
+#         **headers,
+#         "X-Bypass-Campaign-Config-Cache": "true",
+#     }
+#     response_3 = invoke_with_mock_apigw_request(invoke_path, bypass_headers)
+#     assert_that(
+#         response_3,
+#         is_response().with_status_code(500),
+#     )
