@@ -252,6 +252,8 @@ function log(text) {
     "src/eligibility_signposting_api/model/campaign_config.py",
     "src/eligibility_signposting_api/config/__init__.py",
     "src/eligibility_signposting_api/config/constants.py",
+    "src/eligibility_signposting_api/common/__init__.py",
+    "src/eligibility_signposting_api/common/date_util.py",
     "src/rules_validation_api/decorators/__init__.py",
     "src/rules_validation_api/decorators/tracker.py",
     "src/rules_validation_api/__init__.py",
@@ -273,6 +275,7 @@ function log(text) {
 
       setStatus("Installing Python Libraries...");
       await pyodide.loadPackage("micropip");
+      await pyodide.loadPackage("tzdata");
       await pyodide.pyimport("micropip").install("pydantic");
       await pyodide.pyimport("micropip").install("markdown");
 
