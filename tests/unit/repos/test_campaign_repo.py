@@ -74,3 +74,37 @@ class TestCampaignRepo:
         assert second[0].version == 1
         assert mock_s3_client.list_objects.call_count == 1
         assert mock_s3_client.get_object.call_count == 1
+
+    def test_get_campaign_configs_refreshes_after_ttl_expiry(
+        self,
+        repo,
+        mock_s3_client,
+        monkeypatch,
+    ):
+        repo._cache_ttl_seconds = 60
+
+        first_config = CampaignConfigFactory.build(version=1)
+        second_config = CampaignConfigFactory.build(version=2)
+
+        mock_s3_client.list_objects.return_value = {
+            "Contents": [{"Key": "rsv.json"}]
+        }
+        mock_s3_client.get_object.side_effect = [
+            make_s3_body({"campaign_config": first_config.model_dump(mode="json")}),
+            make_s3_body({"campaign_config": second_config.model_dump(mode="json")}),
+        ]
+
+        current_time = {"value": 1000.0}
+        monkeypatch.setattr("time.time", lambda: current_time["value"])
+
+        first = list(repo.get_campaign_configs())
+        current_time["value"] = 1030.0
+        second = list(repo.get_campaign_configs())
+        current_time["value"] = 1061.0
+        third = list(repo.get_campaign_configs())
+
+        assert first[0].version == 1
+        assert second[0].version == 1
+        assert third[0].version == 2
+        assert mock_s3_client.list_objects.call_count == 2
+        assert mock_s3_client.get_object.call_count == 2
