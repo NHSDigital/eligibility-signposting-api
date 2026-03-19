@@ -37,7 +37,7 @@ class TestCampaignRepo:
         }
         mock_s3_client.get_object.return_value = make_s3_body(rules_payload)
 
-        result = list(repo.get_campaign_configs())
+        result = list(repo.get_campaign_configs("consumer_id"))
 
         assert len(result) == 1
         assert result[0].id == rules_payload["campaign_config"]["id"]
@@ -67,8 +67,8 @@ class TestCampaignRepo:
 
         monkeypatch.setattr("time.time", lambda: 1000.0)
 
-        first = list(repo.get_campaign_configs())
-        second = list(repo.get_campaign_configs())
+        first = list(repo.get_campaign_configs("consumer_id"))
+        second = list(repo.get_campaign_configs("consumer_id"))
 
         assert first[0].version == 1
         assert second[0].version == 1
@@ -97,11 +97,11 @@ class TestCampaignRepo:
         current_time = {"value": 1000.0}
         monkeypatch.setattr("time.time", lambda: current_time["value"])
 
-        first = list(repo.get_campaign_configs())
+        first = list(repo.get_campaign_configs("consumer_id"))
         current_time["value"] = 1030.0
-        second = list(repo.get_campaign_configs())
+        second = list(repo.get_campaign_configs("consumer_id"))
         current_time["value"] = 1061.0
-        third = list(repo.get_campaign_configs())
+        third = list(repo.get_campaign_configs("test-consumer-1"))
 
         assert first[0].version == 1
         assert second[0].version == 1

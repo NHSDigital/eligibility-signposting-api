@@ -6,8 +6,9 @@ NHS_NUMBER_HEADER = "nhs-login-nhs-number"
 CONSUMER_ID = "NHSE-Product-ID"
 ALLOWED_CONDITIONS = Literal["COVID", "FLU", "MMR", "RSV"]
 CONSUMER_MAPPING_FILE_NAME = "consumer_mapping_config.json"
+RESERVED_TEST_CONSUMER_IDS = {"test-consumer-1", "test-consumer-2", "test-consumer-3"}
 
-ttl = {
+TTL = {
     "local": 0,
     "test": 300,
     "dev": 300,

@@ -10,7 +10,7 @@ from botocore.client import BaseClient
 from wireup import Inject, service
 
 from eligibility_signposting_api.model.campaign_config import CampaignConfig, Rules
-from eligibility_signposting_api.config.constants import ttl
+from eligibility_signposting_api.config.constants import TTL, RESERVED_TEST_CONSUMER_IDS
 
 BucketName = NewType("BucketName", str)
 
@@ -32,14 +32,14 @@ class CampaignRepo:
         self.bucket_name = bucket_name
         self._campaign_configs_cache: list[CampaignConfig] | None = None
         self._cache_expiry_epoch: float = 0.0
-        self._cache_ttl_seconds: int = int(ttl.get(os.getenv("ENVIRONMENT"), 0))
+        self._cache_ttl_seconds: int = int(TTL.get(os.getenv("ENVIRONMENT"), 0))
 
-    def get_campaign_configs(self, bypass_cache: bool = False) -> Generator[CampaignConfig, None, None]:
+    def get_campaign_configs(self, consumer_id: str) -> Generator[CampaignConfig, None, None]:
         now = time.time()
         cache_enabled = self._cache_ttl_seconds > 0
         cache_valid = (
             cache_enabled
-            and not bypass_cache
+            and consumer_id not in RESERVED_TEST_CONSUMER_IDS
             and self._campaign_configs_cache is not None
             and now < self._cache_expiry_epoch
         )
@@ -51,13 +51,13 @@ class CampaignRepo:
                 return
 
             logger.info(
-                "Refreshing campaign configs from S3 (bypass_cache=%s, ttl_seconds=%s)",
-                bypass_cache,
+                "Refreshing campaign configs from S3 (consumer_id=%s, ttl_seconds=%s)",
+                consumer_id,
                 self._cache_ttl_seconds,
             )
             campaign_configs = self._load_campaign_configs_from_s3()
 
-            if cache_enabled and not bypass_cache:
+            if cache_enabled and consumer_id not in RESERVED_TEST_CONSUMER_IDS:
                 self._campaign_configs_cache = campaign_configs
                 self._cache_expiry_epoch = now + self._cache_ttl_seconds
 

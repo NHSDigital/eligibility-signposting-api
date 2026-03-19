@@ -62,7 +62,6 @@ class FakeEligibilityService(EligibilityService):
         _conditions: list[str],
         _category: str,
         _consumer_id: str,
-        bypass_campaign_config_cache: bool = False,
     ) -> EligibilityStatus:
         return EligibilityStatusFactory.build()
 
@@ -78,7 +77,6 @@ class FakeUnknownPersonEligibilityService(EligibilityService):
         _conditions: list[str],
         _category: str,
         _consumer_id: str,
-        bypass_campaign_config_cache: bool = False,
     ) -> EligibilityStatus:
         raise UnknownPersonError
 
@@ -94,7 +92,6 @@ class FakeUnexpectedErrorEligibilityService(EligibilityService):
         _conditions: list[str],
         _category: str,
         _consumer_id: str,
-        bypass_campaign_config_cache: bool = False,
     ) -> EligibilityStatus:
         raise ValueError
 
