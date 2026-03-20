@@ -1703,6 +1703,8 @@ class TestEligibilityResponseWithVariousInputs:
         rules_bucket: BucketName,
         audit_bucket: BucketName,
         secretsmanager_client: BaseClient,  # noqa: ARG002
+        kinesis_client,
+        firehose_client
     ):
         # Given
         consumer_id = "consumer-n3bs-jo4hn-ce4na"
@@ -1794,6 +1796,13 @@ class TestEligibilityResponseWithVariousInputs:
 
         # When
         response = client.get(f"/patient-check/{persisted_person_pc_sw19}", headers=headers)
+
+        bridge_latest_kinesis_record_to_firehose(
+            kinesis_client=kinesis_client,
+            kinesis_stream_name="test-kinesis-audit-stream",
+            firehose_client=firehose_client,
+            firehose_delivery_stream_name="test_firehose_audit_stream_to_s3",
+        )
 
         # Then
         assert_that(response, is_response().with_status_code(HTTPStatus.OK))
