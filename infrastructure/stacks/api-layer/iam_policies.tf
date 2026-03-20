@@ -843,9 +843,8 @@ data "aws_iam_policy_document" "s3_cloudtrail_bucket_policy" {
 
 # Attach s3 Cloudtrail bucket policy to Cloudtrail role
 resource "aws_iam_role_policy" "s3_cloudtrail_bucket_policy" {
-  count = length(aws_iam_role.cloudtrail_cloudwatch_role)
   name   = "S3CloudTrailBucketAccess"
-  role   = aws_iam_role.cloudtrail_cloudwatch_role[count.index].id
+  role   = aws_iam_role.cloudtrail_cloudwatch_role.id
   policy = data.aws_iam_policy_document.s3_cloudtrail_bucket_policy.json
 }
 
@@ -867,9 +866,8 @@ data "aws_iam_policy_document" "s3_cloudtrail_kms_access_policy" {
 
 # Attach S3 Cloudtrail bucket KMS policy to Cloudtrail role
 resource "aws_iam_role_policy" "s3_cloudtrail_kms_access_policy" {
-  count = length(aws_iam_role.cloudtrail_cloudwatch_role)
   name   = "S3CloudTrailKMSAccess"
-  role   = aws_iam_role.cloudtrail_cloudwatch_role[count.index].id
+  role   = aws_iam_role.cloudtrail_cloudwatch_role.id
   policy = data.aws_iam_policy_document.s3_cloudtrail_kms_access_policy.json
 }
 
@@ -892,8 +890,7 @@ data "aws_iam_policy_document" "cloudtrail_cloudwatch_policy" {
 
 # Attach CloudTrail CloudWatch Logs policy to CloudTrail role
 resource "aws_iam_role_policy" "cloudtrail_cloudwatch_policy" {
-    count = length(aws_iam_role.cloudtrail_cloudwatch_role)
     name   = "CloudTrailCloudWatchLogsAccess"
-    role   = aws_iam_role.cloudtrail_cloudwatch_role[count.index].id
+    role   = aws_iam_role.cloudtrail_cloudwatch_role.id
     policy = data.aws_iam_policy_document.cloudtrail_cloudwatch_policy.json
 }

@@ -145,7 +145,7 @@ resource "aws_iam_role_policy_attachment" "rotation_vpc_access" {
 
 # IAM role for CloudTrail to write to CloudWatch Logs
 resource "aws_iam_role" "cloudtrail_cloudwatch_role" {
-  name = "${var.project_name}-${var.environment}-cloudtrail-cloudwatch-role"
+  name = "cloudtrail-cloudwatch-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
