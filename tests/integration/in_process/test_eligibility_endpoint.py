@@ -1,12 +1,14 @@
 import json
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from http import HTTPStatus
+from zoneinfo import ZoneInfo
 
 import pytest
 from botocore.client import BaseClient
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask.testing import FlaskClient
+from freezegun import freeze_time
 from hamcrest import (
     assert_that,
     contains_exactly,
@@ -32,17 +34,19 @@ from eligibility_signposting_api.repos.campaign_repo import BucketName
 from tests.fixtures.builders.model import rule
 from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
 
-
-def today() -> date:
-    return datetime.now(UTC).date()
+UK_TIMEZONE = ZoneInfo("Europe/London")
 
 
-def yesterday() -> date:
-    return datetime.now(UTC).date() - timedelta(days=1)
+def today_uk() -> date:
+    return datetime.now(UK_TIMEZONE).date()
 
 
-def tomorrow() -> date:
-    return datetime.now(UTC).date() + timedelta(days=1)
+def yesterday_uk() -> date:
+    return datetime.now(UK_TIMEZONE).date() - timedelta(days=1)
+
+
+def tomorrow_uk() -> date:
+    return datetime.now(UK_TIMEZONE).date() + timedelta(days=1)
 
 
 class TestBaseLine:
@@ -1211,13 +1215,13 @@ class TestEligibilityResponseWithVariousInputs:
             (
                 [
                     # Creates campaign configs by [target, campaign id, iteration status, iteration date]
-                    ("RSV", "RSV_campaign_id_1", "active", today()),
-                    ("RSV", "RSV_campaign_id_2", "active", today()),
-                    ("RSV", "RSV_campaign_id_3", "active", today()),
-                    ("RSV", "RSV_campaign_id_4", "active", yesterday()),
+                    ("RSV", "RSV_campaign_id_1", "active", today_uk()),
+                    ("RSV", "RSV_campaign_id_2", "active", today_uk()),
+                    ("RSV", "RSV_campaign_id_3", "active", today_uk()),
+                    ("RSV", "RSV_campaign_id_4", "active", yesterday_uk()),
                     # inactive iteration
-                    ("RSV", "inactive_RSV_campaign_id_5", "inactive", tomorrow()),
-                    ("RSV", "RSV_campaign_id_6", "active", today()),
+                    ("RSV", "inactive_RSV_campaign_id_5", "inactive", tomorrow_uk()),
+                    ("RSV", "RSV_campaign_id_6", "active", today_uk()),
                 ],
                 {
                     # Consumer mappings in S3
@@ -1288,43 +1292,43 @@ class TestEligibilityResponseWithVariousInputs:
         ),
         [
             (
-                ("RSV_campaign_id_1", today()),
-                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                ("RSV_campaign_id_1", today_uk()),
+                ("RSV_campaign_id_2", today_uk() - timedelta(days=1)),
                 "SW19",  # postcode for resulting in not-actionable (used by the suppression rule)
                 "cohort2",
                 "RSV_campaign_id_1",
             ),
             (
-                ("RSV_campaign_id_1", today() - timedelta(days=1)),
-                ("RSV_campaign_id_2", today()),
+                ("RSV_campaign_id_1", today_uk() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today_uk()),
                 "SW19",  # postcode for resulting in not-actionable
                 "cohort2",
                 "RSV_campaign_id_2",
             ),
             (
-                ("RSV_campaign_id_1", today()),
-                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                ("RSV_campaign_id_1", today_uk()),
+                ("RSV_campaign_id_2", today_uk() - timedelta(days=1)),
                 "M4",  # postcode for resulting in actionable
                 "cohort2",
                 "RSV_campaign_id_1",
             ),
             (
-                ("RSV_campaign_id_1", today() - timedelta(days=1)),
-                ("RSV_campaign_id_2", today()),
+                ("RSV_campaign_id_1", today_uk() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today_uk()),
                 "M4",  # postcode for resulting in actionable
                 "cohort2",
                 "RSV_campaign_id_2",
             ),
             (
-                ("RSV_campaign_id_1", today()),
-                ("RSV_campaign_id_2", today() - timedelta(days=1)),
+                ("RSV_campaign_id_1", today_uk()),
+                ("RSV_campaign_id_2", today_uk() - timedelta(days=1)),
                 "M4",  # cohort for resulting in not-eligible
                 "cohort1",
                 "RSV_campaign_id_1",
             ),
             (
-                ("RSV_campaign_id_1", today() - timedelta(days=1)),
-                ("RSV_campaign_id_2", today()),
+                ("RSV_campaign_id_1", today_uk() - timedelta(days=1)),
+                ("RSV_campaign_id_2", today_uk()),
                 "M4",
                 "cohort1",  # cohort for resulting in not-eligible (used by the filter rule)
                 "RSV_campaign_id_2",
@@ -1446,7 +1450,7 @@ class TestEligibilityResponseWithVariousInputs:
         else:
             assert_that(len(audit_data["response"]["condition"]), equal_to(0))
 
-    def test_if_multiple_active_iterations_with_same_iteration_datetime_for_the_same_target_throws_internal_error(  # noqa: PLR0913
+    def test_if_multiple_active_iterations_with_same_iteration_date_default_time_for_same_target_throws_internal_error(  # noqa: PLR0913
         self,
         client: FlaskClient,
         persisted_person_pc_sw19: NHSNumber,
@@ -1474,7 +1478,7 @@ class TestEligibilityResponseWithVariousInputs:
             ),
             ContentType="application/json",
         )
-        previous_day = yesterday()
+        previous_day = yesterday_uk()
         # Campaign configs
         campaign_1 = rule.RawCampaignConfigFactory.build(
             id="RSV_campaign_id_1",
@@ -1532,12 +1536,258 @@ class TestEligibilityResponseWithVariousInputs:
                 )
             ),
         )
+        expected_date = datetime.combine(previous_day, time.min).replace(tzinfo=UK_TIMEZONE)
         err_msg = (
             "Ambiguous result: '2' active iterations "
             "for target RSV "
-            f"found for datetime '{previous_day} 00:00:00+00:00' "
+            f"found for datetime '{expected_date}' "
             "across campaign(s) ['RSV_campaign_id_1', 'RSV_campaign_id_2']"
         )
         assert any(err_msg in message for message in caplog.messages), (
             f"Expected log message not found. Logged messages: {caplog.messages}"
         )
+
+    def test_if_multiple_active_iterations_with_same_iteration_date_and_time_for_same_target_throws_internal_error(  # noqa: PLR0913
+        self,
+        client: FlaskClient,
+        persisted_person_pc_sw19: NHSNumber,
+        s3_client: BaseClient,
+        consumer_mapping_bucket: BucketName,
+        rules_bucket: BucketName,
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+        caplog,
+    ):
+        # Given
+        consumer_id = "consumer-n3bs-jo4hn-ce4na"
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
+        now_london = datetime.now(ZoneInfo("Europe/London"))
+        previous_day = yesterday_uk()
+
+        ## Campaign config 1
+        campaign_1 = rule.RawCampaignConfigFactory.build(
+            id="RSV_campaign_id_1",
+            target="RSV",
+            start_date=previous_day,
+            type="V",
+            iterations=[
+                rule.IterationFactory.build(iteration_date=previous_day),
+                rule.IterationFactory.build(iteration_date=tomorrow_uk()),
+            ],
+        )
+
+        campaign_1_json = campaign_1.model_dump(by_alias=True)
+
+        iteration_date_1 = now_london.strftime("%Y%m%d")
+        iteration_time_1 = now_london.strftime("%H:%M:%S")
+        iteration_time_1_after_20m = (now_london + timedelta(minutes=20)).strftime("%H:%M:%S")
+        campaign_1_json["Iterations"][0]["IterationDate"] = iteration_date_1
+        campaign_1_json["Iterations"][0]["IterationTime"] = iteration_time_1
+        campaign_1_json["Iterations"][1]["IterationDate"] = iteration_date_1
+        campaign_1_json["Iterations"][1]["IterationTime"] = iteration_time_1_after_20m
+
+        ## Campaign config 2
+        campaign_2 = rule.RawCampaignConfigFactory.build(
+            id="RSV_campaign_id_2",
+            target="RSV",
+            start_date=previous_day,
+            type="V",
+            iterations=[
+                rule.IterationFactory.build(iteration_date=previous_day),
+                rule.IterationFactory.build(iteration_date=tomorrow_uk()),
+            ],
+        )
+
+        campaign_2_json = campaign_2.model_dump(by_alias=True)
+        iteration_date_2 = now_london.strftime("%Y%m%d")
+        iteration_time_2 = now_london.strftime("%H:%M:%S")
+        iteration_time_2_after_20m = (now_london + timedelta(minutes=20)).strftime("%H:%M:%S")
+        campaign_2_json["Iterations"][0]["IterationDate"] = iteration_date_2
+        campaign_2_json["Iterations"][0]["IterationTime"] = iteration_time_2
+        campaign_2_json["Iterations"][1]["IterationDate"] = iteration_date_2
+        campaign_2_json["Iterations"][1]["IterationTime"] = iteration_time_2_after_20m
+
+        # Upload to Campaign config bucket
+        for campaign in [campaign_1_json, campaign_2_json]:
+            campaign_id = campaign["ID"]
+            s3_client.put_object(
+                Bucket=rules_bucket,
+                Key=f"{campaign_id}.json",
+                Body=json.dumps({"CampaignConfig": campaign}),
+                ContentType="application/json",
+            )
+
+        # Upload Consumer Mapping Data
+        s3_client.put_object(
+            Bucket=consumer_mapping_bucket,
+            Key="consumer_mapping_config.json",
+            Body=json.dumps(
+                {
+                    consumer_id: [
+                        {"CampaignConfigID": "RSV_campaign_id_1"},
+                        {"CampaignConfigID": "RSV_campaign_id_2"},
+                    ],
+                }
+            ),
+            ContentType="application/json",
+        )
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}", headers=headers)
+
+        # Then
+        assert_that(
+            response,
+            is_response()
+            .with_status_code(HTTPStatus.INTERNAL_SERVER_ERROR)
+            .with_headers(has_entries({"Content-Type": "application/fhir+json"}))
+            .and_text(
+                is_json_that(
+                    has_entries(
+                        resourceType="OperationOutcome",
+                        issue=contains_exactly(
+                            has_entries(
+                                severity="error",
+                                code="processing",
+                                diagnostics="An unexpected error occurred.",
+                                details={
+                                    "coding": [
+                                        {
+                                            "system": "https://fhir.nhs.uk/STU3/ValueSet/Spine-ErrorOrWarningCode-1",
+                                            "code": "INTERNAL_SERVER_ERROR",
+                                            "display": "An unexpected internal server error occurred.",
+                                        }
+                                    ]
+                                },
+                            )
+                        ),
+                    )
+                )
+            ),
+        )
+        expected_dt = now_london.strftime("%Y-%m-%d %H:%M:%S%z")
+        expected_dt = expected_dt[:-2] + ":" + expected_dt[-2:]
+
+        err_msg = (
+            "Ambiguous result: '2' active iterations "
+            "for target RSV "
+            f"found for datetime '{expected_dt}' "
+            "across campaign(s) ['RSV_campaign_id_1', 'RSV_campaign_id_2']"
+        )
+        assert any(err_msg in message for message in caplog.messages), (
+            f"Expected log message not found. Logged messages: {caplog.messages}"
+        )
+
+    @freeze_time("2025-08-08 00:00:00+01:00")  # 2025-08-08 00:00 BST
+    def test_iteration_selection_by_datetime_with_multiple_campaigns_same_target(  # noqa: PLR0913
+        self,
+        client: FlaskClient,
+        persisted_person_pc_sw19: NHSNumber,
+        s3_client: BaseClient,
+        consumer_mapping_bucket: BucketName,
+        rules_bucket: BucketName,
+        audit_bucket: BucketName,
+        secretsmanager_client: BaseClient,  # noqa: ARG002
+    ):
+        # Given
+        consumer_id = "consumer-n3bs-jo4hn-ce4na"
+        headers = {"nhs-login-nhs-number": str(persisted_person_pc_sw19), UNIQUE_CONSUMER_HEADER: consumer_id}
+        start_date = datetime(2025, 8, 6, tzinfo=ZoneInfo("Europe/London")).date()
+        current_datetime = datetime(2025, 8, 8, tzinfo=ZoneInfo("Europe/London"))
+        next_day_datetime = current_datetime + timedelta(days=1)
+
+        ## Campaign config 1
+        campaign_1 = rule.RawCampaignConfigFactory.build(
+            id="RSV_campaign_id_1",
+            target="RSV",
+            start_date=start_date,
+            type="V",
+            iterations=[
+                rule.IterationFactory.build(
+                    iteration_date=start_date, iteration_rules=[rule.PostcodeSuppressionRuleFactory.build()]
+                ),
+                rule.IterationFactory.build(
+                    id="current_active_iteration_id",
+                    iteration_date=current_datetime.date(),
+                    iteration_rules=[rule.PostcodeSuppressionRuleFactory.build()],
+                ),
+            ],
+        )
+
+        campaign_1_json = campaign_1.model_dump(by_alias=True)
+
+        iteration_date_a = current_datetime.strftime("%Y%m%d")
+        iteration_date_b = current_datetime.strftime("%Y%m%d")
+        iteration_time_a = current_datetime.strftime("%H:%M:%S")
+        iteration_time_b_after_30m = (current_datetime + timedelta(minutes=30)).strftime("%H:%M:%S")
+        campaign_1_json["Iterations"][0]["IterationDate"] = iteration_date_b
+        campaign_1_json["Iterations"][0]["IterationTime"] = iteration_time_b_after_30m
+        campaign_1_json["Iterations"][1]["IterationDate"] = iteration_date_a
+        campaign_1_json["Iterations"][1]["IterationTime"] = iteration_time_a
+
+        ## Campaign config 2
+        campaign_2 = rule.RawCampaignConfigFactory.build(
+            id="RSV_campaign_id_2",
+            target="RSV",
+            start_date=start_date,
+            type="V",
+            iterations=[
+                rule.IterationFactory.build(
+                    iteration_date=start_date, iteration_rules=[rule.PostcodeSuppressionRuleFactory.build()]
+                ),
+                rule.IterationFactory.build(
+                    iteration_date=current_datetime.date(),
+                    iteration_rules=[rule.PostcodeSuppressionRuleFactory.build()],
+                ),
+            ],
+        )
+
+        campaign_2_json = campaign_2.model_dump(by_alias=True)
+        iteration_date_c = current_datetime.strftime("%Y%m%d")
+        iteration_time_c_after_20m = (current_datetime + timedelta(minutes=20)).strftime("%H:%M:%S")
+        iteration_date_d = next_day_datetime.strftime("%Y%m%d")
+        iteration_time_d = next_day_datetime.strftime("%H:%M:%S")
+        campaign_2_json["Iterations"][0]["IterationDate"] = iteration_date_c
+        campaign_2_json["Iterations"][0]["IterationTime"] = iteration_time_c_after_20m
+        campaign_2_json["Iterations"][1]["IterationDate"] = iteration_date_d
+        campaign_2_json["Iterations"][1]["IterationTime"] = iteration_time_d
+
+        # Upload to Campaign config bucket
+        for campaign in [campaign_1_json, campaign_2_json]:
+            campaign_id = campaign["ID"]
+            s3_client.put_object(
+                Bucket=rules_bucket,
+                Key=f"{campaign_id}.json",
+                Body=json.dumps({"CampaignConfig": campaign}),
+                ContentType="application/json",
+            )
+
+        # Upload Consumer Mapping Data
+        s3_client.put_object(
+            Bucket=consumer_mapping_bucket,
+            Key="consumer_mapping_config.json",
+            Body=json.dumps(
+                {
+                    consumer_id: [
+                        {"CampaignConfigID": "RSV_campaign_id_1"},
+                        {"CampaignConfigID": "RSV_campaign_id_2"},
+                    ],
+                }
+            ),
+            ContentType="application/json",
+        )
+
+        # When
+        response = client.get(f"/patient-check/{persisted_person_pc_sw19}", headers=headers)
+
+        # Then
+        assert_that(response, is_response().with_status_code(HTTPStatus.OK))
+
+        objects = s3_client.list_objects_v2(Bucket=audit_bucket).get("Contents", [])
+        object_keys = [obj["Key"] for obj in objects]
+        latest_key = sorted(object_keys)[-1]
+        audit_data = json.loads(s3_client.get_object(Bucket=audit_bucket, Key=latest_key)["Body"].read())
+
+        # Then
+        assert_that(len(audit_data["response"]["condition"]), equal_to(1))
+        assert_that(audit_data["response"]["condition"][0].get("campaignId"), equal_to("RSV_campaign_id_1"))
+        assert_that(audit_data["response"]["condition"][0].get("iterationId"), equal_to("current_active_iteration_id"))
