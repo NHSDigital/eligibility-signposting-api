@@ -1704,7 +1704,7 @@ class TestEligibilityResponseWithVariousInputs:
         audit_bucket: BucketName,
         secretsmanager_client: BaseClient,  # noqa: ARG002
         kinesis_client,
-        firehose_client
+        firehose_client,
     ):
         # Given
         consumer_id = "consumer-n3bs-jo4hn-ce4na"
