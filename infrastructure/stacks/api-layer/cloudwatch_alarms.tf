@@ -172,6 +172,15 @@ locals {
       alarm_description   = "Multiple Lambda function changes detected within 10 minutes"
       actions_enabled     = true
     }
+    DynamoDBTableReadOutsideLambdaRole = {
+      threshold           = 1
+      comparison_operator = "GreaterThanOrEqualToThreshold"
+      evaluation_periods  = 1
+      period              = 300
+      statistic           = "Sum"
+      alarm_description   = "DynamoDB table read detected from non-Lambda execution role"
+      actions_enabled     = true
+    }
   }
 
   # API Gateway alarm configuration

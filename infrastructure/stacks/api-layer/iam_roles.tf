@@ -142,3 +142,23 @@ resource "aws_iam_role_policy_attachment" "rotation_vpc_access" {
   role       = aws_iam_role.rotation_lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
+
+# IAM role for CloudTrail to write to CloudWatch Logs
+resource "aws_iam_role" "cloudtrail_cloudwatch_role" {
+  name = "cloudtrail-cloudwatch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudtrail.amazonaws.com"
+        }
+      }
+    ]
+  })
+  permissions_boundary = aws_iam_policy.assumed_role_permissions_boundary.arn
+}
+
