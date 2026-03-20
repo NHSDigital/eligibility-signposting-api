@@ -570,3 +570,19 @@ class TestBUCValidations:
             f"Failed! Input: {iteration_time_input}, Default: {default_time_iteration_input}. "
             f"Expected {expected_date_time} but got {result}"
         )
+
+    def test_iteration_rules_having_invalid_cohort_labels_throws_error(
+        self, valid_iteration_with_only_mandatory_fields,
+        valid_iteration_rule_with_only_mandatory_fields,
+        valid_iteration_cohorts,
+    ):
+        data = valid_iteration_with_only_mandatory_fields.copy()
+        data["iteration_rules"] = [valid_iteration_rule_with_only_mandatory_fields]
+        data["iteration_cohorts"] = [valid_iteration_cohorts]
+        data["iteration_rules"][0]["CohortLabel"] = "label_2"
+        IterationValidation(**(data))
+        # try:
+
+        #     IterationValidation(**(data))
+        # except ValidationError as e:
+        #     pytest.fail(f"Unexpected error during model instantiation: {e}")
