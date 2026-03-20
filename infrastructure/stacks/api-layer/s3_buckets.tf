@@ -58,9 +58,9 @@ module "s3_dq_metrics_bucket" {
   workspace    = terraform.workspace
 }
 
-module "s3_elid_cloudwatch_bucket" {
+module "s3_cloudtrail_bucket" {
   source       = "../../modules/s3"
-  bucket_name  = "elid-cloudwatch-logs"
+  bucket_name  = "eli-cloudwatch-logs"
   environment  = var.environment
   project_name = var.project_name
   stack_name   = local.stack_name

@@ -118,7 +118,7 @@ locals {
       name           = "DynamoDBTableReadOutsideLambdaRole"
       namespace      = "security"
       filter         = "{($.eventSource=dynamodb.amazonaws.com) && (($.eventName=GetItem) || ($.eventName=Query) || ($.eventName=Scan)) && ($.requestParameters.tableName=\"${module.eligibility_status_table.table_name}\") && ($.userIdentity.sessionContext.sessionIssuer.arn != \"${aws_iam_role.eligibility_lambda_role.arn}\")}"
-      log_group_name = "elid-aws-cloudtrail-logs"
+      log_group_name = aws_cloudwatch_log_group.cloudtrail_log_group.name
     },
   ]
 }
