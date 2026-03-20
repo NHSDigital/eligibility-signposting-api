@@ -27,7 +27,6 @@ STATUS_MAPPING = {
     Status.not_actionable: eligibility_response.Status.not_actionable,
     Status.not_eligible: eligibility_response.Status.not_eligible,
 }
-
 logger = logging.getLogger(__name__)
 
 eligibility_blueprint = Blueprint("eligibility", __name__)

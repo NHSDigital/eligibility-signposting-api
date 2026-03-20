@@ -50,7 +50,9 @@ class EligibilityService:
             except NotFoundError as e:
                 raise UnknownPersonError from e
             else:
-                campaign_configs: list[CampaignConfig] = list(self.campaign_repo.get_campaign_configs())
+                campaign_configs: list[CampaignConfig] = list(
+                    self.campaign_repo.get_campaign_configs(consumer_id)
+                )
                 permitted_campaign_configs = self.__collect_permitted_campaign_configs(
                     campaign_configs, ConsumerId(consumer_id)
                 )
