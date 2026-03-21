@@ -23,7 +23,7 @@ from eligibility_signposting_api.model.campaign_config import CampaignConfig
 from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import NHSNumber
 from eligibility_signposting_api.repos.campaign_repo import BucketName
-from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
+from tests.integration.conftest import UNIQUE_CONSUMER_HEADER, bridge_latest_kinesis_record_to_firehose
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +174,8 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
     invoke_with_mock_apigw_request,
     lambda_logs: Callable[[], list[str]],
     secretsmanager_client: BaseClient,  # noqa:ARG001
+    kinesis_client,
+    firehose_client,
 ):
     # Given
     invoke_path = f"/patient-check/{persisted_person}"
@@ -189,6 +191,13 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
 
     # When
     response = invoke_with_mock_apigw_request(path=invoke_path, headers=headers, params=params)
+
+    bridge_latest_kinesis_record_to_firehose(
+        kinesis_client=kinesis_client,
+        kinesis_stream_name="test-kinesis-audit-stream",
+        firehose_client=firehose_client,
+        firehose_delivery_stream_name="test_firehose_audit_stream_to_s3",
+    )
 
     # Then
     assert_that(
@@ -414,6 +423,8 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
     audit_bucket: BucketName,
     invoke_with_mock_apigw_request,
     secretsmanager_client: BaseClient,  # noqa: ARG001
+    kinesis_client,
+    firehose_client,
 ):
     # Given
     invoke_path = f"/patient-check/{persisted_person_all_cohorts}"
@@ -429,6 +440,12 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
 
     # When
     response = invoke_with_mock_apigw_request(path=invoke_path, headers=headers, params=params)
+    bridge_latest_kinesis_record_to_firehose(
+        kinesis_client=kinesis_client,
+        kinesis_stream_name="test-kinesis-audit-stream",
+        firehose_client=firehose_client,
+        firehose_delivery_stream_name="test_firehose_audit_stream_to_s3",
+    )
 
     # Then
     assert_that(
@@ -597,10 +614,18 @@ def test_token_formatting_in_eligibility_response_and_audit(  # noqa: PLR0913
     s3_client: BaseClient,
     audit_bucket: BucketName,
     invoke_with_mock_apigw_request,
+    kinesis_client,
+    firehose_client,
 ):
     invoke_path = f"/patient-check/{person_with_all_data}"
     headers = {"nhs-login-nhs-number": str(person_with_all_data), UNIQUE_CONSUMER_HEADER: consumer_id}
     response = invoke_with_mock_apigw_request(invoke_path, headers)
+    bridge_latest_kinesis_record_to_firehose(
+        kinesis_client=kinesis_client,
+        kinesis_stream_name="test-kinesis-audit-stream",
+        firehose_client=firehose_client,
+        firehose_delivery_stream_name="test_firehose_audit_stream_to_s3",
+    )
 
     assert_that(
         response,

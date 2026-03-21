@@ -66,7 +66,7 @@ def check_eligibility(
         return handle_unknown_person_error(nhs_number)
     else:
         response: eligibility_response.EligibilityResponse = build_eligibility_response(eligibility_status)
-        AuditContext.write_to_firehose(audit_service)
+        AuditContext.write_audit_record(audit_service)
         return make_response(response.model_dump(by_alias=True, mode="json", exclude_none=True), HTTPStatus.OK)
 
 

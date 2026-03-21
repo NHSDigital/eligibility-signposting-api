@@ -54,7 +54,7 @@ variable "eligibility_status_table_name" {
   type        = string
 }
 
-variable "kinesis_audit_stream_to_s3_name" {
+variable "kinesis_audit_stream_name" {
   description = "kinesis audit stream to s3 name"
   type        = string
 }
