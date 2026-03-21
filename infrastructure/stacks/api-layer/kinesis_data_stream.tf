@@ -74,7 +74,7 @@ data "aws_iam_policy_document" "kinesis_stream_kms_key_policy" {
     condition {
       test     = "StringEquals"
       variable = "kms:ViaService"
-      values   = ["firehose.eu-west-2.amazonaws.com"]
+      values   = ["firehose.${var.default_aws_region}.amazonaws.com"]
     }
   }
 }

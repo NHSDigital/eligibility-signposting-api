@@ -23,7 +23,7 @@ resource "aws_kinesis_firehose_delivery_stream" "eligibility_audit_firehose_deli
       log_stream_name = var.firehose_cloud_watch_log_stream
     }
   }
-
+  # Removed server_side_encryption_configuration as it is not supported for kinesis as source
   depends_on = [
     aws_kms_key.firehose_cmk,
     var.kinesis_source_stream_arn,

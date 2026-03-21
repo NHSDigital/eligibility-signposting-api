@@ -87,20 +87,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "firehose:StopDeliveryStreamEncryption",
 
       # Kinesis Stream - audit log streaming
-      "kinesis:CreateStream",
-      "kinesis:DeleteStream",
-      "kinesis:DescribeStream",
-      "kinesis:ListStreams",
-      "kinesis:PutRecord",
-      "kinesis:PutRecords",
-      "kinesis:TagStream",
-      "kinesis:ListTagsForStream",
-      "kinesis:UntagStream",
-      "kinesis:GetShardIterator",
-      "kinesis:GetRecords",
-      "kinesis:ListShards",
-      "kinesis:SubscribeToShard",
-      "kinesis:DescribeStreamSummary",
+      "kinesis:*",
 
       # IAM - specific role and policy management
       "iam:GetRole*",
