@@ -3,6 +3,7 @@ resource "aws_kms_key" "kinesis_data_stream_kms_key" {
   deletion_window_in_days = 14
   is_enabled              = true
   enable_key_rotation     = true
+  tags                    = local.tags
 }
 
 resource "aws_kms_alias" "kinesis_data_stream_kms_key" {
@@ -94,4 +95,5 @@ resource "aws_kinesis_stream" "kinesis_source_stream" {
 
   encryption_type = "KMS"
   kms_key_id      = aws_kms_key.kinesis_data_stream_kms_key.arn
+  tags            = local.tags
 }
