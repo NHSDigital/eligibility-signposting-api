@@ -827,15 +827,16 @@ data "aws_iam_policy_document" "s3_cloudtrail_bucket_policy" {
       "s3:ListBucket",
       "s3:GetBucketLocation",
       "s3:GetObject",
-      "s3:PutObject"
+      "s3:PutObject",
+      "s3:GetBucketAcl"
     ]
     resources = [
       module.s3_cloudtrail_bucket.storage_bucket_arn,
       "${module.s3_cloudtrail_bucket.storage_bucket_arn}/*",
     ]
     principals {
-      type = "*"
-      identifiers = ["*"]
+      type = "Service"
+      identifiers = ["cloudtrail.amazonaws.com"]
     }
     condition {
       test     = "Bool"
