@@ -576,7 +576,7 @@ class TestBUCValidations:
     ):
         data = valid_iteration_with_only_mandatory_fields.copy()
         data["IterationRules"] = [valid_iteration_rule_with_only_mandatory_fields]
-        data["IterationCohorts"] = [valid_iteration_cohorts]
+        data["IterationCohorts"] = [valid_iteration_cohorts()]
         data["IterationRules"][0]["CohortLabel"] = "label_2"
 
         with pytest.raises(ValidationError):
