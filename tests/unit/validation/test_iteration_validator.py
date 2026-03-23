@@ -14,10 +14,7 @@ class TestMandatoryFieldsSchemaValidations:
     def test_campaign_config_with_only_mandatory_fields_configuration(
         self, valid_campaign_config_with_only_mandatory_fields
     ):
-        try:
-            IterationValidation(**(valid_campaign_config_with_only_mandatory_fields["Iterations"][0]))
-        except ValidationError as e:
-            pytest.fail(f"Unexpected error during model instantiation: {e}")
+        IterationValidation(**(valid_campaign_config_with_only_mandatory_fields["Iterations"][0]))
 
     @pytest.mark.parametrize(
         "mandatory_field",
@@ -556,7 +553,7 @@ class TestBUCValidations:
         data = valid_campaign_config_with_only_mandatory_fields.copy()
 
         if default_time_iteration_input:
-            data["iteration_time"] = default_time_iteration_input
+            data["IterationTime"] = default_time_iteration_input
 
         data["Iterations"] = [iteration_data]
 
@@ -572,17 +569,15 @@ class TestBUCValidations:
         )
 
     def test_iteration_rules_having_invalid_cohort_labels_throws_error(
-        self, valid_iteration_with_only_mandatory_fields,
+        self,
+        valid_iteration_with_only_mandatory_fields,
         valid_iteration_rule_with_only_mandatory_fields,
         valid_iteration_cohorts,
     ):
         data = valid_iteration_with_only_mandatory_fields.copy()
-        data["iteration_rules"] = [valid_iteration_rule_with_only_mandatory_fields]
-        data["iteration_cohorts"] = [valid_iteration_cohorts]
-        data["iteration_rules"][0]["CohortLabel"] = "label_2"
-        IterationValidation(**(data))
-        # try:
+        data["IterationRules"] = [valid_iteration_rule_with_only_mandatory_fields]
+        data["IterationCohorts"] = [valid_iteration_cohorts]
+        data["IterationRules"][0]["CohortLabel"] = "label_2"
 
-        #     IterationValidation(**(data))
-        # except ValidationError as e:
-        #     pytest.fail(f"Unexpected error during model instantiation: {e}")
+        with pytest.raises(ValidationError):
+            IterationValidation(**(data))
