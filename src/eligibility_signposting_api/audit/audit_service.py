@@ -39,6 +39,9 @@ class AuditService:  # pragma: no cover
         """
         data = json.dumps(audit_record, default=str)
         response_id = audit_record.get("response", {}).get("responseId")
+        if response_id is None:
+            response_id = str(uuid.uuid4())
+            logger.warning("Missing responseId in audit record; using UUID fallback")
         partition_key = self.get_partition_key(str(response_id))
         response = self.kinesis.put_record(
             StreamName=self.audit_stream,
