@@ -64,7 +64,6 @@ resource "aws_kms_key" "cloudtrail_kms_key" {
 
 # KMS key alias
 resource "aws_kms_alias" "cloudtrail_kms_alias" {
-  name          = "alias/${terraform.workspace == "default" ? "" : "${terraform.workspace}"}-cloudtrail-cmk"
+  name          = "alias/${var.project_name}-${var.environment}-cloudtrail-cmk"
   target_key_id = aws_kms_key.cloudtrail_kms_key.key_id
 }
-

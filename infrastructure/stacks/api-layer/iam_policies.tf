@@ -824,27 +824,28 @@ data "aws_iam_policy_document" "s3_cloudtrail_bucket_policy" {
   statement {
     sid = "AllowSSLRequestsOnly"
     actions = [
-      "s3:ListBucket",
-      "s3:GetBucketLocation",
-      "s3:GetObject",
-      "s3:PutObject"
+      "s3:*"
     ]
+    effect = "Deny"
     resources = [
       module.s3_cloudtrail_bucket.storage_bucket_arn,
       "${module.s3_cloudtrail_bucket.storage_bucket_arn}/*",
     ]
+    principals {
+      type = "*"
+      identifiers = ["*"]
+    }
     condition {
       test     = "Bool"
-      values = ["true"]
+      values = ["false"]
       variable = "aws:SecureTransport"
     }
   }
 }
 
 # Attach s3 Cloudtrail bucket policy to Cloudtrail role
-resource "aws_iam_role_policy" "s3_cloudtrail_bucket_policy" {
-  name   = "S3CloudTrailBucketAccess"
-  role   = aws_iam_role.cloudtrail_cloudwatch_role.id
+resource "aws_s3_bucket_policy" "s3_cloudtrail_bucket_policy" {
+  bucket = module.s3_cloudtrail_bucket.storage_bucket_id
   policy = data.aws_iam_policy_document.s3_cloudtrail_bucket_policy.json
 }
 
