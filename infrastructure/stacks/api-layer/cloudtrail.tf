@@ -67,3 +67,35 @@ resource "aws_kms_alias" "cloudtrail_kms_alias" {
   name          = "alias/${var.project_name}-${var.environment}-cloudtrail-cmk"
   target_key_id = aws_kms_key.cloudtrail_kms_key.key_id
 }
+
+# KMS key policy to allow CloudTrail and CloudWatch Logs to use the key for encryption and decryption
+resource "aws_kms_key_policy" "cloudtrail_kms_key_policy" {
+  key_id = aws_kms_key.cloudtrail_kms_key.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "logs.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}

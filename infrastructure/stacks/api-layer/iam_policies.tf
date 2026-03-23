@@ -822,7 +822,29 @@ resource "aws_iam_role_policy" "external_s3_kms_access_policy" {
 # S3 Cloudtrail bucket policy
 data "aws_iam_policy_document" "s3_cloudtrail_bucket_policy" {
   statement {
-    sid = "AllowSSLRequestsOnly"
+    sid = "AllowS3SSLRequestsOnly"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketLocation",
+      "s3:GetObject",
+      "s3:PutObject"
+    ]
+    resources = [
+      module.s3_cloudtrail_bucket.storage_bucket_arn,
+      "${module.s3_cloudtrail_bucket.storage_bucket_arn}/*",
+    ]
+    principals {
+      type = "*"
+      identifiers = ["*"]
+    }
+    condition {
+      test     = "Bool"
+      values = ["true"]
+      variable = "aws:SecureTransport"
+    }
+  }
+  statement {
+    sid = "DenyS3NonSSLRequests"
     actions = [
       "s3:*"
     ]

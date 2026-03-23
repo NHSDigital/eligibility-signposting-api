@@ -45,5 +45,5 @@ resource "aws_cloudwatch_log_group" "rotation_sfn_logs" {
 resource "aws_cloudwatch_log_group" "cloudtrail_log_group" {
   name              = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}elid-aws-cloudtrail-logs"
   retention_in_days = 365
-  kms_key_id        = aws_kms_key.cloudtrail_kms_key.arn
+  kms_key_id        = aws_kms_alias.cloudtrail_kms_alias.arn
 }
