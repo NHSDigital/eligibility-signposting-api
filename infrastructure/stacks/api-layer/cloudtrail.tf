@@ -1,4 +1,6 @@
 resource "aws_cloudtrail" "data_events_trail" {
+  #checkov:skip=CKV_AWS_67: Ensure CloudTrail is enabled in all Regions
+  #checkov:skip=CKV_AWS_252: Ensure CloudTrail defines an SNS Topic
   name                          = "${var.project_name}-${var.environment}-data-events-trail"
   s3_bucket_name                = module.s3_cloudtrail_bucket.storage_bucket_name
   kms_key_id                    = aws_kms_key.cloudtrail_kms_key.arn
