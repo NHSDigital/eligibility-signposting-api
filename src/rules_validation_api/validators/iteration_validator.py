@@ -102,7 +102,7 @@ class IterationValidation(Iteration):
         allowed_labels = {c.cohort_label for c in self.iteration_cohorts}
         line_errors: list[InitErrorDetails] = []
 
-        # Pre‑compute allowed label string once
+        # Pre compute allowed label string once
         allowed_str = ", ".join(sorted(allowed_labels)) if allowed_labels else None
 
         for idx, rule in enumerate(self.iteration_rules):
@@ -115,8 +115,7 @@ class IterationValidation(Iteration):
 
                 # Build error message
                 error_message = (
-                    f"Invalid cohort_label value '{label}'. "
-                    f"Allowed values: {allowed_str}."
+                    f"Invalid cohort_label value '{label}'. Allowed values: {allowed_str}."
                     if allowed_str
                     else (
                         f"Invalid cohort_label value '{label}'. "
@@ -134,10 +133,7 @@ class IterationValidation(Iteration):
                 )
 
         if line_errors:
-            raise ValidationError.from_exception_data(
-                title="IterationValidation",
-                line_errors=line_errors
-            )
+            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=line_errors)
 
         return self
 
