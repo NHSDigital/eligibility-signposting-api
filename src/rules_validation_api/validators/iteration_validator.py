@@ -108,14 +108,21 @@ class IterationValidation(Iteration):
 
             for label in rule.parsed_cohort_labels:
                 if label not in allowed_labels:
-                    allowed_str = ", ".join(sorted(allowed_labels))
+                    if allowed_labels:
+                        allowed_str = ", ".join(sorted(allowed_labels))
+                        error_message = (
+                            f"Invalid cohort_label value '{label}'. Allowed values: {allowed_str}."
+                        )
+                    else:
+                        error_message = (
+                            f"Invalid cohort_label value '{label}'. "
+                            "No iteration cohorts are defined, so no cohort labels are allowed."
+                        )
                     error = InitErrorDetails(
                         type="value_error",
                         loc=("iteration_rules", idx, "cohort_label"),
                         input=rule.cohort_label,
-                        ctx={
-                            "error": f"Invalid cohort_label value '{label}'. Allowed values: {allowed_str}."
-                        },
+                        ctx={"error": error_message},
                     )
                     line_errors.append(error)
         if line_errors:
