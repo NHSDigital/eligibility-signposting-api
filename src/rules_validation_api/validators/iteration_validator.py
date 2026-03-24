@@ -100,16 +100,26 @@ class IterationValidation(Iteration):
     @model_validator(mode="after")
     def validate_rule_cohort_labels_against_iteration_cohorts(self) -> typing.Self:
         allowed_labels = {cohort.cohort_label for cohort in self.iteration_cohorts}
+        line_errors: list[InitErrorDetails] = []
 
         for idx, rule in enumerate(self.iteration_rules):
             if rule.cohort_label is None:
                 continue
-            if not all(label in allowed_labels for label in rule.parsed_cohort_labels):
-                allowed_str = ", ".join(sorted(allowed_labels))
-                msg = (
-                    f"Invalid cohort_label value: {rule.cohort_label}. Allowed values: {allowed_str}. Rule index: {idx}"
-                )
-                raise ValueError(msg)
+
+            for label in rule.parsed_cohort_labels:
+                if label not in allowed_labels:
+                    allowed_str = ", ".join(sorted(allowed_labels))
+                    error = InitErrorDetails(
+                        type="value_error",
+                        loc=("iteration_rules", idx, "cohort_label"),
+                        input=rule.cohort_label,
+                        ctx={
+                            "error": f"Invalid cohort_label value '{label}'. Allowed values: {allowed_str}."
+                        },
+                    )
+                    line_errors.append(error)
+        if line_errors:
+            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=line_errors)
 
         return self
 

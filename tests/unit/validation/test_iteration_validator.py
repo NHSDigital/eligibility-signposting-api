@@ -579,5 +579,12 @@ class TestBUCValidations:
         data["IterationCohorts"] = [valid_iteration_cohorts()]
         data["IterationRules"][0]["CohortLabel"] = "label_2"
 
-        with pytest.raises(ValidationError):
-            IterationValidation(**(data))
+        with pytest.raises(ValidationError) as exc_info:
+            IterationValidation(**data)
+
+        errors = exc_info.value.errors()
+        # Ensure at least one error is specifically about the invalid CohortLabel in IterationRules[0]
+        assert any(
+            err.get("loc", [])[:3] == ("iteration_rules", 0, "cohort_label")
+            for err in errors
+        )
