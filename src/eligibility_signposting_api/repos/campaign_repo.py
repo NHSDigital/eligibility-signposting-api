@@ -7,14 +7,17 @@ from typing import Annotated, NewType
 
 from aws_xray_sdk.core import xray_recorder
 from botocore.client import BaseClient
+from cachetools import TTLCache
 from wireup import Inject, service
 
 from eligibility_signposting_api.model.campaign_config import CampaignConfig, Rules
-from eligibility_signposting_api.config.constants import TTL, RESERVED_TEST_CONSUMER_IDS
+from eligibility_signposting_api.config.constants import CACHE_TTL_SECONDS, RESERVED_TEST_CONSUMER_IDS
 
 BucketName = NewType("BucketName", str)
 
 logger = logging.getLogger(__name__)
+
+campaign_config_cache: TTLCache[str, list[CampaignConfig]] = TTLCache(maxsize=1, ttl=CACHE_TTL_SECONDS)
 
 @service
 class CampaignRepo:
@@ -30,38 +33,29 @@ class CampaignRepo:
         super().__init__()
         self.s3_client = s3_client
         self.bucket_name = bucket_name
-        self._campaign_configs_cache: list[CampaignConfig] | None = None
-        self._cache_expiry_epoch: float = 0.0
-        self._cache_ttl_seconds: int = int(TTL.get(os.getenv("ENVIRONMENT"), 0))
 
     def get_campaign_configs(self, consumer_id: str) -> Generator[CampaignConfig, None, None]:
-        now = time.time()
-        cache_enabled = self._cache_ttl_seconds > 0
-        cache_valid = (
-            cache_enabled
-            and consumer_id not in RESERVED_TEST_CONSUMER_IDS
-            and self._campaign_configs_cache is not None
-            and now < self._cache_expiry_epoch
-        )
+        bypass = consumer_id in RESERVED_TEST_CONSUMER_IDS
+        cache_key = "all_campaigns"
+        cached = None if bypass else campaign_config_cache.get(cache_key)
 
         with xray_recorder.in_subsegment("CampaignRepo.get_campaign_configs"):
-            if cache_valid:
+            if cached is not None:
                 logger.info("Using cached campaign configs")
-                yield from self._campaign_configs_cache
+                yield from cached
                 return
 
             logger.info(
                 "Refreshing campaign configs from S3 (consumer_id=%s, ttl_seconds=%s)",
                 consumer_id,
-                self._cache_ttl_seconds,
+                CACHE_TTL_SECONDS,
             )
-            campaign_configs = self._load_campaign_configs_from_s3()
+            configs = self._load_campaign_configs_from_s3()
 
-            if cache_enabled and consumer_id not in RESERVED_TEST_CONSUMER_IDS:
-                self._campaign_configs_cache = campaign_configs
-                self._cache_expiry_epoch = now + self._cache_ttl_seconds
+            if not bypass:
+                campaign_config_cache[cache_key] = configs
 
-            yield from campaign_configs
+            yield from configs
 
     def _load_campaign_configs_from_s3(self) -> list[CampaignConfig]:
         campaign_configs: list[CampaignConfig] = []

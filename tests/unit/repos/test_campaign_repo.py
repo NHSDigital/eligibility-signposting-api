@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from eligibility_signposting_api.repos.campaign_repo import CampaignRepo, BucketName
+from eligibility_signposting_api.repos.campaign_repo import CampaignRepo, BucketName, campaign_config_cache
 from tests.fixtures.builders.model.rule import CampaignConfigFactory
 
 
@@ -13,6 +13,10 @@ def make_s3_body(payload: dict):
 
 
 class TestCampaignRepo:
+    @pytest.fixture(autouse=True)
+    def clear_cache(self):
+        campaign_config_cache.clear()
+
     @pytest.fixture
     def mock_s3_client(self):
         return MagicMock()
