@@ -99,34 +99,45 @@ class IterationValidation(Iteration):
 
     @model_validator(mode="after")
     def validate_rule_cohort_labels_against_iteration_cohorts(self) -> typing.Self:
-        allowed_labels = {cohort.cohort_label for cohort in self.iteration_cohorts}
+        allowed_labels = {c.cohort_label for c in self.iteration_cohorts}
         line_errors: list[InitErrorDetails] = []
 
+        # Pre‑compute allowed label string once
+        allowed_str = ", ".join(sorted(allowed_labels)) if allowed_labels else None
+
         for idx, rule in enumerate(self.iteration_rules):
-            if rule.cohort_label is None:
+            if not rule.cohort_label:
                 continue
 
             for label in rule.parsed_cohort_labels:
-                if label not in allowed_labels:
-                    if allowed_labels:
-                        allowed_str = ", ".join(sorted(allowed_labels))
-                        error_message = (
-                            f"Invalid cohort_label value '{label}'. Allowed values: {allowed_str}."
-                        )
-                    else:
-                        error_message = (
-                            f"Invalid cohort_label value '{label}'. "
-                            "No iteration cohorts are defined, so no cohort labels are allowed."
-                        )
-                    error = InitErrorDetails(
+                if label in allowed_labels:
+                    continue
+
+                # Build error message
+                error_message = (
+                    f"Invalid cohort_label value '{label}'. "
+                    f"Allowed values: {allowed_str}."
+                    if allowed_str
+                    else (
+                        f"Invalid cohort_label value '{label}'. "
+                        "No iteration cohorts are defined, so no labels are allowed."
+                    )
+                )
+
+                line_errors.append(
+                    InitErrorDetails(
                         type="value_error",
                         loc=("iteration_rules", idx, "cohort_label"),
                         input=rule.cohort_label,
                         ctx={"error": error_message},
                     )
-                    line_errors.append(error)
+                )
+
         if line_errors:
-            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=line_errors)
+            raise ValidationError.from_exception_data(
+                title="IterationValidation",
+                line_errors=line_errors
+            )
 
         return self
 
