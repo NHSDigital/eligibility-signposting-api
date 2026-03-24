@@ -1,6 +1,7 @@
 import hashlib
 import json
 import logging
+import uuid
 from typing import Annotated
 
 from aws_xray_sdk.core import xray_recorder
