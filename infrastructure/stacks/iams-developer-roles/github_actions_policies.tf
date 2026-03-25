@@ -731,7 +731,7 @@ resource "aws_iam_policy" "code_signing_management" {
           "lambda:DeleteFunctionCodeSigningConfig",
           "lambda:PutFunctionCodeSigningConfig"
         ],
-        Resource = "*"
+        Resource = "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api:*",
       },
       {
         Sid    = "SignerJobUsage",
@@ -740,7 +740,7 @@ resource "aws_iam_policy" "code_signing_management" {
           "signer:StartSigningJob",
           "signer:DescribeSigningJob"
         ],
-        Resource = "*"
+        Resource = "arn:aws:signer:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:/signing-jobs/*"
       },
       {
         Sid    = "SignerProfileManagement",
@@ -755,7 +755,7 @@ resource "aws_iam_policy" "code_signing_management" {
           "signer:CancelSigningProfile",
           "signer:RevokeSignature"
         ],
-        Resource = "*"
+        Resource = "arn:aws:signer:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:/signing-profiles/eligibility-signposting-api-*"
       }
     ]
   })
