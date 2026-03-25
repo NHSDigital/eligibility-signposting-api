@@ -22,3 +22,7 @@ resource "aws_lambda_code_signing_config" "signing_config" {
 
   description = "Only allow Lambda bundles signed by our trusted signer profile"
 }
+
+output "lambda_signing_profile_name" {
+  value = aws_signer_signing_profile.lambda_signing.name
+}
