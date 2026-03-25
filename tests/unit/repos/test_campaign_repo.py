@@ -66,7 +66,7 @@ class TestCampaignRepo:
         assert mock_s3_client.list_objects.call_count == 1
         assert mock_s3_client.get_object.call_count == 1
 
-    def test_get_campaign_configs_refreshes_after_ttl_expiry(
+    def test_get_campaign_configs_refreshes_after_cache_is_cleared(
         self,
         repo,
         mock_s3_client,
@@ -85,8 +85,10 @@ class TestCampaignRepo:
         campaign_config_cache.clear()
         third = list(repo.get_campaign_configs("test-consumer-1"))
 
-        assert first[0].version == 1
-        assert second[0].version == 1
-        assert third[0].version == 2
-        assert mock_s3_client.list_objects.call_count == 2
-        assert mock_s3_client.get_object.call_count == 2
+        expected_call_count = 2
+
+        assert first[0].version == first_config.version
+        assert second[0].version == first_config.version
+        assert third[0].version == second_config.version
+        assert mock_s3_client.list_objects.call_count == expected_call_count
+        assert mock_s3_client.get_object.call_count == expected_call_count
