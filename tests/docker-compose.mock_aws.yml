@@ -31,6 +31,7 @@ services:
       - S3_ENDPOINT=http://moto-server:5000
       - SECRET_MANAGER_ENDPOINT=http://moto-server:5000
       - FIREHOSE_ENDPOINT=http://moto-server:5000
+      - KINESIS_ENDPOINT=http://moto-server:5000
       - LOG_LEVEL=INFO
     entrypoint: /bin/sh
     command:

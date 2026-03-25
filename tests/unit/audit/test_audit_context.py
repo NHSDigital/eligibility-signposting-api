@@ -330,7 +330,7 @@ def test_add_response_details_adds_to_audit_log_on_g(app):
         assert g.audit_log.response.last_updated is last_updated
 
 
-def test_write_to_firehose_calls_audit_service_with_correct_data_from_g(app):
+def test_write_audit_record_calls_audit_service_with_correct_data_from_g(app):
     mock_audit_service = Mock(spec=AuditService)
     response_id = uuid.uuid4()
     last_updated = datetime(2023, 1, 1, 0, 0, tzinfo=UTC)
@@ -339,7 +339,7 @@ def test_write_to_firehose_calls_audit_service_with_correct_data_from_g(app):
         g.audit_log = AuditEvent()
 
         AuditContext.add_response_details(response_id, last_updated)
-        AuditContext.write_to_firehose(mock_audit_service)
+        AuditContext.write_audit_record(mock_audit_service)
 
         assert g.audit_log.response.response_id == response_id
         assert g.audit_log.response.last_updated == last_updated

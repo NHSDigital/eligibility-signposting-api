@@ -25,7 +25,7 @@ module "eligibility_signposting_lambda_function" {
   eligibility_rules_bucket_name             = module.s3_rules_bucket.storage_bucket_name
   eligibility_consumer_mappings_bucket_name = module.s3_consumer_mappings_bucket.storage_bucket_name
   eligibility_status_table_name             = module.eligibility_status_table.table_name
-  kinesis_audit_stream_to_s3_name           = module.eligibility_audit_firehose_delivery_stream.firehose_stream_name
+  kinesis_audit_stream_name                 = aws_kinesis_stream.kinesis_source_stream.name
   hashing_secret_name                       = module.secrets_manager.aws_hashing_secret_name
   lambda_insights_extension_version         = 38
   log_level                                 = "INFO"

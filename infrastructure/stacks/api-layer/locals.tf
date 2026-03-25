@@ -10,6 +10,8 @@ locals {
     data.aws_ssm_parameter.mtls_api_ca_cert.value
   ])
 
+  firehose_stream_name = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}${var.project_name}-${var.environment}-audit_stream_to_s3"
+
   # Toggle for deploying WAF resources in the current environment
   # True when var.environment is contained in var.waf_enabled_environments
   waf_enabled = contains(var.waf_enabled_environments, var.environment)
