@@ -33,7 +33,7 @@ from eligibility_signposting_api.model.campaign_config import (
 from eligibility_signposting_api.model.consumer_mapping import ConsumerCampaign, ConsumerId, ConsumerMapping
 from eligibility_signposting_api.processors.hashing_service import HashingService, HashSecretName
 from eligibility_signposting_api.repos import SecretRepo
-from eligibility_signposting_api.repos.campaign_repo import BucketName
+from eligibility_signposting_api.repos.campaign_repo import BucketName, campaign_config_cache
 from eligibility_signposting_api.repos.person_repo import TableName
 from tests.fixtures.builders.model import rule
 from tests.fixtures.builders.model.rule import RulesMapperFactory
@@ -101,6 +101,11 @@ def moto_server(request: pytest.FixtureRequest) -> URL:
         check=lambda: is_responsive(url),
     )
     return url
+
+
+@pytest.fixture(autouse=True)
+def clear_cache():
+    campaign_config_cache.clear()
 
 
 def is_responsive(url: URL) -> bool:
@@ -1304,7 +1309,7 @@ def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -
 
 @pytest.fixture(scope="class")
 def consumer_id() -> ConsumerId:
-    return ConsumerId("23-mic7heal-jor6don")
+    return ConsumerId("test-23-mic7heal-jor6don")
 
 
 def create_and_put_consumer_mapping_in_s3(

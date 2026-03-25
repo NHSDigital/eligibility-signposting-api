@@ -27,7 +27,7 @@ def test_get_campaign_config(s3_client: BaseClient, rules_bucket: BucketName, ca
     repo = CampaignRepo(s3_client, rules_bucket)
 
     # When
-    actual = list(repo.get_campaign_configs())
+    actual = list(repo.get_campaign_configs("consumer_id"))
 
     # Then
     assert_that(

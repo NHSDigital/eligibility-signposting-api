@@ -91,6 +91,7 @@ class FakeUnexpectedErrorEligibilityService(EligibilityService):
         _include_actions: str,
         _conditions: list[str],
         _category: str,
+        _consumer_id: str,
     ) -> EligibilityStatus:
         raise ValueError
 

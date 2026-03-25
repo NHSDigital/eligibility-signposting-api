@@ -33,6 +33,7 @@ services:
       - FIREHOSE_ENDPOINT=http://moto-server:5000
       - KINESIS_ENDPOINT=http://moto-server:5000
       - LOG_LEVEL=INFO
+      #- ENVIRONMENT=dev
     entrypoint: /bin/sh
     command:
       - "-c"
