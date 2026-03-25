@@ -1,5 +1,5 @@
-from typing import Literal
 import os
+from typing import Literal
 
 URL_PREFIX = "patient-check"
 RULE_STOP_DEFAULT = False

@@ -1,7 +1,5 @@
 import json
 import logging
-import os
-import time
 from collections.abc import Generator
 from typing import Annotated, NewType
 
@@ -10,14 +8,15 @@ from botocore.client import BaseClient
 from cachetools import TTLCache
 from wireup import Inject, service
 
-from eligibility_signposting_api.model.campaign_config import CampaignConfig, Rules
 from eligibility_signposting_api.config.constants import CACHE_TTL_SECONDS
+from eligibility_signposting_api.model.campaign_config import CampaignConfig, Rules
 
 BucketName = NewType("BucketName", str)
 
 logger = logging.getLogger(__name__)
 
 campaign_config_cache: TTLCache[str, list[CampaignConfig]] = TTLCache(maxsize=1, ttl=CACHE_TTL_SECONDS)
+
 
 @service
 class CampaignRepo:
@@ -34,7 +33,7 @@ class CampaignRepo:
         self.s3_client = s3_client
         self.bucket_name = bucket_name
 
-    def get_campaign_configs(self, consumer_id: str) -> Generator[CampaignConfig, None, None]:
+    def get_campaign_configs(self, consumer_id: str) -> Generator[CampaignConfig]:
         bypass = "test-" in consumer_id
         cache_key = "all_campaigns"
         cached = None if bypass else campaign_config_cache.get(cache_key)
@@ -71,8 +70,6 @@ class CampaignRepo:
                         Key=f"{campaign_object['Key']}",
                     )
                     body = response["Body"].read()
-                    campaign_configs.append(
-                        Rules.model_validate(json.loads(body)).campaign_config
-                    )
+                    campaign_configs.append(Rules.model_validate(json.loads(body)).campaign_config)
 
         return campaign_configs

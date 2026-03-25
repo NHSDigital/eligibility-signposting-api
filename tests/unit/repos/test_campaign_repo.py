@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from eligibility_signposting_api.repos.campaign_repo import CampaignRepo, BucketName, campaign_config_cache
+from eligibility_signposting_api.repos.campaign_repo import BucketName, CampaignRepo, campaign_config_cache
 from tests.fixtures.builders.model.rule import CampaignConfigFactory
 
 
@@ -31,14 +31,10 @@ class TestCampaignRepo:
     @pytest.fixture
     def rules_payload(self):
         campaign_config = CampaignConfigFactory.build()
-        return {
-            "campaign_config": campaign_config.model_dump(mode="json")
-        }
+        return {"campaign_config": campaign_config.model_dump(mode="json")}
 
     def test_get_campaign_configs_loads_from_s3(self, repo, mock_s3_client, rules_payload):
-        mock_s3_client.list_objects.return_value = {
-            "Contents": [{"Key": "rsv.json"}]
-        }
+        mock_s3_client.list_objects.return_value = {"Contents": [{"Key": "rsv.json"}]}
         mock_s3_client.get_object.return_value = make_s3_body(rules_payload)
 
         result = list(repo.get_campaign_configs("consumer_id"))
@@ -56,20 +52,11 @@ class TestCampaignRepo:
         self,
         repo,
         mock_s3_client,
-        monkeypatch,
     ):
-        repo._cache_ttl_seconds = 60
-
         first_config = CampaignConfigFactory.build(version=1)
 
-        mock_s3_client.list_objects.return_value = {
-            "Contents": [{"Key": "rsv.json"}]
-        }
-        mock_s3_client.get_object.return_value = make_s3_body(
-            {"campaign_config": first_config.model_dump(mode="json")}
-        )
-
-        monkeypatch.setattr("time.time", lambda: 1000.0)
+        mock_s3_client.list_objects.return_value = {"Contents": [{"Key": "rsv.json"}]}
+        mock_s3_client.get_object.return_value = make_s3_body({"campaign_config": first_config.model_dump(mode="json")})
 
         first = list(repo.get_campaign_configs("consumer_id"))
         second = list(repo.get_campaign_configs("consumer_id"))
@@ -83,28 +70,19 @@ class TestCampaignRepo:
         self,
         repo,
         mock_s3_client,
-        monkeypatch,
     ):
-        repo._cache_ttl_seconds = 60
-
         first_config = CampaignConfigFactory.build(version=1)
         second_config = CampaignConfigFactory.build(version=2)
 
-        mock_s3_client.list_objects.return_value = {
-            "Contents": [{"Key": "rsv.json"}]
-        }
+        mock_s3_client.list_objects.return_value = {"Contents": [{"Key": "rsv.json"}]}
         mock_s3_client.get_object.side_effect = [
             make_s3_body({"campaign_config": first_config.model_dump(mode="json")}),
             make_s3_body({"campaign_config": second_config.model_dump(mode="json")}),
         ]
 
-        current_time = {"value": 1000.0}
-        monkeypatch.setattr("time.time", lambda: current_time["value"])
-
         first = list(repo.get_campaign_configs("consumer_id"))
-        current_time["value"] = 1030.0
         second = list(repo.get_campaign_configs("consumer_id"))
-        current_time["value"] = 1061.0
+        campaign_config_cache.clear()
         third = list(repo.get_campaign_configs("test-consumer-1"))
 
         assert first[0].version == 1

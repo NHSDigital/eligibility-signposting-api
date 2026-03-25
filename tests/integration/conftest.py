@@ -107,6 +107,7 @@ def moto_server(request: pytest.FixtureRequest) -> URL:
 def clear_cache():
     campaign_config_cache.clear()
 
+
 def is_responsive(url: URL) -> bool:
     try:
         response = httpx.get(str(url))
