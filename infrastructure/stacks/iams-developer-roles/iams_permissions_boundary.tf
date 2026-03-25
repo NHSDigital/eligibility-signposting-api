@@ -86,6 +86,9 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "firehose:StartDeliveryStreamEncryption",
       "firehose:StopDeliveryStreamEncryption",
 
+      # Kinesis Stream - audit log streaming
+      "kinesis:*",
+
       # IAM - specific role and policy management
       "iam:GetRole*",
       "iam:GetPolicy*",

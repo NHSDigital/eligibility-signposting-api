@@ -165,6 +165,11 @@ def firehose_client(boto3_session: Session, moto_server: URL) -> BaseClient:
 
 
 @pytest.fixture(scope="session")
+def kinesis_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("kinesis", endpoint_url=str(moto_server))
+
+
+@pytest.fixture(scope="session")
 def secretsmanager_client(boto3_session: Session, moto_server: URL) -> BaseClient:
     """
     Provides a boto3 Secrets Manager client bound to Moto.
@@ -572,8 +577,17 @@ def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
 
 
 @pytest.fixture(autouse=True)
+def kinesis_stream(kinesis_client: BaseClient) -> dict[str, Any]:
+    stream_name = "test-kinesis-audit-stream"
+    try:
+        return kinesis_client.create_stream(StreamName=stream_name, ShardCount=1)
+    except kinesis_client.exceptions.ResourceInUseException:
+        return kinesis_client.describe_stream(StreamName=stream_name)
+
+
+@pytest.fixture(autouse=True)
 def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketName) -> dict[str, Any]:
-    stream_name = "test_kinesis_audit_stream_to_s3"
+    stream_name = "test_firehose_audit_stream_to_s3"
 
     try:
         return firehose_client.create_delivery_stream(
@@ -589,6 +603,53 @@ def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketNa
         )
     except firehose_client.exceptions.ResourceInUseException:
         return firehose_client.describe_delivery_stream(DeliveryStreamName=stream_name)
+
+
+def bridge_latest_kinesis_record_to_firehose(
+    kinesis_client: BaseClient,
+    kinesis_stream_name: str,
+    firehose_client: BaseClient,
+    firehose_delivery_stream_name: str,
+) -> dict[str, Any]:
+    """
+    Read the latest record from the Kinesis stream and forward it into Firehose.
+
+    This is a test-only bridge to simulate Firehose consuming from Kinesis when
+    running against Moto.
+
+    Returns the Firehose put_record response.
+    Raises AssertionError if no Kinesis records are found.
+    """
+    stream_description = kinesis_client.describe_stream(StreamName=kinesis_stream_name)
+    shards = stream_description["StreamDescription"]["Shards"]
+
+    if not shards:
+        msg = f"No shards in {kinesis_stream_name}"
+        raise AssertionError(msg)
+
+    shard_id = shards[0]["ShardId"]
+
+    iterator_response = kinesis_client.get_shard_iterator(
+        StreamName=kinesis_stream_name,
+        ShardId=shard_id,
+        ShardIteratorType="TRIM_HORIZON",
+    )
+    shard_iterator = iterator_response["ShardIterator"]
+
+    records_response = kinesis_client.get_records(ShardIterator=shard_iterator)
+    records = records_response.get("Records", [])
+
+    if not records:
+        msg = f"No records in {kinesis_stream_name}"
+        raise AssertionError(msg)
+
+    latest_record = records[-1]
+    latest_data = latest_record["Data"]
+
+    return firehose_client.put_record(
+        DeliveryStreamName=firehose_delivery_stream_name,
+        Record={"Data": latest_data},
+    )
 
 
 @pytest.fixture
