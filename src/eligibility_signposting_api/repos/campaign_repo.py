@@ -11,7 +11,7 @@ from cachetools import TTLCache
 from wireup import Inject, service
 
 from eligibility_signposting_api.model.campaign_config import CampaignConfig, Rules
-from eligibility_signposting_api.config.constants import CACHE_TTL_SECONDS, RESERVED_TEST_CONSUMER_IDS
+from eligibility_signposting_api.config.constants import CACHE_TTL_SECONDS
 
 BucketName = NewType("BucketName", str)
 
@@ -35,7 +35,7 @@ class CampaignRepo:
         self.bucket_name = bucket_name
 
     def get_campaign_configs(self, consumer_id: str) -> Generator[CampaignConfig, None, None]:
-        bypass = consumer_id in RESERVED_TEST_CONSUMER_IDS
+        bypass = "test-" in consumer_id
         cache_key = "all_campaigns"
         cached = None if bypass else campaign_config_cache.get(cache_key)
 

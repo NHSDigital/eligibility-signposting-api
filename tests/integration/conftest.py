@@ -1247,7 +1247,7 @@ def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -
 
 @pytest.fixture(scope="class")
 def consumer_id() -> ConsumerId:
-    return ConsumerId("23-mic7heal-jor6don")
+    return ConsumerId("test-23-mic7heal-jor6don")
 
 
 def create_and_put_consumer_mapping_in_s3(
