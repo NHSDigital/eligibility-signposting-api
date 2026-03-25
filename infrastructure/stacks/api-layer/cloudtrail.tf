@@ -12,7 +12,7 @@ resource "aws_cloudtrail" "data_events_trail" {
   cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.cloudtrail_log_group.arn}:*"
 
   event_selector {
-    read_write_type           = "ReadOnly"
+    read_write_type           = "All"
     include_management_events = false
 
     data_resource {
