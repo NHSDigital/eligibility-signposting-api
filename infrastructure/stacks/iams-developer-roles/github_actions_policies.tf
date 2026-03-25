@@ -728,7 +728,8 @@ resource "aws_iam_policy" "code_signing_management" {
           "lambda:ListCodeSigningConfigs",
           "lambda:GetFunctionCodeSigningConfig",
           "lambda:ListTags",
-          "lambda:DeleteFunctionCodeSigningConfig"
+          "lambda:DeleteFunctionCodeSigningConfig",
+          "lambda:PutFunctionCodeSigningConfig"
         ],
         Resource = "*"
       },

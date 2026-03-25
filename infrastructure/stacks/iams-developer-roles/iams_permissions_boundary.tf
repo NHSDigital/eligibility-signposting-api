@@ -163,6 +163,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "lambda:DeleteFunctionCodeSigningConfig",
       "lambda:PutFunctionCodeSigningConfig",
       "lambda:DeleteCodeSigningConfig",
+      "lambda:CreateCodeSigningConfig",
 
       # CloudWatch Logs - log management
       "logs:*",
