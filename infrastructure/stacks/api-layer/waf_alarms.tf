@@ -197,14 +197,14 @@ resource "aws_cloudwatch_metric_alarm" "waf_all_requests_high" {
   )
 }
 
-# Alarm for counted requests (NoUserAgent_Header override)
-# The CRS NoUserAgent_Header sub-rule is kept in COUNT to allow the API proxy healthcheck.
+# Alarm for counted requests (NoUserAgent_HEADER override)
+# The CRS NoUserAgent_HEADER sub-rule is kept in COUNT to allow the API proxy healthcheck.
 # This alarm alerts if count spikes unexpectedly, which could indicate rule misconfiguration
 # or unexpected traffic patterns hitting that override.
 resource "aws_cloudwatch_metric_alarm" "waf_counted_requests_monitoring" {
   count               = local.waf_enabled ? 1 : 0
   alarm_name          = "WAF-CountedRequests-Monitoring-${local.workspace}"
-  alarm_description   = "Monitors counted requests - expected to be low volume (healthcheck NoUserAgent_Header override only)"
+  alarm_description   = "Monitors counted requests - expected to be low volume (healthcheck NoUserAgent_HEADER override only)"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "CountedRequests"
@@ -227,7 +227,7 @@ resource "aws_cloudwatch_metric_alarm" "waf_counted_requests_monitoring" {
       Name        = "WAF-CountedRequests-Monitoring"
       Severity    = "low"
       Environment = var.environment
-      Purpose     = "Monitor NoUserAgent_Header count override for healthcheck proxy"
+      Purpose     = "Monitor NoUserAgent_HEADER count override for healthcheck proxy"
     }
   )
 }

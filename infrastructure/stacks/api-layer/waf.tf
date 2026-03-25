@@ -48,9 +48,9 @@ resource "aws_wafv2_web_acl" "api_gateway" {
         vendor_name = "AWS"
         name        = "AWSManagedRulesCommonRuleSet"
 
-        # Override NoUserAgent_Header to count only - APIM health checks send no User-Agent
+        # Override NoUserAgent_HEADER to count only - APIM health checks send no User-Agent
         rule_action_override {
-          name = "NoUserAgent_Header"
+          name = "NoUserAgent_HEADER"
           action_to_use {
             count {}
           }
