@@ -64,7 +64,7 @@ class CampaignRepo:
                 campaign_objects = self.s3_client.list_objects(Bucket=self.bucket_name)
 
             with xray_recorder.in_subsegment("get_objects"):
-                for campaign_object in campaign_objects.get("Contents", []):
+                for campaign_object in campaign_objects.get("Contents"):
                     response = self.s3_client.get_object(
                         Bucket=self.bucket_name,
                         Key=f"{campaign_object['Key']}",
