@@ -53,6 +53,7 @@ data "aws_iam_policy_document" "assumed_role_permissions_boundary" {
       # Kinesis Firehose - Lambda writing audit data
       "firehose:PutRecord",
       "firehose:PutRecordBatch",
+      "kinesis:*",
 
       # X-Ray - Lambda tracing
       "xray:PutTraceSegments",

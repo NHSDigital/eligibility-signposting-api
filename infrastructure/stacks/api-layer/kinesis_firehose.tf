@@ -11,4 +11,11 @@ module "eligibility_audit_firehose_delivery_stream" {
   firehose_cloud_watch_log_stream       = aws_cloudwatch_log_stream.firehose_audit_stream.name
   eligibility_lambda_role_arn           = aws_iam_role.eligibility_lambda_role.arn
   kinesis_source_stream_arn             = aws_kinesis_stream.kinesis_source_stream.arn
+
+  depends_on = [
+    aws_iam_role_policy.kinesis_firehose_read_policy,
+    aws_iam_role_policy.firehose_kinesis_source_kms_policy,
+    aws_iam_role_policy.kinesis_firehose_s3_write_policy,
+    aws_iam_role_policy.kinesis_firehose_logs_policy,
+  ]
 }
