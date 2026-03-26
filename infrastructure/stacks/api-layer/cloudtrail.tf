@@ -85,9 +85,13 @@ resource "aws_kms_key_policy" "cloudtrail_kms_key_policy" {
         Resource = "*"
       },
       {
+        Sid    = "AllowCloudTrailAndLogsKMS"
         Effect = "Allow"
         Principal = {
-          Service = "logs.amazonaws.com"
+          Service = [
+            "cloudtrail.amazonaws.com",
+            "logs.amazonaws.com"
+          ]
         }
         Action = [
           "kms:Encrypt",

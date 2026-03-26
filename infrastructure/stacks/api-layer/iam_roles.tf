@@ -162,9 +162,8 @@ resource "aws_iam_role" "cloudtrail_cloudwatch_role" {
   permissions_boundary = aws_iam_policy.assumed_role_permissions_boundary.arn
 
   tags = {
-    environment  = var.environment
-    project_name = var.project_name
-    stack_name   = local.stack_name
-    workspace    = terraform.workspace
+    Environment = var.environment
+    Purpose     = "cloudtrail-service-role"
+    ManagedBy   = "terraform"
   }
 }
