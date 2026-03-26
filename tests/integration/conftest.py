@@ -33,7 +33,7 @@ from eligibility_signposting_api.model.campaign_config import (
 from eligibility_signposting_api.model.consumer_mapping import ConsumerCampaign, ConsumerId, ConsumerMapping
 from eligibility_signposting_api.processors.hashing_service import HashingService, HashSecretName
 from eligibility_signposting_api.repos import SecretRepo
-from eligibility_signposting_api.repos.campaign_repo import BucketName
+from eligibility_signposting_api.repos.campaign_repo import BucketName, campaign_config_cache
 from eligibility_signposting_api.repos.person_repo import TableName
 from tests.fixtures.builders.model import rule
 from tests.fixtures.builders.model.rule import RulesMapperFactory
@@ -103,6 +103,11 @@ def moto_server(request: pytest.FixtureRequest) -> URL:
     return url
 
 
+@pytest.fixture(autouse=True)
+def clear_cache():
+    campaign_config_cache.clear()
+
+
 def is_responsive(url: URL) -> bool:
     try:
         response = httpx.get(str(url))
@@ -157,6 +162,11 @@ def s3_client(boto3_session: Session, moto_server: URL) -> BaseClient:
 @pytest.fixture(scope="session")
 def firehose_client(boto3_session: Session, moto_server: URL) -> BaseClient:
     return boto3_session.client("firehose", endpoint_url=str(moto_server))
+
+
+@pytest.fixture(scope="session")
+def kinesis_client(boto3_session: Session, moto_server: URL) -> BaseClient:
+    return boto3_session.client("kinesis", endpoint_url=str(moto_server))
 
 
 @pytest.fixture(scope="session")
@@ -567,8 +577,17 @@ def audit_bucket(s3_client: BaseClient) -> Generator[BucketName]:
 
 
 @pytest.fixture(autouse=True)
+def kinesis_stream(kinesis_client: BaseClient) -> dict[str, Any]:
+    stream_name = "test-kinesis-audit-stream"
+    try:
+        return kinesis_client.create_stream(StreamName=stream_name, ShardCount=1)
+    except kinesis_client.exceptions.ResourceInUseException:
+        return kinesis_client.describe_stream(StreamName=stream_name)
+
+
+@pytest.fixture(autouse=True)
 def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketName) -> dict[str, Any]:
-    stream_name = "test_kinesis_audit_stream_to_s3"
+    stream_name = "test_firehose_audit_stream_to_s3"
 
     try:
         return firehose_client.create_delivery_stream(
@@ -584,6 +603,53 @@ def firehose_delivery_stream(firehose_client: BaseClient, audit_bucket: BucketNa
         )
     except firehose_client.exceptions.ResourceInUseException:
         return firehose_client.describe_delivery_stream(DeliveryStreamName=stream_name)
+
+
+def bridge_latest_kinesis_record_to_firehose(
+    kinesis_client: BaseClient,
+    kinesis_stream_name: str,
+    firehose_client: BaseClient,
+    firehose_delivery_stream_name: str,
+) -> dict[str, Any]:
+    """
+    Read the latest record from the Kinesis stream and forward it into Firehose.
+
+    This is a test-only bridge to simulate Firehose consuming from Kinesis when
+    running against Moto.
+
+    Returns the Firehose put_record response.
+    Raises AssertionError if no Kinesis records are found.
+    """
+    stream_description = kinesis_client.describe_stream(StreamName=kinesis_stream_name)
+    shards = stream_description["StreamDescription"]["Shards"]
+
+    if not shards:
+        msg = f"No shards in {kinesis_stream_name}"
+        raise AssertionError(msg)
+
+    shard_id = shards[0]["ShardId"]
+
+    iterator_response = kinesis_client.get_shard_iterator(
+        StreamName=kinesis_stream_name,
+        ShardId=shard_id,
+        ShardIteratorType="TRIM_HORIZON",
+    )
+    shard_iterator = iterator_response["ShardIterator"]
+
+    records_response = kinesis_client.get_records(ShardIterator=shard_iterator)
+    records = records_response.get("Records", [])
+
+    if not records:
+        msg = f"No records in {kinesis_stream_name}"
+        raise AssertionError(msg)
+
+    latest_record = records[-1]
+    latest_data = latest_record["Data"]
+
+    return firehose_client.put_record(
+        DeliveryStreamName=firehose_delivery_stream_name,
+        Record={"Data": latest_data},
+    )
 
 
 @pytest.fixture
@@ -1243,7 +1309,7 @@ def campaign_configs(request, s3_client: BaseClient, rules_bucket: BucketName) -
 
 @pytest.fixture(scope="class")
 def consumer_id() -> ConsumerId:
-    return ConsumerId("23-mic7heal-jor6don")
+    return ConsumerId("test-23-mic7heal-jor6don")
 
 
 def create_and_put_consumer_mapping_in_s3(

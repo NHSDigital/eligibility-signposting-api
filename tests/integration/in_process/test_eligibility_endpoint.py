@@ -32,7 +32,7 @@ from eligibility_signposting_api.model.eligibility_status import (
 )
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from tests.fixtures.builders.model import rule
-from tests.integration.conftest import UNIQUE_CONSUMER_HEADER
+from tests.integration.conftest import UNIQUE_CONSUMER_HEADER, bridge_latest_kinesis_record_to_firehose
 
 UK_TIMEZONE = ZoneInfo("Europe/London")
 
@@ -1260,6 +1260,8 @@ class TestEligibilityResponseWithVariousInputs:
         requested_conditions: str,
         requested_category: str,
         expected_campaign_id: list[str],
+        kinesis_client,
+        firehose_client,
     ):
         # Given
         headers = {"nhs-login-nhs-number": str(persisted_person), UNIQUE_CONSUMER_HEADER: consumer_id}
@@ -1268,6 +1270,12 @@ class TestEligibilityResponseWithVariousInputs:
         client.get(
             f"/patient-check/{persisted_person}?includeActions=Y&category={requested_category}&conditions={requested_conditions}",
             headers=headers,
+        )
+        bridge_latest_kinesis_record_to_firehose(
+            kinesis_client=kinesis_client,
+            kinesis_stream_name="test-kinesis-audit-stream",
+            firehose_client=firehose_client,
+            firehose_delivery_stream_name="test_firehose_audit_stream_to_s3",
         )
 
         objects = s3_client.list_objects_v2(Bucket=audit_bucket).get("Contents", [])
@@ -1349,6 +1357,8 @@ class TestEligibilityResponseWithVariousInputs:
         postcode_for_comparator: str,
         cohort_for_comparator: str,
         expected_campaign_id: NHSNumber,
+        kinesis_client,
+        firehose_client,
     ):
         # Given
         consumer_id = "consumer-n3bs-jo4hn-ce4na"
@@ -1437,6 +1447,12 @@ class TestEligibilityResponseWithVariousInputs:
 
         # When
         client.get(f"/patient-check/{persisted_person_pc_sw19}", headers=headers)
+        bridge_latest_kinesis_record_to_firehose(
+            kinesis_client=kinesis_client,
+            kinesis_stream_name="test-kinesis-audit-stream",
+            firehose_client=firehose_client,
+            firehose_delivery_stream_name="test_firehose_audit_stream_to_s3",
+        )
 
         objects = s3_client.list_objects_v2(Bucket=audit_bucket).get("Contents", [])
         object_keys = [obj["Key"] for obj in objects]
@@ -1687,6 +1703,8 @@ class TestEligibilityResponseWithVariousInputs:
         rules_bucket: BucketName,
         audit_bucket: BucketName,
         secretsmanager_client: BaseClient,  # noqa: ARG002
+        kinesis_client,
+        firehose_client,
     ):
         # Given
         consumer_id = "consumer-n3bs-jo4hn-ce4na"
@@ -1778,6 +1796,13 @@ class TestEligibilityResponseWithVariousInputs:
 
         # When
         response = client.get(f"/patient-check/{persisted_person_pc_sw19}", headers=headers)
+
+        bridge_latest_kinesis_record_to_firehose(
+            kinesis_client=kinesis_client,
+            kinesis_stream_name="test-kinesis-audit-stream",
+            firehose_client=firehose_client,
+            firehose_delivery_stream_name="test_firehose_audit_stream_to_s3",
+        )
 
         # Then
         assert_that(response, is_response().with_status_code(HTTPStatus.OK))

@@ -15,6 +15,7 @@ AwsRegion = NewType("AwsRegion", str)
 AwsAccessKey = NewType("AwsAccessKey", str)
 AwsSecretAccessKey = NewType("AwsSecretAccessKey", str)
 AwsKinesisFirehoseStreamName = NewType("AwsKinesisFirehoseStreamName", str)
+AwsKinesisStreamName = NewType("AwsKinesisStreamName", str)
 ApiDomainName = NewType("ApiDomainName", str)
 
 
@@ -27,9 +28,10 @@ def config() -> dict[str, Any]:
     hashing_secret_name = HashSecretName(os.getenv("HASHING_SECRET_NAME", "test_secret"))
     aws_default_region = AwsRegion(os.getenv("AWS_DEFAULT_REGION", "eu-west-1"))
     enable_xray_patching = os.getenv("ENABLE_XRAY_PATCHING", "false").lower() == "true"
-    kinesis_audit_stream_to_s3 = AwsKinesisFirehoseStreamName(
-        os.getenv("KINESIS_AUDIT_STREAM_TO_S3", "test_kinesis_audit_stream_to_s3")
+    firehose_audit_stream_to_s3 = AwsKinesisFirehoseStreamName(
+        os.getenv("FIREHOSE_AUDIT_STREAM_TO_S3", "test_firehose_audit_stream_to_s3")
     )
+    kinesis_audit_stream = AwsKinesisStreamName(os.getenv("KINESIS_AUDIT_STREAM", "test-kinesis-audit-stream"))
     log_level = LOG_LEVEL
 
     if os.getenv("ENV"):
@@ -44,7 +46,9 @@ def config() -> dict[str, Any]:
             "audit_bucket_name": audit_bucket_name,
             "consumer_mapping_bucket_name": consumer_mapping_bucket_name,
             "firehose_endpoint": None,
-            "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
+            "firehose_audit_stream_to_s3": firehose_audit_stream_to_s3,
+            "kinesis_audit_stream": kinesis_audit_stream,
+            "kinesis_endpoint": None,
             "enable_xray_patching": enable_xray_patching,
             "secretsmanager_endpoint": None,
             "hashing_secret_name": hashing_secret_name,
@@ -63,7 +67,9 @@ def config() -> dict[str, Any]:
         "audit_bucket_name": audit_bucket_name,
         "consumer_mapping_bucket_name": consumer_mapping_bucket_name,
         "firehose_endpoint": URL(os.getenv("FIREHOSE_ENDPOINT", moto_server_endpoint)),
-        "kinesis_audit_stream_to_s3": kinesis_audit_stream_to_s3,
+        "firehose_audit_stream_to_s3": firehose_audit_stream_to_s3,
+        "kinesis_audit_stream": kinesis_audit_stream,
+        "kinesis_endpoint": URL(os.getenv("KINESIS_ENDPOINT", moto_server_endpoint)),
         "enable_xray_patching": enable_xray_patching,
         "secretsmanager_endpoint": URL(os.getenv("SECRET_MANAGER_ENDPOINT", moto_server_endpoint)),
         "hashing_secret_name": hashing_secret_name,

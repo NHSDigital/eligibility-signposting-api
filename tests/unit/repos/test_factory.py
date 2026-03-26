@@ -9,6 +9,7 @@ from yarl import URL
 from eligibility_signposting_api.repos.factory import (
     dynamodb_resource_factory,
     firehose_client_factory,
+    kinesis_client_factory,
     s3_service_factory,
 )
 
@@ -78,4 +79,25 @@ def test_firehose_service_factory_without_endpoint(mock_session):
     result = firehose_client_factory(mock_session, None)
 
     mock_session.client.assert_called_once_with("firehose", endpoint_url=None)
+    assert result is mock_client
+
+
+def test_kinesis_service_factory_with_endpoint(mock_session):
+    mock_client = MagicMock(spec=BaseClient)
+    mock_session.client = MagicMock(return_value=mock_client)
+    endpoint = URL("http://localhost:4566")
+
+    result = kinesis_client_factory(mock_session, endpoint)
+
+    mock_session.client.assert_called_once_with("kinesis", endpoint_url="http://localhost:4566")
+    assert result is mock_client
+
+
+def test_kinesis_service_factory_without_endpoint(mock_session):
+    mock_client = MagicMock(spec=BaseClient)
+    mock_session.client = MagicMock(return_value=mock_client)
+
+    result = kinesis_client_factory(mock_session, None)
+
+    mock_session.client.assert_called_once_with("kinesis", endpoint_url=None)
     assert result is mock_client

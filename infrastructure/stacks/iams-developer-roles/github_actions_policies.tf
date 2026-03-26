@@ -674,6 +674,41 @@ resource "aws_iam_policy" "firehose_readonly" {
   tags = merge(local.tags, { Name = "firehose-describe-access" })
 }
 
+resource "aws_iam_policy" "kinesis_management" {
+  name        = "kinesis-management"
+  description = "Allow GitHub Actions to manage project Kinesis streams"
+  path        = "/service-policies/"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "kinesis:CreateStream",
+          "kinesis:DeleteStream",
+          "kinesis:DescribeStream",
+          "kinesis:DescribeStreamSummary",
+          "kinesis:ListStreams",
+          "kinesis:ListTagsForStream",
+          "kinesis:AddTagsToStream",
+          "kinesis:RemoveTagsFromStream",
+          "kinesis:ListShards",
+          "kinesis:IncreaseStreamRetentionPeriod",
+          "kinesis:DecreaseStreamRetentionPeriod",
+          "kinesis:StartStreamEncryption",
+          "kinesis:StopStreamEncryption"
+        ],
+        Resource = [
+          "arn:aws:kinesis:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:stream/eligibility-signposting-api-*"
+        ]
+      }
+    ]
+  })
+
+  tags = merge(local.tags, { Name = "kinesis-management" })
+}
+
 resource "aws_iam_policy" "cloudwatch_management" {
   #checkov:skip=CKV_AWS_355: GetMetricWidgetImage requires wildcard resource
   #checkov:skip=CKV_AWS_290: GetMetricWidgetImage requires wildcard resource
@@ -787,4 +822,9 @@ resource "aws_iam_role_policy_attachment" "firehose_readonly_attach" {
 resource "aws_iam_role_policy_attachment" "cloudwatch_management" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.cloudwatch_management.arn
+}
+
+resource "aws_iam_role_policy_attachment" "kinesis_management_attach" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.kinesis_management.arn
 }
