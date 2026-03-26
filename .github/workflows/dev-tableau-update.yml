@@ -1,0 +1,92 @@
+name: "Daily Tableau Data Update"
+
+on:
+  schedule:
+    # This runs at 10:00 AM UTC every day
+    - cron: '0 10 * * *'
+  workflow_dispatch: # manual run for testing
+
+jobs:
+  metadata:
+    name: "Set CI/CD metadata"
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      build_datetime: ${{ steps.variables.outputs.build_datetime }}
+      build_timestamp: ${{ steps.variables.outputs.build_timestamp }}
+      build_epoch: ${{ steps.variables.outputs.build_epoch }}
+      nodejs_version: ${{ steps.variables.outputs.nodejs_version }}
+      python_version: ${{ steps.variables.outputs.python_version }}
+      terraform_version: ${{ steps.variables.outputs.terraform_version }}
+      version: ${{ steps.variables.outputs.version }}
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: "Set CI/CD variables"
+        id: variables
+        run: |
+          datetime=$(date -u +'%Y-%m-%dT%H:%M:%S%z')
+          echo "build_datetime=$datetime" >> $GITHUB_OUTPUT
+          echo "build_timestamp=$(date --date=$datetime -u +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+          echo "build_epoch=$(date --date=$datetime -u +'%s')" >> $GITHUB_OUTPUT
+          echo "nodejs_version=$(grep "^nodejs" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
+          echo "python_version=$(grep "^nodejs" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
+          echo "terraform_version=$(grep "^terraform" .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
+          echo "version=dev-$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+
+      - name: "List variables"
+        run: |
+          echo "Deploying to: DEV"
+          echo "VERSION=${{ steps.variables.outputs.version }}"
+
+  publish:
+    name: "Publish to dev"
+    runs-on: ubuntu-latest
+    needs: [metadata]
+    timeout-minutes: 30
+    environment: "dev"
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: "Checkout Repository"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: "Install Dependencies"
+        run: |
+          pip install boto3 pandas tableauserverclient tableauhyperapi requests
+
+      - name: "Configure AWS Credentials (Main Deployment Role)"
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Run S3 to Hyper Script"
+        run: python scripts/tableau/generate_tableau_data.py
+
+      - name: "Publish to Tableau"
+        env:
+          TABLEAU_TOKEN_NAME: ${{ secrets.TABLEAU_TOKEN_NAME }}
+          TABLEAU_TOKEN_VALUE: ${{ secrets.TABLEAU_TOKEN_VALUE }}
+          TABLEAU_SITE_ID: ${{ vars.TABLEAU_SITE_ID }}
+          TABLEAU_SERVER_URL: ${{ vars.TABLEAU_SERVER_URL }}
+          TABLEAU_DATE_SOURCE_ID: ${{ secrets.TABLEAU_DATASOURCE_ID }}
+        run: python scripts/tableau/tableau_refresh.py
+
