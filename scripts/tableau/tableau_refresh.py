@@ -50,7 +50,7 @@ def main() -> None:
     if not tableau_token_name: missing_vars.append("TABLEAU_TOKEN_NAME")
     if not tableau_token_value: missing_vars.append("TABLEAU_TOKEN_VALUE")
     if not tableau_server_url: missing_vars.append("TABLEAU_SERVER_URL")
-    if not datasource_id: missing_vars.append("TABLEAU_DATASOURCE_ID/TABLEAU_DATE_SOURCE_ID")
+    if not datasource_id: missing_vars.append("TABLEAU_DATASOURCE_ID")
 
     if missing_vars:
         raise EnvironmentError(
