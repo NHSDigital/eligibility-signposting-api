@@ -35,7 +35,7 @@ def main() -> None:
     tableau_token_value = os.getenv("TABLEAU_TOKEN_VALUE")
     tableau_site = os.getenv("TABLEAU_SITE_ID", "NHSD_DEV")
     tableau_server_url = os.getenv("TABLEAU_SERVER_URL")
-    datasource_id = os.getenv("TABLEAU_DATE_SOURCE_ID")
+    datasource_id = os.getenv("TABLEAU_DATASOURCE_ID") or os.getenv("TABLEAU_DATE_SOURCE_ID")
 
     # Validate required env vars
     if not tableau_token_name or not tableau_token_value:
