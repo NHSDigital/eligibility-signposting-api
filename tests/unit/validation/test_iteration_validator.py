@@ -14,10 +14,7 @@ class TestMandatoryFieldsSchemaValidations:
     def test_campaign_config_with_only_mandatory_fields_configuration(
         self, valid_campaign_config_with_only_mandatory_fields
     ):
-        try:
-            IterationValidation(**(valid_campaign_config_with_only_mandatory_fields["Iterations"][0]))
-        except ValidationError as e:
-            pytest.fail(f"Unexpected error during model instantiation: {e}")
+        IterationValidation(**(valid_campaign_config_with_only_mandatory_fields["Iterations"][0]))
 
     @pytest.mark.parametrize(
         "mandatory_field",
@@ -556,7 +553,7 @@ class TestBUCValidations:
         data = valid_campaign_config_with_only_mandatory_fields.copy()
 
         if default_time_iteration_input:
-            data["iteration_time"] = default_time_iteration_input
+            data["IterationTime"] = default_time_iteration_input
 
         data["Iterations"] = [iteration_data]
 
@@ -570,3 +567,21 @@ class TestBUCValidations:
             f"Failed! Input: {iteration_time_input}, Default: {default_time_iteration_input}. "
             f"Expected {expected_date_time} but got {result}"
         )
+
+    def test_iteration_rules_having_invalid_cohort_labels_throws_error(
+        self,
+        valid_iteration_with_only_mandatory_fields,
+        valid_iteration_rule_with_only_mandatory_fields,
+        valid_iteration_cohorts,
+    ):
+        data = valid_iteration_with_only_mandatory_fields.copy()
+        data["IterationRules"] = [valid_iteration_rule_with_only_mandatory_fields]
+        data["IterationCohorts"] = [valid_iteration_cohorts()]
+        data["IterationRules"][0]["CohortLabel"] = "label_2"
+
+        with pytest.raises(ValidationError) as exc_info:
+            IterationValidation(**data)
+
+        errors = exc_info.value.errors()
+        # Ensure at least one error is specifically about the invalid CohortLabel in IterationRules[0]
+        assert any(err.get("loc", [])[:3] == ("iteration_rules", 0, "cohort_label") for err in errors)

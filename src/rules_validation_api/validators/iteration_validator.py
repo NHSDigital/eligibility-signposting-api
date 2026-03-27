@@ -98,6 +98,46 @@ class IterationValidation(Iteration):
         return action_mapper
 
     @model_validator(mode="after")
+    def validate_rule_cohort_labels_against_iteration_cohorts(self) -> typing.Self:
+        allowed_labels = {c.cohort_label for c in self.iteration_cohorts}
+        line_errors: list[InitErrorDetails] = []
+
+        # Pre compute allowed label string once
+        allowed_str = ", ".join(sorted(allowed_labels)) if allowed_labels else None
+
+        for idx, rule in enumerate(self.iteration_rules):
+            if not rule.cohort_label:
+                continue
+
+            for label in rule.parsed_cohort_labels:
+                if label in allowed_labels:
+                    continue
+
+                # Build error message
+                error_message = (
+                    f"Invalid cohort_label value '{label}'. Allowed values: {allowed_str}."
+                    if allowed_str
+                    else (
+                        f"Invalid cohort_label value '{label}'. "
+                        "No iteration cohorts are defined, so no labels are allowed."
+                    )
+                )
+
+                line_errors.append(
+                    InitErrorDetails(
+                        type="value_error",
+                        loc=("iteration_rules", idx, "cohort_label"),
+                        input=rule.cohort_label,
+                        ctx={"error": error_message},
+                    )
+                )
+
+        if line_errors:
+            raise ValidationError.from_exception_data(title="IterationValidation", line_errors=line_errors)
+
+        return self
+
+    @model_validator(mode="after")
     def action_mapper_validation(self) -> typing.Self:
         all_errors = []
 
