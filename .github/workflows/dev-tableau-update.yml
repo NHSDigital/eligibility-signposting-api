@@ -82,6 +82,6 @@ jobs:
           TABLEAU_TOKEN_VALUE: ${{ secrets.TABLEAU_TOKEN_VALUE }}
           TABLEAU_SITE_ID: ${{ vars.TABLEAU_SITE_ID }}
           TABLEAU_SERVER_URL: ${{ vars.TABLEAU_SERVER_URL }}
-          TABLEAU_DATE_SOURCE_ID: ${{ secrets.TABLEAU_DATASOURCE_ID }}
+          TABLEAU_DATASOURCE_ID: ${{ secrets.TABLEAU_DATASOURCE_ID }}
         run: python scripts/tableau/tableau_refresh.py
 
