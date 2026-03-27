@@ -10,9 +10,10 @@ idempotence
 Makefile
 Middleware
 middleware
+moto
 OAuth
 Octokit
-onboarding
+[Oo]nboarding
 Podman
 preprod
 Proxygen
@@ -27,7 +28,11 @@ Terraform
 toolchain
 Trufflehog
 Uncomment
+virtualenv
 Werkzeug
+[Ww]alkthrough
+[Pp]ylance
+[Pp]yright
 Syncytial
 pyenv
 colima
