@@ -75,7 +75,7 @@ def create_hyper_from_df(df, hyper_path):
                 for _, row in df.iterrows():
                     # Parse timestamp string
                     ts = datetime.strptime(str(row['timestamp']), "%Y-%m-%d %H:%M:%S")
-                    # Parse processing_date string (20260303)
+                    # Parse processing_date str (20260303)
                     pd_str = str(row['processing_date'])
                     pd_dt = datetime.strptime(pd_str, "%Y%m%d")
 
