@@ -731,7 +731,7 @@ resource "aws_iam_policy" "code_signing_management" {
           "lambda:DeleteFunctionCodeSigningConfig",
           "lambda:PutFunctionCodeSigningConfig"
         ],
-        Resource = "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api:*",
+        Resource = "*"
       },
       {
         Sid    = "SignerJobUsage",
