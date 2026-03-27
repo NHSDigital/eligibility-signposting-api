@@ -59,13 +59,18 @@ def create_hyper_from_df(df, hyper_path):
         TableDefinition, Telemetry, SqlType, TableName, Date, Timestamp
     )
 
-    with HyperProcess(Telemetry.DO_NOT_SEND_USAGE_DATA_TO_TABLEAU) as hyper:
-        with Connection(endpoint=hyper.endpoint, database=hyper_path,
-                        create_mode=CreateMode.CREATE_AND_REPLACE) as connection:
-            table_name = TableName("public", "Extract")
+    # Define the schema and table names clearly
+    SCHEMA_NAME = "Extract"
+    TABLE_NAME = "Extract"
 
-            # Define schema exactly as your Athena table
-            schema = TableDefinition(table_name, [
+    with HyperProcess(Telemetry.DO_NOT_SEND_USAGE_DATA_TO_TABLEAU) as hyper:
+        with Connection(endpoint=hyper.endpoint,
+                        database=hyper_path,
+                        create_mode=CreateMode.CREATE_AND_REPLACE) as connection:
+            # Align TableName with the schema we are about to create
+            target_table = TableName(SCHEMA_NAME, TABLE_NAME)
+
+            schema_def = TableDefinition(target_table, [
                 TableDefinition.Column("timestamp", SqlType.timestamp()),
                 TableDefinition.Column("datamart", SqlType.text()),
                 TableDefinition.Column("attribute_type", SqlType.text()),
@@ -77,14 +82,13 @@ def create_hyper_from_df(df, hyper_path):
                 TableDefinition.Column("processing_date", SqlType.date()),
             ])
 
-            connection.catalog.create_schema("Extract")
-            connection.catalog.create_table(schema)
+            # Create the schema first, then the table within that schema
+            connection.catalog.create_schema(SCHEMA_NAME)
+            connection.catalog.create_table(schema_def)
 
-            with Inserter(connection, schema) as inserter:
+            with Inserter(connection, schema_def) as inserter:
                 for _, row in df.iterrows():
-                    # Parse timestamp string
                     ts = datetime.strptime(str(row['timestamp']), "%Y-%m-%d %H:%M:%S")
-                    # Parse processing_date str (20260303)
                     pd_str = str(row['processing_date'])
                     pd_dt = datetime.strptime(pd_str, "%Y%m%d")
 
@@ -100,7 +104,7 @@ def create_hyper_from_df(df, hyper_path):
                         Date(pd_dt.year, pd_dt.month, pd_dt.day)
                     ])
                 inserter.execute()
-    print(f"Hyper file created at {hyper_path}")
+    print(f"Hyper file created at {hyper_path} with schema '{SCHEMA_NAME}'")
 
 
 # --- Main Execution ---
