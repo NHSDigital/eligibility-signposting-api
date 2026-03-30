@@ -40,3 +40,10 @@ resource "aws_cloudwatch_log_group" "rotation_sfn_logs" {
   kms_key_id = module.secrets_manager.rotation_sns_key_arn
   retention_in_days = 365
 }
+
+# CloudWatch Log Group for CloudTrail
+resource "aws_cloudwatch_log_group" "cloudtrail_log_group" {
+  name              = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}elid-aws-cloudtrail-logs"
+  retention_in_days = 365
+  kms_key_id        = aws_kms_alias.cloudtrail_kms_alias.arn
+}
