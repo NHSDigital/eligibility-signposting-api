@@ -916,3 +916,108 @@ resource "aws_iam_role_policy" "external_s3_kms_access_policy" {
   role   = aws_iam_role.write_access_role[count.index].id
   policy = data.aws_iam_policy_document.s3_dq_kms_access_policy.json
 }
+
+
+##################################
+# Cloudtrail Bucket & KMS Policies
+##################################
+
+# S3 Cloudtrail bucket policy
+data "aws_iam_policy_document" "s3_cloudtrail_bucket_policy" {
+  statement {
+    sid = "AllowS3SSLRequestsOnly"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketLocation",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:GetBucketAcl"
+    ]
+    resources = [
+      module.s3_cloudtrail_bucket.storage_bucket_arn,
+      "${module.s3_cloudtrail_bucket.storage_bucket_arn}/*",
+    ]
+    principals {
+      type = "Service"
+      identifiers = ["cloudtrail.amazonaws.com"]
+    }
+    condition {
+      test     = "Bool"
+      values = ["true"]
+      variable = "aws:SecureTransport"
+    }
+  }
+  statement {
+    sid = "DenyS3NonSSLRequests"
+    actions = [
+      "s3:*"
+    ]
+    effect = "Deny"
+    resources = [
+      module.s3_cloudtrail_bucket.storage_bucket_arn,
+      "${module.s3_cloudtrail_bucket.storage_bucket_arn}/*",
+    ]
+    principals {
+      type = "*"
+      identifiers = ["*"]
+    }
+    condition {
+      test     = "Bool"
+      values = ["false"]
+      variable = "aws:SecureTransport"
+    }
+  }
+}
+
+# Attach s3 Cloudtrail bucket policy to Cloudtrail role
+resource "aws_s3_bucket_policy" "s3_cloudtrail_bucket_policy" {
+  bucket = module.s3_cloudtrail_bucket.storage_bucket_id
+  policy = data.aws_iam_policy_document.s3_cloudtrail_bucket_policy.json
+}
+
+# S3 Cloudtrail bucket KMS access policy
+data "aws_iam_policy_document" "s3_cloudtrail_kms_access_policy" {
+  statement {
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = [
+      module.s3_cloudtrail_bucket.storage_bucket_kms_key_arn
+    ]
+  }
+}
+
+# Attach S3 Cloudtrail bucket KMS policy to Cloudtrail role
+resource "aws_iam_role_policy" "s3_cloudtrail_kms_access_policy" {
+  name   = "S3CloudTrailKMSAccess"
+  role   = aws_iam_role.cloudtrail_cloudwatch_role.id
+  policy = data.aws_iam_policy_document.s3_cloudtrail_kms_access_policy.json
+}
+
+# CloudWatch Logs permissions policy for CloudTrail
+data "aws_iam_policy_document" "cloudtrail_cloudwatch_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:PutLogEvents",
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream"
+    ]
+    resources = [
+      aws_cloudwatch_log_group.cloudtrail_log_group.arn,
+      "${aws_cloudwatch_log_group.cloudtrail_log_group.arn}:*"
+    ]
+
+  }
+}
+
+# Attach CloudTrail CloudWatch Logs policy to CloudTrail role
+resource "aws_iam_role_policy" "cloudtrail_cloudwatch_policy" {
+    name   = "CloudTrailCloudWatchLogsAccess"
+    role   = aws_iam_role.cloudtrail_cloudwatch_role.id
+    policy = data.aws_iam_policy_document.cloudtrail_cloudwatch_policy.json
+}
