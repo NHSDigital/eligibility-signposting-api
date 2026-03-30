@@ -29,20 +29,7 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "cloudwatch:GetMetricWidgetImage",
 
       # CloudTrail - trail management
-      "cloudtrail:AddTags",
-      "cloudtrail:CreateTrail",
-      "cloudtrail:DeleteTrail",
-      "cloudtrail:DescribeTrails",
-      "cloudtrail:GetEventSelectors",
-      "cloudtrail:GetTrail",
-      "cloudtrail:GetTrailStatus",
-      "cloudtrail:ListTags",
-      "cloudtrail:ListTrails",
-      "cloudtrail:PutEventSelectors",
-      "cloudtrail:RemoveTags",
-      "cloudtrail:StartLogging",
-      "cloudtrail:StopLogging",
-      "cloudtrail:UpdateTrail",
+      "cloudtrail:*",
 
       # DynamoDB - table management
       "dynamodb:Describe*",
