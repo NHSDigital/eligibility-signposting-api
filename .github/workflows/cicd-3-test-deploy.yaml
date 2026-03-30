@@ -46,15 +46,17 @@ jobs:
           echo "name=$TAG" >> $GITHUB_OUTPUT
           echo "Resolved tag: $TAG"
 
-  deploy:
-    name: "Deploy to TEST (approval required)"
+  sign-lambda-artifact:
+    name: "Sign lambda artifact for TEST"
     runs-on: ubuntu-latest
     needs: [metadata]
     environment: test
-    timeout-minutes: 10080
+    timeout-minutes: 45
     permissions:
       id-token: write
       contents: read
+    outputs:
+      bucket_name: ${{ steps.tf_output.outputs.bucket_name }}
     steps:
       - name: "Checkout same commit"
         uses: actions/checkout@v6
@@ -80,6 +82,124 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
 
+      - name: "Terraform Init (TEST api-layer)"
+        env:
+          ENVIRONMENT: test
+          WORKSPACE: "default"
+        run: |
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=init"
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=init workspace=$WORKSPACE
+        working-directory: ./infrastructure
+
+      - name: "Extract S3 bucket name from Terraform output"
+        id: tf_output
+        run: |
+          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          PROFILE=$(terraform output -raw lambda_signing_profile_name)
+          echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
+          echo "signing_profile_name=$PROFILE" >> $GITHUB_OUTPUT
+        working-directory: ./infrastructure/stacks/api-layer
+
+      - name: "Upload unsigned lambda artifact to S3"
+        run: |
+          aws s3 cp ./dist/lambda.zip \
+            s3://${{ steps.tf_output.outputs.bucket_name }}/unsigned/${{ needs.metadata.outputs.tag }}/lambda.zip \
+            --region eu-west-2
+
+      - name: "Get uploaded source object version"
+        id: source_object
+        run: |
+          VERSION_ID=$(aws s3api head-object \
+            --bucket "${{ steps.tf_output.outputs.bucket_name }}" \
+            --key "unsigned/${{ needs.metadata.outputs.tag }}/lambda.zip" \
+            --query 'VersionId' \
+            --output text \
+            --region eu-west-2)
+          echo "version_id=$VERSION_ID" >> $GITHUB_OUTPUT
+
+      - name: "Start signing job"
+        id: signing
+        env:
+          SIGNING_PROFILE_NAME: ${{ steps.tf_output.outputs.signing_profile_name }}
+        run: |
+          JOB_ID=$(aws signer start-signing-job \
+            --source "s3={bucketName=${{ steps.tf_output.outputs.bucket_name }},key=unsigned/${{ needs.metadata.outputs.tag }}/lambda.zip,version=${{ steps.source_object.outputs.version_id }}}" \
+            --destination "s3={bucketName=${{ steps.tf_output.outputs.bucket_name }},prefix=signed/${{ needs.metadata.outputs.tag }}/}" \
+            --profile-name "$SIGNING_PROFILE_NAME" \
+            --query 'jobId' \
+            --output text \
+            --region eu-west-2)
+          echo "job_id=$JOB_ID" >> $GITHUB_OUTPUT
+
+      - name: "Wait for signing job"
+        run: |
+          aws signer wait successful-signing-job \
+            --job-id "${{ steps.signing.outputs.job_id }}" \
+            --region eu-west-2
+
+      - name: "Resolve signed artifact location"
+        id: signed_object
+        run: |
+          SIGNED_BUCKET=$(aws signer describe-signing-job \
+            --job-id "${{ steps.signing.outputs.job_id }}" \
+            --region eu-west-2 \
+            --query 'signedObject.s3.bucketName' \
+            --output text)
+
+          SIGNED_KEY=$(aws signer describe-signing-job \
+            --job-id "${{ steps.signing.outputs.job_id }}" \
+            --region eu-west-2 \
+            --query 'signedObject.s3.key' \
+            --output text)
+
+          echo "bucket_name=$SIGNED_BUCKET" >> $GITHUB_OUTPUT
+          echo "object_key=$SIGNED_KEY" >> $GITHUB_OUTPUT
+
+      - name: "Download signed lambda artifact"
+        run: |
+          aws s3 cp \
+            "s3://${{ steps.signed_object.outputs.bucket_name }}/${{ steps.signed_object.outputs.object_key }}" \
+            ./dist/lambda.zip \
+            --region eu-west-2
+
+      - name: "Upload signed lambda artifact for current workflow"
+        uses: actions/upload-artifact@v6
+        with:
+          name: lambda-${{ needs.metadata.outputs.tag }}
+          path: ./dist/lambda.zip
+
+  deploy:
+    name: "Deploy to TEST (approval required)"
+    runs-on: ubuntu-latest
+    needs: [metadata, sign-lambda-artifact]
+    environment: test
+    timeout-minutes: 10080
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: "Checkout same commit"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
+
+      - name: "Download signed lambda artefact"
+        uses: actions/download-artifact@v7
+        with:
+          name: lambda-${{ needs.metadata.outputs.tag }}
+          path: ./dist
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
       - name: "Terraform Apply (TEST)"
         env:
           ENVIRONMENT: test
@@ -92,7 +212,6 @@ jobs:
           TF_VAR_OPERATOR_EMAILS: ${{ vars.SECRET_ROTATION_OPERATOR_EMAILS }}
           TF_VAR_PROXYGEN_PRIVATE_KEY_PTL: ${{ secrets.PROXYGEN_PRIVATE_KEY_PTL }}
           TF_VAR_PROXYGEN_PRIVATE_KEY_PROD: ${{ secrets.PROXYGEN_PRIVATE_KEY_PROD }}
-
         run: |
           mkdir -p ./build
           echo "Deploying tag: ${{ needs.metadata.outputs.tag }}"
@@ -109,17 +228,10 @@ jobs:
           pip install boto3
           python scripts/feature_toggle/validate_toggles.py
 
-      - name: "Extract S3 bucket name from Terraform output"
-        id: tf_output
-        run: |
-          BUCKET=$(terraform output -raw lambda_artifact_bucket)
-          echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
-        working-directory: ./infrastructure/stacks/api-layer
-
-      - name: "Upload lambda artifact to S3"
+      - name: "Upload signed lambda artifact to S3"
         run: |
           aws s3 cp ./dist/lambda.zip \
-            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
+            s3://${{ needs.sign-lambda-artifact.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
             --region eu-west-2
 
   regression-tests:
@@ -130,4 +242,3 @@ jobs:
       ENVIRONMENT: "test"
       VERSION_NUMBER: "main"
     secrets: inherit
-
