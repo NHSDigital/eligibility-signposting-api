@@ -9,10 +9,7 @@ class TestMandatoryFieldsSchemaValidations:
     def test_campaign_config_with_only_mandatory_fields_configuration(
         self, valid_iteration_rule_with_only_mandatory_fields
     ):
-        try:
-            IterationRuleValidation(**valid_iteration_rule_with_only_mandatory_fields)
-        except ValidationError as e:
-            pytest.fail(f"Unexpected error during model instantiation: {e}")
+        IterationRuleValidation(**valid_iteration_rule_with_only_mandatory_fields)
 
     @pytest.mark.parametrize(
         "mandatory_field",

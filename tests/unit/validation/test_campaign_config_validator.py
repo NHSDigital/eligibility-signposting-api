@@ -13,10 +13,7 @@ class TestMandatoryFieldsSchemaValidations:
     def test_campaign_config_with_only_mandatory_fields_configuration(
         self, valid_campaign_config_with_only_mandatory_fields
     ):
-        try:
-            CampaignConfigValidation(**valid_campaign_config_with_only_mandatory_fields)
-        except ValidationError as e:
-            pytest.fail(f"Unexpected error during model instantiation: {e}")
+        CampaignConfigValidation(**valid_campaign_config_with_only_mandatory_fields)
 
     @pytest.mark.parametrize(
         "mandatory_field",
