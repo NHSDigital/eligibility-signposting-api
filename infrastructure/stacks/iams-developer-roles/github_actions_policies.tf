@@ -710,6 +710,8 @@ resource "aws_iam_policy" "kinesis_management" {
 }
 
 resource "aws_iam_policy" "code_signing_management" {
+  #checkov:skip=CKV_AWS_290: Actions require wildcard resource for Lambda code signing configs and Signer jobs
+  #checkov:skip=CKV_AWS_235: Actions require wildcard resource for Lambda code signing configs and Signer jobs
   name        = "code-signing-management"
   description = "Allow GitHub Actions to manage Lambda code signing and start Signer jobs"
   path        = "/service-policies/"
