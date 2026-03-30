@@ -28,6 +28,9 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "cloudwatch:GetDashboard",
       "cloudwatch:GetMetricWidgetImage",
 
+      # CloudTrail - trail management
+      "cloudtrail:*",
+
       # DynamoDB - table management
       "dynamodb:Describe*",
       "dynamodb:ListTables",
