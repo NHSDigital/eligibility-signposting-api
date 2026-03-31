@@ -235,6 +235,10 @@ resource "aws_iam_policy" "s3_management" {
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics-access-logs",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-logs-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-logs-access-logs/*",
         ]
       }
     ]
@@ -259,6 +263,12 @@ resource "aws_iam_policy" "api_infrastructure" {
         Effect = "Allow",
         Action = [
           "logs:Describe*",
+          "cloudtrail:DescribeTrails",
+          "cloudtrail:GetEventSelectors",
+          "cloudtrail:GetTrail",
+          "cloudtrail:GetTrailStatus",
+          "cloudtrail:ListTags",
+          "cloudtrail:ListTrails",
           "ssm:DescribeParameters",
           "ec2:Describe*",
           "ec2:DescribeVpcs",
@@ -315,7 +325,10 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/wafv2/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-wafv2-logs-*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:aws-waf-logs-*",
-          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/stepfunctions/*"
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/stepfunctions/*",
+          # CloudTrail log group
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:*elid-aws-cloudtrail-logs",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:*elid-aws-cloudtrail-logs:*"
         ]
       },
       {
@@ -348,7 +361,9 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*firehose*role*",
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/splunk-firehose-assume-role*",
           # CSOC CloudWatch Logs subscription role
-          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*-CWLogsSubscriptionRole"
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*-CWLogsSubscriptionRole",
+          # CloudTrail to CloudWatch Logs role
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/cloudtrail-cloudwatch-role"
         ],
         Condition = {
           StringEquals = {
@@ -358,7 +373,8 @@ resource "aws_iam_policy" "api_infrastructure" {
               "vpc-flow-logs.amazonaws.com",
               "events.amazonaws.com",
               "firehose.amazonaws.com",
-              "logs.amazonaws.com"
+              "logs.amazonaws.com",
+              "cloudtrail.amazonaws.com"
             ]
           }
         }
@@ -373,6 +389,16 @@ resource "aws_iam_policy" "api_infrastructure" {
           "logs:CreateLogGroup",
           "logs:PutMetricFilter",
           "logs:TagResource",
+
+          # CloudTrail
+          "cloudtrail:AddTags",
+          "cloudtrail:CreateTrail",
+          "cloudtrail:DeleteTrail",
+          "cloudtrail:PutEventSelectors",
+          "cloudtrail:RemoveTags",
+          "cloudtrail:StartLogging",
+          "cloudtrail:StopLogging",
+          "cloudtrail:UpdateTrail",
 
           # EC2 permissions
           "ec2:CreateTags",
@@ -460,6 +486,8 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/apigateway/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/eligibility-signposting-api-${var.environment}-audit/*",
           "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:NHSDAudit_trail_log_group*",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:*elid-aws-cloudtrail-logs",
+          "arn:aws:logs:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:log-group:*elid-aws-cloudtrail-logs:*",
           "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/*",
           "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/splunk/*",
           "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/ptl/*",
@@ -469,7 +497,8 @@ resource "aws_iam_policy" "api_infrastructure" {
           "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/webacl/*",
           "arn:aws:wafv2:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:regional/managedruleset/*",
           "arn:aws:states:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:stateMachine:*",
-          "arn:aws:events:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:rule/*"
+          "arn:aws:events:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:rule/*",
+          "arn:aws:cloudtrail:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:trail/${var.project_name}-${var.environment}-*"
         ]
       },
     ]
@@ -605,7 +634,9 @@ resource "aws_iam_policy" "iam_management" {
           # Eventbridge invoke step functions role
           "arn:aws:iam::*:role/eventbridge_invoke_sfn_role",
           "arn:aws:iam::*:role/secret_rotation_lambda_role",
-          "arn:aws:iam::*:role/secret_rotation_workflow_role"
+          "arn:aws:iam::*:role/secret_rotation_workflow_role",
+          # CloudTrail to CloudWatch Logs role
+          "arn:aws:iam::*:role/cloudtrail-cloudwatch-role"
         ]
       }
     ]
