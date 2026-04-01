@@ -130,4 +130,3 @@ jobs:
       ENVIRONMENT: "test"
       VERSION_NUMBER: "main"
     secrets: inherit
-

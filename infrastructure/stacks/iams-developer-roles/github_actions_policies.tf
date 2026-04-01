@@ -740,6 +740,63 @@ resource "aws_iam_policy" "kinesis_management" {
   tags = merge(local.tags, { Name = "kinesis-management" })
 }
 
+resource "aws_iam_policy" "code_signing_management" {
+  #checkov:skip=CKV_AWS_290: Actions require wildcard resource for Lambda code signing configs and Signer jobs
+  #checkov:skip=CKV_AWS_235: Actions require wildcard resource for Lambda code signing configs and Signer jobs
+  #checkov:skip=CKV_AWS_355: Actions require wildcard resource for Lambda code signing configs and Signer jobs
+  name        = "code-signing-management"
+  description = "Allow GitHub Actions to manage Lambda code signing and start Signer jobs"
+  path        = "/service-policies/"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid    = "LambdaCodeSigningConfigManagement",
+        Effect = "Allow",
+        Action = [
+          "lambda:CreateCodeSigningConfig",
+          "lambda:UpdateCodeSigningConfig",
+          "lambda:DeleteCodeSigningConfig",
+          "lambda:GetCodeSigningConfig",
+          "lambda:ListCodeSigningConfigs",
+          "lambda:GetFunctionCodeSigningConfig",
+          "lambda:ListTags",
+          "lambda:DeleteFunctionCodeSigningConfig",
+          "lambda:PutFunctionCodeSigningConfig"
+        ],
+        Resource = "*"
+      },
+      {
+        Sid    = "SignerJobUsage",
+        Effect = "Allow",
+        Action = [
+          "signer:StartSigningJob",
+          "signer:DescribeSigningJob"
+        ],
+        Resource = "arn:aws:signer:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:/signing-jobs/*"
+      },
+      {
+        Sid    = "SignerProfileManagement",
+        Effect = "Allow",
+        Action = [
+          "signer:PutSigningProfile",
+          "signer:GetSigningProfile",
+          "signer:ListSigningProfiles",
+          "signer:ListTagsForResource",
+          "signer:TagResource",
+          "signer:UntagResource",
+          "signer:CancelSigningProfile",
+          "signer:RevokeSignature"
+        ],
+        Resource = "arn:aws:signer:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:/signing-profiles/eligibility-signposting-api-*"
+      }
+    ]
+  })
+
+  tags = merge(local.tags, { Name = "code-signing-management" })
+}
+
 resource "aws_iam_policy" "cloudwatch_management" {
   #checkov:skip=CKV_AWS_355: GetMetricWidgetImage requires wildcard resource
   #checkov:skip=CKV_AWS_290: GetMetricWidgetImage requires wildcard resource
@@ -858,4 +915,9 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_management" {
 resource "aws_iam_role_policy_attachment" "kinesis_management_attach" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.kinesis_management.arn
+}
+
+resource "aws_iam_role_policy_attachment" "code_signing_management" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.code_signing_management.arn
 }
