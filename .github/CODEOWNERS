@@ -1,0 +1,14 @@
+# Default owner
+* @NHSDigital/eligibility-signposting-api-code-owners
+
+# Terraform / infra
+*.tf @NHSDigital/eligibility-signposting-api-code-owners
+
+# Lambda / API code
+/src/ @NHSDigital/eligibility-signposting-api-code-owners
+
+# Tests
+/tests/ @NHSDigital/eligibility-signposting-api-code-owners
+
+# GitHub workflows
+/.github/workflows/ @NHSDigital/eligibility-signposting-api-code-owners
