@@ -12,7 +12,7 @@ There are two methods for publishing the data to Tableau Server:
 
 This section provides an overview of the process for publishing DQ metrics data to Tableau Server.
 
-The python scripts are used to generate a Tableau `.hyper` datasource file from the DQ metric
+The Python scripts are used to generate a Tableau `.hyper` datasource file from the DQ metric
 JSON files stored in S3.
 This `.hyper` file is then published to Tableau Server by overwriting an existing datasource.
 Once this datasource is updated, a ping is sent to a Tableau view to trigger a cache refresh,
