@@ -71,7 +71,6 @@ LOCAL_HYPER_PATH = "converted.hyper"
 
 NOTE: PAT credentials must be set as GitHub secrets for the workflow, and as environment variables for local testing.
 
-
 ---
 
 ### Repository structure
@@ -186,8 +185,6 @@ if the Tableau refresh ping fails.
 5. Trigger cache refresh for the relevant workbook view
 
 ---
-
-
 
 ## GitHub Actions workflow
 
