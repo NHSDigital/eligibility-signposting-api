@@ -1,6 +1,6 @@
 # Tableau DQ Metrics
 
-This readme describes the process
+This README describes the process
 for publishing the DQ metrics data from AWS S3 to the Tableau Server.
 
 There are two methods for publishing the data to Tableau Server:
