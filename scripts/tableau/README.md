@@ -4,11 +4,11 @@ This README describes the process
 for publishing the DQ metrics data from AWS S3 to the Tableau Server.
 
 There are two methods for publishing the data to Tableau Server:
+
 1. [Running the Python scripts locally](#python-scripts)
 2. Using the [GitHub Actions workflow](#github-actions-workflow) to run the scripts on a schedule
 
-
-# Overview
+## Overview
 
 This section provides an overview of the process for publishing DQ metrics data to Tableau Server.
 
@@ -20,7 +20,7 @@ ensuring that the latest data is updated and available for visualisation.
 
 The following sections provide more details on the Python scripts and the GitHub Actions workflow that automates this process.
 
-# Python Scripts
+## Python Scripts
 
 There are two Python scripts involved:
 
@@ -34,9 +34,9 @@ This work supports the EliD DQ metrics Tableau MVP, where Tableau is being used 
 
 ---
 
-## What the scripts do
+### What the scripts do
 
-### 1. Generate Hyper extract
+#### 1. Generate Hyper extract
 
 `generate_tableau_data.py`:
 
@@ -58,7 +58,7 @@ and the output file is:
 LOCAL_HYPER_PATH = "converted.hyper"
 ```
 
-### 2. Publish to Tableau
+#### 2. Publish to Tableau
 
 `tableau_refresh.py`:
 
@@ -74,7 +74,7 @@ NOTE: PAT credentials must be set as GitHub secrets for the workflow, and as env
 
 ---
 
-## Repository structure
+### Repository structure
 
 The GitHub Actions workflow expects the scripts to exist at:
 
@@ -92,9 +92,9 @@ python scripts/tableau/tableau_refresh.py
 
 ---
 
-## Running locally
+### Running locally
 
-## Prerequisites
+### Prerequisites
 
 You will need:
 
@@ -108,7 +108,7 @@ You will need:
   - `tableauhyperapi`
   - `requests`
 
-### Install dependencies
+#### Install dependencies
 
 If installing dependencies locally
 
@@ -116,7 +116,7 @@ If installing dependencies locally
 pip install boto3 pandas tableauserverclient tableauhyperapi requests
 ```
 
-### Required environment variables
+#### Required environment variables
 
 Before publishing to Tableau, set the following environment variables:
 
@@ -135,7 +135,7 @@ which can be found in the Tableau Server URL when viewing the datasource (LUID).
 
 `TABLEAU_SITE_ID` defaults to `NHSD_DEV` if not set.
 
-### AWS credentials
+#### AWS credentials
 
 You also need AWS credentials available locally so `boto3` can read from S3.
 Also, may need to set the AWS region if not configured globally:
@@ -146,7 +146,7 @@ export AWS_REGION=eu-west-2
 
 The workflow uses `eu-west-2`.
 
-### Run the scripts
+#### Run the scripts
 
 Step 1: Generate the Hyper file
 
@@ -177,7 +177,7 @@ if the Tableau refresh ping fails.
 
 ---
 
-## Expected local flow
+### Expected local flow
 
 1. Read recent DQ metric JSON data from S3
 2. Build `converted.hyper`
@@ -189,7 +189,7 @@ if the Tableau refresh ping fails.
 
 
 
-# GitHub Actions workflow
+## GitHub Actions workflow
 
 The GitHub Actions workflow is named:
 
@@ -303,7 +303,3 @@ python scripts/tableau/tableau_refresh.py --ignore-refresh-failure
 ```
 
 if you want to allow publish success even when the refresh ping fails.
-
-
-
-
