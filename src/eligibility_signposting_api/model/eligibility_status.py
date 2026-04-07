@@ -151,6 +151,7 @@ class MatchedActionDetail:
     rule_name: campaign_config.RuleName | None = None
     rule_priority: campaign_config.RulePriority | None = None
     actions: list[SuggestedAction] | None = None
+    status_text_override: StatusText | None = None
 
 
 @dataclass

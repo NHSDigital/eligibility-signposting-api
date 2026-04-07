@@ -1,6 +1,7 @@
 from itertools import groupby
 from operator import attrgetter
 
+from eligibility_signposting_api.config.constants import STATUS_TEXT_OVERRIDE_ACTION_TYPE
 from eligibility_signposting_api.model.campaign_config import (
     ActionsMapper,
     Iteration,
@@ -16,7 +17,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     RuleType,
     SuggestedAction,
     UrlLabel,
-    UrlLink,
+    UrlLink, StatusText,
 )
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.calculators.rule_calculator import RuleCalculator
@@ -65,7 +66,31 @@ class ActionRuleHandler:
                 matched_action_rule_name = rule_group_list[0].name
                 break
 
-        return MatchedActionDetail(matched_action_rule_name, matched_action_rule_priority, actions)
+        #return MatchedActionDetail(matched_action_rule_name, matched_action_rule_priority, actions)
+        actions, status_text_override = self._extract_status_text_override(actions)
+        return MatchedActionDetail(matched_action_rule_name, matched_action_rule_priority, actions, status_text_override)
+
+    @staticmethod
+    def _extract_status_text_override(
+        actions: list[SuggestedAction] | None,
+    ) -> tuple[list[SuggestedAction] | None, StatusText | None]:
+        """Extract and remove any status text override action from the actions list.
+
+        Returns the filtered actions list and the override text (if found).
+        """
+        if not actions:
+            return actions, None
+
+        override_text: StatusText | None = None
+        filtered: list[SuggestedAction] = []
+
+        for action in actions:
+            if action.action_type == STATUS_TEXT_OVERRIDE_ACTION_TYPE:
+                override_text = StatusText(action.action_description) if action.action_description else None
+            else:
+                filtered.append(action)
+
+        return filtered or None, override_text
 
     @staticmethod
     def _get_action_rules_components(
