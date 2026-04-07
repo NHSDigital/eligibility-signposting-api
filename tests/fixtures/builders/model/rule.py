@@ -255,3 +255,15 @@ class ICBNonActionableActionRuleFactory(IterationRuleFactory):
     attribute_name = RuleAttributeName("ICB")
     comparator = RuleComparator("QE1")
     comms_routing = CommsRouting("ActionCode1")
+
+class ClinicalRiskRedirectRuleFactory(IterationRuleFactory):
+    type = RuleType.redirect
+    name = RuleName("Health reason redirect with override")
+    code = None
+    description = RuleDescription("Redirect for clinical risk individuals")
+    priority = RulePriority(10)
+    operator = RuleOperator.is_not_null
+    attribute_level = RuleAttributeLevel.PERSON
+    attribute_name = RuleAttributeName("CLINICAL_RISK_GROUP")
+    comparator = RuleComparator("")
+    comms_routing = CommsRouting("STATUS_TEXT_OVERRIDE")
