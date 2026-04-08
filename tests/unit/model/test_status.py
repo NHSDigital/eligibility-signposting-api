@@ -1,6 +1,12 @@
 from eligibility_signposting_api.model.campaign_config import RuleName, RulePriority
-from eligibility_signposting_api.model.eligibility_status import ConditionName, RuleType, Status, StatusText
-from eligibility_signposting_api.model.eligibility_status import MatchedActionDetail, SuggestedAction
+from eligibility_signposting_api.model.eligibility_status import (
+    ConditionName,
+    MatchedActionDetail,
+    RuleType,
+    Status,
+    StatusText,
+    SuggestedAction,
+)
 
 
 class TestStatus:
@@ -70,3 +76,16 @@ def test_matched_action_detail_existing_constructor_still_works_with_three_args(
     assert action_detail.rule_priority == RulePriority(1)
     assert action_detail.actions == actions
     assert action_detail.status_text_override is None
+
+
+def test_matched_action_detail_existing_constructor_works_with_four_args():
+    actions: list[SuggestedAction] = []
+
+    action_detail = MatchedActionDetail(
+        RuleName("RuleA"), RulePriority(1), actions, status_text_override=StatusText("Override")
+    )
+
+    assert action_detail.rule_name == RuleName("RuleA")
+    assert action_detail.rule_priority == RulePriority(1)
+    assert action_detail.actions == actions
+    assert action_detail.status_text_override == StatusText("Override")

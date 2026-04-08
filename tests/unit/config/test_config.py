@@ -3,8 +3,8 @@ import os
 import pytest
 from yarl import URL
 
-from eligibility_signposting_api.config.constants import STATUS_TEXT_OVERRIDE_ACTION_TYPE
 from eligibility_signposting_api.config.config import LOG_LEVEL, AwsAccessKey, AwsRegion, AwsSecretAccessKey, config
+from eligibility_signposting_api.config.constants import STATUS_TEXT_OVERRIDE_ACTION_TYPE
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
 
