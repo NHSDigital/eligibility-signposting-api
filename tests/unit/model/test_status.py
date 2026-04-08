@@ -1,3 +1,5 @@
+from hamcrest import assert_that, has_properties
+
 from eligibility_signposting_api.model.campaign_config import RuleName, RulePriority
 from eligibility_signposting_api.model.eligibility_status import (
     ConditionName,
@@ -58,13 +60,13 @@ class TestStatus:
 def test_matched_action_detail_default_status_text_override_is_none():
     action_detail = MatchedActionDetail()
 
-    assert action_detail.status_text_override is None
+    assert_that(action_detail, has_properties(status_text_override=None))
 
 
 def test_matched_action_detail_stores_status_text_override_value():
     action_detail = MatchedActionDetail(status_text_override=StatusText("X"))
 
-    assert action_detail.status_text_override == StatusText("X")
+    assert_that(action_detail, has_properties(status_text_override=StatusText("X")))
 
 
 def test_matched_action_detail_existing_constructor_still_works_with_three_args():
@@ -72,10 +74,15 @@ def test_matched_action_detail_existing_constructor_still_works_with_three_args(
 
     action_detail = MatchedActionDetail(RuleName("RuleA"), RulePriority(1), actions)
 
-    assert action_detail.rule_name == RuleName("RuleA")
-    assert action_detail.rule_priority == RulePriority(1)
-    assert action_detail.actions == actions
-    assert action_detail.status_text_override is None
+    assert_that(
+        action_detail,
+        has_properties(
+            rule_name=RuleName("RuleA"),
+            rule_priority=RulePriority(1),
+            actions=actions,
+            status_text_override=StatusText(None),
+        ),
+    )
 
 
 def test_matched_action_detail_existing_constructor_works_with_four_args():
@@ -85,7 +92,12 @@ def test_matched_action_detail_existing_constructor_works_with_four_args():
         RuleName("RuleA"), RulePriority(1), actions, status_text_override=StatusText("Override")
     )
 
-    assert action_detail.rule_name == RuleName("RuleA")
-    assert action_detail.rule_priority == RulePriority(1)
-    assert action_detail.actions == actions
-    assert action_detail.status_text_override == StatusText("Override")
+    assert_that(
+        action_detail,
+        has_properties(
+            rule_name=RuleName("RuleA"),
+            rule_priority=RulePriority(1),
+            actions=actions,
+            status_text_override=StatusText("Override"),
+        ),
+    )
