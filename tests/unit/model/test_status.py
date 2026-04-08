@@ -1,4 +1,6 @@
+from eligibility_signposting_api.model.campaign_config import RuleName, RulePriority
 from eligibility_signposting_api.model.eligibility_status import ConditionName, RuleType, Status, StatusText
+from eligibility_signposting_api.model.eligibility_status import MatchedActionDetail, SuggestedAction
 
 
 class TestStatus:
@@ -45,3 +47,26 @@ class TestStatus:
         assert Status.not_actionable.get_action_rule_type() == RuleType(RuleType.not_actionable_actions)
 
         assert Status.actionable.get_action_rule_type() == RuleType(RuleType.redirect)
+
+
+def test_matched_action_detail_default_status_text_override_is_none():
+    action_detail = MatchedActionDetail()
+
+    assert action_detail.status_text_override is None
+
+
+def test_matched_action_detail_stores_status_text_override_value():
+    action_detail = MatchedActionDetail(status_text_override=StatusText("X"))
+
+    assert action_detail.status_text_override == StatusText("X")
+
+
+def test_matched_action_detail_existing_constructor_still_works_with_three_args():
+    actions: list[SuggestedAction] = []
+
+    action_detail = MatchedActionDetail(RuleName("RuleA"), RulePriority(1), actions)
+
+    assert action_detail.rule_name == RuleName("RuleA")
+    assert action_detail.rule_priority == RulePriority(1)
+    assert action_detail.actions == actions
+    assert action_detail.status_text_override is None
