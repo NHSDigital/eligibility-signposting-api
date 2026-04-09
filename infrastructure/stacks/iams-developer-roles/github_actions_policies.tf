@@ -809,6 +809,69 @@ resource "aws_iam_policy" "cloudwatch_management" {
   tags = merge(local.tags, { Name = "cloudwatch-management" })
 }
 
+resource "aws_iam_policy" "code_signing_management" {
+  #checkov:skip=CKV_AWS_290: Actions require wildcard resource for Lambda code signing configs and Signer jobs
+  #checkov:skip=CKV_AWS_235: Actions require wildcard resource for Lambda code signing configs and Signer jobs
+  #checkov:skip=CKV_AWS_355: Actions require wildcard resource for Lambda code signing configs and Signer jobs
+  name        = "code-signing-management"
+  description = "Allow GitHub Actions to manage Lambda code signing and start Signer jobs"
+  path        = "/service-policies/"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid    = "LambdaCodeSigningConfigManagement",
+        Effect = "Allow",
+        Action = [
+          "lambda:CreateCodeSigningConfig",
+          "lambda:UpdateCodeSigningConfig",
+          "lambda:DeleteCodeSigningConfig",
+          "lambda:GetCodeSigningConfig",
+          "lambda:ListCodeSigningConfigs",
+          "lambda:GetFunctionCodeSigningConfig",
+          "lambda:ListTags",
+          "lambda:DeleteFunctionCodeSigningConfig",
+          "lambda:PutFunctionCodeSigningConfig"
+        ],
+        Resource = "*"
+      },
+      {
+        Sid    = "SignerProfileManagement"
+        Effect = "Allow"
+        Action = [
+          "signer:GetSigningProfile",
+          "signer:TagResource",
+          "signer:UntagResource",
+          "signer:ListTagsForResource"
+        ]
+        Resource = local.lambda_signing_profile_arn
+      },
+      {
+        Sid    = "SignerProfileCreateAndList"
+        Effect = "Allow"
+        Action = [
+          "signer:PutSigningProfile",
+          "signer:ListSigningProfiles"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "SignerJobUsage",
+        Effect = "Allow",
+        Action = [
+          "signer:StartSigningJob",
+          "signer:DescribeSigningJob",
+          "signer:ListSigningJobs"
+        ],
+        Resource = "*"
+      },
+    ]
+  })
+
+   tags = merge(local.tags, { Name = "code-signing-management" })
+}
+
 # Attach the policies to the role
 resource "aws_iam_role_policy_attachment" "terraform_state" {
   role       = aws_iam_role.github_actions.name
@@ -858,4 +921,9 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_management" {
 resource "aws_iam_role_policy_attachment" "kinesis_management_attach" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.kinesis_management.arn
+}
+
+resource "aws_iam_role_policy_attachment" "code_signing_management" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.code_signing_management.arn
 }
