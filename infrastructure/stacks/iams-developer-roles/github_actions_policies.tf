@@ -869,7 +869,7 @@ resource "aws_iam_policy" "code_signing_management" {
     ]
   })
 
-   tags = merge(local.tags, { Name = "code-signing-management" })
+  tags = merge(local.tags, { Name = "code-signing-management" })
 }
 
 # Attach the policies to the role

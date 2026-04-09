@@ -21,5 +21,5 @@ resource "aws_lambda_code_signing_config" "signing_config" {
     untrusted_artifact_on_deployment = "Enforce"
   }
 
-   description = "Only allow Lambda bundles signed by our trusted signer profile"
+  description = "Only allow Lambda bundles signed by our trusted signer profile"
 }
