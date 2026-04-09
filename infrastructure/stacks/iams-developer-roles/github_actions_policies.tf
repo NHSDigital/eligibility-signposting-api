@@ -789,7 +789,7 @@ resource "aws_iam_policy" "code_signing_management" {
           "signer:CancelSigningProfile",
           "signer:RevokeSignature"
         ],
-        Resource = "arn:aws:signer:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:/signing-profiles/eligibility-signposting-api-*"
+        Resource = "${terraform.workspace == "default" ? "" : "${terraform.workspace}"}EligibilityApiLambdaSigningProfile"
       }
     ]
   })
