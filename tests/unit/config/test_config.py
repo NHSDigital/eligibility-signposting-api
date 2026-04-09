@@ -4,6 +4,7 @@ import pytest
 from yarl import URL
 
 from eligibility_signposting_api.config.config import LOG_LEVEL, AwsAccessKey, AwsRegion, AwsSecretAccessKey, config
+from eligibility_signposting_api.config.constants import STATUS_TEXT_OVERRIDE_ACTION_TYPE
 from eligibility_signposting_api.repos.campaign_repo import BucketName
 from eligibility_signposting_api.repos.person_repo import TableName
 
@@ -48,3 +49,7 @@ def test_config_without_env_variable():
     assert config_data_without_env["s3_endpoint"] == URL("http://localhost:4566")
     assert config_data_without_env["rules_bucket_name"] == BucketName("test-rules-bucket")
     assert config_data_without_env["log_level"] == LOG_LEVEL
+
+
+def test_status_text_override_action_type_constant_value():
+    assert STATUS_TEXT_OVERRIDE_ACTION_TYPE == "norender_StatusTextOverride"

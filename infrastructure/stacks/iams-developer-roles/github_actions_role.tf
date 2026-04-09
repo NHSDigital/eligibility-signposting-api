@@ -87,6 +87,7 @@ data "aws_iam_policy_document" "github_actions_iam_bootstrap_assume_role" {
         "${var.github_org}/${var.github_repo}/.github/workflows/iam-bootstrap-deploy.yaml@*",
         "${var.github_org}/${var.github_repo}/.github/workflows/base-deploy.yml@*",
         "${var.github_org}/${var.github_repo}/.github/workflows/cicd-2-publish.yaml@*",
+        "${var.github_org}/${var.github_repo}/.github/workflows/cicd-3-test-deploy.yaml@*",
       ]
     }
   }

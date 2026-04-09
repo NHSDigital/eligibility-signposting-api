@@ -235,10 +235,10 @@ resource "aws_iam_policy" "s3_management" {
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics/*",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics-access-logs",
           "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics-access-logs/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-logs",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-logs/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-logs-access-logs",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-logs-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-access-logs/*",
         ]
       }
     ]

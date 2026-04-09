@@ -1,4 +1,14 @@
-from eligibility_signposting_api.model.eligibility_status import ConditionName, RuleType, Status, StatusText
+from hamcrest import assert_that, has_properties
+
+from eligibility_signposting_api.model.campaign_config import RuleName, RulePriority
+from eligibility_signposting_api.model.eligibility_status import (
+    ConditionName,
+    MatchedActionDetail,
+    RuleType,
+    Status,
+    StatusText,
+    SuggestedAction,
+)
 
 
 class TestStatus:
@@ -45,3 +55,49 @@ class TestStatus:
         assert Status.not_actionable.get_action_rule_type() == RuleType(RuleType.not_actionable_actions)
 
         assert Status.actionable.get_action_rule_type() == RuleType(RuleType.redirect)
+
+
+def test_matched_action_detail_default_status_text_override_is_none():
+    action_detail = MatchedActionDetail()
+
+    assert_that(action_detail, has_properties(status_text_override=None))
+
+
+def test_matched_action_detail_stores_status_text_override_value():
+    action_detail = MatchedActionDetail(status_text_override=StatusText("X"))
+
+    assert_that(action_detail, has_properties(status_text_override=StatusText("X")))
+
+
+def test_matched_action_detail_existing_constructor_still_works_with_three_args():
+    actions: list[SuggestedAction] = []
+
+    action_detail = MatchedActionDetail(RuleName("RuleA"), RulePriority(1), actions)
+
+    assert_that(
+        action_detail,
+        has_properties(
+            rule_name=RuleName("RuleA"),
+            rule_priority=RulePriority(1),
+            actions=actions,
+            status_text_override=StatusText(None),
+        ),
+    )
+
+
+def test_matched_action_detail_existing_constructor_works_with_four_args():
+    actions: list[SuggestedAction] = []
+
+    action_detail = MatchedActionDetail(
+        RuleName("RuleA"), RulePriority(1), actions, status_text_override=StatusText("Override")
+    )
+
+    assert_that(
+        action_detail,
+        has_properties(
+            rule_name=RuleName("RuleA"),
+            rule_priority=RulePriority(1),
+            actions=actions,
+            status_text_override=StatusText("Override"),
+        ),
+    )
