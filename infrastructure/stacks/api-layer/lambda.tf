@@ -35,6 +35,12 @@ module "eligibility_signposting_lambda_function" {
   api_domain_name                           = local.api_domain_name
 }
 
+
+# Needed by github workflows to sign the lambda artifacts
+output "signing_profile_name" {
+  value = module.eligibility_signposting_lambda_function.lambda_signing_profile_name
+}
+
 # -----------------------------------------------------------------------------
 # Secret rotation lambdas
 # -----------------------------------------------------------------------------
