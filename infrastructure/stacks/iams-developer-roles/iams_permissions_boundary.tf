@@ -91,6 +91,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
 
       # Kinesis Stream - audit log streaming
       "kinesis:*",
+      # signing - code signing for Lambda functions
+      "signer:*",
 
       # IAM - specific role and policy management
       "iam:GetRole*",
@@ -159,6 +161,11 @@ data "aws_iam_policy_document" "permissions_boundary" {
       "lambda:DeleteProvisionedConcurrencyConfig",
       "lambda:ListProvisionedConcurrencyConfigs",
       "lambda:PutFunctionConcurrency",
+      "lambda:GetCodeSigningConfig",
+      "lambda:DeleteFunctionCodeSigningConfig",
+      "lambda:PutFunctionCodeSigningConfig",
+      "lambda:DeleteCodeSigningConfig",
+      "lambda:CreateCodeSigningConfig",
 
       # CloudWatch Logs - log management
       "logs:*",
