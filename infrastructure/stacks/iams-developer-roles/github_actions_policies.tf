@@ -553,7 +553,8 @@ resource "aws_iam_policy" "security_management" {
           "lambda:GetCodeSigningConfig",
           "lambda:ListCodeSigningConfigs",
           "lambda:GetFunctionCodeSigningConfig",
-          "lambda:ListTags"
+          "lambda:ListTags",
+          "lambda:TagResource",
         ],
         Resource = "*"
       },
