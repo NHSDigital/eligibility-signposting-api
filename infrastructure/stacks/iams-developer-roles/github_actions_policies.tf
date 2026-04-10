@@ -837,6 +837,15 @@ resource "aws_iam_policy" "code_signing_management" {
         Resource = "*"
       },
       {
+        Sid    = "LambdaFunctionSigningManagement",
+        Effect = "Allow",
+        Action = [
+          "lambda:DeleteFunctionCodeSigningConfig",
+          "lambda:PutFunctionCodeSigningConfig"
+        ],
+        Resource = "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api"
+      },
+      {
         Sid    = "SignerProfileManagement"
         Effect = "Allow"
         Action = [
