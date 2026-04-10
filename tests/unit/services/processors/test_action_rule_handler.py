@@ -843,7 +843,7 @@ def test_extract_status_text_override_with_none_returns_none_none():
 def test_extract_status_text_override_with_empty_list_returns_none_none():
     result = ActionRuleHandler._extract_status_text_override([])
 
-    assert_that(result, is_((None, None)))
+    assert_that(result, is_(([], None)))
 
 
 def test_extract_status_text_override_with_no_override_action_leaves_actions_unchanged():
@@ -860,7 +860,7 @@ def test_extract_status_text_override_with_only_override_action_captures_text():
 
     remaining, override_text = ActionRuleHandler._extract_status_text_override(actions)
 
-    assert_that(remaining, is_(None))
+    assert_that(remaining, is_([]))
     assert_that(override_text, is_(StatusText("You maybe eligible for a vaccination")))
 
 

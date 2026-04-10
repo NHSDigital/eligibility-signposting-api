@@ -111,8 +111,11 @@ class ActionRuleHandler:
     def _extract_status_text_override(
         actions: list[SuggestedAction] | None,
     ) -> tuple[list[SuggestedAction] | None, StatusText | None]:
-        if not actions:
+        if actions is None:
             return None, None
+
+        if len(actions) == 0:
+            return [], None
 
         override_text = None
         remaining = []
@@ -122,4 +125,4 @@ class ActionRuleHandler:
             else:
                 remaining.append(action)
 
-        return remaining or None, override_text
+        return remaining, override_text
