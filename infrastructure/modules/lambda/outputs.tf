@@ -16,3 +16,7 @@ output "aws_lambda_invoke_arn" {
 output "lambda_cmk_arn" {
   value = aws_kms_key.lambda_cmk.arn
 }
+
+output "lambda_signing_profile_name" {
+  value = aws_signer_signing_profile.lambda_signing.name
+}
