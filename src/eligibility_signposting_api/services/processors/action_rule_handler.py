@@ -1,6 +1,7 @@
 from itertools import groupby
 from operator import attrgetter
 
+from eligibility_signposting_api.config.constants import STATUS_TEXT_OVERRIDE_ACTION_TYPE
 from eligibility_signposting_api.model.campaign_config import (
     ActionsMapper,
     Iteration,
@@ -21,7 +22,6 @@ from eligibility_signposting_api.model.eligibility_status import (
 )
 from eligibility_signposting_api.model.person import Person
 from eligibility_signposting_api.services.calculators.rule_calculator import RuleCalculator
-from eligibility_signposting_api.config.constants import STATUS_TEXT_OVERRIDE_ACTION_TYPE
 
 
 class ActionRuleHandler:
@@ -69,7 +69,9 @@ class ActionRuleHandler:
 
         actions, status_text_override = self._extract_status_text_override(actions)
 
-        return MatchedActionDetail(matched_action_rule_name, matched_action_rule_priority, actions, status_text_override)
+        return MatchedActionDetail(
+            matched_action_rule_name, matched_action_rule_priority, actions, status_text_override
+        )
 
     @staticmethod
     def _get_action_rules_components(
@@ -106,7 +108,7 @@ class ActionRuleHandler:
                     )
                 )
         return suggested_actions
-    
+
     @staticmethod
     def _extract_status_text_override(
         actions: list[SuggestedAction] | None,

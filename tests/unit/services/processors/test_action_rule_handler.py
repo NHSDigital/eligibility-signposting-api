@@ -815,8 +815,6 @@ def test_handle_is_not_called_when_include_actions_is_false(mock_handle, handler
     assert_that(mock_handle.call_count, is_(0))
 
 
-# --- helpers ---
-
 def _make_action(action_type: str, description: str) -> SuggestedAction:
     return SuggestedAction(
         action_type=ActionType(action_type),
@@ -831,8 +829,6 @@ def _make_action(action_type: str, description: str) -> SuggestedAction:
 REGULAR_ACTION = _make_action("CareCardWithText", "You are eligible for a vaccination")
 OVERRIDE_ACTION = _make_action(STATUS_TEXT_OVERRIDE_ACTION_TYPE, "You maybe eligible for a vaccination")
 
-
-# --- _extract_status_text_override ---
 
 def test_extract_status_text_override_with_none_returns_none_none():
     result = ActionRuleHandler._extract_status_text_override(None)
@@ -873,15 +869,11 @@ def test_extract_status_text_override_with_mixed_actions_strips_override_and_kee
     assert_that(override_text, is_(StatusText("You maybe eligible for a vaccination")))
 
 
-# --- _handle integration ---
-
-@patch("eligibility_signposting_api.services.processors.action_rule_handler.RuleCalculator")
 @patch.object(ActionRuleHandler, "_get_actions_from_comms")
 @patch.object(ActionRuleHandler, "_get_action_rules_components")
 def test_handle_returns_status_text_override_in_matched_action_detail(
     mock_get_action_rules_components,
     mock_get_actions_from_comms,
-    mock_rule_calculator_class,
     handler: ActionRuleHandler,
 ):
     active_iteration = rule_builder.IterationFactory.build(
