@@ -91,6 +91,8 @@ data "aws_iam_policy_document" "permissions_boundary" {
 
       # Kinesis Stream - audit log streaming
       "kinesis:*",
+      # signing - code signing for Lambda functions
+      "signer:*",
 
       # CodeSigning
       "signer:*",

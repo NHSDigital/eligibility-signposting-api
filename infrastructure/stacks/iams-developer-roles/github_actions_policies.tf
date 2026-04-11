@@ -1,7 +1,8 @@
-# Terraform State Management Policy
-resource "aws_iam_policy" "terraform_state" {
-  name        = "terraform-state-management"
-  description = "Policy granting access to S3 bucket for Terraform state"
+
+# S3 Management Policy (includes Terraform state access)
+resource "aws_iam_policy" "s3_management" {
+  name        = "s3-management"
+  description = "Policy granting permissions to manage project S3 buckets and Terraform state storage"
   path        = "/service-policies/"
 
   policy = jsonencode({
@@ -20,16 +21,83 @@ resource "aws_iam_policy" "terraform_state" {
           "${local.terraform_state_bucket_arn}",
           "${local.terraform_state_bucket_arn}/*"
         ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetLifecycleConfiguration",
+          "s3:PutLifecycleConfiguration",
+          "s3:GetBucketVersioning",
+          "s3:GetEncryptionConfiguration",
+          "s3:PutEncryptionConfiguration",
+          "s3:GetBucketPolicy",
+          "s3:GetBucketObjectLockConfiguration",
+          "s3:GetBucketLogging",
+          "s3:GetReplicationConfiguration",
+          "s3:GetBucketWebsite",
+          "s3:GetBucketRequestPayment",
+          "s3:GetBucketCORS",
+          "s3:GetBucketAcl",
+          "s3:PutBucketAcl",
+          "s3:GetAccelerateConfiguration",
+          "s3:ListBucket",
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:GetBucketLocation",
+          "s3:GetBucketPublicAccessBlock",
+          "s3:PutBucketCORS",
+          "s3:CreateBucket",
+          "s3:DeleteBucket",
+          "s3:GetBucketTagging",
+          "s3:PutBucketPolicy",
+          "s3:PutBucketVersioning",
+          "s3:PutBucketPublicAccessBlock",
+          "s3:PutBucketLogging",
+          "s3:GetObjectTagging",
+          "s3:PutObjectTagging",
+          "s3:GetObjectVersion",
+          "s3:PutBucketTagging",
+        ],
+        Resource = [
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics-access-logs/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch/*",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-access-logs",
+          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-access-logs/*",
+        ]
       }
     ]
   })
 
-  tags = merge(
-    local.tags,
-    {
-      Name = "terraform-state-management"
-    }
-  )
+  tags = merge(local.tags, { Name = "s3-management" })
 }
 
 # Lambda Management Policy
@@ -158,93 +226,6 @@ resource "aws_iam_policy" "dynamodb_management" {
   })
 
   tags = merge(local.tags, { Name = "dynamodb-management" })
-}
-
-# S3 Management Policy
-resource "aws_iam_policy" "s3_management" {
-  name        = "s3-management"
-  description = "Policy granting permissions to manage S3 buckets"
-  path        = "/service-policies/"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "s3:GetLifecycleConfiguration",
-          "s3:PutLifecycleConfiguration",
-          "s3:GetBucketVersioning",
-          "s3:GetEncryptionConfiguration",
-          "s3:PutEncryptionConfiguration",
-          "s3:GetBucketPolicy",
-          "s3:GetBucketObjectLockConfiguration",
-          "s3:GetBucketLogging",
-          "s3:GetReplicationConfiguration",
-          "s3:GetBucketWebsite",
-          "s3:GetBucketRequestPayment",
-          "s3:GetBucketCORS",
-          "s3:GetBucketAcl",
-          "s3:PutBucketAcl",
-          "s3:GetAccelerateConfiguration",
-          "s3:ListBucket",
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:GetBucketLocation",
-          "s3:GetBucketPublicAccessBlock",
-          "s3:PutBucketCORS",
-          "s3:CreateBucket",
-          "s3:DeleteBucket",
-          "s3:GetBucketTagging",
-          "s3:PutBucketPolicy",
-          "s3:PutBucketVersioning",
-          "s3:PutBucketPublicAccessBlock",
-          "s3:PutBucketLogging",
-          "s3:GetObjectTagging",
-          "s3:PutObjectTagging",
-          "s3:GetObjectVersion",
-          "s3:PutBucketTagging",
-        ],
-        Resource = [
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules-access-logs",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules-access-logs/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit-access-logs",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-audit-access-logs/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map-access-logs",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map-access-logs/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-truststore-access-logs/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-access-logs",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-splunk-access-logs/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts-access-logs",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-artifacts-access-logs/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics-access-logs",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-dq-metrics-access-logs/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch/*",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-access-logs",
-          "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-cloudwatch-access-logs/*",
-        ]
-      }
-    ]
-  })
-
-  tags = merge(local.tags, { Name = "s3-management" })
 }
 
 # API Infrastructure Management Policy
@@ -512,14 +493,14 @@ resource "aws_iam_policy" "api_infrastructure" {
   )
 }
 
-# Create KMS keys policy for GitHub Actions
-resource "aws_iam_policy" "kms_creation" {
+# Security Management Policy (includes KMS and code signing)
+resource "aws_iam_policy" "security_management" {
   #checkov:skip=CKV_AWS_290: Actions require wildcard resource (Creation and listing of keys)
   #checkov:skip=CKV_AWS_289: Actions require wildcard resource
   #checkov:skip=CKV_AWS_355: Actions require wildcard resource
-
-  name        = "github-actions-kms-creation"
-  description = "Policy allowing GitHub Actions to manage KMS keys"
+  #checkov:skip=CKV_AWS_235: Actions require wildcard resource for Lambda code signing configs and Signer jobs
+  name        = "security-management"
+  description = "Allow GitHub Actions to manage KMS keys and Lambda code signing"
   path        = "/service-policies/"
 
   policy = jsonencode({
@@ -561,13 +542,66 @@ resource "aws_iam_policy" "kms_creation" {
           "arn:aws:kms:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:key/*",
           "arn:aws:kms:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:alias/*"
         ]
-      }
+      },
+      {
+        Sid    = "LambdaCodeSigningConfigManagement",
+        Effect = "Allow",
+        Action = [
+          "lambda:CreateCodeSigningConfig",
+          "lambda:UpdateCodeSigningConfig",
+          "lambda:DeleteCodeSigningConfig",
+          "lambda:GetCodeSigningConfig",
+          "lambda:ListCodeSigningConfigs",
+          "lambda:GetFunctionCodeSigningConfig",
+          "lambda:ListTags",
+          "lambda:TagResource",
+        ],
+        Resource = "*"
+      },
+      {
+        Sid    = "LambdaFunctionSigningManagement",
+        Effect = "Allow",
+        Action = [
+          "lambda:DeleteFunctionCodeSigningConfig",
+          "lambda:PutFunctionCodeSigningConfig"
+        ],
+        Resource = "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api"
+      },
+      {
+        Sid    = "SignerProfileManagement",
+        Effect = "Allow",
+        Action = [
+          "signer:GetSigningProfile",
+          "signer:TagResource",
+          "signer:UntagResource",
+          "signer:ListTagsForResource"
+        ],
+        Resource = local.lambda_signing_profile_arn
+      },
+      {
+        Sid    = "SignerProfileCreateAndList",
+        Effect = "Allow",
+        Action = [
+          "signer:PutSigningProfile",
+          "signer:ListSigningProfiles"
+        ],
+        Resource = "*"
+      },
+      {
+        Sid    = "SignerJobUsage",
+        Effect = "Allow",
+        Action = [
+          "signer:StartSigningJob",
+          "signer:DescribeSigningJob",
+          "signer:ListSigningJobs"
+        ],
+        Resource = "*"
+      },
     ]
   })
 
-  tags = merge(local.tags, { Name = "github-actions-kms-creation" })
+  tags = merge(local.tags, { Name = "security-management" })
 }
-
 
 # IAM Management Policy
 resource "aws_iam_policy" "iam_management" {
@@ -672,9 +706,9 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
   }
 }
 
-resource "aws_iam_policy" "firehose_readonly" {
-  name        = "firehose-describe-access"
-  description = "Allow GitHub Actions to describe Firehose delivery stream"
+resource "aws_iam_policy" "stream_management" {
+  name        = "stream-management"
+  description = "Allow GitHub Actions to manage project Firehose delivery streams and Kinesis streams"
   path        = "/service-policies/"
 
   policy = jsonencode({
@@ -694,25 +728,12 @@ resource "aws_iam_policy" "firehose_readonly" {
           "firehose:UntagDeliveryStream",
           "firehose:StartDeliveryStreamEncryption",
           "firehose:StopDeliveryStreamEncryption"
-        ]
+        ],
         Resource = [
           "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/eligibility-signposting-api*",
           "arn:aws:firehose:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:deliverystream/splunk-alarm-events*"
         ]
-      }
-    ]
-  })
-  tags = merge(local.tags, { Name = "firehose-describe-access" })
-}
-
-resource "aws_iam_policy" "kinesis_management" {
-  name        = "kinesis-management"
-  description = "Allow GitHub Actions to manage project Kinesis streams"
-  path        = "/service-policies/"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
+      },
       {
         Effect = "Allow",
         Action = [
@@ -737,64 +758,7 @@ resource "aws_iam_policy" "kinesis_management" {
     ]
   })
 
-  tags = merge(local.tags, { Name = "kinesis-management" })
-}
-
-resource "aws_iam_policy" "code_signing_management" {
-  #checkov:skip=CKV_AWS_290: Actions require wildcard resource for Lambda code signing configs and Signer jobs
-  #checkov:skip=CKV_AWS_235: Actions require wildcard resource for Lambda code signing configs and Signer jobs
-  #checkov:skip=CKV_AWS_355: Actions require wildcard resource for Lambda code signing configs and Signer jobs
-  name        = "code-signing-management"
-  description = "Allow GitHub Actions to manage Lambda code signing and start Signer jobs"
-  path        = "/service-policies/"
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Sid    = "LambdaCodeSigningConfigManagement",
-        Effect = "Allow",
-        Action = [
-          "lambda:CreateCodeSigningConfig",
-          "lambda:UpdateCodeSigningConfig",
-          "lambda:DeleteCodeSigningConfig",
-          "lambda:GetCodeSigningConfig",
-          "lambda:ListCodeSigningConfigs",
-          "lambda:GetFunctionCodeSigningConfig",
-          "lambda:ListTags",
-          "lambda:DeleteFunctionCodeSigningConfig",
-          "lambda:PutFunctionCodeSigningConfig"
-        ],
-        Resource = "*"
-      },
-      {
-        Sid    = "SignerJobUsage",
-        Effect = "Allow",
-        Action = [
-          "signer:StartSigningJob",
-          "signer:DescribeSigningJob"
-        ],
-        Resource = "arn:aws:signer:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:/signing-jobs/*"
-      },
-      {
-        Sid    = "SignerProfileManagement",
-        Effect = "Allow",
-        Action = [
-          "signer:PutSigningProfile",
-          "signer:GetSigningProfile",
-          "signer:ListSigningProfiles",
-          "signer:ListTagsForResource",
-          "signer:TagResource",
-          "signer:UntagResource",
-          "signer:CancelSigningProfile",
-          "signer:RevokeSignature"
-        ],
-        Resource = "${terraform.workspace == "default" ? "" : "${terraform.workspace}"}EligibilityApiLambdaSigningProfile"
-      }
-    ]
-  })
-
-  tags = merge(local.tags, { Name = "code-signing-management" })
+  tags = merge(local.tags, { Name = "stream-management" })
 }
 
 resource "aws_iam_policy" "cloudwatch_management" {
@@ -867,11 +831,6 @@ resource "aws_iam_policy" "cloudwatch_management" {
 }
 
 # Attach the policies to the role
-resource "aws_iam_role_policy_attachment" "terraform_state" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.terraform_state.arn
-}
-
 resource "aws_iam_role_policy_attachment" "api_infrastructure" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.api_infrastructure.arn
@@ -892,9 +851,9 @@ resource "aws_iam_role_policy_attachment" "s3_management" {
   policy_arn = aws_iam_policy.s3_management.arn
 }
 
-resource "aws_iam_role_policy_attachment" "kms_creation" {
+resource "aws_iam_role_policy_attachment" "security_management" {
   role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.kms_creation.arn
+  policy_arn = aws_iam_policy.security_management.arn
 }
 
 resource "aws_iam_role_policy_attachment" "iam_management" {
@@ -902,22 +861,12 @@ resource "aws_iam_role_policy_attachment" "iam_management" {
   policy_arn = aws_iam_policy.iam_management.arn
 }
 
-resource "aws_iam_role_policy_attachment" "firehose_readonly_attach" {
+resource "aws_iam_role_policy_attachment" "stream_management" {
   role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.firehose_readonly.arn
+  policy_arn = aws_iam_policy.stream_management.arn
 }
 
 resource "aws_iam_role_policy_attachment" "cloudwatch_management" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.cloudwatch_management.arn
-}
-
-resource "aws_iam_role_policy_attachment" "kinesis_management_attach" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.kinesis_management.arn
-}
-
-resource "aws_iam_role_policy_attachment" "code_signing_management" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.code_signing_management.arn
 }
