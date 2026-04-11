@@ -704,6 +704,18 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
       values   = ["sts.amazonaws.com"]
     }
   }
+  statement {
+    sid     = "AllowDevSSORoleToAssumeIamBootstrap"
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        local.dev_role_arn
+      ]
+    }
+  }
 }
 
 resource "aws_iam_policy" "stream_management" {
