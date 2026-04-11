@@ -94,9 +94,6 @@ data "aws_iam_policy_document" "permissions_boundary" {
       # signing - code signing for Lambda functions
       "signer:*",
 
-      # CodeSigning
-      "signer:*",
-
       # IAM - specific role and policy management
       "iam:GetRole*",
       "iam:GetPolicy*",
