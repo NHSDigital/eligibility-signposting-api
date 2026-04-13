@@ -91,7 +91,7 @@ jobs:
           make terraform env=$ENVIRONMENT stack=api-layer tf-command=init workspace=$WORKSPACE
         working-directory: ./infrastructure
 
-      - name: "Extract S3 bucket name from Terraform output"
+      - name: "Extract Terraform outputs"
         id: tf_output
         run: |
           BUCKET=$(terraform output -raw lambda_artifact_bucket)
@@ -103,7 +103,7 @@ jobs:
       - name: "Upload unsigned lambda artifact to S3"
         run: |
           aws s3 cp ./dist/lambda.zip \
-            s3://${{ steps.tf_output.outputs.bucket_name }}/unsigned/${{ needs.metadata.outputs.tag }}/lambda.zip \
+            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
             --region eu-west-2
 
       - name: "Get uploaded source object version"
@@ -123,8 +123,8 @@ jobs:
           SIGNING_PROFILE_NAME: ${{ steps.tf_output.outputs.signing_profile_name }}
         run: |
           JOB_ID=$(aws signer start-signing-job \
-            --source "s3={bucketName=${{ steps.tf_output.outputs.bucket_name }},key=unsigned/${{ needs.metadata.outputs.tag }}/lambda.zip,version=${{ steps.source_object.outputs.version_id }}}" \
-            --destination "s3={bucketName=${{ steps.tf_output.outputs.bucket_name }},prefix=signed/${{ needs.metadata.outputs.tag }}/}" \
+            --source "s3={bucketName=${{ steps.tf_output.outputs.bucket_name }},key=artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip,version=${{ steps.source_object.outputs.version_id }}}" \
+            --destination "s3={bucketName=${{ steps.tf_output.outputs.bucket_name }},prefix=signed-artifacts/${{ needs.metadata.outputs.tag }}/}" \
             --profile-name "$SIGNING_PROFILE_NAME" \
             --query 'jobId' \
             --output text \
