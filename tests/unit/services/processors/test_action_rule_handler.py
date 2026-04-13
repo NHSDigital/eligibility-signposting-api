@@ -1,9 +1,10 @@
 from unittest.mock import Mock, call, patch
 
 import pytest
-from hamcrest import assert_that, is_
+from hamcrest import assert_that, has_properties, is_
 from pydantic import HttpUrl
 
+from eligibility_signposting_api.config.constants import STATUS_TEXT_OVERRIDE_ACTION_TYPE
 from eligibility_signposting_api.model.campaign_config import AvailableAction, RuleName, RulePriority, RuleType
 from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
@@ -812,3 +813,89 @@ def test_handle_is_not_called_when_include_actions_is_false(mock_handle, handler
     )
 
     assert_that(mock_handle.call_count, is_(0))
+
+
+def _make_action(action_type: str, description: str) -> SuggestedAction:
+    return SuggestedAction(
+        action_type=ActionType(action_type),
+        action_code=ActionCode("CODE"),
+        action_description=ActionDescription(description),
+        url_link=None,
+        url_label=None,
+        internal_action_code=InternalActionCode("code"),
+    )
+
+
+REGULAR_ACTION = _make_action("CareCardWithText", "You are eligible for a vaccination")
+OVERRIDE_ACTION = _make_action(STATUS_TEXT_OVERRIDE_ACTION_TYPE, "You maybe eligible for a vaccination")
+
+
+def test_extract_status_text_override_with_none_returns_none_none():
+    result = ActionRuleHandler._extract_status_text_override(None)
+
+    assert_that(result, is_((None, None)))
+
+
+def test_extract_status_text_override_with_empty_list_returns_none_none():
+    result = ActionRuleHandler._extract_status_text_override([])
+
+    assert_that(result, is_(([], None)))
+
+
+def test_extract_status_text_override_with_no_override_action_leaves_actions_unchanged():
+    actions = [REGULAR_ACTION]
+
+    remaining, override_text = ActionRuleHandler._extract_status_text_override(actions)
+
+    assert_that(remaining, is_([REGULAR_ACTION]))
+    assert_that(override_text, is_(None))
+
+
+def test_extract_status_text_override_with_only_override_action_captures_text():
+    actions = [OVERRIDE_ACTION]
+
+    remaining, override_text = ActionRuleHandler._extract_status_text_override(actions)
+
+    assert_that(remaining, is_([]))
+    assert_that(override_text, is_(StatusText("You maybe eligible for a vaccination")))
+
+
+def test_extract_status_text_override_with_mixed_actions_strips_override_and_keeps_others():
+    actions = [REGULAR_ACTION, OVERRIDE_ACTION]
+
+    remaining, override_text = ActionRuleHandler._extract_status_text_override(actions)
+
+    assert_that(remaining, is_([REGULAR_ACTION]))
+    assert_that(override_text, is_(StatusText("You maybe eligible for a vaccination")))
+
+
+@patch.object(ActionRuleHandler, "_get_actions_from_comms")
+@patch.object(ActionRuleHandler, "_get_action_rules_components")
+def test_handle_returns_status_text_override_in_matched_action_detail(
+    mock_get_action_rules_components,
+    mock_get_actions_from_comms,
+    handler: ActionRuleHandler,
+):
+    active_iteration = rule_builder.IterationFactory.build(
+        default_comms_routing="default_action_code",
+        actions_mapper=ActionsMapperFactory.build(),
+        iteration_rules=[],
+    )
+    mock_get_action_rules_components.return_value = (
+        [],
+        active_iteration.actions_mapper,
+        active_iteration.default_comms_routing,
+    )
+    mock_get_actions_from_comms.return_value = [REGULAR_ACTION, OVERRIDE_ACTION]
+
+    matched_action_detail = handler._handle(MOCK_PERSON, active_iteration, RuleType.redirect)
+
+    assert_that(
+        matched_action_detail,
+        has_properties(
+            actions=[REGULAR_ACTION],
+            status_text_override=StatusText("You maybe eligible for a vaccination"),
+            rule_name=None,
+            rule_priority=None,
+        ),
+    )
