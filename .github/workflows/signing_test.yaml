@@ -1,4 +1,4 @@
-name: "Updated - 3. CD | Deploy to Test"
+name: "signing-test"
 
 on:
   workflow_dispatch:
