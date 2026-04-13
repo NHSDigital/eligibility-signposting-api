@@ -1,9 +1,18 @@
 name: "Updated - 3. CD | Deploy to Test"
 
-#on:
-#  workflow_run:
-#    workflows: ["2. CD | Deploy to Dev"]
-#    types: [completed]
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or commit SHA to check out"
+        required: true
+        default: "main"
+      artifact_tag:
+        description: "Artifact tag to deploy, for example dev-20260410120000"
+        required: true
+      artifact_run_id:
+        description: "Workflow run ID that produced the lambda artifact"
+        required: true
 
 concurrency:
   group: test-deployments
@@ -16,35 +25,27 @@ permissions:
 
 jobs:
   metadata:
-    name: "Resolve metadata from triggering run"
+    name: "Resolve metadata"
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     outputs:
       terraform_version: ${{ steps.vars.outputs.terraform_version }}
       tag: ${{ steps.tag.outputs.name }}
     steps:
-      - name: "Checkout exact commit from CI/CD publish"
+      - name: "Checkout selected ref"
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ inputs.ref }}
 
       - name: "Set CI/CD variables"
         id: vars
         run: |
           echo "terraform_version=$(grep '^terraform' .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
 
-      - name: "Resolve the dev-* tag for this commit"
+      - name: "Use provided artifact tag"
         id: tag
         run: |
-          git fetch --tags --force
-          SHA="${{ github.event.workflow_run.head_sha }}"
-          TAG=$(git tag --points-at "$SHA" | grep '^dev-' | sort -r | head -n1 || true)
-          if [ -z "$TAG" ]; then
-            echo "No dev-* tag found on $SHA" >&2
-            exit 1
-          fi
-          echo "name=$TAG" >> $GITHUB_OUTPUT
-          echo "Resolved tag: $TAG"
+          echo "name=${{ inputs.artifact_tag }}" >> $GITHUB_OUTPUT
+          echo "Resolved tag: ${{ inputs.artifact_tag }}"
 
   sign-lambda-artifact:
     name: "Sign lambda artifact for TEST"
@@ -58,10 +59,10 @@ jobs:
     outputs:
       bucket_name: ${{ steps.tf_output.outputs.bucket_name }}
     steps:
-      - name: "Checkout same commit"
+      - name: "Checkout selected ref"
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ inputs.ref }}
 
       - name: "Setup Terraform"
         uses: hashicorp/setup-terraform@v3
@@ -74,12 +75,12 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
           aws-region: eu-west-2
 
-      - name: "Download lambda artefact from dev workflow"
+      - name: "Download lambda artefact from chosen workflow run"
         uses: actions/download-artifact@v7
         with:
           name: lambda-${{ needs.metadata.outputs.tag }}
           path: ./dist
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ inputs.artifact_run_id }}
           github-token: ${{ github.token }}
 
       - name: "Terraform Init (TEST api-layer)"
@@ -111,7 +112,7 @@ jobs:
         run: |
           VERSION_ID=$(aws s3api head-object \
             --bucket "${{ steps.tf_output.outputs.bucket_name }}" \
-            --key "unsigned/${{ needs.metadata.outputs.tag }}/lambda.zip" \
+            --key "artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip" \
             --query 'VersionId' \
             --output text \
             --region eu-west-2)
@@ -178,10 +179,10 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: "Checkout same commit"
+      - name: "Checkout selected ref"
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ inputs.ref }}
 
       - name: "Setup Terraform"
         uses: hashicorp/setup-terraform@v3
@@ -227,12 +228,6 @@ jobs:
         run: |
           pip install boto3
           python scripts/feature_toggle/validate_toggles.py
-
-      - name: "Upload signed lambda artifact to S3"
-        run: |
-          aws s3 cp ./dist/lambda.zip \
-            s3://${{ needs.sign-lambda-artifact.outputs.bucket_name }}/artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip \
-            --region eu-west-2
 
   regression-tests:
     name: "Regression Tests"
