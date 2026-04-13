@@ -429,7 +429,6 @@ data "aws_iam_policy_document" "iam_bootstrap_permissions_boundary" {
     sid    = "DenyBootstrapBoundaryModification"
     effect = "Deny"
     actions = [
-      "iam:CreatePolicyVersion",
       "iam:DeletePolicy",
       "iam:DeletePolicyVersion",
       "iam:SetDefaultPolicyVersion",
