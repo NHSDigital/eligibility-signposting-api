@@ -416,7 +416,6 @@ data "aws_iam_policy_document" "iam_bootstrap_permissions_boundary" {
       "iam:DetachRolePolicy",
       "iam:PutRolePolicy",
       "iam:DeleteRolePolicy",
-      "iam:UpdateAssumeRolePolicy",
       "iam:PutRolePermissionsBoundary",
       "iam:DeleteRolePermissionsBoundary",
     ]
