@@ -1,6 +1,7 @@
 from itertools import groupby
 from operator import attrgetter
 
+from eligibility_signposting_api.config.constants import STATUS_TEXT_OVERRIDE_ACTION_TYPE
 from eligibility_signposting_api.model.campaign_config import (
     ActionsMapper,
     Iteration,
@@ -14,6 +15,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     IterationResult,
     MatchedActionDetail,
     RuleType,
+    StatusText,
     SuggestedAction,
     UrlLabel,
     UrlLink,
@@ -65,7 +67,11 @@ class ActionRuleHandler:
                 matched_action_rule_name = rule_group_list[0].name
                 break
 
-        return MatchedActionDetail(matched_action_rule_name, matched_action_rule_priority, actions)
+        actions, status_text_override = self._extract_status_text_override(actions)
+
+        return MatchedActionDetail(
+            matched_action_rule_name, matched_action_rule_priority, actions, status_text_override
+        )
 
     @staticmethod
     def _get_action_rules_components(
@@ -102,3 +108,23 @@ class ActionRuleHandler:
                     )
                 )
         return suggested_actions
+
+    @staticmethod
+    def _extract_status_text_override(
+        actions: list[SuggestedAction] | None,
+    ) -> tuple[list[SuggestedAction] | None, StatusText | None]:
+        if actions is None:
+            return None, None
+
+        if len(actions) == 0:
+            return [], None
+
+        override_text = None
+        remaining = []
+        for action in actions:
+            if action.action_type == STATUS_TEXT_OVERRIDE_ACTION_TYPE:
+                override_text = StatusText(str(action.action_description)) if action.action_description else None
+            else:
+                remaining.append(action)
+
+        return remaining, override_text
