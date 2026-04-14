@@ -6,7 +6,7 @@ on:
       ref:
         description: "Branch, tag, or commit SHA to check out"
         required: true
-        default: "main"
+        default: "feature/ELI-702-code-signing"
       artifact_tag:
         description: "Artifact tag to deploy, for example dev-20260410120000"
         required: true
@@ -200,40 +200,3 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
           aws-region: eu-west-2
-
-      - name: "Terraform Apply (TEST)"
-        env:
-          ENVIRONMENT: test
-          WORKSPACE: "default"
-          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
-          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
-          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
-          TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
-          TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
-          TF_VAR_OPERATOR_EMAILS: ${{ vars.SECRET_ROTATION_OPERATOR_EMAILS }}
-          TF_VAR_PROXYGEN_PRIVATE_KEY_PTL: ${{ secrets.PROXYGEN_PRIVATE_KEY_PTL }}
-          TF_VAR_PROXYGEN_PRIVATE_KEY_PROD: ${{ secrets.PROXYGEN_PRIVATE_KEY_PROD }}
-        run: |
-          mkdir -p ./build
-          echo "Deploying tag: ${{ needs.metadata.outputs.tag }}"
-          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=apply"
-          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
-          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
-          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
-        working-directory: ./infrastructure
-
-      - name: "Validate Feature Toggles"
-        env:
-          ENV: test
-        run: |
-          pip install boto3
-          python scripts/feature_toggle/validate_toggles.py
-
-  regression-tests:
-    name: "Regression Tests"
-    needs: deploy
-    uses: ./.github/workflows/regression-tests.yml
-    with:
-      ENVIRONMENT: "test"
-      VERSION_NUMBER: "main"
-    secrets: inherit
