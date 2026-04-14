@@ -42,6 +42,25 @@ terraform: guard-env guard-stack guard-tf-command terraform-init terraform-works
 	mkdir -p ./build
 	terraform -chdir=./stacks/$(stack) output -json > ./build/terraform_outputs_$(stack).json
 
+terraform-as-github: SHELL=/bin/bash
+terraform-as-github: guard-env guard-stack guard-tf-command
+	@role=$$( [ "$(stack)" = "iams-developer-roles" ] && \
+		echo arn:aws:iam::448049830832:role/service-roles/github-actions-iam-bootstrap-role || \
+		echo arn:aws:iam::448049830832:role/service-roles/github-actions-api-deployment-role ); \
+	read AK SK ST <<< $$(aws sts assume-role --role-arn $$role --role-session-name local \
+		--query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text); \
+	export AWS_ACCESS_KEY_ID=$$AK AWS_SECRET_ACCESS_KEY=$$SK AWS_SESSION_TOKEN=$$ST; \
+	echo "Caller identity after assume-role:"; \
+	aws sts get-caller-identity; \
+	d=./stacks/$(stack); \
+	terraform -chdir=$$d init -backend-config=backends/$(env).$(stack).tfbackend -upgrade; \
+	terraform -chdir=$$d get -update; \
+	terraform -chdir=$$d $(tf-command) $(args) -var="environment=$(env)" \
+		$$( [ "$(tf-command)" != "init" ] && echo --parallelism=30 ) \
+		$$( [ "$(tf-command)" = "apply" ] && echo -auto-approve ); \
+	mkdir -p build; \
+	terraform -chdir=$$d output -json > build/terraform_outputs_$(stack).json
+
 ###################
 #### Bootstrap ####
 ###################
