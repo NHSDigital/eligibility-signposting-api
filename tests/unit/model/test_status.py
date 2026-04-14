@@ -80,7 +80,7 @@ def test_matched_action_detail_existing_constructor_still_works_with_three_args(
             rule_name=RuleName("RuleA"),
             rule_priority=RulePriority(1),
             actions=actions,
-            status_text_override=StatusText(None),
+            status_text_override=None,
         ),
     )
 
