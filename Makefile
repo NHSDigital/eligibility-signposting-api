@@ -11,7 +11,7 @@ install-python:
 
 #Configures Git Hooks, which are scripts that run given a specified event.
 .git/hooks/pre-commit:
-	cp scripts/pre-commit .git/hooks/pre-commit
+	pre-commit install --config scripts/config/pre-commit.yaml
 
 #Condensed Target to run all targets above.
 install: install-python .git/hooks/pre-commit

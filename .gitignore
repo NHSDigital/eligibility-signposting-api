@@ -28,6 +28,7 @@ __pycache__/
 .envrc
 .idea/
 .venv/
+.python-version
 
 smoketest-report.xml
 .env
