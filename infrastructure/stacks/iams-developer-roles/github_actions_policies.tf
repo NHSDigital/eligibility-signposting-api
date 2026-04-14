@@ -704,16 +704,19 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
       values   = ["sts.amazonaws.com"]
     }
   }
-  statement {
-    sid     = "AllowDevSSORoleToAssumeIamBootstrap"
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
+  dynamic "statement" {
+    for_each = var.environment == "dev" ? [1] : []
+    content {
+      sid    = "AllowDevSSORoleToAssumeIamBootstrap"
+      effect = "Allow"
+      actions = ["sts:AssumeRole"]
 
-    principals {
-      type = "AWS"
-      identifiers = [
-        local.dev_role_arn
-      ]
+      principals {
+        type = "AWS"
+        identifiers = [
+          local.dev_role_arn
+        ]
+      }
     }
   }
 }
