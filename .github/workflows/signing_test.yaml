@@ -1,18 +1,9 @@
 name: "signing-test"
 
 on:
-  workflow_dispatch:
-    inputs:
-      ref:
-        description: "Branch, tag, or commit SHA to check out"
-        required: true
-        default: "feature/ELI-702-code-signing"
-      artifact_tag:
-        description: "Artifact tag to deploy, for example dev-20260410120000"
-        required: true
-      artifact_run_id:
-        description: "Workflow run ID that produced the lambda artifact"
-        required: true
+  push:
+    branches:
+      - feature/ELI-702-code-signing
 
 concurrency:
   group: test-deployments
@@ -22,6 +13,11 @@ permissions:
   contents: read
   id-token: write
   actions: read
+
+env:
+  SELECTED_REF: feature/ELI-702-code-signing
+  SELECTED_ARTIFACT_TAG: dev-20260414083041
+  SELECTED_ARTIFACT_RUN_ID: 24389064472
 
 jobs:
   metadata:
@@ -34,18 +30,24 @@ jobs:
       - name: "Checkout selected ref"
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ env.SELECTED_REF }}
+
+      - name: "Show checked out commit"
+        run: |
+          git branch --show-current || true
+          git rev-parse HEAD
+          git log -1 --oneline
 
       - name: "Set CI/CD variables"
         id: vars
         run: |
           echo "terraform_version=$(grep '^terraform' .tool-versions | cut -f2 -d' ')" >> $GITHUB_OUTPUT
 
-      - name: "Use provided artifact tag"
+      - name: "Use static artifact tag"
         id: tag
         run: |
-          echo "name=${{ inputs.artifact_tag }}" >> $GITHUB_OUTPUT
-          echo "Resolved tag: ${{ inputs.artifact_tag }}"
+          echo "name=${{ env.SELECTED_ARTIFACT_TAG }}" >> $GITHUB_OUTPUT
+          echo "Resolved tag: ${{ env.SELECTED_ARTIFACT_TAG }}"
 
   sign-lambda-artifact:
     name: "Sign lambda artifact for TEST"
@@ -62,7 +64,13 @@ jobs:
       - name: "Checkout selected ref"
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ env.SELECTED_REF }}
+
+      - name: "Show checked out commit"
+        run: |
+          git branch --show-current || true
+          git rev-parse HEAD
+          git log -1 --oneline
 
       - name: "Setup Terraform"
         uses: hashicorp/setup-terraform@v3
@@ -80,7 +88,7 @@ jobs:
         with:
           name: lambda-${{ needs.metadata.outputs.tag }}
           path: ./dist
-          run-id: ${{ inputs.artifact_run_id }}
+          run-id: ${{ env.SELECTED_ARTIFACT_RUN_ID }}
           github-token: ${{ github.token }}
 
       - name: "Terraform Init (TEST api-layer)"
@@ -182,7 +190,13 @@ jobs:
       - name: "Checkout selected ref"
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ env.SELECTED_REF }}
+
+      - name: "Show checked out commit"
+        run: |
+          git branch --show-current || true
+          git rev-parse HEAD
+          git log -1 --oneline
 
       - name: "Setup Terraform"
         uses: hashicorp/setup-terraform@v3
