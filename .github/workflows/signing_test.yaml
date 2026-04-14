@@ -96,7 +96,7 @@ jobs:
         id: tf_output
         run: |
           BUCKET=$(terraform output -raw lambda_artifact_bucket)
-          PROFILE=$(terraform output -raw lambda_signing_profile_name)
+          PROFILE=$(terraform output -raw signing_profile_name)
           echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
           echo "signing_profile_name=$PROFILE" >> $GITHUB_OUTPUT
         working-directory: ./infrastructure/stacks/api-layer
