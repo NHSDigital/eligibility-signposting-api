@@ -111,7 +111,7 @@ jobs:
         run: |
           VERSION_ID=$(aws s3api head-object \
             --bucket "${{ steps.tf_output.outputs.bucket_name }}" \
-            --key "unsigned/${{ needs.metadata.outputs.tag }}/lambda.zip" \
+            --key "artifacts/${{ needs.metadata.outputs.tag }}/lambda.zip" \
             --query 'VersionId' \
             --output text \
             --region eu-west-2)
