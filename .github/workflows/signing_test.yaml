@@ -5,10 +5,6 @@ on:
     branches:
       - feature/ELI-702-code-signing
 
-concurrency:
-  group: test-deployments
-  cancel-in-progress: false
-
 permissions:
   contents: read
   id-token: write
