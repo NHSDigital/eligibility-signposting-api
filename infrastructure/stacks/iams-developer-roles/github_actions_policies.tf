@@ -678,77 +678,6 @@ resource "aws_iam_policy" "iam_management" {
   tags = merge(local.tags, { Name = "iam-management" })
 }
 
-# Assume role policy document for GitHub Actions
-data "aws_iam_policy_document" "github_actions_assume_role" {
-  statement {
-    sid     = "OidcAssumeRoleWithWebIdentity"
-    effect  = "Allow"
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type = "Federated"
-      identifiers = [
-        aws_iam_openid_connect_provider.github.arn
-      ]
-    }
-
-    condition {
-      test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-  }
-  dynamic "statement" {
-    for_each = var.environment == "dev" ? [1] : []
-    content {
-      sid    = "AllowDevSSORoleToAssumeIamBootstrap"
-      effect = "Allow"
-      actions = ["sts:AssumeRole"]
-
-      principals {
-        type = "AWS"
-        identifiers = [
-          local.dev_role_arn
-        ]
-      }
-    }
-  }
-}
-
-# Assume role policy document for GitHub Actions
-data "aws_iam_policy_document" "regression_repo_assume_role" {
-  statement {
-    sid    = "OidcAssumeRoleWithWebIdentity"
-    effect = "Allow"
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type = "Federated"
-      identifiers = [
-        aws_iam_openid_connect_provider.github.arn
-      ]
-    }
-
-    condition {
-      test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:sub"
-      values = ["repo:${var.github_org}/${var.regression_repo}:*"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values = ["sts.amazonaws.com"]
-    }
-  }
-}
-
 resource "aws_iam_policy" "stream_management" {
   name        = "stream-management"
   description = "Allow GitHub Actions to manage project Firehose delivery streams and Kinesis streams"
@@ -871,6 +800,77 @@ resource "aws_iam_policy" "cloudwatch_management" {
   })
 
   tags = merge(local.tags, { Name = "cloudwatch-management" })
+}
+
+# Assume role policy document for GitHub Actions
+data "aws_iam_policy_document" "github_actions_assume_role" {
+  statement {
+    sid     = "OidcAssumeRoleWithWebIdentity"
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type = "Federated"
+      identifiers = [
+        aws_iam_openid_connect_provider.github.arn
+      ]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+  dynamic "statement" {
+    for_each = var.environment == "dev" ? [1] : []
+    content {
+      sid    = "AllowDevSSORoleToAssumeIamBootstrap"
+      effect = "Allow"
+      actions = ["sts:AssumeRole"]
+
+      principals {
+        type = "AWS"
+        identifiers = [
+          local.dev_role_arn
+        ]
+      }
+    }
+  }
+}
+
+# Assume role policy document for GitHub Actions
+data "aws_iam_policy_document" "regression_repo_assume_role" {
+  statement {
+    sid    = "OidcAssumeRoleWithWebIdentity"
+    effect = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type = "Federated"
+      identifiers = [
+        aws_iam_openid_connect_provider.github.arn
+      ]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values = ["repo:${var.github_org}/${var.regression_repo}:*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values = ["sts.amazonaws.com"]
+    }
+  }
 }
 
 # Attach the policies to the role
