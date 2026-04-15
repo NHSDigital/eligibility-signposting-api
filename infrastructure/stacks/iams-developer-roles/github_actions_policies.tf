@@ -802,6 +802,115 @@ resource "aws_iam_policy" "cloudwatch_management" {
   tags = merge(local.tags, { Name = "cloudwatch-management" })
 }
 
+data "aws_iam_policy_document" "regression_test_permissions" {
+  statement {
+    sid    = "S3Access"
+    Effect = "Allow",
+    Action = [
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+      "s3:GetBucketTagging",
+      "s3:GetObjectTagging",
+      "s3:PutObjectTagging",
+      "s3:GetObjectVersion",
+    ],
+    Resource = [
+      "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules",
+      "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules/*",
+      "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map",
+      "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map/*"
+    ]
+  }
+
+  statement {
+    sid    = "DynamoAccess"
+    Effect = "Allow"
+    Action = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:DescribeTable",
+      "dynamodb:ListTables",
+      "dynamodb:DeleteTable",
+      "dynamodb:CreateTable",
+      "dynamodb:TagResource",
+      "dynamodb:UntagResource",
+      "dynamodb:ListTagsOfResource"
+    ]
+    resources = [
+      "arn:aws:dynamodb:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/my-table"
+    ]
+  }
+
+  statement {
+    sid = "SecretsManagerAccess"
+    Effect = "Allow"
+    Action = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:PutSecretValue",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:UpdateSecretVersionStage"
+      ]
+  }
+
+  statement {
+    sid    = "CloudWatchLogsRead"
+    Effect = "Allow"
+    Action = [
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams",
+      "logs:GetLogEvents",
+      "logs:FilterLogEvents",
+      "logs:StartQuery",
+      "logs:GetQueryResults",
+      "logs:StopQuery"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "XRayRead"
+    Effect = "Allow"
+    Action = [
+      "xray:GetTraceSummaries",
+      "xray:BatchGetTraces",
+      "xray:GetServiceGraph",
+      "xray:GetGroups",
+      "xray:GetGroup",
+      "xray:GetSamplingRules",
+      "xray:GetSamplingTargets",
+      "xray:GetSamplingStatisticSummaries",
+      "xray:UpdateSamplingRule"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "SSMRead"
+    Effect = "Allow"
+    Action = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:GetParametersByPath"
+    ]
+    resources = [
+      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/my-app/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "regression_test_permissions" {
+  name        = "regression-test-permissions"
+  description = "Permissions for the regression test GitHub Actions role"
+  path        = "/service-policies/"
+  policy      = data.aws_iam_policy_document.regression_test_permissions.json
+}
+
 # Assume role policy document for GitHub Actions
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
@@ -912,4 +1021,14 @@ resource "aws_iam_role_policy_attachment" "stream_management" {
 resource "aws_iam_role_policy_attachment" "cloudwatch_management" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.cloudwatch_management.arn
+}
+
+resource "aws_iam_role_policy_attachment" "regression_test_permissions" {
+  role       = aws_iam_role.regression_test_role.name
+  policy_arn = aws_iam_policy.regression_test_permissions.arn
+}
+
+resource "aws_iam_role_policy_attachment" "security_management" {
+  role       = aws_iam_role.regression_test_role.name
+  policy_arn = aws_iam_policy.security_management.arn
 }
