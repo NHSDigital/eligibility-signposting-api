@@ -2184,10 +2184,10 @@ def test_configureable_status_text(faker: Faker):
         icb="QE1",
     )
 
-    available_action = AvailableAction(
+    action_status_text_override_actionable = AvailableAction(
         ExternalRoutingCode="StatusTextOverride",
         ActionType="norender_StatusTextOverride",
-        ActionDescription="You maybe eligible for an RSV vaccine.",
+        ActionDescription="Status Text Override Actionable",
     )
 
     campaign_configs = [
@@ -2198,6 +2198,13 @@ def test_configureable_status_text(faker: Faker):
                     #default_comms_routing="TOKEN_TEST",
                     #default_not_actionable_routing="TOKEN_TEST",
                     #default_not_eligible_routing="TOKEN_TEST",
+
+                    status_text=campaign_config.StatusText(
+                        NotEligible="Orignal you are not eligible status text",
+                        NotActionable="Orignal you are not actionable status text",
+                        Actionable="Orignal you are actionable status text",
+                    ),
+
                     iteration_cohorts=[
                         rule_builder.IterationCohortFactory.build(
                             cohort_label="rsv_cohort_1", cohort_group="rsv_cohort_group", priority=0
@@ -2205,14 +2212,27 @@ def test_configureable_status_text(faker: Faker):
                     ],
                     iteration_rules=[
                         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                            type=RuleType.filter,
+                            type=RuleType.filter, # FILTER RULE !!
                             name=RuleName("NotEligible Reason 1"),
                             description=RuleText("NotEligible Description 1"),
                             priority=RulePriority("100"),
                             operator=RuleOperator.year_lte,
                             attribute_level=RuleAttributeLevel.PERSON,
                             attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                            comparator=RuleComparator("-90"),
+                            #comparator=RuleComparator("-80"), # Not Base Eligible - Not Eligible
+                            comparator=RuleComparator("-90"),  # Base Eligible     - ?
+                        ),
+
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            type=RuleType.suppression, # SUPPRESSION RULE !!
+                            name=RuleName("NotActionable Reason 1"),
+                            description=RuleText("NotActionable Description 1"),
+                            priority=RulePriority("110"),
+                            operator=RuleOperator.year_lte,
+                            attribute_level=RuleAttributeLevel.PERSON,
+                            attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                            #comparator=RuleComparator("-80"), # Not Actionable
+                            comparator=RuleComparator("-90"),  # Actionable
                         ),
 
                         # rule_builder.ClinicalRiskRedirectRuleFactory.build(
@@ -2220,27 +2240,13 @@ def test_configureable_status_text(faker: Faker):
                         # ),
 
                         rule_builder.ICBRedirectRuleFactory.build(
-                            comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")
+                            comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE_ACTIONABLE")
                         ),
 
-
-                        rule_builder.PersonAgeSuppressionRuleFactory.build(
-                            type=RuleType.suppression,
-                            name=RuleName("NotActionable Reason 1"),
-                            description=RuleText("NotActionable Description 1"),
-                            priority=RulePriority("110"),
-                            operator=RuleOperator.year_lte,
-                            attribute_level=RuleAttributeLevel.PERSON,
-                            attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                            comparator=RuleComparator("-90"),
-                        ),
                     ],
-                    status_text=campaign_config.StatusText(
-                        NotEligible="You are not eligible to take RSV vaccines.",
-                        NotActionable="You have taken RSV vaccine in the last 90 days",
-                        Actionable="You can take RSV vaccine.",
-                    ),
-                    actions_mapper=rule_builder.ActionsMapperFactory.build(root={"STATUS_TEXT_OVERRIDE": available_action}),
+
+                    actions_mapper=rule_builder.ActionsMapperFactory.build(
+                        root={"STATUS_TEXT_OVERRIDE_ACTIONABLE": action_status_text_override_actionable}),
                 )
             ],
         )
@@ -2259,7 +2265,12 @@ def test_configureable_status_text(faker: Faker):
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(Status.actionable)
                 #.and_status_text(StatusText("You can take RSV vaccine."))
-                .and_status_text(StatusText("You maybe eligible for an RSV vaccine."))
+
+                # Actionable and Status Text Override
+                .and_status_text(StatusText("Status Text Override Actionable"))
+
+                # Actionable and NO Override (remove comms routing)
+                #.and_status_text(StatusText("Status Text Override Actionable"))
             )
         ),
     )
