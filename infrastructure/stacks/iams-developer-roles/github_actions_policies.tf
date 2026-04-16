@@ -843,7 +843,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
       "dynamodb:ListTagsOfResource"
     ]
     resources = [
-      "arn:aws:dynamodb:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/my-table"
+      "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
     ]
   }
 
@@ -899,7 +899,10 @@ data "aws_iam_policy_document" "regression_test_permissions" {
       "ssm:GetParametersByPath"
     ]
     resources = [
-      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/my-app/*"
+      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/*",
+      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/splunk/*",
+      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/ptl/*",
+      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/prod/*"
     ]
   }
 }
@@ -1028,7 +1031,7 @@ resource "aws_iam_role_policy_attachment" "regression_test_permissions" {
   policy_arn = aws_iam_policy.regression_test_permissions.arn
 }
 
-resource "aws_iam_role_policy_attachment" "security_management" {
+resource "aws_iam_role_policy_attachment" "regression_security_management" {
   role       = aws_iam_role.regression_test_role.name
   policy_arn = aws_iam_policy.security_management.arn
 }
