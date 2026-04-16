@@ -856,6 +856,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
       "secretsmanager:DescribeSecret",
       "secretsmanager:UpdateSecretVersionStage"
       ]
+    resources = ["*"]
   }
 
   statement {
