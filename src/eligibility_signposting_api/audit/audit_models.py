@@ -77,6 +77,7 @@ class AuditCondition(CamelCaseBaseModel):
     condition_name: str | None = None
     status: str | None = None
     status_text: str | None = None
+    status_text_override: str | None = Field(default=None, exclude_if=lambda value: value is None)
     eligibility_cohorts: list[AuditEligibilityCohorts] | None = None
     eligibility_cohort_groups: list[AuditEligibilityCohortGroups] | None = None
     filter_rules: list[AuditFilterRule] | None = None

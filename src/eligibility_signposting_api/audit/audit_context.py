@@ -101,6 +101,7 @@ class AuditContext:
             condition_name=condition_name,
             status=best_candidate.status.name if best_candidate and best_candidate.status else None,
             status_text=best_candidate.status_text if best_candidate else None,
+            status_text_override=action_detail.status_text_override,
             eligibility_cohorts=audit_eligibility_cohorts,
             eligibility_cohort_groups=audit_eligibility_cohort_groups,
             filter_rules=audit_filter_rule,
