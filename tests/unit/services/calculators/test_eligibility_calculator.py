@@ -51,6 +51,200 @@ from tests.fixtures.matchers.eligibility import (
     is_condition,
     is_eligibility_status,
 )
+from eligibility_signposting_api.model.eligibility_status import StatusText
+from eligibility_signposting_api.services.processors.token_processor import TokenProcessor
+from eligibility_signposting_api.model.eligibility_status import MatchedActionDetail
+from unittest.mock import MagicMock
+
+def test_get_eligibility_status_uses_status_text_override_when_present(faker: Faker):
+    """
+    Test: override present → statusText replaced
+    If an override status text is provided, it replaces the original status text
+    produced by the iteration.
+    """
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(
+        nhs_number,
+        cohorts=["cohort1"],
+        icb="QE1",
+    )
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(cohort_label="cohort1")
+                    ],
+                    iteration_rules=[],
+                    status_text=campaign_config.StatusText(
+                        NotEligible="You are not eligible for RSV.",
+                        NotActionable="You are not currently able to book RSV.",
+                        Actionable="Original actionable text",
+                    ),
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+    calculator.action_rule_handler.get_actions = MagicMock(
+        return_value=MatchedActionDetail(status_text_override=StatusText("Override actionable text"))
+    )
+
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    assert len(actual.conditions) == 1
+    assert actual.conditions[0].condition_name == ConditionName("RSV")
+    assert actual.conditions[0].status == Status.actionable
+    assert actual.conditions[0].status_text == StatusText("Override actionable text")
+    assert g.audit_log.response.condition[0].status_text == "Override actionable text"
+
+
+def test_get_eligibility_status_keeps_original_status_text_when_override_absent(faker: Faker):
+    """
+    Override absent → statusText unchanged
+    If no override is provided, the calculator should keep the original
+    status text from the iteration.
+    """
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(
+        nhs_number,
+        cohorts=["cohort1"],
+        icb="QE1",
+    )
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(cohort_label="cohort1")
+                    ],
+                    iteration_rules=[],
+                    status_text=campaign_config.StatusText(
+                        NotEligible="You are not eligible for RSV.",
+                        NotActionable="You are not currently able to book RSV.",
+                        Actionable="Original actionable text",
+                    ),
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+    calculator.action_rule_handler.get_actions = MagicMock(
+        return_value=MatchedActionDetail(status_text_override=None)
+    )
+
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    assert len(actual.conditions) == 1
+    assert actual.conditions[0].condition_name == ConditionName("RSV")
+    assert actual.conditions[0].status == Status.actionable
+    assert actual.conditions[0].status_text == StatusText("Original actionable text")
+    assert g.audit_log.response.condition[0].status_text == "Original actionable text"
+
+
+def test_get_eligibility_status_resolves_tokens_in_status_text_override(faker: Faker):
+    """
+    Test: override with token → resolved
+    check that a token inside the override status text gets replaced with actual person data.
+    """
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(
+        nhs_number,
+        cohorts=["cohort1"],
+        icb="ICB123",
+    )
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(cohort_label="cohort1")
+                    ],
+                    iteration_rules=[],
+                    status_text=campaign_config.StatusText(
+                        NotEligible="You are not eligible for RSV.",
+                        NotActionable="You are not currently able to book RSV.",
+                        Actionable="Original actionable text",
+                    ),
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+    calculator.action_rule_handler.get_actions = MagicMock(
+        return_value=MatchedActionDetail(
+            status_text_override=StatusText("You can book via [[PERSON.ICB]].")
+        )
+    )
+
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    assert len(actual.conditions) == 1
+    assert actual.conditions[0].condition_name == ConditionName("RSV")
+    assert actual.conditions[0].status == Status.actionable
+    assert actual.conditions[0].status_text == StatusText("You can book via ICB123.")
+    assert g.audit_log.response.condition[0].status_text == "You can book via ICB123."
+
+
+def test_get_eligibility_status_applies_override_before_token_processing(faker: Faker):
+    """
+    Test: override applied before token processing (order verification)
+    Check if apply the override first, and only then replace tokens
+    """
+    nhs_number = NHSNumber(faker.nhs_number())
+
+    person_rows = person_rows_builder(
+        nhs_number,
+        cohorts=["cohort1"],
+        icb="ICB999",
+    )
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(cohort_label="cohort1")
+                    ],
+                    iteration_rules=[],
+                    status_text=campaign_config.StatusText(
+                        NotEligible="You are not eligible for RSV.",
+                        NotActionable="You are not currently able to book RSV.",
+                        Actionable="ORIGINAL [[PERSON.ICB]]",
+                    ),
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+    calculator.action_rule_handler.get_actions = MagicMock(
+        return_value=MatchedActionDetail(
+            status_text_override=StatusText("OVERRIDE [[PERSON.ICB]]")
+        )
+    )
+
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    assert len(actual.conditions) == 1
+    assert actual.conditions[0].condition_name == ConditionName("RSV")
+    assert actual.conditions[0].status == Status.actionable
+    assert actual.conditions[0].status_text == StatusText("OVERRIDE ICB999")
+    assert actual.conditions[0].status_text != StatusText("ORIGINAL ICB999")
+    assert g.audit_log.response.condition[0].status_text == "OVERRIDE ICB999"
 
 
 @pytest.fixture
