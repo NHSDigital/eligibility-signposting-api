@@ -1,5 +1,5 @@
 resource "aws_signer_signing_profile" "lambda_signing" {
-  name = "${terraform.workspace == "default" ? "" : "${terraform.workspace}"}EligibilityApiLambdaSigningProfile"
+  name = "${terraform.workspace == "default" ? "" : "${terraform.workspace}"}EligibilityLambdaSigningProfile"
   #aws signer is strict with names, does not like hyphens or underscores
 
   platform_id = "AWSLambda-SHA384-ECDSA"
