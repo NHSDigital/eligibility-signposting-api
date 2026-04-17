@@ -2235,7 +2235,7 @@ class TestEligibilityResultBuilder:
                     ),
          "not actionable override"),
         (Status.not_eligible, 
-         "Original you are not eligible status text",
+         "Status Text Override Not Eligible",
          rule_builder.PersonAgeSuppressionRuleFactory.build(
                                 type=RuleType.filter, # FILTER RULE !!
                                 name=RuleName("NotEligible Reason 1"),
@@ -2256,13 +2256,72 @@ class TestEligibilityResultBuilder:
                                 attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
                                 comparator=RuleComparator("-80"), # Not Actionable
                             ),
-         rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("")),
+         rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Not Eligible",),
          campaign_config.StatusText(NotEligible="Original you are not eligible status text",
                         NotActionable="Original you are not actionable status text",
                         Actionable="Original you are actionable status text",
                     ),
          "not eligible override"),
+         (Status.actionable, 
+         "You should have the RSV vaccine",
+         rule_builder.PersonAgeSuppressionRuleFactory.build(
+                                type=RuleType.filter, # FILTER RULE !!
+                                name=RuleName("NotEligible Reason 1"),
+                                description=RuleText("NotEligible Description 1"),
+                                priority=RulePriority("100"),
+                                operator=RuleOperator.year_lte,
+                                attribute_level=RuleAttributeLevel.PERSON,
+                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                                comparator=RuleComparator("-90"),  # Base Eligible     - ?
+                            ),
+        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                                type=RuleType.suppression, # SUPPRESSION RULE !!
+                                name=RuleName("NotActionable Reason 1"),
+                                description=RuleText("NotActionable Description 1"),
+                                priority=RulePriority("110"),
+                                operator=RuleOperator.year_lte,
+                                attribute_level=RuleAttributeLevel.PERSON,
+                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                                comparator=RuleComparator("-90"),  # Actionable
+                            ),
+         rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting(None)),
+         AvailableAction(ExternalRoutingCode="", ActionType="", ActionDescription=None,
+    ),
+    campaign_config.StatusText(NotEligible=None,
+                        NotActionable=None,
+                        Actionable=None,
+                    ),
+         "actionable hardcoded"),
+         (Status.not_actionable, 
+         "Original you are not actionable status text",
+         rule_builder.PersonAgeSuppressionRuleFactory.build(
+                                type=RuleType.filter, # FILTER RULE !!
+                                name=RuleName("NotEligible Reason 1"),
+                                description=RuleText("NotEligible Description 1"),
+                                priority=RulePriority("100"),
+                                operator=RuleOperator.year_lte,
+                                attribute_level=RuleAttributeLevel.PERSON,
+                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                                comparator=RuleComparator("-90"),  # Base Eligible     - ?
+                            ),
+        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                                type=RuleType.suppression, # SUPPRESSION RULE !!
+                                name=RuleName("NotActionable Reason 1"),
+                                description=RuleText("NotActionable Description 1"),
+                                priority=RulePriority("110"),
+                                operator=RuleOperator.year_lte,
+                                attribute_level=RuleAttributeLevel.PERSON,
+                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                                comparator=RuleComparator("-80"), # Not Actionable
+                            ),
+         rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting(None)),
+         AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription=None,),
+         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
+                        NotActionable="Original you are not actionable status text",
+                        Actionable="Original you are actionable status text",
+                    ),
+         "not actionable original"),
     ],
 )
 
