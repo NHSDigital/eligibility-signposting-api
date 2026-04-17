@@ -1,9 +1,18 @@
 name: "signing-test"
 
 on:
-  push:
-    branches:
-      - feature/ELI-702-code-signing
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag, or commit SHA to check out"
+        required: true
+        default: "feature/ELI-702-code-signing"
+      artifact_tag:
+        description: "Artifact tag to deploy, for example dev-20260410120000"
+        required: true
+      artifact_run_id:
+        description: "Workflow run ID that produced the lambda artifact"
+        required: true
 
 permissions:
   contents: read
