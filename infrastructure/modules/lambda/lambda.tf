@@ -11,6 +11,8 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
 
   source_code_hash = filebase64sha256(var.file_name)
 
+  code_signing_config_arn = contains(var.environments_with_signing, var.environment) ? aws_lambda_code_signing_config.signing_config.arn : null
+
   runtime     = var.runtime
   timeout     = 30
   memory_size = 2048
