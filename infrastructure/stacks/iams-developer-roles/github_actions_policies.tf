@@ -805,8 +805,8 @@ resource "aws_iam_policy" "cloudwatch_management" {
 data "aws_iam_policy_document" "regression_test_permissions" {
   statement {
     sid    = "S3Access"
-    effect = "Allow",
-    action = [
+    effect = "Allow"
+    actions = [
       "s3:ListBucket",
       "s3:GetObject",
       "s3:PutObject",
@@ -814,9 +814,9 @@ data "aws_iam_policy_document" "regression_test_permissions" {
       "s3:GetBucketTagging",
       "s3:GetObjectTagging",
       "s3:PutObjectTagging",
-      "s3:GetObjectVersion",
+      "s3:GetObjectVersion"
     ],
-    resource = [
+    resources = [
       "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules",
       "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules/*",
       "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map",
@@ -827,7 +827,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
   statement {
     sid    = "DynamoAccess"
     effect = "Allow"
-    action = [
+    actions = [
       "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:Query",
@@ -850,7 +850,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
   statement {
     sid = "SecretsManagerAccess"
     effect = "Allow"
-    action = [
+    actions = [
       "secretsmanager:GetSecretValue",
       "secretsmanager:PutSecretValue",
       "secretsmanager:DescribeSecret",
@@ -862,7 +862,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
   statement {
     sid    = "CloudWatchLogsRead"
     effect = "Allow"
-    action = [
+    actions = [
       "logs:DescribeLogGroups",
       "logs:DescribeLogStreams",
       "logs:GetLogEvents",
@@ -877,7 +877,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
   statement {
     sid    = "XRayRead"
     effect = "Allow"
-    action = [
+    actions = [
       "xray:GetTraceSummaries",
       "xray:BatchGetTraces",
       "xray:GetServiceGraph",
@@ -894,7 +894,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
   statement {
     sid    = "SSMRead"
     effect = "Allow"
-    action = [
+    actions = [
       "ssm:GetParameter",
       "ssm:GetParameters",
       "ssm:GetParametersByPath"
