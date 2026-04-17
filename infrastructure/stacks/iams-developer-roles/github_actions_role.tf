@@ -109,7 +109,7 @@ data "aws_iam_policy_document" "github_actions_iam_bootstrap_assume_role" {
 }
 
 resource "aws_iam_role" "regression_test_role" {
-  name                 = "Eligibility-Signposting-API-E2E-Regression-Tests"
+  name                 = "Eligibility-API-E2E-Regression-Tests"
   description          = "Role for regression testing"
   permissions_boundary = aws_iam_policy.permissions_boundary.arn
   path                 = "/service-roles/"
@@ -120,7 +120,7 @@ resource "aws_iam_role" "regression_test_role" {
   tags = merge(
     local.tags,
     {
-      Name = "Eligibility-Signposting-API-E2E-Regression-Tests"
+      Name = "Eligibility-API-E2E-Regression-Tests"
     }
   )
 }
