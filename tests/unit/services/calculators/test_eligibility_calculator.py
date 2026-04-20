@@ -1,6 +1,7 @@
 import datetime
 import logging
 from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 from faker import Faker
@@ -33,6 +34,7 @@ from eligibility_signposting_api.model.eligibility_status import (
     DateOfBirth,
     InternalActionCode,
     IterationResult,
+    MatchedActionDetail,
     NHSNumber,
     Postcode,
     Reason,
@@ -51,10 +53,7 @@ from tests.fixtures.matchers.eligibility import (
     is_condition,
     is_eligibility_status,
 )
-from eligibility_signposting_api.model.eligibility_status import StatusText
-from eligibility_signposting_api.services.processors.token_processor import TokenProcessor
-from eligibility_signposting_api.model.eligibility_status import MatchedActionDetail
-from unittest.mock import MagicMock
+
 
 def test_get_eligibility_status_uses_status_text_override_when_present(faker: Faker):
     """
@@ -75,9 +74,7 @@ def test_get_eligibility_status_uses_status_text_override_when_present(faker: Fa
             target="RSV",
             iterations=[
                 rule_builder.IterationFactory.build(
-                    iteration_cohorts=[
-                        rule_builder.IterationCohortFactory.build(cohort_label="cohort1")
-                    ],
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                     iteration_rules=[],
                     status_text=campaign_config.StatusText(
                         NotEligible="You are not eligible for RSV.",
@@ -122,9 +119,7 @@ def test_get_eligibility_status_keeps_original_status_text_when_override_absent(
             target="RSV",
             iterations=[
                 rule_builder.IterationFactory.build(
-                    iteration_cohorts=[
-                        rule_builder.IterationCohortFactory.build(cohort_label="cohort1")
-                    ],
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                     iteration_rules=[],
                     status_text=campaign_config.StatusText(
                         NotEligible="You are not eligible for RSV.",
@@ -137,9 +132,7 @@ def test_get_eligibility_status_keeps_original_status_text_when_override_absent(
     ]
 
     calculator = EligibilityCalculator(person_rows, campaign_configs)
-    calculator.action_rule_handler.get_actions = MagicMock(
-        return_value=MatchedActionDetail(status_text_override=None)
-    )
+    calculator.action_rule_handler.get_actions = MagicMock(return_value=MatchedActionDetail(status_text_override=None))
 
     actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
 
@@ -168,9 +161,7 @@ def test_get_eligibility_status_resolves_tokens_in_status_text_override(faker: F
             target="RSV",
             iterations=[
                 rule_builder.IterationFactory.build(
-                    iteration_cohorts=[
-                        rule_builder.IterationCohortFactory.build(cohort_label="cohort1")
-                    ],
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                     iteration_rules=[],
                     status_text=campaign_config.StatusText(
                         NotEligible="You are not eligible for RSV.",
@@ -184,9 +175,7 @@ def test_get_eligibility_status_resolves_tokens_in_status_text_override(faker: F
 
     calculator = EligibilityCalculator(person_rows, campaign_configs)
     calculator.action_rule_handler.get_actions = MagicMock(
-        return_value=MatchedActionDetail(
-            status_text_override=StatusText("You can book via [[PERSON.ICB]].")
-        )
+        return_value=MatchedActionDetail(status_text_override=StatusText("You can book via [[PERSON.ICB]]."))
     )
 
     actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
@@ -216,9 +205,7 @@ def test_get_eligibility_status_applies_override_before_token_processing(faker: 
             target="RSV",
             iterations=[
                 rule_builder.IterationFactory.build(
-                    iteration_cohorts=[
-                        rule_builder.IterationCohortFactory.build(cohort_label="cohort1")
-                    ],
+                    iteration_cohorts=[rule_builder.IterationCohortFactory.build(cohort_label="cohort1")],
                     iteration_rules=[],
                     status_text=campaign_config.StatusText(
                         NotEligible="You are not eligible for RSV.",
@@ -232,9 +219,7 @@ def test_get_eligibility_status_applies_override_before_token_processing(faker: 
 
     calculator = EligibilityCalculator(person_rows, campaign_configs)
     calculator.action_rule_handler.get_actions = MagicMock(
-        return_value=MatchedActionDetail(
-            status_text_override=StatusText("OVERRIDE [[PERSON.ICB]]")
-        )
+        return_value=MatchedActionDetail(status_text_override=StatusText("OVERRIDE [[PERSON.ICB]]"))
     )
 
     actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
