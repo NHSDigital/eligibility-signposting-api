@@ -2173,7 +2173,7 @@ class TestEligibilityResultBuilder:
 
 
 @pytest.mark.parametrize(
-    ("status", "status_text", "scenario_filter", "scenario_suppression", "action_rule", "action_status_text","iteration_status_text", "test_comment"),
+    ("status", "status_text", "scenario_filter", "scenario_suppression", "action_r_rule","action_x_rule","action_y_rule", "action_status_text","iteration_status_text", "test_comment"),
     [
         (Status.actionable, 
          "Status Text Override Actionable",
@@ -2198,6 +2198,8 @@ class TestEligibilityResultBuilder:
                                 comparator=RuleComparator("-90"),  # Actionable
                             ),
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Actionable",
     ),
     campaign_config.StatusText(NotEligible="Original you are not eligible status text",
@@ -2228,6 +2230,8 @@ class TestEligibilityResultBuilder:
                                 comparator=RuleComparator("-80"), # Not Actionable
                             ),
          rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Not Actionable",),
          campaign_config.StatusText(NotEligible="Original you are not eligible status text",
                         NotActionable="Original you are not actionable status text",
@@ -2257,6 +2261,8 @@ class TestEligibilityResultBuilder:
                                 comparator=RuleComparator("-80"), # Not Actionable
                             ),
          rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Not Eligible",),
          campaign_config.StatusText(NotEligible="Original you are not eligible status text",
                         NotActionable="Original you are not actionable status text",
@@ -2286,6 +2292,8 @@ class TestEligibilityResultBuilder:
                                 comparator=RuleComparator("-90"),  # Actionable
                             ),
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting(None)),
+         rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          AvailableAction(ExternalRoutingCode="", ActionType="", ActionDescription=None,
     ),
     campaign_config.StatusText(NotEligible=None,
@@ -2316,12 +2324,46 @@ class TestEligibilityResultBuilder:
                                 comparator=RuleComparator("-80"), # Not Actionable
                             ),
          rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting(None)),
+         rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription=None,),
          campaign_config.StatusText(NotEligible="Original you are not eligible status text",
                         NotActionable="Original you are not actionable status text",
                         Actionable="Original you are actionable status text",
                     ),
          "not actionable original"),
+         (Status.not_actionable, 
+         "Original you are not actionable status text",
+         rule_builder.PersonAgeSuppressionRuleFactory.build(
+                                type=RuleType.filter, # FILTER RULE !!
+                                name=RuleName("NotEligible Reason 1"),
+                                description=RuleText("NotEligible Description 1"),
+                                priority=RulePriority("100"),
+                                operator=RuleOperator.year_lte,
+                                attribute_level=RuleAttributeLevel.PERSON,
+                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                                comparator=RuleComparator("-90"),  # Base Eligible     - ?
+                            ),
+        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                                type=RuleType.suppression, # SUPPRESSION RULE !!
+                                name=RuleName("NotActionable Reason 1"),
+                                description=RuleText("NotActionable Description 1"),
+                                priority=RulePriority("110"),
+                                operator=RuleOperator.year_lte,
+                                attribute_level=RuleAttributeLevel.PERSON,
+                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                                comparator=RuleComparator("-80"),  # Not Actionable
+                            ),
+         rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Actionable",
+    ),
+    campaign_config.StatusText(NotEligible="Original you are not eligible status text",
+                        NotActionable="Original you are not actionable status text",
+                        Actionable="Original you are actionable status text",
+                    ),
+         "actionable override"),
     ],
 )
 
@@ -2331,7 +2373,9 @@ def test_configureable_status_text_actionable(
     status_text: str,
     scenario_filter: object,
     scenario_suppression: object,
-    action_rule: object,
+    action_r_rule: object,
+    action_x_rule: object,
+    action_y_rule: object,
     action_status_text: object,
     iteration_status_text: object,
     test_comment: str,
@@ -2347,14 +2391,13 @@ def test_configureable_status_text_actionable(
         icb="QE1",
     )
 
-    
 
     scenario_rules = [
                             scenario_filter,
 
                             scenario_suppression,
 
-                            action_rule
+                            action_r_rule
 
                         ]
     campaign_configs = [
