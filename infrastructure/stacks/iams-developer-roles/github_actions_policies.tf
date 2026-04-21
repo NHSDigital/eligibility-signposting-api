@@ -852,11 +852,9 @@ data "aws_iam_policy_document" "regression_test_permissions" {
     effect = "Allow"
     actions = [
       "secretsmanager:GetSecretValue",
-      "secretsmanager:PutSecretValue",
-      "secretsmanager:DescribeSecret",
-      "secretsmanager:UpdateSecretVersionStage"
+      "secretsmanager:DescribeSecret"
       ]
-    resources = ["*"]
+    resources = ["arn:aws:secretsmanager:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:secret:eligibility-signposting-api-*"]
   }
 
   statement {
@@ -900,10 +898,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
       "ssm:GetParametersByPath"
     ]
     resources = [
-      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/*",
-      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/splunk/*",
-      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/ptl/*",
-      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/prod/*"
+      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/*"
     ]
   }
 }
