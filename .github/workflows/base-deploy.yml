@@ -276,19 +276,123 @@ jobs:
       - name: "Upload signed lambda artifact for current workflow"
         uses: actions/upload-artifact@v6
         with:
-          name: lambda-${{ needs.metadata.outputs.tag }}
+          name: lambda-signed-${{ needs.metadata.outputs.tag }}
           path: ./dist/lambda.zip
 
 
-  deploy:
-    name: "Deploy to ${{ needs.metadata.outputs.environment }}"
+  deploy-preprod:
+    name: "Deploy to preprod"
+    if: ${{ needs.metadata.outputs.environment == 'preprod' }}
     runs-on: ubuntu-latest
     needs: [metadata, download-lambda-artifact, sign-lambda-artifact]
     timeout-minutes: 45
     permissions:
       id-token: write
       contents: write
-    environment: ${{ needs.metadata.outputs.environment }}
+    environment: preprod
+    steps:
+      - name: "Checkout repository at ref"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.metadata.outputs.ref }}
+          fetch-depth: 0
+
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ needs.metadata.outputs.terraform_version }}
+
+      - name: "Download signed Lambda Artifact"
+        uses: actions/download-artifact@v7
+        with:
+          name: lambda-signed-${{ needs.metadata.outputs.tag }}
+          path: ./dist
+
+      - name: "Configure AWS Credentials (IAM Bootstrap Role)"
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-iam-bootstrap-role
+          aws-region: eu-west-2
+
+      - name: "Deploy IAM roles (iams-developer-roles stack)"
+        working-directory: ./infrastructure
+        run: |
+          make terraform env=preprod stack=iams-developer-roles tf-command=apply workspace=default
+
+      - name: "Configure AWS Credentials (Main Deployment Role)"
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/service-roles/github-actions-api-deployment-role
+          aws-region: eu-west-2
+
+      - name: "Terraform Apply"
+        env:
+          ENVIRONMENT: preprod
+          WORKSPACE: "default"
+          TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
+          TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
+          TF_VAR_API_PRIVATE_KEY_CERT: ${{ secrets.API_PRIVATE_KEY_CERT }}
+          TF_VAR_SPLUNK_HEC_TOKEN: ${{ secrets.SPLUNK_HEC_TOKEN }}
+          TF_VAR_SPLUNK_HEC_ENDPOINT: ${{ secrets.SPLUNK_HEC_ENDPOINT }}
+          TF_VAR_OPERATOR_EMAILS: ${{ vars.SECRET_ROTATION_OPERATOR_EMAILS }}
+          TF_VAR_PROXYGEN_PRIVATE_KEY_PTL: ${{ secrets.PROXYGEN_PRIVATE_KEY_PTL }}
+          TF_VAR_PROXYGEN_PRIVATE_KEY_PROD: ${{ secrets.PROXYGEN_PRIVATE_KEY_PROD }}
+        working-directory: ./infrastructure
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ./build
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=networking tf-command=apply"
+          make terraform env=$ENVIRONMENT stack=networking tf-command=apply workspace=$WORKSPACE
+          echo "Running: make terraform env=$ENVIRONMENT workspace=$WORKSPACE stack=api-layer tf-command=apply"
+          make terraform env=$ENVIRONMENT stack=api-layer tf-command=apply workspace=$WORKSPACE
+
+      - name: "Extract S3 bucket name from Terraform output"
+        id: tf_output
+        run: |
+          BUCKET=$(terraform output -raw lambda_artifact_bucket)
+          echo "bucket_name=$BUCKET" >> $GITHUB_OUTPUT
+        working-directory: ./infrastructure/stacks/api-layer
+
+      - name: "Validate Feature Toggles"
+        env:
+          ENV: preprod
+        run: |
+          pip install boto3
+          python scripts/feature_toggle/validate_toggles.py
+
+      - name: "Tag and Release"
+        env:
+          ENVIRONMENT: preprod
+          REF: ${{ needs.metadata.outputs.ref }}
+          INPUT_RELEASE_TYPE: ${{ inputs.release_type }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          pip install requests
+          python scripts/workflow/tag_and_release.py
+
+      - name: "Capture release tag"
+        id: release_tag
+        run: |
+          echo "release_tag=$(cat release_tag.txt)" >> $GITHUB_OUTPUT
+
+      - name: "Upload lambda artifact to S3"
+        run: |
+          aws s3 cp ./dist/lambda.zip \
+            s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ steps.release_tag.outputs.release_tag }}/lambda.zip \
+            --region eu-west-2
+
+  deploy-prod:
+    name: "Deploy to prod"
+    if: ${{ needs.metadata.outputs.environment == 'prod' }}
+    runs-on: ubuntu-latest
+    needs: [metadata, download-lambda-artifact]
+    timeout-minutes: 45
+    permissions:
+      id-token: write
+      contents: write
+    environment: prod
     steps:
       - name: "Checkout repository at ref"
         uses: actions/checkout@v6
@@ -316,7 +420,7 @@ jobs:
       - name: "Deploy IAM roles (iams-developer-roles stack)"
         working-directory: ./infrastructure
         run: |
-          make terraform env=${{ needs.metadata.outputs.environment }} stack=iams-developer-roles tf-command=apply workspace=default
+          make terraform env=prod stack=iams-developer-roles tf-command=apply workspace=default
 
       - name: "Configure AWS Credentials (Main Deployment Role)"
         uses: aws-actions/configure-aws-credentials@v6
@@ -326,7 +430,7 @@ jobs:
 
       - name: "Terraform Apply"
         env:
-          ENVIRONMENT: ${{ needs.metadata.outputs.environment }}
+          ENVIRONMENT: prod
           WORKSPACE: "default"
           TF_VAR_API_CA_CERT: ${{ secrets.API_CA_CERT }}
           TF_VAR_API_CLIENT_CERT: ${{ secrets.API_CLIENT_CERT }}
@@ -336,7 +440,6 @@ jobs:
           TF_VAR_OPERATOR_EMAILS: ${{ vars.SECRET_ROTATION_OPERATOR_EMAILS }}
           TF_VAR_PROXYGEN_PRIVATE_KEY_PTL: ${{ secrets.PROXYGEN_PRIVATE_KEY_PTL }}
           TF_VAR_PROXYGEN_PRIVATE_KEY_PROD: ${{ secrets.PROXYGEN_PRIVATE_KEY_PROD }}
-
         working-directory: ./infrastructure
         shell: bash
         run: |
@@ -356,15 +459,14 @@ jobs:
 
       - name: "Validate Feature Toggles"
         env:
-          ENV: ${{ needs.metadata.outputs.environment }}
+          ENV: prod
         run: |
           pip install boto3
           python scripts/feature_toggle/validate_toggles.py
 
       - name: "Tag and Release"
-        if: ${{ needs.metadata.outputs.environment == 'preprod' || needs.metadata.outputs.environment == 'prod' }}
         env:
-          ENVIRONMENT: ${{ needs.metadata.outputs.environment }}
+          ENVIRONMENT: prod
           REF: ${{ needs.metadata.outputs.ref }}
           INPUT_RELEASE_TYPE: ${{ inputs.release_type }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -384,11 +486,10 @@ jobs:
             s3://${{ steps.tf_output.outputs.bucket_name }}/artifacts/${{ steps.release_tag.outputs.release_tag }}/lambda.zip \
             --region eu-west-2
 
-
   regression-tests:
     name: "Regression Tests"
     if: ${{ needs.metadata.outputs.environment == 'preprod' }}
-    needs: deploy
+    needs: deploy-preprod
     uses: ./.github/workflows/regression-tests.yml
     with:
       ENVIRONMENT: "preprod"
