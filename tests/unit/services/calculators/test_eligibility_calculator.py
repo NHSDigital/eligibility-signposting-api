@@ -2175,7 +2175,7 @@ class TestEligibilityResultBuilder:
 @pytest.mark.parametrize(
     ("status", "status_text", "scenario_filter", "scenario_suppression", "action_r_rule","action_x_rule","action_y_rule", "action_status_text","iteration_status_text", "test_comment"),
     [
-        (Status.actionable, 
+        (Status.actionable,
          "You should have the RSV vaccine",
          rule_builder.PersonAgeSuppressionRuleFactory.build(
                                 type=RuleType.filter, # FILTER RULE !!
@@ -2207,7 +2207,7 @@ class TestEligibilityResultBuilder:
                         Actionable=None,
                     ),
          "actionable hardcoded"),
-         (Status.not_actionable, 
+         (Status.not_actionable,
          "Original you are not actionable status text",
          rule_builder.PersonAgeSuppressionRuleFactory.build(
                                 type=RuleType.filter, # FILTER RULE !!
@@ -2238,7 +2238,7 @@ class TestEligibilityResultBuilder:
                         Actionable="Original you are actionable status text",
                     ),
          "not actionable original"),
-        (Status.actionable, 
+        (Status.actionable,
          "Status Text Override Actionable",
          rule_builder.PersonAgeSuppressionRuleFactory.build(
                                 type=RuleType.filter, # FILTER RULE !!
@@ -2270,7 +2270,7 @@ class TestEligibilityResultBuilder:
                         Actionable="Original you are actionable status text",
                     ),
          "actionable override"),
-         (Status.not_actionable, 
+         (Status.not_actionable,
          "Original you are not actionable status text",
          rule_builder.PersonAgeSuppressionRuleFactory.build(
                                 type=RuleType.filter, # FILTER RULE !!
@@ -2302,7 +2302,7 @@ class TestEligibilityResultBuilder:
                         Actionable="Original you are actionable status text",
                     ),
          "not actionable original"),
-         (Status.not_actionable, 
+         (Status.not_actionable,
          "Status Text Override Not Actionable",
          rule_builder.PersonAgeSuppressionRuleFactory.build(
                                 type=RuleType.filter, # FILTER RULE !!
@@ -2333,7 +2333,7 @@ class TestEligibilityResultBuilder:
                         Actionable="Original you are actionable status text",
                     ),
          "not actionable override"),
-        (Status.not_eligible, 
+        (Status.not_eligible,
          "Status Text Override Not Eligible",
          rule_builder.PersonAgeSuppressionRuleFactory.build(
                                 type=RuleType.filter, # FILTER RULE !!
@@ -2364,7 +2364,7 @@ class TestEligibilityResultBuilder:
                         Actionable="Original you are actionable status text",
                     ),
          "not eligible override"),
-         (Status.actionable, 
+         (Status.actionable,
          "Status Text Override Actionable",
          rule_builder.PersonAgeSuppressionRuleFactory.build(
                                 type=RuleType.filter, # FILTER RULE !!
@@ -2395,7 +2395,7 @@ class TestEligibilityResultBuilder:
                         Actionable="Original you are actionable status text",
                     ),
          "eligible override"),
-         (Status.not_actionable, 
+         (Status.not_actionable,
          "You should have the RSV vaccine",
          rule_builder.PersonAgeSuppressionRuleFactory.build(
                                 type=RuleType.filter, # FILTER RULE !!
@@ -2426,7 +2426,7 @@ class TestEligibilityResultBuilder:
                         Actionable="Original you are actionable status text",
                     ),
          "not actionable hardcoded"),
-         
+
     ],
 )
 
@@ -2510,210 +2510,3 @@ def test_configureable_status_text_actionable(
             )
         ),
     )
-
-    # def test_configureable_status_text_not_actionable(self, faker: Faker):
-    #     # Given
-    #     nhs_number = NHSNumber(faker.nhs_number())
-    #     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=85, maximum_age=85))
-
-    #     person_rows = person_rows_builder(
-    #         nhs_number,
-    #         date_of_birth=date_of_birth,
-    #         cohorts=["rsv_cohort_1"],
-    #         icb="QE1",
-    #     )
-
-    #     action_status_text_override_not_actionable = AvailableAction(
-    #         ExternalRoutingCode="StatusTextOverrideNotActionable",
-    #         ActionType="norender_StatusTextOverride",
-    #         ActionDescription="Status Text Override Not Actionable",
-    #     )
-
-    #     campaign_configs = [
-    #         rule_builder.CampaignConfigFactory.build(
-    #             target="RSV",
-    #             iterations=[
-    #                 rule_builder.IterationFactory.build(
-    #                     #default_comms_routing="TOKEN_TEST",
-    #                     #default_not_actionable_routing="TOKEN_TEST",
-    #                     #default_not_eligible_routing="TOKEN_TEST",
-
-    #                     status_text=campaign_config.StatusText(
-    #                         NotEligible="Orignal you are not eligible status text",
-    #                         NotActionable="Orignal you are not actionable status text",
-    #                         Actionable="Orignal you are actionable status text",
-    #                     ),
-
-    #                     iteration_cohorts=[
-    #                         rule_builder.IterationCohortFactory.build(
-    #                             cohort_label="rsv_cohort_1", cohort_group="rsv_cohort_group", priority=0
-    #                         ),
-    #                     ],
-    #                     iteration_rules=[
-    #                         rule_builder.PersonAgeSuppressionRuleFactory.build(
-    #                             type=RuleType.filter, # FILTER RULE !!
-    #                             name=RuleName("NotEligible Reason 1"),
-    #                             description=RuleText("NotEligible Description 1"),
-    #                             priority=RulePriority("100"),
-    #                             operator=RuleOperator.year_lte,
-    #                             attribute_level=RuleAttributeLevel.PERSON,
-    #                             attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-    #                             #comparator=RuleComparator("-80"), # Not Base Eligible - Not Eligible
-    #                             comparator=RuleComparator("-90"),  # Base Eligible     - ?
-    #                         ),
-
-    #                         rule_builder.PersonAgeSuppressionRuleFactory.build(
-    #                             type=RuleType.suppression, # SUPPRESSION RULE !!
-    #                             name=RuleName("NotActionable Reason 1"),
-    #                             description=RuleText("NotActionable Description 1"),
-    #                             priority=RulePriority("110"),
-    #                             operator=RuleOperator.year_lte,
-    #                             attribute_level=RuleAttributeLevel.PERSON,
-    #                             attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-    #                             comparator=RuleComparator("-80"), # Not Actionable
-    #                             #comparator=RuleComparator("-90"),  # Actionable
-    #                         ),
-
-    #                         # rule_builder.ClinicalRiskRedirectRuleFactory.build(
-    #                         #     comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")
-    #                         # ),
-
-    #                         rule_builder.ICBNonActionableActionRuleFactory.build(
-    #                             comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE_NOT_ACTIONABLE")
-    #                         ),
-
-    #                     ],
-
-    #                     actions_mapper=rule_builder.ActionsMapperFactory.build(
-    #                         root={"STATUS_TEXT_OVERRIDE_NOT_ACTIONABLE": action_status_text_override_not_actionable}),
-    #                 )
-    #             ],
-    #         )
-    #     ]
-
-    #     calculator = EligibilityCalculator(person_rows, campaign_configs)
-
-    #     # When
-    #     actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
-
-    #     assert_that(
-    #         actual,
-    #         is_eligibility_status().with_conditions(
-    #             has_item(
-    #                 is_condition()
-    #                 .with_condition_name(ConditionName("RSV"))
-    #                 .and_status(Status.not_actionable)
-    #                 #.and_status_text(StatusText("You can take RSV vaccine."))
-
-    #                 # Actionable and Status Text Override
-    #                 .and_status_text(StatusText("Status Text Override Not Actionable"))
-
-    #                 # Actionable and NO Override (remove comms routing)
-    #                 #.and_status_text(StatusText("Status Text Override Actionable"))
-    #             )
-    #         ),
-    #     )
-
-    # #test below is base eligible but not actionable, but has a not eligible override, which tests original status text will appear
-    # def test_configureable_status_text_eligible_but_has_not_eligible_override(self, faker: Faker):
-    #         # Given
-    #         nhs_number = NHSNumber(faker.nhs_number())
-    #         date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=85, maximum_age=85))
-
-    #         person_rows = person_rows_builder(
-    #             nhs_number,
-    #             date_of_birth=date_of_birth,
-    #             cohorts=["rsv_cohort_1"],
-    #             icb="QE1",
-    #         )
-
-    #         action_status_text_override_not_eligible = AvailableAction(
-    #             ExternalRoutingCode="StatusTextOverrideNotEligible",
-    #             ActionType="norender_StatusTextOverride",
-    #             ActionDescription="Status Text Override Not Eligible",
-    #         )
-
-    #         campaign_configs = [
-    #             rule_builder.CampaignConfigFactory.build(
-    #                 target="RSV",
-    #                 iterations=[
-    #                     rule_builder.IterationFactory.build(
-    #                         #default_comms_routing="TOKEN_TEST",
-    #                         #default_not_actionable_routing="TOKEN_TEST",
-    #                         #default_not_eligible_routing="TOKEN_TEST",
-
-    #                         status_text=campaign_config.StatusText(
-    #                             NotEligible="Orignal you are not eligible status text",
-    #                             NotActionable="Orignal you are not actionable status text",
-    #                             Actionable="Orignal you are actionable status text",
-    #                         ),
-
-    #                         iteration_cohorts=[
-    #                             rule_builder.IterationCohortFactory.build(
-    #                                 cohort_label="rsv_cohort_1", cohort_group="rsv_cohort_group", priority=0
-    #                             ),
-    #                         ],
-    #                         iteration_rules=[
-    #                             rule_builder.PersonAgeSuppressionRuleFactory.build(
-    #                                 type=RuleType.filter, # FILTER RULE !!
-    #                                 name=RuleName("NotEligible Reason 1"),
-    #                                 description=RuleText("NotEligible Description 1"),
-    #                                 priority=RulePriority("100"),
-    #                                 operator=RuleOperator.year_lte,
-    #                                 attribute_level=RuleAttributeLevel.PERSON,
-    #                                 attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-    #                                 #comparator=RuleComparator("-80"), # Not Base Eligible - Not Eligible
-    #                                 comparator=RuleComparator("-90"),  # Base Eligible     - ?
-    #                             ),
-
-    #                             rule_builder.PersonAgeSuppressionRuleFactory.build(
-    #                                 type=RuleType.suppression, # SUPPRESSION RULE !!
-    #                                 name=RuleName("NotActionable Reason 1"),
-    #                                 description=RuleText("NotActionable Description 1"),
-    #                                 priority=RulePriority("110"),
-    #                                 operator=RuleOperator.year_lte,
-    #                                 attribute_level=RuleAttributeLevel.PERSON,
-    #                                 attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-    #                                 comparator=RuleComparator("-80"), # Not Actionable
-    #                                 #comparator=RuleComparator("-90"),  # Actionable
-    #                             ),
-
-    #                             # rule_builder.ClinicalRiskRedirectRuleFactory.build(
-    #                             #     comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")
-    #                             # ),
-
-    #                             rule_builder.ICBNonEligibleActionRuleFactory.build(
-    #                                 comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE_NOT_ELIGIBLE")
-    #                             ),
-
-    #                         ],
-
-    #                         actions_mapper=rule_builder.ActionsMapperFactory.build(
-    #                             root={"STATUS_TEXT_OVERRIDE_NOT_ELIGIBLE": action_status_text_override_not_eligible}),
-    #                     )
-    #                 ],
-    #             )
-    #         ]
-
-    #         calculator = EligibilityCalculator(person_rows, campaign_configs)
-
-    #         # When
-    #         actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
-
-    #         assert_that(
-    #             actual,
-    #             is_eligibility_status().with_conditions(
-    #                 has_item(
-    #                     is_condition()
-    #                     .with_condition_name(ConditionName("RSV"))
-    #                     .and_status(Status.not_actionable)
-    #                     #.and_status_text(StatusText("You can take RSV vaccine."))
-
-    #                     # Actionable and Status Text Override
-    #                     .and_status_text(StatusText("Orignal you are not actionable status text"))
-
-    #                     # Actionable and NO Override (remove comms routing)
-    #                     #.and_status_text(StatusText("Status Text Override Actionable"))
-    #                 )
-    #             ),
-    #         )
