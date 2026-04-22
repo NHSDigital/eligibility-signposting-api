@@ -2456,16 +2456,13 @@ def test_configureable_status_text_actionable(
     )
 
 
-    action_rule = {
-        Status.actionable: action_r_rule,
-        Status.not_eligible: action_x_rule,
-        Status.not_actionable: action_y_rule,
-    }[status]
 
     scenario_rules = [
         scenario_filter,
         scenario_suppression,
-        action_rule,
+        action_r_rule,
+        action_x_rule,
+        action_y_rule,
     ]
     campaign_configs = [
         rule_builder.CampaignConfigFactory.build(
