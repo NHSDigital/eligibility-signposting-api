@@ -12,7 +12,7 @@ on:
 
 jobs:
   regression-tests:
-    if: ${{ (inputs.ENVIRONMENT != 'prod') && (inputs.ENVIRONMENT != 'preprod') }}
+    if: ${{ inputs.ENVIRONMENT != 'prod' }}
     uses: NHSDigital/eligibility-signposting-api-regression-tests/.github/workflows/regression_tests.yml@main
     with:
       environment: ${{ inputs.ENVIRONMENT }}
