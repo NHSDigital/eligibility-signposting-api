@@ -181,7 +181,7 @@ resource "aws_iam_policy" "dynamodb_management" {
             "dynamodb:UpdateTable",
           ],
           Resource = [
-            "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
+            "arn:aws:dynamodb:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
           ]
         },
 
@@ -218,7 +218,7 @@ resource "aws_iam_policy" "dynamodb_management" {
             "dynamodb:Query"
           ],
           Resource = [
-            "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
+            "arn:aws:dynamodb:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
           ]
         }
       ] : []
@@ -843,7 +843,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
       "dynamodb:ListTagsOfResource"
     ]
     resources = [
-      "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
+      "arn:aws:dynamodb:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
     ]
   }
 
