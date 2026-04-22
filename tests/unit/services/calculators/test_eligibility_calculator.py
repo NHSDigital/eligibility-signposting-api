@@ -2173,30 +2173,10 @@ class TestEligibilityResultBuilder:
 
 
 @pytest.mark.parametrize(
-    ("status", "status_text", "scenario_filter", "scenario_suppression", "action_r_rule","action_x_rule","action_y_rule", "action_status_text","iteration_status_text", "test_comment"),
+    ("status", "status_text", "action_r_rule","action_x_rule","action_y_rule", "action_status_text","iteration_status_text", "test_comment"),
     [
         (Status.actionable,
          "You should have the RSV vaccine",
-         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.filter, # FILTER RULE !!
-                                name=RuleName("NotEligible Reason 1"),
-                                description=RuleText("NotEligible Description 1"),
-                                priority=RulePriority("100"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-90"),  # Base Eligible     - ?
-                            ),
-        rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.suppression, # SUPPRESSION RULE !!
-                                name=RuleName("NotActionable Reason 1"),
-                                description=RuleText("NotActionable Description 1"),
-                                priority=RulePriority("110"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-90"),  # Actionable
-                            ),
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting(None)),
          rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
@@ -2209,26 +2189,6 @@ class TestEligibilityResultBuilder:
          "actionable hardcoded"),
          (Status.not_actionable,
          "Original you are not actionable status text",
-         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.filter, # FILTER RULE !!
-                                name=RuleName("NotEligible Reason 1"),
-                                description=RuleText("NotEligible Description 1"),
-                                priority=RulePriority("100"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-90"),  # Base Eligible     - ?
-                            ),
-        rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.suppression, # SUPPRESSION RULE !!
-                                name=RuleName("NotActionable Reason 1"),
-                                description=RuleText("NotActionable Description 1"),
-                                priority=RulePriority("110"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-80"), # Not Actionable
-                            ),
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting(None)),
          rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting(None)),
          rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting(None)),
@@ -2240,26 +2200,6 @@ class TestEligibilityResultBuilder:
          "not actionable original"),
         (Status.actionable,
          "Status Text Override Actionable",
-         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.filter, # FILTER RULE !!
-                                name=RuleName("NotEligible Reason 1"),
-                                description=RuleText("NotEligible Description 1"),
-                                priority=RulePriority("100"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-90"),  # Base Eligible     - ?
-                            ),
-        rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.suppression, # SUPPRESSION RULE !!
-                                name=RuleName("NotActionable Reason 1"),
-                                description=RuleText("NotActionable Description 1"),
-                                priority=RulePriority("110"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-90"),  # Actionable
-                            ),
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
@@ -2272,26 +2212,6 @@ class TestEligibilityResultBuilder:
          "actionable override"),
          (Status.not_actionable,
          "Original you are not actionable status text",
-         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.filter, # FILTER RULE !!
-                                name=RuleName("NotEligible Reason 1"),
-                                description=RuleText("NotEligible Description 1"),
-                                priority=RulePriority("100"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-90"),  # Base Eligible     - ?
-                            ),
-        rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.suppression, # SUPPRESSION RULE !!
-                                name=RuleName("NotActionable Reason 1"),
-                                description=RuleText("NotActionable Description 1"),
-                                priority=RulePriority("110"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-80"),  # Not Actionable
-                            ),
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting(None)),
          rule_builder.PostcodeNonActionableRuleFactory.build(comms_routing=CommsRouting(None)),
@@ -2304,26 +2224,6 @@ class TestEligibilityResultBuilder:
          "not actionable original"),
          (Status.not_actionable,
          "Status Text Override Not Actionable",
-         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.filter, # FILTER RULE !!
-                                name=RuleName("NotEligible Reason 1"),
-                                description=RuleText("NotEligible Description 1"),
-                                priority=RulePriority("100"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-90"),  # Base Eligible     - ?
-                            ),
-        rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.suppression, # SUPPRESSION RULE !!
-                                name=RuleName("NotActionable Reason 1"),
-                                description=RuleText("NotActionable Description 1"),
-                                priority=RulePriority("110"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-80"), # Not Actionable
-                            ),
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
@@ -2335,26 +2235,6 @@ class TestEligibilityResultBuilder:
          "not actionable override"),
         (Status.not_eligible,
          "Status Text Override Not Eligible",
-         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.filter, # FILTER RULE !!
-                                name=RuleName("NotEligible Reason 1"),
-                                description=RuleText("NotEligible Description 1"),
-                                priority=RulePriority("100"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-80"),  # Base Eligible     - ?
-                            ),
-        rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.suppression, # SUPPRESSION RULE !!
-                                name=RuleName("NotActionable Reason 1"),
-                                description=RuleText("NotActionable Description 1"),
-                                priority=RulePriority("110"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-80"), # Not Actionable
-                            ),
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
@@ -2366,26 +2246,6 @@ class TestEligibilityResultBuilder:
          "not eligible override"),
          (Status.actionable,
          "Status Text Override Actionable",
-         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.filter, # FILTER RULE !!
-                                name=RuleName("NotEligible Reason 1"),
-                                description=RuleText("NotEligible Description 1"),
-                                priority=RulePriority("100"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-90"),  # Base Eligible     - ?
-                            ),
-        rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.suppression, # SUPPRESSION RULE !!
-                                name=RuleName("NotActionable Reason 1"),
-                                description=RuleText("NotActionable Description 1"),
-                                priority=RulePriority("110"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-90"), # Actionable
-                            ),
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting(None)),
          rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting(None)),
@@ -2397,26 +2257,6 @@ class TestEligibilityResultBuilder:
          "eligible override"),
          (Status.not_actionable,
          "You should have the RSV vaccine",
-         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.filter, # FILTER RULE !!
-                                name=RuleName("NotEligible Reason 1"),
-                                description=RuleText("NotEligible Description 1"),
-                                priority=RulePriority("100"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-90"),  # Base Eligible     - ?
-                            ),
-        rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.suppression, # SUPPRESSION RULE !!
-                                name=RuleName("NotActionable Reason 1"),
-                                description=RuleText("NotActionable Description 1"),
-                                priority=RulePriority("110"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator("-80"), # Actionable
-                            ),
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting(None)),
          rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting(None)),
@@ -2434,8 +2274,6 @@ def test_configureable_status_text_actionable(
     faker: Faker,
     status: Status,
     status_text: str,
-    scenario_filter: object,
-    scenario_suppression: object,
     action_r_rule: object,
     action_x_rule: object,
     action_y_rule: object,
@@ -2455,11 +2293,40 @@ def test_configureable_status_text_actionable(
         postcode="SW19"
     )
 
-
+    if status == Status.actionable:
+        filter_comparator = "-90"
+        suppression_comparator = "-90"
+    if status == Status.not_actionable:
+        filter_comparator = "-90"
+        suppression_comparator = "-80"
+    if status == Status.not_eligible:
+        filter_comparator = "-80"
+        suppression_comparator = "-80"
 
     scenario_rules = [
-        scenario_filter,
-        scenario_suppression,
+        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                                type=RuleType.filter, # FILTER RULE !!
+                                name=RuleName("NotEligible Reason 1"),
+                                description=RuleText("NotEligible Description 1"),
+                                priority=RulePriority("100"),
+                                operator=RuleOperator.year_lte,
+                                attribute_level=RuleAttributeLevel.PERSON,
+                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                                comparator=RuleComparator(filter_comparator),  # Base Eligible     - ?
+                            ),
+        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                                type=RuleType.suppression, # SUPPRESSION RULE !!
+                                name=RuleName("NotActionable Reason 1"),
+                                description=RuleText("NotActionable Description 1"),
+                                priority=RulePriority("110"),
+                                operator=RuleOperator.year_lte,
+                                attribute_level=RuleAttributeLevel.PERSON,
+                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                                comparator=RuleComparator(suppression_comparator), # Actionable
+                            ),
+        
+        #scenario_filter,
+        #scenario_suppression,
         action_r_rule,
         action_x_rule,
         action_y_rule,
