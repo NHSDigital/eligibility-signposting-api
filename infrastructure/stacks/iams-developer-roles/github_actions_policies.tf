@@ -815,7 +815,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
       "s3:GetObjectTagging",
       "s3:PutObjectTagging",
       "s3:GetObjectVersion"
-    ],
+    ]
     resources = [
       "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules",
       "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules/*",
@@ -835,9 +835,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
       "dynamodb:UpdateItem",
       "dynamodb:DeleteItem",
       "dynamodb:DescribeTable",
-      "dynamodb:ListTables",
       "dynamodb:DeleteTable",
-      "dynamodb:CreateTable",
       "dynamodb:TagResource",
       "dynamodb:UntagResource",
       "dynamodb:ListTagsOfResource"
@@ -845,6 +843,16 @@ data "aws_iam_policy_document" "regression_test_permissions" {
     resources = [
       "arn:aws:dynamodb:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
     ]
+  }
+
+  statement {
+    sid    = "DynamoGlobal"
+    effect = "Allow"
+    actions = [
+    "dynamodb:ListTables",
+    "dynamodb:CreateTable"
+    ]
+    resources = ["*"]
   }
 
   statement {
