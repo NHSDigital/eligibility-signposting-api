@@ -102,6 +102,9 @@ class EligibilityCalculator:
                 include_actions_flag=include_actions_flag,
             )
 
+            if matched_action_detail.status_text_override:
+                iteration_result_summary.iteration_result.status_text = matched_action_detail.status_text_override
+
             iteration_result_summary = TokenProcessor.find_and_replace_tokens(self.person, iteration_result_summary)
             matched_action_detail = TokenProcessor.find_and_replace_tokens(self.person, matched_action_detail)
 
