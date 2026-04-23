@@ -13,6 +13,10 @@ on:
 jobs:
   regression-tests:
     if: ${{ inputs.ENVIRONMENT != 'prod' }}
+    permissions:
+      id-token: write
+      issues: write
+      pull-requests: write
     uses: NHSDigital/eligibility-signposting-api-regression-tests/.github/workflows/regression_tests.yml@main
     with:
       environment: ${{ inputs.ENVIRONMENT }}
