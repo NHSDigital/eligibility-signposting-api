@@ -247,6 +247,7 @@ def test_given_nhs_number_in_path_matches_with_nhs_number_in_headers_and_check_i
             ],
             "actionRule": None,
             "actions": [],
+            "statusTextOverride": None,
         }
     ]
 
@@ -495,6 +496,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             "suitabilityRules": None,
             "actionRule": None,
             "actions": [],
+            "statusTextOverride": None,
         },
         {
             "campaignId": covid_campaign.id,
@@ -527,6 +529,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
             ],
             "actionRule": None,
             "actions": [],
+            "statusTextOverride": None,
         },
         {
             "campaignId": flu_campaign.id,
@@ -557,6 +560,7 @@ def test_given_person_has_unique_status_for_different_conditions_with_audit(  # 
                     "actionUrlLabel": None,
                 }
             ],
+            "statusTextOverride": None,
         },
     ]
 
