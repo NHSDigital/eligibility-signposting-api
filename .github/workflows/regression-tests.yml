@@ -15,6 +15,7 @@ jobs:
     if: ${{ inputs.ENVIRONMENT != 'prod' }}
     permissions:
       id-token: write
+      contents: read
       issues: write
       pull-requests: write
     uses: NHSDigital/eligibility-signposting-api-regression-tests/.github/workflows/regression_tests.yml@main
