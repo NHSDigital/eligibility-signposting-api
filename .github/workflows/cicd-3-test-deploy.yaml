@@ -254,5 +254,5 @@ jobs:
     with:
       ENVIRONMENT: "test"
       VERSION_NUMBER: "main"
-    secrets: inherit
-
+    secrets:
+      AWS_ACCOUNT_ID: ${{ secrets.TEST_AWS_ACCOUNT_ID }}

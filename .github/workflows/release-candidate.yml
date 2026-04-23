@@ -278,7 +278,8 @@ jobs:
     with:
       ENVIRONMENT: "test"
       VERSION_NUMBER: "main"
-    secrets: inherit
+    secrets:
+      AWS_ACCOUNT_ID: ${{ secrets.TEST_AWS_ACCOUNT_ID }}
 
   deploy-to-preprod:
     name: "Deploy to PreProd and create RC"
@@ -394,7 +395,8 @@ jobs:
     with:
       ENVIRONMENT: "preprod"
       VERSION_NUMBER: "main"
-    secrets: inherit
+    secrets:
+      AWS_ACCOUNT_ID: ${{ secrets.PREPROD_AWS_ACCOUNT_ID }}
 
   summary:
     name: "Deployment Summary"

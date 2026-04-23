@@ -9,6 +9,9 @@ on:
       VERSION_NUMBER:
         required: true
         type: string
+    secrets:
+      AWS_ACCOUNT_ID:
+        required: true
 
 jobs:
   regression-tests:
@@ -19,6 +22,7 @@ jobs:
       issues: write
       pull-requests: write
     uses: NHSDigital/eligibility-signposting-api-regression-tests/.github/workflows/regression_tests.yml@main
+    secrets: inherit
     with:
       environment: ${{ inputs.ENVIRONMENT }}
       tags: "@regression"
