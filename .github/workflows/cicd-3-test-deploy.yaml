@@ -252,6 +252,11 @@ jobs:
   regression-tests:
     name: "Regression Tests"
     needs: deploy
+    permissions:
+      id-token: write
+      contents: read
+      issues: write
+      pull-requests: write
     uses: ./.github/workflows/regression-tests.yml
     with:
       ENVIRONMENT: "test"
