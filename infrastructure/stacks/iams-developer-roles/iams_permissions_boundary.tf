@@ -352,6 +352,7 @@ data "aws_iam_policy_document" "iam_bootstrap_permissions_boundary" {
     resources = [
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-roles/github-actions-api-deployment-role",
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-roles/github-actions-iam-bootstrap-role",
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-roles/Eligibility-API-E2E-Regression-Tests",
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.project_name}-terraform-developer-role",
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/terraform-developer-role",
       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${upper(var.project_name)}-*",
