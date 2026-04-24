@@ -2237,22 +2237,22 @@ class TestEligibilityResultBuilder:
                         Actionable="Original you are actionable status text",
                     )),
          # Scenario: Patient is actionable, Status Text present, actionable override present
-         # Expected: Status Text value
+         # Expected: Status Text Override
          (Status.actionable,
          "Status Text Override Actionable",
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Actionable"),
-         campaign_config.StatusText(NotEligible=None,
+         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
                         NotActionable=None,
                         Actionable="Original you are actionable status text",
                     )),
          # Scenario: Patient is not actionable, Status Text present, Actionable override present
-         # Expected: Status Text value
+         # Expected: Hardcoded value
          (Status.not_actionable,
          "You should have the RSV vaccine",
          rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Actionable"),
-         campaign_config.StatusText(NotEligible=None,
+         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
                         NotActionable=None,
                         Actionable="Original you are actionable status text",
                     )),
