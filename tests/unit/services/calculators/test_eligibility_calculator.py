@@ -2178,105 +2178,162 @@ class TestEligibilityResultBuilder:
 
         # Scenario: Patient is actionable, no Status Text, no override present
         # Expected: Hardcoded value
-        (Status.actionable,
-         "You should have the RSV vaccine",
-         rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting(None)),
-         AvailableAction(ExternalRoutingCode="", ActionType="", ActionDescription=None),
-         campaign_config.StatusText(NotEligible=None,
-                        NotActionable=None,
-                        Actionable=None,
-                    )),
+        pytest.param(
+            Status.actionable,
+            "You should have the RSV vaccine",
+            rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting(None)),
+            AvailableAction(ExternalRoutingCode="", ActionType="", ActionDescription=None),
+            campaign_config.StatusText(
+                NotEligible=None,
+                NotActionable=None,
+                Actionable=None,
+            ),
+            id="actionable_hardcoded",
+        ),
         # Scenario: Patient is actionable, Status Text present, no override present
         # Expected: Status Text value
-         (Status.actionable,
-         "Original you are actionable status text",
-         rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting(None)),
-         AvailableAction(ExternalRoutingCode="StatusText", ActionType="StatusText", ActionDescription="Original you are not eligible status text"),
-         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
-                        NotActionable="Original you are not actionable status text",
-                        Actionable="Original you are actionable status text",
-                    )),
+        pytest.param(
+            Status.actionable,
+            "Original you are actionable status text",
+            rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting(None)),
+            AvailableAction(
+                ExternalRoutingCode="StatusText",
+                ActionType="StatusText",
+                ActionDescription="Original you are not eligible status text",
+            ),
+            campaign_config.StatusText(
+                NotEligible="Original you are not eligible status text",
+                NotActionable="Original you are not actionable status text",
+                Actionable="Original you are actionable status text",
+            ),
+            id="actionable_original",
+        ),
         # Scenario: Patient is not actionable, Status Text present, no override present
-         # Expected: Status Text value
-         (Status.not_actionable,
-         "Original you are not actionable status text",
-         rule_builder.PostcodeNonActionableRuleFactory.build(comms_routing=CommsRouting(None)),
-         AvailableAction(ExternalRoutingCode="StatusText", ActionType="StatusText", ActionDescription="Original you are not eligible status text"),
-         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
-                        NotActionable="Original you are not actionable status text",
-                        Actionable="Original you are actionable status text",
-                    )),
-         # Scenario: Patient is actionable, Status Text present, override present
-         # Expected: Status Text Override
-        (Status.actionable,
-         "Status Text Override Actionable",
-         rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
-         AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Actionable"),
-         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
-                        NotActionable="Original you are not actionable status text",
-                        Actionable="Original you are actionable status text",
-                    )),
-          # Scenario: Patient is not eligible, Status Text present, override present
-         # Expected: Status Text Override
-        (Status.not_eligible,
-         "Status Text Override Not Eligible",
-         rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
-         AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Not Eligible"),
-         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
-                        NotActionable="Original you are not actionable status text",
-                        Actionable="Original you are actionable status text",
-                    )),
-         # Scenario: Patient is not actionable, Status Text present, override present
-         # Expected: Status Text Override
-         (Status.not_actionable,
-         "Status Text Override Not Actionable",
-         rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
-         AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Not Actionable"),
-         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
-                        NotActionable="Original you are not actionable status text",
-                        Actionable="Original you are actionable status text",
-                    )),
-         # Scenario: Patient is actionable, Status Text present, actionable override present
-         # Expected: Status Text Override
-         (Status.actionable,
-         "Status Text Override Actionable",
-         rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
-         AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Actionable"),
-         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
-                        NotActionable=None,
-                        Actionable="Original you are actionable status text",
-                    )),
-         # Scenario: Patient is not actionable, Status Text present, Actionable override present
-         # Expected: Hardcoded value
-         (Status.not_actionable,
-         "You should have the RSV vaccine",
-         rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
-         AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Actionable"),
-         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
-                        NotActionable=None,
-                        Actionable="Original you are actionable status text",
-                    )),
-         # Scenario: Patient is not eligible, Status Text present, Actionable override present
-         # Expected: Status Text value
-         (Status.not_eligible,
-         "Original you are not eligible status text",
-         rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
-         AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Actionable"),
-         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
-                        NotActionable=None,
-                        Actionable="Original you are actionable status text",
-                    )),
-    ],
-    ids=[
-        "actionable_hardcoded",
-        "actionable_original",
-        "not_actionable_original_postcode",
-        "actionable_override",
-        "not_eligible_override",
-        "not_actionable_override",
-        "actionable_override",
-        "not_actionable_hardcoded",
-        "not_eligible_original",
+        # Expected: Status Text value
+        pytest.param(
+            Status.not_actionable,
+            "Original you are not actionable status text",
+            rule_builder.PostcodeNonActionableRuleFactory.build(comms_routing=CommsRouting(None)),
+            AvailableAction(
+                ExternalRoutingCode="StatusText",
+                ActionType="StatusText",
+                ActionDescription="Original you are not eligible status text",
+            ),
+            campaign_config.StatusText(
+                NotEligible="Original you are not eligible status text",
+                NotActionable="Original you are not actionable status text",
+                Actionable="Original you are actionable status text",
+            ),
+            id="not_actionable_original_postcode",
+        ),
+        # Scenario: Patient is actionable, Status Text present, override present
+        # Expected: Status Text Override
+        pytest.param(
+            Status.actionable,
+            "Status Text Override Actionable",
+            rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+            AvailableAction(
+                ExternalRoutingCode="StatusTextOverride",
+                ActionType="norender_StatusTextOverride",
+                ActionDescription="Status Text Override Actionable",
+            ),
+            campaign_config.StatusText(
+                NotEligible="Original you are not eligible status text",
+                NotActionable="Original you are not actionable status text",
+                Actionable="Original you are actionable status text",
+            ),
+            id="actionable_override",
+        ),
+        # Scenario: Patient is not eligible, Status Text present, override present
+        # Expected: Status Text Override
+        pytest.param(
+            Status.not_eligible,
+            "Status Text Override Not Eligible",
+            rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+            AvailableAction(
+                ExternalRoutingCode="StatusTextOverride",
+                ActionType="norender_StatusTextOverride",
+                ActionDescription="Status Text Override Not Eligible",
+            ),
+            campaign_config.StatusText(
+                NotEligible="Original you are not eligible status text",
+                NotActionable="Original you are not actionable status text",
+                Actionable="Original you are actionable status text",
+            ),
+            id="not_eligible_override",
+        ),
+        # Scenario: Patient is not actionable, Status Text present, override present
+        # Expected: Status Text Override
+        pytest.param(
+            Status.not_actionable,
+            "Status Text Override Not Actionable",
+            rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+            AvailableAction(
+                ExternalRoutingCode="StatusTextOverride",
+                ActionType="norender_StatusTextOverride",
+                ActionDescription="Status Text Override Not Actionable",
+            ),
+            campaign_config.StatusText(
+                NotEligible="Original you are not eligible status text",
+                NotActionable="Original you are not actionable status text",
+                Actionable="Original you are actionable status text",
+            ),
+            id="not_actionable_override",
+        ),
+        # Scenario: Patient is actionable, Status Text present, actionable override present
+        # Expected: Status Text Override
+        pytest.param(
+            Status.actionable,
+            "Status Text Override Actionable",
+            rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+            AvailableAction(
+                ExternalRoutingCode="StatusTextOverride",
+                ActionType="norender_StatusTextOverride",
+                ActionDescription="Status Text Override Actionable",
+            ),
+            campaign_config.StatusText(
+                NotEligible="Original you are not eligible status text",
+                NotActionable=None,
+                Actionable="Original you are actionable status text",
+            ),
+            id="actionable_override_with_only_actionable_override_present",
+        ),
+        # Scenario: Patient is not actionable, Status Text present, Actionable override present
+        # Expected: Hardcoded value
+        pytest.param(
+            Status.not_actionable,
+            "You should have the RSV vaccine",
+            rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+            AvailableAction(
+                ExternalRoutingCode="StatusTextOverride",
+                ActionType="norender_StatusTextOverride",
+                ActionDescription="Status Text Override Actionable",
+            ),
+            campaign_config.StatusText(
+                NotEligible="Original you are not eligible status text",
+                NotActionable=None,
+                Actionable="Original you are actionable status text",
+            ),
+            id="not_actionable_hardcoded_with_only_actionable_override_present",
+        ),
+        # Scenario: Patient is not eligible, Status Text present, Actionable override present
+        # Expected: Status Text value
+        pytest.param(
+            Status.not_eligible,
+            "Original you are not eligible status text",
+            rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+            AvailableAction(
+                ExternalRoutingCode="StatusTextOverride",
+                ActionType="norender_StatusTextOverride",
+                ActionDescription="Status Text Override Actionable",
+            ),
+            campaign_config.StatusText(
+                NotEligible="Original you are not eligible status text",
+                NotActionable=None,
+                Actionable="Original you are actionable status text",
+            ),
+            id="not_eligible_original_with_only_actionable_override_present",
+        ),
     ],
 )
 def test_configureable_status_text(
