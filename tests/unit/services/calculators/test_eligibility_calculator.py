@@ -2186,11 +2186,21 @@ class TestEligibilityResultBuilder:
                         NotActionable=None,
                         Actionable=None,
                     )),
-        # Scenario: Patient is not actionable, Status Text present, no override present
+        # Scenario: Patient is actionable, Status Text present, no override present
         # Expected: Status Text value
+         (Status.actionable,
+         "Original you are actionable status text",
+         rule_builder.ICBRedirectRuleFactory.build(comms_routing=CommsRouting(None)),
+         AvailableAction(ExternalRoutingCode="StatusText", ActionType="StatusText", ActionDescription="Original you are not eligible status text"),
+         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
+                        NotActionable="Original you are not actionable status text",
+                        Actionable="Original you are actionable status text",
+                    )),
+        # Scenario: Patient is not actionable, Status Text present, no override present
+         # Expected: Status Text value
          (Status.not_actionable,
          "Original you are not actionable status text",
-         rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting(None)),
+         rule_builder.PostcodeNonActionableRuleFactory.build(comms_routing=CommsRouting(None)),
          AvailableAction(ExternalRoutingCode="StatusText", ActionType="StatusText", ActionDescription="Original you are not eligible status text"),
          campaign_config.StatusText(NotEligible="Original you are not eligible status text",
                         NotActionable="Original you are not actionable status text",
@@ -2206,12 +2216,12 @@ class TestEligibilityResultBuilder:
                         NotActionable="Original you are not actionable status text",
                         Actionable="Original you are actionable status text",
                     )),
-         # Scenario: Patient is not actionable, Status Text present, no override present
-         # Expected: Status Text value
-         (Status.not_actionable,
-         "Original you are not actionable status text",
-         rule_builder.PostcodeNonActionableRuleFactory.build(comms_routing=CommsRouting(None)),
-         AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Actionable"),
+          # Scenario: Patient is not eligible, Status Text present, override present
+         # Expected: Status Text Override
+        (Status.not_eligible,
+         "Status Text Override Not Eligible",
+         rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
+         AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Not Eligible"),
          campaign_config.StatusText(NotEligible="Original you are not eligible status text",
                         NotActionable="Original you are not actionable status text",
                         Actionable="Original you are actionable status text",
@@ -2222,16 +2232,6 @@ class TestEligibilityResultBuilder:
          "Status Text Override Not Actionable",
          rule_builder.ICBNonActionableActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
          AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Not Actionable"),
-         campaign_config.StatusText(NotEligible="Original you are not eligible status text",
-                        NotActionable="Original you are not actionable status text",
-                        Actionable="Original you are actionable status text",
-                    )),
-         # Scenario: Patient is not eligible, Status Text present, override present
-         # Expected: Status Text Override
-        (Status.not_eligible,
-         "Status Text Override Not Eligible",
-         rule_builder.ICBNonEligibleActionRuleFactory.build(comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE")),
-         AvailableAction(ExternalRoutingCode="StatusTextOverride", ActionType="norender_StatusTextOverride", ActionDescription="Status Text Override Not Eligible"),
          campaign_config.StatusText(NotEligible="Original you are not eligible status text",
                         NotActionable="Original you are not actionable status text",
                         Actionable="Original you are actionable status text",
@@ -2300,24 +2300,24 @@ def test_configureable_status_text_actionable(
 
     scenario_rules = [
         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.filter, # FILTER RULE !!
+                                type=RuleType.filter,
                                 name=RuleName("NotEligible Reason 1"),
                                 description=RuleText("NotEligible Description 1"),
                                 priority=RulePriority("100"),
                                 operator=RuleOperator.year_lte,
                                 attribute_level=RuleAttributeLevel.PERSON,
                                 attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator(filter_comparator),  # Base Eligible
+                                comparator=RuleComparator(filter_comparator),
                             ),
         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.suppression, # SUPPRESSION RULE !!
+                                type=RuleType.suppression,
                                 name=RuleName("NotActionable Reason 1"),
                                 description=RuleText("NotActionable Description 1"),
                                 priority=RulePriority("110"),
                                 operator=RuleOperator.year_lte,
                                 attribute_level=RuleAttributeLevel.PERSON,
                                 attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator(suppression_comparator), # Actionable
+                                comparator=RuleComparator(suppression_comparator),
                             ),
         action_rule,
     ]
