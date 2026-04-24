@@ -982,6 +982,14 @@ data "aws_iam_policy_document" "regression_repo_assume_role" {
     }
 
     condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:job_workflow_ref"
+      values = [
+        "${var.github_org}/${var.regression_repo}/.github/workflows/regression_tests.yml@*"
+      ]
+    }
+
+    condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
       values = ["sts.amazonaws.com"]
