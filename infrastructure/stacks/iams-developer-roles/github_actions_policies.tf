@@ -803,6 +803,8 @@ resource "aws_iam_policy" "cloudwatch_management" {
 }
 
 data "aws_iam_policy_document" "regression_test_permissions" {
+  #checkov:skip=CKV_AWS_356: Wildcard resource is required to list all dynamodb tables
+  #checkov:skip=CKV_AWS_111: Wildcard resource is required for cloudwatch and xray read permissions
   statement {
     sid    = "S3Access"
     effect = "Allow"
