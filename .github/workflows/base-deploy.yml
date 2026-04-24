@@ -267,6 +267,11 @@ jobs:
     name: "Regression Tests"
     if: ${{ needs.metadata.outputs.environment == 'preprod' }}
     needs: deploy
+    permissions:
+      id-token: write
+      contents: read
+      issues: write
+      pull-requests: write
     uses: ./.github/workflows/regression-tests.yml
     with:
       ENVIRONMENT: "preprod"
