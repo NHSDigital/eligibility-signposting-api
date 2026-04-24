@@ -107,6 +107,7 @@ class AuditContext:
             suitability_rules=audit_suitability_rule,
             action_rule=audit_action_rule,
             actions=audit_actions,
+            status_text_override=action_detail.status_text_override,
         )
 
         g.audit_log.response.condition.append(audit_condition)
