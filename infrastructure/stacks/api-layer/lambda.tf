@@ -33,7 +33,7 @@ module "eligibility_signposting_lambda_function" {
   stack_name                                = local.stack_name
   provisioned_concurrency_count             = 5
   api_domain_name                           = local.api_domain_name
-  environments_with_signing                 = ["test", "preprod"]
+  environments_with_signing                 = ["test", "preprod", "prod"]
 }
 
 
