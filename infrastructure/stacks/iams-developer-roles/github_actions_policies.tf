@@ -986,6 +986,7 @@ data "aws_iam_policy_document" "regression_repo_assume_role" {
       values = [
         "repo:${var.github_org}/${var.regression_repo}:*",
         "repo:${var.github_org}/${var.github_repo}:*",
+        "repo:${var.github_org}/${var.my_vaccines_repo}:*",
       ]
     }
 
