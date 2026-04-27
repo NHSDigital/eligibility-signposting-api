@@ -88,3 +88,8 @@ variable "hashing_secret_name" {
   description = "hashing secret name"
   type        = string
 }
+
+variable "environments_with_signing" {
+  type    = list(string)
+  default = ["test"]
+}
