@@ -2426,3 +2426,195 @@ def test_configureable_status_text(
             )
         )
     )
+    assert_that(
+        actual.conditions[0].actions,
+        is_([]))
+
+
+def test_configureable_status_text_exclude_actions(faker: Faker):
+    # When actions are excluded status text override is not used
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=85, maximum_age=85))
+
+    person_rows = person_rows_builder(
+        nhs_number,
+        date_of_birth=date_of_birth,
+        cohorts=["rsv_cohort_1"],
+        icb="QE1",
+    )
+
+    action_status_text_override_actionable = AvailableAction(
+        ExternalRoutingCode="StatusTextOverride",
+        ActionType="norender_StatusTextOverride",
+        ActionDescription="Status Text Override Actionable",
+    )
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    status_text=campaign_config.StatusText(
+                        NotEligible="Orignal you are not eligible status text",
+                        NotActionable="Orignal you are not actionable status text",
+                        Actionable="Orignal you are actionable status text",
+                    ),
+
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="rsv_cohort_1", cohort_group="rsv_cohort_group", priority=0
+                        ),
+                    ],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            type=RuleType.filter,
+                            name=RuleName("NotEligible Reason 1"),
+                            description=RuleText("NotEligible Description 1"),
+                            priority=RulePriority("100"),
+                            operator=RuleOperator.year_lte,
+                            attribute_level=RuleAttributeLevel.PERSON,
+                            attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                            comparator=RuleComparator("-90"),
+                        ),
+
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            type=RuleType.suppression,
+                            name=RuleName("NotActionable Reason 1"),
+                            description=RuleText("NotActionable Description 1"),
+                            priority=RulePriority("110"),
+                            operator=RuleOperator.year_lte,
+                            attribute_level=RuleAttributeLevel.PERSON,
+                            attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                            comparator=RuleComparator("-90"),
+                        ),
+                        rule_builder.ICBRedirectRuleFactory.build(
+                            comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE_ACTIONABLE")
+                        ),
+
+                    ],
+
+                    actions_mapper=rule_builder.ActionsMapperFactory.build(
+                        root={"STATUS_TEXT_OVERRIDE_ACTIONABLE": action_status_text_override_actionable}),
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("N", ["ALL"], "ALL")
+
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(Status.actionable)
+                .and_status_text(StatusText("Orignal you are actionable status text"))
+
+            )))
+    assert_that(
+        actual.conditions[0].actions,
+        is_(None),
+    )
+
+def test_configureable_status_text_multiple_actions(faker: Faker):
+    # Patient is actionable and there are multiple actions. Testing override does not change action
+    # Given
+    nhs_number = NHSNumber(faker.nhs_number())
+    date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=85, maximum_age=85))
+
+    person_rows = person_rows_builder(
+        nhs_number,
+        date_of_birth=date_of_birth,
+        cohorts=["rsv_cohort_1"],
+        icb="QE1",
+    )
+
+    action_status_text_override_actionable = AvailableAction(
+        ExternalRoutingCode="StatusTextOverride",
+        ActionType="norender_StatusTextOverride",
+        ActionDescription="Status Text Override Actionable",
+    )
+
+    action_book_nbs = AvailableAction(
+        ExternalRoutingCode="BookNBS",
+        ActionType="defaultcomms",
+        ActionDescription="Book via NBS",
+    )
+
+    campaign_configs = [
+        rule_builder.CampaignConfigFactory.build(
+            target="RSV",
+            iterations=[
+                rule_builder.IterationFactory.build(
+                    status_text=campaign_config.StatusText(
+                        NotEligible="Orignal you are not eligible status text",
+                        NotActionable="Orignal you are not actionable status text",
+                        Actionable="Orignal you are actionable status text",
+                    ),
+
+                    iteration_cohorts=[
+                        rule_builder.IterationCohortFactory.build(
+                            cohort_label="rsv_cohort_1", cohort_group="rsv_cohort_group", priority=0
+                        ),
+                    ],
+                    iteration_rules=[
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            type=RuleType.filter,
+                            name=RuleName("NotEligible Reason 1"),
+                            description=RuleText("NotEligible Description 1"),
+                            priority=RulePriority("100"),
+                            operator=RuleOperator.year_lte,
+                            attribute_level=RuleAttributeLevel.PERSON,
+                            attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                            comparator=RuleComparator("-90"),
+                        ),
+
+                        rule_builder.PersonAgeSuppressionRuleFactory.build(
+                            type=RuleType.suppression,
+                            name=RuleName("NotActionable Reason 1"),
+                            description=RuleText("NotActionable Description 1"),
+                            priority=RulePriority("110"),
+                            operator=RuleOperator.year_lte,
+                            attribute_level=RuleAttributeLevel.PERSON,
+                            attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+                            comparator=RuleComparator("-90"),
+                        ),
+                        rule_builder.ICBRedirectRuleFactory.build(
+                            comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE_ACTIONABLE|BOOK_NBS")
+                        ),
+
+                    ],
+
+                    actions_mapper=rule_builder.ActionsMapperFactory.build(
+                        root={
+                            "STATUS_TEXT_OVERRIDE_ACTIONABLE": action_status_text_override_actionable,
+                            "BOOK_NBS": action_book_nbs,
+                            }),
+                )
+            ],
+        )
+    ]
+
+    calculator = EligibilityCalculator(person_rows, campaign_configs)
+
+    # When
+    actual = calculator.get_eligibility_status("Y", ["ALL"], "ALL")
+
+    assert_that(
+        actual,
+        is_eligibility_status().with_conditions(
+            has_item(
+                is_condition()
+                .with_condition_name(ConditionName("RSV"))
+                .and_status(Status.actionable)
+                .and_status_text(StatusText("Status Text Override Actionable"))
+
+            )))
+    assert_that(len(actual.conditions[0].actions), is_(1))
+    assert_that(actual.conditions[0].actions[0].action_code, is_(ActionCode("BookNBS")))
+    assert_that(actual.conditions[0].actions[0].internal_action_code, is_(InternalActionCode("BOOK_NBS")))

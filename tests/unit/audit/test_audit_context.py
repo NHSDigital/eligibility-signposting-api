@@ -373,3 +373,68 @@ def test_empty_list_returns_empty_list():
     reasons = []
     expected = []
     assert AuditContext.deduplicate_reasons(reasons) == expected
+
+
+def test_should_append_status_override_for_actionable_status(app):
+    condition_name: ConditionName
+    campaign_details: tuple[CampaignID | None, CampaignVersion | None]
+
+    condition_name = ConditionName("Condition1")
+    iteration = IterationFactory.build()
+    audit_rules = [
+        Reason(
+            rule_type=RuleType.filter,
+            rule_name=RuleName("FilterRuleName1"),
+            rule_code=RuleCode("FilterRuleCode1"),
+            rule_text=RuleText("FilterRuleDescription1"),
+            matcher_matched=True,
+            rule_priority=RulePriority("1"),
+        )
+    ]
+    cohort_group_result = CohortGroupResult(
+        status=Status.actionable,
+        cohort_code="CohortCode1",
+        description="CohortDescription1",
+        audit_rules=audit_rules,
+        reasons=audit_rules,
+    )
+    iteration_result = IterationResult(
+        status=Status.actionable,
+        status_text=StatusText("You should have the Condition1 vaccine"),
+        cohort_results=[cohort_group_result],
+        actions=[],
+    )
+    campaign_details = (CampaignID("CampaignID1"), CampaignVersion(123))
+
+    iteration_result_summary = IterationResultSummary(
+        iteration_result,
+        iteration,
+        campaign_details[0],
+        campaign_details[1],
+        {CohortLabel("CohortCode1"): cohort_group_result},
+    )
+
+    status_text_override = MatchedActionDetail(
+        status_text_override=StatusText("You may have the Condition1 vaccine")
+    )
+
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        AuditContext.append_audit_condition(condition_name, iteration_result_summary, status_text_override)
+
+        assert g.audit_log.response.condition, condition_name
+        cond = g.audit_log.response.condition[0]
+        assert cond.status == "actionable"
+        assert cond.status_text == "You should have the Condition1 vaccine"
+        assert cond.status_text_override == "You may have the Condition1 vaccine"
+        assert cond.actions is None
+        assert cond.action_rule is None
+        assert cond.filter_rules[0].rule_priority == "1"
+        assert cond.filter_rules[0].rule_name == "FilterRuleName1"
+        assert cond.suitability_rules is None
+        assert cond.eligibility_cohorts[0].cohort_code == "CohortCode1"
+        assert cond.eligibility_cohorts[0].cohort_status == "actionable"
+        assert cond.eligibility_cohort_groups[0].cohort_code == "CohortCode1"
+        assert cond.eligibility_cohort_groups[0].cohort_status == "actionable"
+        assert cond.eligibility_cohort_groups[0].cohort_text == "CohortDescription1"
