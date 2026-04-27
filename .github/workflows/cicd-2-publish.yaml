@@ -69,7 +69,7 @@ jobs:
       - name: "Set up Python"
         uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: "Checkout Repository"
         uses: actions/checkout@v6
@@ -154,8 +154,14 @@ jobs:
   regression-tests:
     name: "Regression Tests"
     needs: publish
+    permissions:
+      id-token: write
+      contents: read
+      issues: write
+      pull-requests: write
     uses: ./.github/workflows/regression-tests.yml
     with:
       ENVIRONMENT: "dev"
       VERSION_NUMBER: "main"
-    secrets: inherit
+    secrets:
+      AWS_ACCOUNT_ID: ${{ secrets.DEV_AWS_ACCOUNT_ID }}

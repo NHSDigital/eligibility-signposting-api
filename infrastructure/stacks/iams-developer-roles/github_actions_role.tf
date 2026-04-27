@@ -107,3 +107,20 @@ data "aws_iam_policy_document" "github_actions_iam_bootstrap_assume_role" {
     }
   }
 }
+
+resource "aws_iam_role" "regression_test_role" {
+  name                 = "Eligibility-API-E2E-Regression-Tests"
+  description          = "Role for regression testing"
+  permissions_boundary = aws_iam_policy.permissions_boundary.arn
+  path                 = "/service-roles/"
+
+  # Trust policy allowing GitHub Actions to assume the role
+  assume_role_policy = data.aws_iam_policy_document.regression_repo_assume_role.json
+
+  tags = merge(
+    local.tags,
+    {
+      Name = "Eligibility-API-E2E-Regression-Tests"
+    }
+  )
+}

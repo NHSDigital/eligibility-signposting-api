@@ -13,6 +13,8 @@ permissions:
   contents: read
   id-token: write
   actions: read
+  issues: write
+  pull-requests: write
 
 jobs:
   metadata:
@@ -250,9 +252,14 @@ jobs:
   regression-tests:
     name: "Regression Tests"
     needs: deploy
+    permissions:
+      id-token: write
+      contents: read
+      issues: write
+      pull-requests: write
     uses: ./.github/workflows/regression-tests.yml
     with:
       ENVIRONMENT: "test"
       VERSION_NUMBER: "main"
-    secrets: inherit
-
+    secrets:
+      AWS_ACCOUNT_ID: ${{ secrets.TEST_AWS_ACCOUNT_ID }}

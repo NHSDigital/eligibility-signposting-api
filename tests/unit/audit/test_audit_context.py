@@ -196,6 +196,185 @@ def test_append_audit_condition_adds_condition_to_audit_log_on_g_for_actionable_
         assert cond.eligibility_cohort_groups[0].cohort_text == "CohortDescription1"
 
 
+def test_append_audit_condition_with_status_override_text(app):
+    suggested_actions: list[SuggestedAction] | None
+    condition_name: ConditionName
+    campaign_details: tuple[CampaignID | None, CampaignVersion | None]
+
+    # Build dummy variables sufficient to be able to call append_audit_condition.
+    suggested_actions = [
+        SuggestedAction(
+            internal_action_code=InternalActionCode("InternalActionCode1"),
+            action_code=ActionCode("ActionCode1"),
+            action_type=ActionType("ActionType1"),
+            action_description=ActionDescription("ActionDescription1"),
+            url_link=UrlLink(HttpUrl("https://example.com/")),
+            url_label=UrlLabel("ActionLabel1"),
+        )
+    ]
+    condition_name = ConditionName("Condition1")
+    iteration = IterationFactory.build(version=12345)
+    audit_rules = [
+        Reason(
+            rule_type=RuleType.redirect,
+            rule_name=RuleName("RedirectRuleName1"),
+            rule_code=RuleCode("RedirectRuleCode1"),
+            rule_text=RuleText("RedirectRuleDescription1"),
+            matcher_matched=True,
+            rule_priority=RulePriority("1"),
+        ),
+        Reason(
+            rule_type=RuleType.filter,
+            rule_name=RuleName("FilterRuleName1"),
+            rule_code=RuleCode("FilterRuleCode1"),
+            rule_text=RuleText("FilterRuleDescription1"),
+            matcher_matched=True,
+            rule_priority=RulePriority("1"),
+        ),
+        Reason(
+            rule_type=RuleType.suppression,
+            rule_name=RuleName("SuppressionRuleName1"),
+            rule_code=RuleCode("SuppressionRuleCode1"),
+            rule_text=RuleText("SuppressionRuleDescription1"),
+            matcher_matched=True,
+            rule_priority=RulePriority("1"),
+        ),
+    ]
+    cohort_group_result = CohortGroupResult(
+        status=Status.actionable,
+        cohort_code="CohortCode1",
+        description="CohortDescription1",
+        audit_rules=audit_rules,
+        reasons=audit_rules,
+    )
+    iteration_result = IterationResult(
+        status=Status.actionable,
+        status_text=StatusText(
+            "Override text you should see"
+        ),  # value overwritten by get_eligibility_status prior to append_audit_condition being called.
+        cohort_results=[cohort_group_result],
+        actions=suggested_actions,
+    )
+    status_text_override = StatusText(
+        "Override text you should see (in override field)"
+    )  # Value in real run will exactly match status_text, differentiated here for testing.
+    campaign_details = (CampaignID("CampaignID1"), CampaignVersion(123))
+    matched_action_detail = MatchedActionDetail(
+        campaign_config.RuleName("RedirectRuleName1"),
+        campaign_config.RulePriority(1),
+        suggested_actions,
+        status_text_override,
+    )
+    iteration_result_summary = IterationResultSummary(
+        iteration_result,
+        iteration,
+        campaign_details[0],
+        campaign_details[1],
+        {CohortLabel("CohortCode1"): cohort_group_result},
+    )
+
+    # Initialise test data.
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        AuditContext.append_audit_condition(condition_name, iteration_result_summary, matched_action_detail)
+
+        # Get audit_condition outputs.
+        cond = g.audit_log.response.condition[0]
+
+        # Assert that override status text actually comes out.
+        assert cond.status_text == "Override text you should see"
+        assert cond.status_text_override == "Override text you should see (in override field)"
+
+
+def test_append_audit_condition_without_override_status_text(app):
+    # Trivial but explicit test of append_audit_condition being called where status_test_override is not provided.
+    suggested_actions: list[SuggestedAction] | None
+    condition_name: ConditionName
+    campaign_details: tuple[CampaignID | None, CampaignVersion | None]
+
+    # Build dummy variables sufficient to be able to call append_audit_condition.
+    suggested_actions = [
+        SuggestedAction(
+            internal_action_code=InternalActionCode("InternalActionCode1"),
+            action_code=ActionCode("ActionCode1"),
+            action_type=ActionType("ActionType1"),
+            action_description=ActionDescription("ActionDescription1"),
+            url_link=UrlLink(HttpUrl("https://example.com/")),
+            url_label=UrlLabel("ActionLabel1"),
+        )
+    ]
+    condition_name = ConditionName("Condition1")
+    iteration = IterationFactory.build(version=12345)
+    audit_rules = [
+        Reason(
+            rule_type=RuleType.redirect,
+            rule_name=RuleName("RedirectRuleName1"),
+            rule_code=RuleCode("RedirectRuleCode1"),
+            rule_text=RuleText("RedirectRuleDescription1"),
+            matcher_matched=True,
+            rule_priority=RulePriority("1"),
+        ),
+        Reason(
+            rule_type=RuleType.filter,
+            rule_name=RuleName("FilterRuleName1"),
+            rule_code=RuleCode("FilterRuleCode1"),
+            rule_text=RuleText("FilterRuleDescription1"),
+            matcher_matched=True,
+            rule_priority=RulePriority("1"),
+        ),
+        Reason(
+            rule_type=RuleType.suppression,
+            rule_name=RuleName("SuppressionRuleName1"),
+            rule_code=RuleCode("SuppressionRuleCode1"),
+            rule_text=RuleText("SuppressionRuleDescription1"),
+            matcher_matched=True,
+            rule_priority=RulePriority("1"),
+        ),
+    ]
+    cohort_group_result = CohortGroupResult(
+        status=Status.actionable,
+        cohort_code="CohortCode1",
+        description="CohortDescription1",
+        audit_rules=audit_rules,
+        reasons=audit_rules,
+    )
+    iteration_result = IterationResult(
+        status=Status.actionable,
+        status_text=StatusText("Default status text"),
+        cohort_results=[cohort_group_result],
+        actions=suggested_actions,
+    )
+    status_text_override = None  # Will default to None when not provided, made explicit here for testing.
+    campaign_details = (CampaignID("CampaignID1"), CampaignVersion(123))
+    matched_action_detail = MatchedActionDetail(
+        campaign_config.RuleName("RedirectRuleName1"),
+        campaign_config.RulePriority(1),
+        suggested_actions,
+        status_text_override,
+    )
+    iteration_result_summary = IterationResultSummary(
+        iteration_result,
+        iteration,
+        campaign_details[0],
+        campaign_details[1],
+        {CohortLabel("CohortCode1"): cohort_group_result},
+    )
+
+    # Initialise test data.
+    with app.app_context():
+        g.audit_log = AuditEvent()
+
+        AuditContext.append_audit_condition(condition_name, iteration_result_summary, matched_action_detail)
+
+        # Get audit_condition outputs.
+        cond = g.audit_log.response.condition[0]
+
+        # Assert that override status text actually comes out.
+        assert cond.status_text == "Default status text"
+        assert cond.status_text_override is None
+
+
 def test_should_append_audit_suppression_rules_for_actionable_status(app):
     condition_name: ConditionName
     campaign_details: tuple[CampaignID | None, CampaignVersion | None]

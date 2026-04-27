@@ -181,7 +181,7 @@ resource "aws_iam_policy" "dynamodb_management" {
             "dynamodb:UpdateTable",
           ],
           Resource = [
-            "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
+            "arn:aws:dynamodb:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
           ]
         },
 
@@ -218,7 +218,7 @@ resource "aws_iam_policy" "dynamodb_management" {
             "dynamodb:Query"
           ],
           Resource = [
-            "arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
+            "arn:aws:dynamodb:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
           ]
         }
       ] : []
@@ -678,49 +678,6 @@ resource "aws_iam_policy" "iam_management" {
   tags = merge(local.tags, { Name = "iam-management" })
 }
 
-# Assume role policy document for GitHub Actions
-data "aws_iam_policy_document" "github_actions_assume_role" {
-  statement {
-    sid     = "OidcAssumeRoleWithWebIdentity"
-    effect  = "Allow"
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type = "Federated"
-      identifiers = [
-        aws_iam_openid_connect_provider.github.arn
-      ]
-    }
-
-    condition {
-      test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-  }
-  dynamic "statement" {
-    for_each = var.environment == "dev" ? [1] : []
-    content {
-      sid    = "AllowDevSSORoleToAssumeIamBootstrap"
-      effect = "Allow"
-      actions = ["sts:AssumeRole"]
-
-      principals {
-        type = "AWS"
-        identifiers = [
-          local.dev_role_arn
-        ]
-      }
-    }
-  }
-}
-
 resource "aws_iam_policy" "stream_management" {
   name        = "stream-management"
   description = "Allow GitHub Actions to manage project Firehose delivery streams and Kinesis streams"
@@ -845,6 +802,201 @@ resource "aws_iam_policy" "cloudwatch_management" {
   tags = merge(local.tags, { Name = "cloudwatch-management" })
 }
 
+data "aws_iam_policy_document" "regression_test_permissions" {
+  #checkov:skip=CKV_AWS_356: Wildcard resource is required to list all dynamodb tables
+  #checkov:skip=CKV_AWS_111: Wildcard resource is required for cloudwatch and xray read permissions
+  statement {
+    sid    = "S3Access"
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+      "s3:GetBucketTagging",
+      "s3:GetObjectTagging",
+      "s3:PutObjectTagging",
+      "s3:GetObjectVersion"
+    ]
+    resources = [
+      "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules",
+      "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-eli-rules/*",
+      "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map",
+      "arn:aws:s3:::*eligibility-signposting-api-${var.environment}-consumer-map/*"
+    ]
+  }
+
+  statement {
+    sid    = "DynamoAccess"
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:BatchWriteItem",
+      "dynamodb:DescribeTable",
+      "dynamodb:DeleteTable",
+      "dynamodb:TagResource",
+      "dynamodb:UntagResource",
+      "dynamodb:ListTagsOfResource"
+    ]
+    resources = [
+      "arn:aws:dynamodb:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:table/*eligibility-signposting-api-${var.environment}-eligibility_datastore"
+    ]
+  }
+
+  statement {
+    sid    = "DynamoGlobal"
+    effect = "Allow"
+    actions = [
+      "dynamodb:ListTables",
+      "dynamodb:CreateTable"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "SecretsManagerAccess"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:UpdateSecretVersionStage",
+      "secretsmanager:PutSecretValue"
+    ]
+    resources = ["arn:aws:secretsmanager:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:secret:eligibility-signposting-api-*"]
+  }
+
+  statement {
+    sid    = "CloudWatchLogsRead"
+    effect = "Allow"
+    actions = [
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams",
+      "logs:GetLogEvents",
+      "logs:FilterLogEvents",
+      "logs:StartQuery",
+      "logs:GetQueryResults",
+      "logs:StopQuery"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "XRayRead"
+    effect = "Allow"
+    actions = [
+      "xray:GetTraceSummaries",
+      "xray:BatchGetTraces",
+      "xray:GetServiceGraph",
+      "xray:GetGroups",
+      "xray:GetGroup",
+      "xray:GetSamplingRules",
+      "xray:GetSamplingTargets",
+      "xray:GetSamplingStatisticSummaries",
+      "xray:UpdateSamplingRule"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "SSMRead"
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:GetParametersByPath"
+    ]
+    resources = [
+      "arn:aws:ssm:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:parameter/${var.environment}/*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "regression_test_permissions" {
+  name        = "regression-test-permissions"
+  description = "Permissions for the regression test GitHub Actions role"
+  path        = "/service-policies/"
+  policy      = data.aws_iam_policy_document.regression_test_permissions.json
+}
+
+# Assume role policy document for GitHub Actions
+data "aws_iam_policy_document" "github_actions_assume_role" {
+  statement {
+    sid     = "OidcAssumeRoleWithWebIdentity"
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type = "Federated"
+      identifiers = [
+        aws_iam_openid_connect_provider.github.arn
+      ]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+  dynamic "statement" {
+    for_each = var.environment == "dev" ? [1] : []
+    content {
+      sid     = "AllowDevSSORoleToAssumeIamBootstrap"
+      effect  = "Allow"
+      actions = ["sts:AssumeRole"]
+
+      principals {
+        type = "AWS"
+        identifiers = [
+          local.dev_role_arn
+        ]
+      }
+    }
+  }
+}
+
+# Assume role policy document for GitHub Actions
+data "aws_iam_policy_document" "regression_repo_assume_role" {
+  statement {
+    sid     = "OidcAssumeRoleWithWebIdentity"
+    effect  = "Allow"
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type = "Federated"
+      identifiers = [
+        aws_iam_openid_connect_provider.github.arn
+      ]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values = [
+        "repo:${var.github_org}/${var.regression_repo}:*",
+        "repo:${var.github_org}/${var.github_repo}:*",
+      ]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
 # Attach the policies to the role
 resource "aws_iam_role_policy_attachment" "api_infrastructure" {
   role       = aws_iam_role.github_actions.name
@@ -884,4 +1036,14 @@ resource "aws_iam_role_policy_attachment" "stream_management" {
 resource "aws_iam_role_policy_attachment" "cloudwatch_management" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.cloudwatch_management.arn
+}
+
+resource "aws_iam_role_policy_attachment" "regression_test_permissions" {
+  role       = aws_iam_role.regression_test_role.name
+  policy_arn = aws_iam_policy.regression_test_permissions.arn
+}
+
+resource "aws_iam_role_policy_attachment" "regression_security_management" {
+  role       = aws_iam_role.regression_test_role.name
+  policy_arn = aws_iam_policy.security_management.arn
 }

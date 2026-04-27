@@ -9,3 +9,9 @@ variable "github_repo" {
   description = "GitHub repository"
   type        = string
 }
+
+variable "regression_repo" {
+  default     = "eligibility-signposting-api-regression-tests"
+  description = "GitHub repository"
+  type        = string
+}
