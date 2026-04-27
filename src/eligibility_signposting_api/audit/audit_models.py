@@ -84,6 +84,7 @@ class AuditCondition(CamelCaseBaseModel):
     suitability_rules: list[AuditSuitabilityRule] | None = None
     action_rule: AuditRedirectRule | None = None
     actions: list[AuditAction] | None = Field(default_factory=list)
+    status_text_override: str | None = None
 
 
 class ResponseAuditData(CamelCaseBaseModel):
