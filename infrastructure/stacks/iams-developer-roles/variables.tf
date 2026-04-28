@@ -15,3 +15,9 @@ variable "regression_repo" {
   description = "GitHub repository"
   type        = string
 }
+
+variable "my_vaccines_repo" {
+  default     = "vaccinations-app"
+  description = "GitHub repository"
+  type        = string
+}
