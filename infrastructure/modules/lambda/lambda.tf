@@ -1,7 +1,6 @@
 resource "aws_lambda_function" "eligibility_signposting_lambda" {
   #checkov:skip=CKV_AWS_116: No deadletter queue is configured for this Lambda function, as the requests are synchronous
   #checkov:skip=CKV_AWS_115: Concurrent execution limit will be set at APIM level, not at Lambda level
-  #checkov:skip=CKV_AWS_272: Skipping code signing but flagged to create ticket to investigate on ELI-238
   # If the file is not in the current working directory you will need to include a
   # path.module in the filename.
   filename      = var.file_name
@@ -10,6 +9,8 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   handler       = var.handler
 
   source_code_hash = filebase64sha256(var.file_name)
+
+  code_signing_config_arn = contains(var.environments_with_signing, var.environment) ? aws_lambda_code_signing_config.signing_config.arn : null
 
   runtime     = var.runtime
   timeout     = 30
@@ -39,10 +40,10 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   }
 
   layers = compact([
-      var.environment == "prod" || var.environment == "preprod" ?
-      "arn:aws:lambda:${var.region}:580247275435:layer:LambdaInsightsExtension:${var.lambda_insights_extension_version}"
-      :
-      null
+    var.environment == "prod" || var.environment == "preprod" ?
+    "arn:aws:lambda:${var.region}:580247275435:layer:LambdaInsightsExtension:${var.lambda_insights_extension_version}"
+    :
+    null
   ])
 
 
@@ -66,4 +67,3 @@ resource "aws_lambda_provisioned_concurrency_config" "campaign_pc" {
   qualifier                         = aws_lambda_alias.campaign_alias[0].name
   provisioned_concurrent_executions = var.provisioned_concurrency_count
 }
-

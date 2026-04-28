@@ -18,7 +18,7 @@ module "eligibility_signposting_lambda_function" {
   environment                               = var.environment
   runtime                                   = "python3.13"
   lambda_func_name                          = "${terraform.workspace == "default" ? "" : "${terraform.workspace}-"}eligibility_signposting_api"
-  security_group_ids = [data.aws_security_group.main_sg.id]
+  security_group_ids                        = [data.aws_security_group.main_sg.id]
   vpc_intra_subnets                         = [for v in data.aws_subnet.private_subnets : v.id]
   file_name                                 = "../../../dist/lambda.zip"
   handler                                   = "eligibility_signposting_api.app.lambda_handler"
@@ -33,6 +33,7 @@ module "eligibility_signposting_lambda_function" {
   stack_name                                = local.stack_name
   provisioned_concurrency_count             = 5
   api_domain_name                           = local.api_domain_name
+  environments_with_signing                 = ["test", "preprod", "prod"]
 }
 
 
@@ -69,7 +70,7 @@ resource "aws_lambda_function" "create_secret_lambda" {
     variables = { SECRET_NAME = module.secrets_manager.aws_hashing_secret_name }
   }
   vpc_config {
-    subnet_ids = [for s in data.aws_subnet.private_subnets : s.id]
+    subnet_ids         = [for s in data.aws_subnet.private_subnets : s.id]
     security_group_ids = [data.aws_security_group.main_sg.id]
   }
 }
@@ -98,7 +99,7 @@ resource "aws_lambda_function" "promote_secret_lambda" {
     variables = { SECRET_NAME = module.secrets_manager.aws_hashing_secret_name }
   }
   vpc_config {
-    subnet_ids = [for s in data.aws_subnet.private_subnets : s.id]
+    subnet_ids         = [for s in data.aws_subnet.private_subnets : s.id]
     security_group_ids = [data.aws_security_group.main_sg.id]
   }
 }
