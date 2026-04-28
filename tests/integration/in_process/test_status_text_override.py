@@ -5,17 +5,16 @@ from botocore.client import BaseClient
 from brunns.matchers.data import json_matching as is_json_that
 from brunns.matchers.werkzeug import is_werkzeug_response as is_response
 from flask.testing import FlaskClient
-from hamcrest import assert_that, has_entries, has_item, has_key, is_not, none, equal_to, is_
+from hamcrest import assert_that, equal_to, has_entries, has_item, has_key, is_, is_not, none
 
 from eligibility_signposting_api.model.consumer_mapping import ConsumerId, ConsumerMapping
 from eligibility_signposting_api.model.eligibility_status import NHSNumber
-from tests.integration.conftest import UNIQUE_CONSUMER_HEADER, bridge_latest_kinesis_record_to_firehose
-
 from eligibility_signposting_api.repos.campaign_repo import BucketName
+from tests.integration.conftest import UNIQUE_CONSUMER_HEADER, bridge_latest_kinesis_record_to_firehose
 
 
 class TestStatusTextOverride:
-    def test_status_text_override_replaces_iteration_status_text_and_is_not_returned_as_action(
+    def test_status_text_override_replaces_iteration_status_text_and_is_not_returned_as_action(  # noqa: PLR0913
         self,
         client: FlaskClient,
         audit_bucket: BucketName,
@@ -87,7 +86,7 @@ class TestStatusTextOverride:
         assert_that(audit_data["response"]["condition"][0].get("statusTextOverride"), equal_to(status_text_override))
         assert_that(audit_data["response"]["condition"][0].get("statusText"), equal_to(status_text))
 
-    def test_no_status_text_override_as_no_action(
+    def test_no_status_text_override_as_no_action(  # noqa: PLR0913
         self,
         client: FlaskClient,
         audit_bucket: BucketName,
@@ -128,7 +127,7 @@ class TestStatusTextOverride:
 
         actions = covid_suggestion.get("actions", [])
 
-        assert_that(actions,is_([]))
+        assert_that(actions, is_([]))
 
         assert all(action.get("actionType") != "norender_StatusTextOverride" for action in actions)
 

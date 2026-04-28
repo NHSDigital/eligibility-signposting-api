@@ -256,6 +256,7 @@ class ICBNonActionableActionRuleFactory(IterationRuleFactory):
     comparator = RuleComparator("QE1")
     comms_routing = CommsRouting("ActionCode1")
 
+
 class PostcodeNonActionableRuleFactory(IterationRuleFactory):
     type = RuleType.not_actionable_actions
     name = RuleName("Excluded postcode In SW19")

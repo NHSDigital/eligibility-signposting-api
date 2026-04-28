@@ -15,6 +15,7 @@ from eligibility_signposting_api.model import campaign_config as rules_model
 from eligibility_signposting_api.model.campaign_config import (
     AvailableAction,
     CohortLabel,
+    CommsRouting,
     Description,
     RuleAttributeLevel,
     RuleAttributeName,
@@ -22,7 +23,7 @@ from eligibility_signposting_api.model.campaign_config import (
     RuleComparator,
     RuleName,
     RuleOperator,
-    RuleType, CommsRouting,
+    RuleType,
 )
 from eligibility_signposting_api.model.eligibility_status import (
     ActionCode,
@@ -2354,7 +2355,6 @@ class TestEligibilityResultBuilder:
 @pytest.mark.parametrize(
     ("status", "status_text", "action_rule", "action_status_text", "iteration_status_text"),
     [
-
         # Scenario: Patient is actionable, no Status Text, no override present
         # Expected: Hardcoded value
         pytest.param(
@@ -2515,7 +2515,7 @@ class TestEligibilityResultBuilder:
         ),
     ],
 )
-def test_configureable_status_text(
+def test_configureable_status_text(  # noqa: PLR0913
     faker: Faker,
     status: Status,
     status_text: str,
@@ -2528,11 +2528,7 @@ def test_configureable_status_text(
     date_of_birth = DateOfBirth(faker.date_of_birth(minimum_age=85, maximum_age=85))
 
     person_rows = person_rows_builder(
-        nhs_number,
-        date_of_birth=date_of_birth,
-        cohorts=["rsv_cohort_1"],
-        icb="QE1",
-        postcode="SW19"
+        nhs_number, date_of_birth=date_of_birth, cohorts=["rsv_cohort_1"], icb="QE1", postcode="SW19"
     )
 
     if status == Status.actionable:
@@ -2547,25 +2543,25 @@ def test_configureable_status_text(
 
     scenario_rules = [
         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.filter,
-                                name=RuleName("NotEligible Reason 1"),
-                                description=RuleText("NotEligible Description 1"),
-                                priority=RulePriority("100"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator(filter_comparator),
-                            ),
+            type=RuleType.filter,
+            name=RuleName("NotEligible Reason 1"),
+            description=RuleText("NotEligible Description 1"),
+            priority=RulePriority("100"),
+            operator=RuleOperator.year_lte,
+            attribute_level=RuleAttributeLevel.PERSON,
+            attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+            comparator=RuleComparator(filter_comparator),
+        ),
         rule_builder.PersonAgeSuppressionRuleFactory.build(
-                                type=RuleType.suppression,
-                                name=RuleName("NotActionable Reason 1"),
-                                description=RuleText("NotActionable Description 1"),
-                                priority=RulePriority("110"),
-                                operator=RuleOperator.year_lte,
-                                attribute_level=RuleAttributeLevel.PERSON,
-                                attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
-                                comparator=RuleComparator(suppression_comparator),
-                            ),
+            type=RuleType.suppression,
+            name=RuleName("NotActionable Reason 1"),
+            description=RuleText("NotActionable Description 1"),
+            priority=RulePriority("110"),
+            operator=RuleOperator.year_lte,
+            attribute_level=RuleAttributeLevel.PERSON,
+            attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
+            comparator=RuleComparator(suppression_comparator),
+        ),
         action_rule,
     ]
     campaign_configs = [
@@ -2574,16 +2570,15 @@ def test_configureable_status_text(
             iterations=[
                 rule_builder.IterationFactory.build(
                     status_text=iteration_status_text,
-
                     iteration_cohorts=[
                         rule_builder.IterationCohortFactory.build(
                             cohort_label="rsv_cohort_1", cohort_group="rsv_cohort_group", priority=0
                         ),
                     ],
                     iteration_rules=scenario_rules,
-
                     actions_mapper=rule_builder.ActionsMapperFactory.build(
-                        root={"STATUS_TEXT_OVERRIDE": action_status_text}),
+                        root={"STATUS_TEXT_OVERRIDE": action_status_text}
+                    ),
                 )
             ],
         )
@@ -2603,11 +2598,9 @@ def test_configureable_status_text(
                 .and_status(status)
                 .and_status_text(StatusText(status_text))
             )
-        )
+        ),
     )
-    assert_that(
-        actual.conditions[0].actions,
-        is_([]))
+    assert_that(actual.conditions[0].actions, is_([]))
 
 
 def test_configureable_status_text_exclude_actions(faker: Faker):
@@ -2639,7 +2632,6 @@ def test_configureable_status_text_exclude_actions(faker: Faker):
                         NotActionable="Orignal you are not actionable status text",
                         Actionable="Orignal you are actionable status text",
                     ),
-
                     iteration_cohorts=[
                         rule_builder.IterationCohortFactory.build(
                             cohort_label="rsv_cohort_1", cohort_group="rsv_cohort_group", priority=0
@@ -2656,7 +2648,6 @@ def test_configureable_status_text_exclude_actions(faker: Faker):
                             attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
                             comparator=RuleComparator("-90"),
                         ),
-
                         rule_builder.PersonAgeSuppressionRuleFactory.build(
                             type=RuleType.suppression,
                             name=RuleName("NotActionable Reason 1"),
@@ -2670,11 +2661,10 @@ def test_configureable_status_text_exclude_actions(faker: Faker):
                         rule_builder.ICBRedirectRuleFactory.build(
                             comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE_ACTIONABLE")
                         ),
-
                     ],
-
                     actions_mapper=rule_builder.ActionsMapperFactory.build(
-                        root={"STATUS_TEXT_OVERRIDE_ACTIONABLE": action_status_text_override_actionable}),
+                        root={"STATUS_TEXT_OVERRIDE_ACTIONABLE": action_status_text_override_actionable}
+                    ),
                 )
             ],
         )
@@ -2693,12 +2683,14 @@ def test_configureable_status_text_exclude_actions(faker: Faker):
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(Status.actionable)
                 .and_status_text(StatusText("Orignal you are actionable status text"))
-
-            )))
+            )
+        ),
+    )
     assert_that(
         actual.conditions[0].actions,
         is_(None),
     )
+
 
 def test_configureable_status_text_multiple_actions(faker: Faker):
     # Patient is actionable and there are multiple actions. Testing override does not change action
@@ -2735,7 +2727,6 @@ def test_configureable_status_text_multiple_actions(faker: Faker):
                         NotActionable="Orignal you are not actionable status text",
                         Actionable="Orignal you are actionable status text",
                     ),
-
                     iteration_cohorts=[
                         rule_builder.IterationCohortFactory.build(
                             cohort_label="rsv_cohort_1", cohort_group="rsv_cohort_group", priority=0
@@ -2752,7 +2743,6 @@ def test_configureable_status_text_multiple_actions(faker: Faker):
                             attribute_name=RuleAttributeName("DATE_OF_BIRTH"),
                             comparator=RuleComparator("-90"),
                         ),
-
                         rule_builder.PersonAgeSuppressionRuleFactory.build(
                             type=RuleType.suppression,
                             name=RuleName("NotActionable Reason 1"),
@@ -2766,14 +2756,13 @@ def test_configureable_status_text_multiple_actions(faker: Faker):
                         rule_builder.ICBRedirectRuleFactory.build(
                             comms_routing=CommsRouting("STATUS_TEXT_OVERRIDE_ACTIONABLE|BOOK_NBS")
                         ),
-
                     ],
-
                     actions_mapper=rule_builder.ActionsMapperFactory.build(
                         root={
                             "STATUS_TEXT_OVERRIDE_ACTIONABLE": action_status_text_override_actionable,
                             "BOOK_NBS": action_book_nbs,
-                            }),
+                        }
+                    ),
                 )
             ],
         )
@@ -2792,8 +2781,9 @@ def test_configureable_status_text_multiple_actions(faker: Faker):
                 .with_condition_name(ConditionName("RSV"))
                 .and_status(Status.actionable)
                 .and_status_text(StatusText("Status Text Override Actionable"))
-
-            )))
+            )
+        ),
+    )
     assert_that(len(actual.conditions[0].actions), is_(1))
     assert_that(actual.conditions[0].actions[0].action_code, is_(ActionCode("BookNBS")))
     assert_that(actual.conditions[0].actions[0].internal_action_code, is_(InternalActionCode("BOOK_NBS")))
