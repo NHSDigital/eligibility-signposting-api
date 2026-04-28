@@ -41,10 +41,8 @@ resource "aws_lambda_function" "eligibility_signposting_lambda" {
   }
 
   layers = compact([
-    var.environment == "prod" || var.environment == "preprod" ?
-    "arn:aws:lambda:${var.region}:580247275435:layer:LambdaInsightsExtension:${var.lambda_insights_extension_version}"
-    :
-    null
+    # LambdaInsightsExtension excluded: incompatible with Lambda code signing enforcement.
+    # AWS signs the layer with an internal profile not available via the API.
   ])
 
 

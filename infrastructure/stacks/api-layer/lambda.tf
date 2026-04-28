@@ -27,7 +27,6 @@ module "eligibility_signposting_lambda_function" {
   eligibility_status_table_name             = module.eligibility_status_table.table_name
   kinesis_audit_stream_name                 = aws_kinesis_stream.kinesis_source_stream.name
   hashing_secret_name                       = module.secrets_manager.aws_hashing_secret_name
-  lambda_insights_extension_version         = 38
   log_level                                 = "INFO"
   enable_xray_patching                      = "true"
   stack_name                                = local.stack_name

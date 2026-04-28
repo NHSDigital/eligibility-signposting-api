@@ -250,12 +250,6 @@ resource "aws_iam_role_policy_attachment" "lambda_logs_policy_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-#Attach CloudWatchLambdaInsightsExecutionRolePolicy to lambda for enhanced monitoring
-resource "aws_iam_role_policy_attachment" "lambda_insights_policy" {
-  role       = aws_iam_role.eligibility_lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy"
-}
-
 # Policy document to read from Kinesis Source stream
 data "aws_iam_policy_document" "kinesis_source_access" {
   statement {

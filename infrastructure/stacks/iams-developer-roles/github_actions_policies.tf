@@ -145,8 +145,7 @@ resource "aws_iam_policy" "lambda_management" {
           "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api",
           "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api:*",
           "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:default-CreatePendingSecretFunction",
-          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:default-PromoteToCurrentFunction",
-          "arn:aws:lambda:*:580247275435:layer:LambdaInsightsExtension:*"
+          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:default-PromoteToCurrentFunction"
         ]
       }
     ]
