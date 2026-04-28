@@ -88,3 +88,9 @@ variable "hashing_secret_name" {
   description = "hashing secret name"
   type        = string
 }
+
+variable "environments_with_signing" {
+  description = "List of environments where Lambda code signing is enabled; enforcement behaviour depends on the configured code signing policy"
+  type        = list(string)
+  default     = ["test"]
+}
