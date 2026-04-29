@@ -8,7 +8,7 @@ Use this prompt with Opus 4.6 to assess your GitHub Actions workflows for compli
 
 Please assess our GitHub Actions workflows for compliance with the NHSDigital GitHub Actions Security Best Practices (see docs/github-actions-best-practices.md).
 
-- Review all workflow files in .github/workflows/ (*.yml, *.yaml).
+- Review all workflow files in .github/workflows/ (`*.yml`, `*.yaml`).
 - Identify any gaps or violations, including but not limited to:
   - Actions not pinned to commit SHAs
   - Missing or overly broad permissions blocks
@@ -21,6 +21,7 @@ Please assess our GitHub Actions workflows for compliance with the NHSDigital Gi
   - Missing audit, monitoring, or CODEOWNERS controls
 
 Please provide:
+
 1. An investigation writeup summarizing the current state and any risks.
 2. A list of remediation tickets for each gap found, with suggested actions.
 
