@@ -1124,6 +1124,55 @@ def campaign_config_with_custom_target_attributes(
 
 
 @pytest.fixture
+def campaign_config_with_status_text_override(
+    s3_client: BaseClient, rules_bucket: BucketName
+) -> Generator[CampaignConfig]:
+    """Campaign config that overrides status text via a no-render action."""
+    campaign: CampaignConfig = rule.CampaignConfigFactory.build(
+        target="COVID",
+        iterations=[
+            rule.IterationFactory.build(
+                default_comms_routing="VISIBLE_ACTION|STATUS_TEXT_OVERRIDE",
+                status_text=StatusText(
+                    NotEligible="Original not eligible text",
+                    NotActionable="Original not actionable text",
+                    Actionable="Original actionable text",
+                ),
+                actions_mapper=rule.ActionsMapperFactory.build(
+                    root={
+                        "VISIBLE_ACTION": AvailableAction(
+                            ActionType="DataValue",
+                            ExternalRoutingCode="VisibleAction",
+                            ActionDescription="Visible action description",
+                        ),
+                        "STATUS_TEXT_OVERRIDE": AvailableAction(
+                            ActionType="norender_StatusTextOverride",
+                            ExternalRoutingCode="StatusTextOverride",
+                            ActionDescription="Overridden actionable status text",
+                        ),
+                    }
+                ),
+                iteration_rules=[],
+                iteration_cohorts=[
+                    rule.IterationCohortFactory.build(
+                        cohort_label="cohort_label1",
+                        cohort_group="cohort_group1",
+                        positive_description="Positive Description",
+                        negative_description="Negative Description",
+                    )
+                ],
+            )
+        ],
+    )
+    campaign_data = {"CampaignConfig": campaign.model_dump(by_alias=True)}
+    s3_client.put_object(
+        Bucket=rules_bucket, Key=f"{campaign.name}.json", Body=json.dumps(campaign_data), ContentType="application/json"
+    )
+    yield campaign
+    s3_client.delete_object(Bucket=rules_bucket, Key=f"{campaign.name}.json")
+
+
+@pytest.fixture
 def multiple_campaign_configs(s3_client: BaseClient, rules_bucket: BucketName) -> Generator[list[CampaignConfig]]:
     """Create and upload multiple campaign configs to S3, then clean up after tests."""
     campaigns, campaign_data_keys = [], []
@@ -1497,6 +1546,20 @@ def consumer_to_active_campaign_config_with_custom_target_attributes_mapping(
     )
     yield consumer_mapping
     s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping.json")
+
+
+@pytest.fixture
+def consumer_to_active_campaign_config_with_status_text_override_mapping(
+    s3_client: BaseClient,
+    consumer_mapping_bucket: ConsumerMapping,
+    campaign_config_with_status_text_override: CampaignConfig,
+    consumer_id: ConsumerId,
+):
+    consumer_mapping = create_and_put_consumer_mapping_in_s3(
+        campaign_config_with_status_text_override, consumer_id, consumer_mapping_bucket, s3_client
+    )
+    yield consumer_mapping
+    s3_client.delete_object(Bucket=consumer_mapping_bucket, Key="consumer_mapping_config.json")
 
 
 @pytest.fixture

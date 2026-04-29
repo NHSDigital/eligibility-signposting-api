@@ -246,9 +246,9 @@ data "aws_iam_policy_document" "permissions_boundary" {
   }
   # Environment-specific actions
   dynamic "statement" {
-    for_each = var.environment == "preprod" ? [1] : []
+    for_each = contains(["dev", "test", "preprod"], var.environment) ? [1] : []
     content {
-      sid    = "AllowPreprodDynamoDBItemOps"
+      sid    = "AllowDynamoDBItemOps"
       effect = "Allow"
       actions = [
         "dynamodb:GetItem",

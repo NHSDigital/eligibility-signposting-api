@@ -74,11 +74,6 @@ variable "provisioned_concurrency_count" {
   type        = number
 }
 
-variable "lambda_insights_extension_version" {
-  description = "version number of LambdaInsightsExtension"
-  type        = number
-}
-
 variable "api_domain_name" {
   description = "api domain name - env variable for status endpoint response"
   type        = string
@@ -87,4 +82,10 @@ variable "api_domain_name" {
 variable "hashing_secret_name" {
   description = "hashing secret name"
   type        = string
+}
+
+variable "environments_with_signing" {
+  description = "List of environments where Lambda code signing is enabled; enforcement behaviour depends on the configured code signing policy"
+  type        = list(string)
+  default     = ["test"]
 }

@@ -145,8 +145,7 @@ resource "aws_iam_policy" "lambda_management" {
           "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api",
           "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:eligibility_signposting_api:*",
           "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:default-CreatePendingSecretFunction",
-          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:default-PromoteToCurrentFunction",
-          "arn:aws:lambda:*:580247275435:layer:LambdaInsightsExtension:*"
+          "arn:aws:lambda:*:${data.aws_caller_identity.current.account_id}:function:default-PromoteToCurrentFunction"
         ]
       }
     ]
@@ -836,6 +835,7 @@ data "aws_iam_policy_document" "regression_test_permissions" {
       "dynamodb:Scan",
       "dynamodb:UpdateItem",
       "dynamodb:DeleteItem",
+      "dynamodb:BatchWriteItem",
       "dynamodb:DescribeTable",
       "dynamodb:DeleteTable",
       "dynamodb:TagResource",
@@ -851,19 +851,21 @@ data "aws_iam_policy_document" "regression_test_permissions" {
     sid    = "DynamoGlobal"
     effect = "Allow"
     actions = [
-    "dynamodb:ListTables",
-    "dynamodb:CreateTable"
+      "dynamodb:ListTables",
+      "dynamodb:CreateTable"
     ]
     resources = ["*"]
   }
 
   statement {
-    sid = "SecretsManagerAccess"
+    sid    = "SecretsManagerAccess"
     effect = "Allow"
     actions = [
       "secretsmanager:GetSecretValue",
-      "secretsmanager:DescribeSecret"
-      ]
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:UpdateSecretVersionStage",
+      "secretsmanager:PutSecretValue"
+    ]
     resources = ["arn:aws:secretsmanager:${var.default_aws_region}:${data.aws_caller_identity.current.account_id}:secret:eligibility-signposting-api-*"]
   }
 
@@ -949,8 +951,8 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
   dynamic "statement" {
     for_each = var.environment == "dev" ? [1] : []
     content {
-      sid    = "AllowDevSSORoleToAssumeIamBootstrap"
-      effect = "Allow"
+      sid     = "AllowDevSSORoleToAssumeIamBootstrap"
+      effect  = "Allow"
       actions = ["sts:AssumeRole"]
 
       principals {
@@ -966,8 +968,8 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
 # Assume role policy document for GitHub Actions
 data "aws_iam_policy_document" "regression_repo_assume_role" {
   statement {
-    sid    = "OidcAssumeRoleWithWebIdentity"
-    effect = "Allow"
+    sid     = "OidcAssumeRoleWithWebIdentity"
+    effect  = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
 
     principals {
@@ -980,21 +982,17 @@ data "aws_iam_policy_document" "regression_repo_assume_role" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values = ["repo:${var.github_org}/${var.regression_repo}:*"]
-    }
-
-    condition {
-      test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:job_workflow_ref"
       values = [
-        "${var.github_org}/${var.regression_repo}/.github/workflows/regression_tests.yml@*"
+        "repo:${var.github_org}/${var.regression_repo}:*",
+        "repo:${var.github_org}/${var.github_repo}:*",
+        "repo:${var.github_org}/${var.my_vaccines_repo}:*",
       ]
     }
 
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
-      values = ["sts.amazonaws.com"]
+      values   = ["sts.amazonaws.com"]
     }
   }
 }
